@@ -1,0 +1,374 @@
+{
+  "C": {
+    "language": "C",
+    "total_comments": 36727,
+    "japanese_comments": 311,
+    "emotions": {
+      "uncertainty": {
+        "count": 583,
+        "percentage": 1.6,
+        "avg_intensity": 1.06
+      },
+      "humor": {
+        "count": 187,
+        "percentage": 0.5,
+        "avg_intensity": 1.0
+      },
+      "frustration": {
+        "count": 1872,
+        "percentage": 5.1,
+        "avg_intensity": 1.03
+      },
+      "resignation": {
+        "count": 236,
+        "percentage": 0.6,
+        "avg_intensity": 1.01
+      },
+      "urgency": {
+        "count": 675,
+        "percentage": 1.8,
+        "avg_intensity": 1.12
+      },
+      "warning": {
+        "count": 153,
+        "percentage": 0.4,
+        "avg_intensity": 1.01
+      },
+      "pride": {
+        "count": 161,
+        "percentage": 0.4,
+        "avg_intensity": 1.09
+      },
+      "apology": {
+        "count": 6,
+        "percentage": 0.0,
+        "avg_intensity": 1.0
+      }
+    },
+    "tags": {
+      "HACK": 1618,
+      "NOTE": 428,
+      "XXX": 384,
+      "CHANGED": 221,
+      "WARNING": 86,
+      "TEMPORARY": 76,
+      "OPTIMIZE": 27,
+      "TODO": 15,
+      "BUG": 12,
+      "KLUDGE": 1
+    },
+    "top_emotions": [
+      "frustration",
+      "urgency",
+      "uncertainty",
+      "resignation",
+      "humor"
+    ]
+  },
+  "Lua": {
+    "language": "Lua",
+    "total_comments": 587,
+    "japanese_comments": 0,
+    "emotions": {
+      "urgency": {
+        "count": 6,
+        "percentage": 1.0,
+        "avg_intensity": 1.0
+      },
+      "pride": {
+        "count": 1,
+        "percentage": 0.2,
+        "avg_intensity": 1.0
+      },
+      "uncertainty": {
+        "count": 1,
+        "percentage": 0.2,
+        "avg_intensity": 1.0
+      },
+      "frustration": {
+        "count": 2,
+        "percentage": 0.3,
+        "avg_intensity": 1.0
+      },
+      "warning": {
+        "count": 1,
+        "percentage": 0.2,
+        "avg_intensity": 1.0
+      }
+    },
+    "tags": {
+      "HACK": 1,
+      "NOTE": 1
+    },
+    "top_emotions": [
+      "urgency",
+      "frustration",
+      "pride",
+      "uncertainty",
+      "warning"
+    ]
+  },
+  "DataFile": {
+    "language": "DataFile",
+    "total_comments": 4160,
+    "japanese_comments": 131,
+    "emotions": {
+      "warning": {
+        "count": 16,
+        "percentage": 0.4,
+        "avg_intensity": 1.0
+      },
+      "frustration": {
+        "count": 183,
+        "percentage": 4.4,
+        "avg_intensity": 1.06
+      },
+      "urgency": {
+        "count": 78,
+        "percentage": 1.9,
+        "avg_intensity": 1.0
+      },
+      "uncertainty": {
+        "count": 89,
+        "percentage": 2.1,
+        "avg_intensity": 1.01
+      },
+      "humor": {
+        "count": 14,
+        "percentage": 0.3,
+        "avg_intensity": 1.0
+      },
+      "pride": {
+        "count": 10,
+        "percentage": 0.2,
+        "avg_intensity": 1.0
+      },
+      "resignation": {
+        "count": 2,
+        "percentage": 0.0,
+        "avg_intensity": 1.0
+      },
+      "apology": {
+        "count": 8,
+        "percentage": 0.2,
+        "avg_intensity": 1.0
+      }
+    },
+    "tags": {
+      "NOTE": 27,
+      "CHANGED": 6,
+      "BUG": 3,
+      "WARNING": 3,
+      "HACK": 2,
+      "XXX": 2,
+      "TODO": 1
+    },
+    "top_emotions": [
+      "frustration",
+      "uncertainty",
+      "urgency",
+      "warning",
+      "humor"
+    ]
+  },
+  "COBOL": {
+    "language": "COBOL",
+    "total_comments": 15983,
+    "japanese_comments": 0,
+    "emotions": {
+      "urgency": {
+        "count": 749,
+        "percentage": 4.7,
+        "avg_intensity": 1.01
+      },
+      "warning": {
+        "count": 38,
+        "percentage": 0.2,
+        "avg_intensity": 1.0
+      },
+      "resignation": {
+        "count": 159,
+        "percentage": 1.0,
+        "avg_intensity": 1.0
+      },
+      "uncertainty": {
+        "count": 159,
+        "percentage": 1.0,
+        "avg_intensity": 1.09
+      },
+      "frustration": {
+        "count": 145,
+        "percentage": 0.9,
+        "avg_intensity": 1.37
+      },
+      "pride": {
+        "count": 51,
+        "percentage": 0.3,
+        "avg_intensity": 1.0
+      },
+      "apology": {
+        "count": 1,
+        "percentage": 0.0,
+        "avg_intensity": 1.0
+      },
+      "humor": {
+        "count": 1,
+        "percentage": 0.0,
+        "avg_intensity": 1.0
+      }
+    },
+    "tags": {
+      "CHANGED": 321,
+      "BUG": 65,
+      "NOTE": 57,
+      "TEMPORARY": 46,
+      "WARNING": 20,
+      "XXX": 5,
+      "TODO": 2
+    },
+    "top_emotions": [
+      "urgency",
+      "resignation",
+      "uncertainty",
+      "frustration",
+      "pride"
+    ]
+  },
+  "PL/I": {
+    "language": "PL/I",
+    "total_comments": 2783,
+    "japanese_comments": 0,
+    "emotions": {
+      "uncertainty": {
+        "count": 33,
+        "percentage": 1.2,
+        "avg_intensity": 1.0
+      },
+      "frustration": {
+        "count": 35,
+        "percentage": 1.3,
+        "avg_intensity": 1.03
+      },
+      "urgency": {
+        "count": 78,
+        "percentage": 2.8,
+        "avg_intensity": 1.03
+      },
+      "pride": {
+        "count": 2,
+        "percentage": 0.1,
+        "avg_intensity": 1.0
+      },
+      "warning": {
+        "count": 14,
+        "percentage": 0.5,
+        "avg_intensity": 1.0
+      },
+      "resignation": {
+        "count": 32,
+        "percentage": 1.1,
+        "avg_intensity": 1.12
+      }
+    },
+    "tags": {
+      "CHANGED": 11,
+      "NOTE": 10,
+      "TEMPORARY": 7,
+      "WARNING": 4,
+      "HACK": 2,
+      "KLUDGE": 1
+    },
+    "top_emotions": [
+      "urgency",
+      "frustration",
+      "uncertainty",
+      "resignation",
+      "warning"
+    ]
+  },
+  "JCL": {
+    "language": "JCL",
+    "total_comments": 731,
+    "japanese_comments": 0,
+    "emotions": {
+      "urgency": {
+        "count": 51,
+        "percentage": 7.0,
+        "avg_intensity": 1.0
+      }
+    },
+    "tags": {
+      "CHANGED": 2
+    },
+    "top_emotions": [
+      "urgency"
+    ]
+  },
+  "RPG": {
+    "language": "RPG",
+    "total_comments": 1857,
+    "japanese_comments": 0,
+    "emotions": {
+      "uncertainty": {
+        "count": 15,
+        "percentage": 0.8,
+        "avg_intensity": 1.0
+      },
+      "urgency": {
+        "count": 44,
+        "percentage": 2.4,
+        "avg_intensity": 1.0
+      },
+      "frustration": {
+        "count": 15,
+        "percentage": 0.8,
+        "avg_intensity": 1.07
+      },
+      "warning": {
+        "count": 26,
+        "percentage": 1.4,
+        "avg_intensity": 1.0
+      },
+      "resignation": {
+        "count": 13,
+        "percentage": 0.7,
+        "avg_intensity": 1.0
+      },
+      "pride": {
+        "count": 2,
+        "percentage": 0.1,
+        "avg_intensity": 1.0
+      }
+    },
+    "tags": {
+      "CHANGED": 25,
+      "NOTE": 19,
+      "WARNING": 9,
+      "TEMPORARY": 5,
+      "REVIEW": 2
+    },
+    "top_emotions": [
+      "urgency",
+      "warning",
+      "uncertainty",
+      "frustration",
+      "resignation"
+    ]
+  },
+  "VB6": {
+    "language": "VB6",
+    "total_comments": 2000,
+    "japanese_comments": 0,
+    "emotions": {
+      "urgency": {
+        "count": 1,
+        "percentage": 0.1,
+        "avg_intensity": 1.0
+      }
+    },
+    "tags": {},
+    "top_emotions": [
+      "urgency"
+    ]
+  }
+}

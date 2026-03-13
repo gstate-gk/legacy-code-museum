@@ -1,0 +1,38 @@
+{
+  "total": 64828,
+  "chunks": 13,
+  "chunk_size": 5000,
+  "repos": [
+    "ACAS-Sources",
+    "COBOL-Legacy-Benchmark-Suite",
+    "IBM-i-RPG-Free-CLP-Code",
+    "aws-mainframe-modernization-carddemo",
+    "habitat",
+    "hengband-lua",
+    "pos-retail",
+    "zBANK"
+  ],
+  "languages": [
+    "C",
+    "COBOL",
+    "DataFile",
+    "JCL",
+    "Lua",
+    "PL/I",
+    "RPG",
+    "VB6"
+  ],
+  "tags": [
+    "BUG",
+    "CHANGED",
+    "HACK",
+    "KLUDGE",
+    "NOTE",
+    "OPTIMIZE",
+    "REVIEW",
+    "TEMPORARY",
+    "TODO",
+    "WARNING",
+    "XXX"
+  ]
+}
