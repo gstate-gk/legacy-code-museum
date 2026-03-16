@@ -136,7 +136,7 @@ export default function HomePage() {
         <h2 className="mb-4 font-mono text-xl text-[var(--lca-gold)]">About This Museum</h2>
         <p className="mx-auto max-w-2xl text-sm leading-relaxed text-[var(--lca-text-dim)]">
           Legacy Code Archive (LCA) は、消えゆく古いコードを収集・分析するプロジェクトです。
-          COBOL、PL/I、RPG、VB6、C+Lua — 1986年から2022年までの{index.repos.length}つのリポジトリから
+          COBOL、PL/I、RPG、VB6、C+Lua、そして米陸軍CADやQEMU — 1978年から2022年までの{index.repos.length}リポジトリから
           {index.total.toLocaleString()}件のコメントを発掘しました。
           プログラマたちが残した TODO、FIXME、HACK、そして呟きから、
           ソフトウェア開発の歴史と人間の営みを読み解きます。

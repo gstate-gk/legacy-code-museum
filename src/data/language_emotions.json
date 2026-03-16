@@ -1,68 +1,72 @@
 {
   "C": {
     "language": "C",
-    "total_comments": 36727,
-    "japanese_comments": 311,
+    "total_comments": 355317,
+    "japanese_comments": 347,
     "emotions": {
       "uncertainty": {
-        "count": 583,
+        "count": 5530,
         "percentage": 1.6,
-        "avg_intensity": 1.06
+        "avg_intensity": 1.05
       },
       "humor": {
-        "count": 187,
-        "percentage": 0.5,
-        "avg_intensity": 1.0
+        "count": 291,
+        "percentage": 0.1,
+        "avg_intensity": 1.01
       },
       "frustration": {
-        "count": 1872,
-        "percentage": 5.1,
-        "avg_intensity": 1.03
+        "count": 4830,
+        "percentage": 1.4,
+        "avg_intensity": 1.08
       },
       "resignation": {
-        "count": 236,
-        "percentage": 0.6,
+        "count": 3724,
+        "percentage": 1.0,
         "avg_intensity": 1.01
       },
       "urgency": {
-        "count": 675,
-        "percentage": 1.8,
-        "avg_intensity": 1.12
+        "count": 20996,
+        "percentage": 5.9,
+        "avg_intensity": 1.09
       },
       "warning": {
-        "count": 153,
-        "percentage": 0.4,
+        "count": 3212,
+        "percentage": 0.9,
         "avg_intensity": 1.01
       },
       "pride": {
-        "count": 161,
-        "percentage": 0.4,
-        "avg_intensity": 1.09
+        "count": 2087,
+        "percentage": 0.6,
+        "avg_intensity": 1.02
       },
       "apology": {
-        "count": 6,
+        "count": 30,
         "percentage": 0.0,
         "avg_intensity": 1.0
       }
     },
     "tags": {
-      "HACK": 1618,
-      "NOTE": 428,
-      "XXX": 384,
-      "CHANGED": 221,
-      "WARNING": 86,
-      "TEMPORARY": 76,
-      "OPTIMIZE": 27,
-      "TODO": 15,
-      "BUG": 12,
-      "KLUDGE": 1
+      "NOTE": 4068,
+      "XXX": 3104,
+      "CHANGED": 2507,
+      "HACK": 1986,
+      "TODO": 1930,
+      "FIXME": 1662,
+      "WARNING": 992,
+      "TEMPORARY": 818,
+      "BUG": 668,
+      "DEPRECATED": 422,
+      "OPTIMIZE": 295,
+      "KLUDGE": 31,
+      "REVIEW": 8,
+      "REFACTOR": 2
     },
     "top_emotions": [
-      "frustration",
       "urgency",
       "uncertainty",
+      "frustration",
       "resignation",
-      "humor"
+      "warning"
     ]
   },
   "Lua": {
