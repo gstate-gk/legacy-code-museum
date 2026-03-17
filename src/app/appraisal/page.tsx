@@ -56,6 +56,55 @@ const PUBLISHED_ARTICLES = [
     language: "C → Python+React",
     year: "2002→2026",
   },
+  {
+    number: "008",
+    title: "DSPython — Nintendo DS用Python",
+    url: null,
+    language: "C / Python",
+    year: 2007,
+  },
+  {
+    number: "009",
+    title: "QEMU — 天才が書いた47万行のCPUエミュレータ",
+    url: null,
+    language: "C",
+    year: 2003,
+  },
+  {
+    number: "010",
+    title: "Whitaker's WORDS — 米空軍大佐がAdaでラテン語辞書",
+    url: null,
+    language: "Ada",
+    year: 1993,
+  },
+  {
+    number: "011",
+    title: "NASA NASTRAN-95 — 宇宙を飛ばすFortran",
+    url: null,
+    language: "Fortran",
+    year: "1960s",
+  },
+  {
+    number: "012",
+    title: "DikuMUD II — MMORPG始祖",
+    url: null,
+    language: "C + DIL",
+    year: 1991,
+  },
+  {
+    number: "013",
+    title: "NCSA Mosaic — 世界初のWebブラウザ",
+    url: null,
+    language: "C",
+    year: 1993,
+  },
+  {
+    number: "014",
+    title: "Minix 1 — Linuxの祖先",
+    url: null,
+    language: "C + ASM",
+    year: 1987,
+  },
 ];
 
 export default function AppraisalPage() {
