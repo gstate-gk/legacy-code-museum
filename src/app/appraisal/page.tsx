@@ -135,6 +135,13 @@ const PUBLISHED_ARTICLES = [
     language: "C + ASM",
     year: 1987,
   },
+  {
+    number: "19",
+    title: "鑑定書#010 Mocha — JavaScriptは10日間で書かれた",
+    url: null,
+    language: "C",
+    year: 1995,
+  },
 ];
 
 export default function AppraisalPage() {
