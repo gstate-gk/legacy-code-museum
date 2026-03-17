@@ -1,0 +1,186 @@
+## 概要
+
+全記事の解析・ドラフト作成・レビュー・公開を一元管理するIssueです。
+
+**役割分担:**
+- **解析・ドラフト作成**: 担当者（keita2399） + AI（Claude Code）
+- **レビュー・公開**: クライアント
+
+**記事リポジトリ**: https://github.com/keita2399/G.state/tree/master/articles
+
+---
+
+## 変換シリーズ（レガシー言語 → モダンWeb）
+
+### ARTICLE_02: C+Lua → Python+React（hengband-lua）
+- [x] 解析
+- [x] ドラフト作成 — [ARTICLE_02_HENGBAND_LUA.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_02_HENGBAND_LUA.md)
+- [x] NOTE_FORMAT作成 — [ARTICLE_02_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_02_NOTE_FORMAT.txt)
+- [x] note.com 公開 — https://note.com/gstate_kamiya/n/n39c6590f3372
+- [ ] GEO最適化版レビュー・公開
+
+### ARTICLE_03: COBOL → Web（ACAS GL）
+- [x] 解析
+- [x] ドラフト作成 — [ARTICLE_03_ACAS_GL.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_03_ACAS_GL.md)
+- [x] NOTE_FORMAT作成 — [ARTICLE_03_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_03_NOTE_FORMAT.txt)
+- [ ] レビュー
+- [ ] note.com 公開
+
+### ARTICLE_03B: C → Rust（Hengband Rust）
+- [x] 解析
+- [x] ドラフト作成 — [ARTICLE_03_HENGBAND_RUST.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_03_HENGBAND_RUST.md)
+- [x] NOTE_FORMAT作成 — [ARTICLE_03B_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_03B_NOTE_FORMAT.txt)
+- [ ] レビュー
+- [ ] note.com 公開
+
+### ARTICLE_04: RPG → Web（顧客マスタ）
+- [x] 解析
+- [x] ドラフト作成 — [ARTICLE_04_RPG_CUSTMAST.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_04_RPG_CUSTMAST.md)
+- [x] NOTE_FORMAT作成 — [ARTICLE_04_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_04_NOTE_FORMAT.txt)
+- [ ] レビュー
+- [ ] note.com 公開
+
+### ARTICLE_05: COBOL+ASM → Web（CardDemo）
+- [x] 解析
+- [x] ドラフト作成 — [ARTICLE_05_CARDDEMO.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_05_CARDDEMO.md)
+- [x] NOTE_FORMAT作成 — [ARTICLE_05_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_05_NOTE_FORMAT.txt)
+- [ ] レビュー
+- [ ] note.com 公開
+
+### ARTICLE_06: VB6 → Web（POS）
+- [x] 解析
+- [x] ドラフト作成 — [ARTICLE_06_VB6_POS.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_06_VB6_POS.md)
+- [x] NOTE_FORMAT作成 — [ARTICLE_06_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_06_NOTE_FORMAT.txt)
+- [ ] レビュー
+- [ ] note.com 公開
+
+### ARTICLE_07: PL/I → Web（Habitat）
+- [x] 解析
+- [x] ドラフト作成 — [ARTICLE_07_HABITAT.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_07_HABITAT.md)
+- [x] NOTE_FORMAT作成 — [ARTICLE_07_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_07_NOTE_FORMAT.txt)
+- [ ] レビュー
+- [ ] note.com 公開
+
+### ARTICLE_08: C+Lua → Python+React（Hengband Web）
+- [x] 解析
+- [x] ドラフト作成 — [ARTICLE_08_HENGBAND_WEB.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_08_HENGBAND_WEB.md)
+- [x] NOTE_FORMAT作成 — [ARTICLE_08_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_08_NOTE_FORMAT.txt)
+- [ ] レビュー
+- [ ] note.com 公開
+
+### ARTICLE_09: MUMPS → Web（VistA Problem List）
+- [x] 解析
+- [x] ドラフト作成 — [ARTICLE_09_MUMPS_VISTA.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_09_MUMPS_VISTA.md)
+- [ ] NOTE_FORMAT作成
+- [ ] レビュー
+- [ ] note.com 公開
+
+### ARTICLE_10: Fortran → Web（Saturn磁場モデル）
+- [x] 解析
+- [x] ドラフト作成 — [ARTICLE_10_FORTRAN_SATURN.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_10_FORTRAN_SATURN.md)
+- [x] NOTE_FORMAT作成 — [ARTICLE_10_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_10_NOTE_FORMAT.txt)
+- [ ] レビュー
+- [ ] note.com 公開
+
+---
+
+## コード鑑定書シリーズ
+
+### 鑑定書 #001: hengband-lua（C+Lua, 2002）
+- [x] 対象選定
+- [x] 解析・推理
+- [x] ドラフト作成 — [ARTICLE_02_HENGBAND_LUA.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_02_HENGBAND_LUA.md)（変換シリーズと共用）
+- [x] note.com 公開 — https://note.com/gstate_kamiya/n/n39c6590f3372
+- [x] Museum 反映
+
+### 鑑定書 #002: BRL-CAD（C, 1979〜, 米陸軍CAD）
+- [x] 対象選定
+- [x] 解析・推理 — 175,177件のコメント、40年の歴史
+- [x] ドラフト作成 — [ARTICLE_11_BRLCAD.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_11_BRLCAD.md)
+- [x] NOTE_FORMAT作成 — [ARTICLE_11_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_11_NOTE_FORMAT.txt)
+- [x] Museum 反映
+- [ ] レビュー
+- [ ] note.com 公開
+
+### 鑑定書 #003: DSPython（C/Python, 2007, Nintendo DS）
+- [x] 対象選定
+- [x] 解析・推理 — EVE Online→DS、4MBの制約、fake_heap_end
+- [x] ドラフト作成 — [ARTICLE_12_DSPYTHON.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_12_DSPYTHON.md)
+- [x] NOTE_FORMAT作成 — [ARTICLE_12_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_12_NOTE_FORMAT.txt)
+- [x] Museum 反映
+- [ ] レビュー
+- [ ] note.com 公開
+
+### 鑑定書 #004: QEMU（C, 2003, CPU仮想化）
+- [x] 対象選定
+- [x] 解析・推理 — Fabrice Bellard、47万行、「ごめんなさい」
+- [x] ドラフト作成 — [ARTICLE_13_QEMU.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_13_QEMU.md)
+- [x] NOTE_FORMAT作成 — [ARTICLE_13_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_13_NOTE_FORMAT.txt)
+- [x] Museum 反映
+- [ ] レビュー
+- [ ] note.com 公開
+
+### 鑑定書 #005: Whitaker's WORDS（Ada, 1993, ラテン語辞書）
+- [x] 対象選定
+- [x] 解析・推理 — 米空軍大佐がAdaでラテン語辞書を13年間
+- [x] ドラフト作成 — [ARTICLE_14_WHITAKERS_WORDS.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_14_WHITAKERS_WORDS.md)
+- [x] NOTE_FORMAT作成 — [ARTICLE_14_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_14_NOTE_FORMAT.txt)
+- [x] Museum 反映
+- [ ] レビュー
+- [ ] note.com 公開
+
+### 鑑定書 #006: NASA NASTRAN-95（Fortran, 1960s〜, 有限要素解析）
+- [x] 対象選定
+- [x] 解析・推理 — 宇宙を計算したFortran、Gordon Chan
+- [x] ドラフト作成 — [ARTICLE_15_NASTRAN.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_15_NASTRAN.md)
+- [x] NOTE_FORMAT作成 — [ARTICLE_15_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_15_NOTE_FORMAT.txt)
+- [x] Museum 反映
+- [ ] レビュー
+- [ ] note.com 公開
+
+### 鑑定書 #007: DikuMUD II（C + DIL, 1991, MMORPG始祖）
+- [x] 対象選定
+- [x] 解析・推理 — コペンハーゲン大学、23年後のWTF
+- [x] ドラフト作成 — [ARTICLE_16_DIKUMUD.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_16_DIKUMUD.md)
+- [x] NOTE_FORMAT作成 — [ARTICLE_16_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_16_NOTE_FORMAT.txt)
+- [x] Museum 反映
+- [ ] レビュー
+- [ ] note.com 公開
+
+### 鑑定書 #008: NCSA Mosaic（C, 1993, 世界初Webブラウザ）
+- [x] 対象選定
+- [x] 解析・推理 — Tim Berners-Lee + Marc Andreessen、about:mozilla
+- [x] ドラフト作成 — [ARTICLE_17_MOSAIC.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_17_MOSAIC.md)
+- [x] NOTE_FORMAT作成 — [ARTICLE_17_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_17_NOTE_FORMAT.txt)
+- [x] Museum 反映
+- [ ] レビュー
+- [ ] note.com 公開
+
+### 鑑定書 #009: Minix 1（C + 8088 ASM, 1987, Linuxの祖先）
+- [x] 対象選定
+- [x] 解析・推理 — Tanenbaumの教科書OS、echoまで自作、!!!!_SEE_BELOW_!!!
+- [x] ドラフト作成 — [ARTICLE_18_MINIX.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_18_MINIX.md)
+- [x] NOTE_FORMAT作成 — [ARTICLE_18_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_18_NOTE_FORMAT.txt)
+- [x] Museum 反映
+- [ ] レビュー
+- [ ] note.com 公開
+
+---
+
+## GEO最適化版（SEO/AIO対応リライト）
+
+- [ ] 全8記事のGEO版レビュー・公開 — `articles/geo/001_〜008_`
+
+---
+
+## 関連Issue
+- #13 — 鑑定書 #001（完了、このIssueに統合）
+- #15 — 鑑定書 #002〜#007（作業完了、このIssueに統合）
+- #14 — Museum（デプロイ済み、データ更新はこのIssueと連動）
+- #17 — gstate.dev更新（PR #11 マージ待ち）
+
+## データ基盤
+- コメント収集パイプライン: 383,418件（12リポジトリ、8言語）
+- Museum: https://gstate-gk.github.io/legacy-code-museum/
+
+
