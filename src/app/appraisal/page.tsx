@@ -142,6 +142,27 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1995,
   },
+  {
+    number: "20",
+    title: "鑑定書#011 farbrausch — 96KBにFPSゲームを詰め込んだ",
+    url: null,
+    language: "C++ / ASM / GLSL",
+    year: 2004,
+  },
+  {
+    number: "21",
+    title: "鑑定書#012 Lisp Machine — 96万行のLispで書かれたOS",
+    url: null,
+    language: "Lisp",
+    year: 1984,
+  },
+  {
+    number: "22",
+    title: "鑑定書#013 MPC-HC — みんな使ってたMedia Player Classic",
+    url: null,
+    language: "C++",
+    year: 2002,
+  },
 ];
 
 export default function AppraisalPage() {
