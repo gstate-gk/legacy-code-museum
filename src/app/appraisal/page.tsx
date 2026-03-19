@@ -163,6 +163,28 @@ const PUBLISHED_ARTICLES = [
     language: "C++",
     year: 2002,
   },
+  // === 変換シリーズ（追加分） ===
+  {
+    number: "23",
+    title: "QBasic → React 変換 + 鑑定書#014 Oregon Trail（1971年の教育ゲーム）",
+    url: null,
+    language: "QBasic → React+TypeScript",
+    year: 1971,
+  },
+  {
+    number: "24",
+    title: "Ada → React 変換 Whitaker's WORDS（ラテン語辞書）",
+    url: null,
+    language: "Ada → React+TypeScript",
+    year: 1993,
+  },
+  {
+    number: "25",
+    title: "Java/Forth → TypeScript 変換 Mako VM（仮想ゲームコンソール）",
+    url: null,
+    language: "Java/Forth → TypeScript+Canvas",
+    year: 2012,
+  },
 ];
 
 export default function AppraisalPage() {

@@ -165,6 +165,42 @@
 - [ ] レビュー
 - [ ] note.com 公開
 
+### 鑑定書 #010: Mocha 1995（C, 1995, 世界初のJavaScriptエンジン）
+- [x] 対象選定
+- [x] 解析・推理 — Brendan Eichが10日間で書いた19,000行、typeof null === "object"の誕生
+- [x] ドラフト作成 — [ARTICLE_19_MOCHA.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_19_MOCHA.md)
+- [x] NOTE_FORMAT作成 — [ARTICLE_19_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_19_NOTE_FORMAT.txt)
+- [x] Museum 反映
+- [ ] レビュー
+- [ ] note.com 公開
+
+### 鑑定書 #011: farbrausch fr_public（C++/ASM/GLSL, 2004, 96KB FPSゲーム・デモシーン）
+- [x] 対象選定
+- [x] 解析・推理 — 96KBにFPS、プロシージャル生成、V2シンセ、「wer das liest, ist rule」
+- [x] ドラフト作成 — [ARTICLE_20_FARBRAUSCH.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_20_FARBRAUSCH.md)
+- [x] NOTE_FORMAT作成 — [ARTICLE_20_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_20_NOTE_FORMAT.txt)
+- [x] Museum 反映
+- [ ] レビュー
+- [ ] note.com 公開
+
+### 鑑定書 #012: LMI Lisp Machine（Lisp, 1984, AI時代のOS）
+- [x] 対象選定
+- [x] 解析・推理 — 96万行のLisp OS、マイクロコードがS式、RMSの痕跡
+- [x] ドラフト作成 — [ARTICLE_21_LISPMACHINE.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_21_LISPMACHINE.md)
+- [x] NOTE_FORMAT作成 — [ARTICLE_21_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_21_NOTE_FORMAT.txt)
+- [x] Museum 反映
+- [ ] レビュー
+- [ ] note.com 公開
+
+### 鑑定書 #013: MPC-HC（C++, 2002, Media Player Classic）
+- [x] 対象選定
+- [x] 解析・推理 — Gabest→コミュニティ→終了、「やさしく死にます」、MacrovisionKicker
+- [x] ドラフト作成 — [ARTICLE_22_MPCHC.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_22_MPCHC.md)
+- [x] NOTE_FORMAT作成 — [ARTICLE_22_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_22_NOTE_FORMAT.txt)
+- [x] Museum 反映
+- [ ] レビュー
+- [ ] note.com 公開
+
 ---
 
 ## GEO最適化版（SEO/AIO対応リライト）
@@ -182,5 +218,8 @@
 ## データ基盤
 - コメント収集パイプライン: 383,418件（12リポジトリ、8言語）
 - Museum: https://gstate-gk.github.io/legacy-code-museum/
+
+
+
 
 

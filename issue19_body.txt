@@ -106,8 +106,8 @@
 - [x] 対象選定
 - [x] 解析・推理 — EVE Online→DS、4MBの制約、fake_heap_end
 - [x] ドラフト作成 — [ARTICLE_12_DSPYTHON.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_12_DSPYTHON.md)
-- [ ] NOTE_FORMAT作成
-- [ ] Museum 反映
+- [x] NOTE_FORMAT作成 — [ARTICLE_12_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_12_NOTE_FORMAT.txt)
+- [x] Museum 反映
 - [ ] レビュー
 - [ ] note.com 公開
 
@@ -115,8 +115,8 @@
 - [x] 対象選定
 - [x] 解析・推理 — Fabrice Bellard、47万行、「ごめんなさい」
 - [x] ドラフト作成 — [ARTICLE_13_QEMU.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_13_QEMU.md)
-- [ ] NOTE_FORMAT作成
-- [ ] Museum 反映
+- [x] NOTE_FORMAT作成 — [ARTICLE_13_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_13_NOTE_FORMAT.txt)
+- [x] Museum 反映
 - [ ] レビュー
 - [ ] note.com 公開
 
@@ -124,8 +124,8 @@
 - [x] 対象選定
 - [x] 解析・推理 — 米空軍大佐がAdaでラテン語辞書を13年間
 - [x] ドラフト作成 — [ARTICLE_14_WHITAKERS_WORDS.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_14_WHITAKERS_WORDS.md)
-- [ ] NOTE_FORMAT作成
-- [ ] Museum 反映
+- [x] NOTE_FORMAT作成 — [ARTICLE_14_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_14_NOTE_FORMAT.txt)
+- [x] Museum 反映
 - [ ] レビュー
 - [ ] note.com 公開
 
@@ -133,8 +133,8 @@
 - [x] 対象選定
 - [x] 解析・推理 — 宇宙を計算したFortran、Gordon Chan
 - [x] ドラフト作成 — [ARTICLE_15_NASTRAN.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_15_NASTRAN.md)
-- [ ] NOTE_FORMAT作成
-- [ ] Museum 反映
+- [x] NOTE_FORMAT作成 — [ARTICLE_15_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_15_NOTE_FORMAT.txt)
+- [x] Museum 反映
 - [ ] レビュー
 - [ ] note.com 公開
 
@@ -142,8 +142,8 @@
 - [x] 対象選定
 - [x] 解析・推理 — コペンハーゲン大学、23年後のWTF
 - [x] ドラフト作成 — [ARTICLE_16_DIKUMUD.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_16_DIKUMUD.md)
-- [ ] NOTE_FORMAT作成
-- [ ] Museum 反映
+- [x] NOTE_FORMAT作成 — [ARTICLE_16_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_16_NOTE_FORMAT.txt)
+- [x] Museum 反映
 - [ ] レビュー
 - [ ] note.com 公開
 
@@ -151,8 +151,8 @@
 - [x] 対象選定
 - [x] 解析・推理 — Tim Berners-Lee + Marc Andreessen、about:mozilla
 - [x] ドラフト作成 — [ARTICLE_17_MOSAIC.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_17_MOSAIC.md)
-- [ ] NOTE_FORMAT作成
-- [ ] Museum 反映
+- [x] NOTE_FORMAT作成 — [ARTICLE_17_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_17_NOTE_FORMAT.txt)
+- [x] Museum 反映
 - [ ] レビュー
 - [ ] note.com 公開
 
@@ -160,8 +160,17 @@
 - [x] 対象選定
 - [x] 解析・推理 — Tanenbaumの教科書OS、echoまで自作、!!!!_SEE_BELOW_!!!
 - [x] ドラフト作成 — [ARTICLE_18_MINIX.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_18_MINIX.md)
-- [ ] NOTE_FORMAT作成
-- [ ] Museum 反映
+- [x] NOTE_FORMAT作成 — [ARTICLE_18_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_18_NOTE_FORMAT.txt)
+- [x] Museum 反映
+- [ ] レビュー
+- [ ] note.com 公開
+
+### 鑑定書 #010: Mocha 1995（C, 1995, 世界初のJavaScriptエンジン）
+- [x] 対象選定
+- [x] 解析・推理 — Brendan Eichが10日間で書いた19,000行、typeof null === "object"の誕生
+- [x] ドラフト作成 — [ARTICLE_19_MOCHA.md](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_19_MOCHA.md)
+- [x] NOTE_FORMAT作成 — [ARTICLE_19_NOTE_FORMAT.txt](https://github.com/keita2399/G.state/blob/master/articles/ARTICLE_19_NOTE_FORMAT.txt)
+- [x] Museum 反映
 - [ ] レビュー
 - [ ] note.com 公開
 
@@ -182,5 +191,8 @@
 ## データ基盤
 - コメント収集パイプライン: 383,418件（12リポジトリ、8言語）
 - Museum: https://gstate-gk.github.io/legacy-code-museum/
+
+
+
 
 
