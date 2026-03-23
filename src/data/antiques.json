@@ -5010,5 +5010,195 @@
       "interpretation": "frustration detected (intensity 2.0). tags: TODO."
     },
     "appraiser_note": "1984年、米陸軍弾道研究所。40年以上の歴史を持つ現役最古級のオープンソースCAD。"
+  },
+  {
+    "id": "2e520be8d7b1",
+    "text": "transmission of data via the extraordinarily high-tech channel consisting of a magtape in a Federal Express packet",
+    "file_path": "docs/admin/qprobs.t",
+    "line_number": 0,
+    "repo_id": "habitat",
+    "repo_name": "Habitat (Lucasfilm, 1986)",
+    "language": "text",
+    "year": 1986,
+    "tags": [
+      "infrastructure",
+      "humor",
+      "historical"
+    ],
+    "interesting_score": 18.0,
+    "ai_analysis": {
+      "primary_emotion": "frustration",
+      "emotion_intensity": 3.0,
+      "emotions": {
+        "frustration": 3.0,
+        "humor": 2.5
+      },
+      "technical_context": "Data transfer via FedEx magtape because modem was unreliable",
+      "human_story": "World first MMO code was shipped by courier"
+    },
+    "appraiser_note": "世界初MMOのコードはFedExでマグテープ郵送されていた。"
+  },
+  {
+    "id": "672c89138aae",
+    "text": "This includes defining what reincarnation REALLY means.",
+    "file_path": "docs/admin/status.t",
+    "line_number": 0,
+    "repo_id": "habitat",
+    "repo_name": "Habitat (Lucasfilm, 1986)",
+    "language": "text",
+    "year": 1986,
+    "tags": [
+      "design",
+      "philosophical",
+      "gaming"
+    ],
+    "interesting_score": 16.0,
+    "ai_analysis": {
+      "primary_emotion": "contemplation",
+      "emotion_intensity": 2.0,
+      "emotions": {
+        "contemplation": 2.5,
+        "humor": 1.5
+      },
+      "technical_context": "Avatar death and resurrection system design",
+      "human_story": "Game designers debating what death means in virtual worlds"
+    },
+    "appraiser_note": "「転生とは本当は何を意味するのか」1986年の哲学的議論。"
+  },
+  {
+    "id": "fe3ddd5241a8",
+    "text": "GMPAGTOR Agent Orange Exposure / GMPION Ionizing Radiation / GMPGULF Persian Gulf / GMPMST Military Sexual Trauma",
+    "file_path": "Routines/GMPLX1.m",
+    "line_number": 29,
+    "repo_id": "vista-problem-list",
+    "repo_name": "VistA Problem List (US VA, 1994)",
+    "language": "MUMPS",
+    "year": 1994,
+    "tags": [
+      "medical",
+      "military",
+      "historical"
+    ],
+    "interesting_score": 19.0,
+    "ai_analysis": {
+      "primary_emotion": "gravity",
+      "emotion_intensity": 4.0,
+      "emotions": {
+        "gravity": 4.0,
+        "duty": 3.0
+      },
+      "technical_context": "Military exposure flags for VA patients",
+      "human_story": "Americas war history as MUMPS variable names"
+    },
+    "appraiser_note": "枯葉剤、核実験、湾岸戦争の被曝フラグ。戦争の歴史が変数名に。"
+  },
+  {
+    "id": "300400af29ba",
+    "text": "Date of Onset cannot be later than the date of death!",
+    "file_path": "Routines/GMPLEDT1.m",
+    "line_number": 18,
+    "repo_id": "vista-problem-list",
+    "repo_name": "VistA Problem List (US VA, 1994)",
+    "language": "MUMPS",
+    "year": 1994,
+    "tags": [
+      "medical",
+      "validation",
+      "mortality"
+    ],
+    "interesting_score": 15.0,
+    "ai_analysis": {
+      "primary_emotion": "duty",
+      "emotion_intensity": 3.0,
+      "emotions": {
+        "duty": 3.0,
+        "gravity": 2.0
+      },
+      "technical_context": "Patient death date validation",
+      "human_story": "Medical records outlive their patients"
+    },
+    "appraiser_note": "「死亡日より後に発症日を入力できません！」ビープ音付き。"
+  },
+  {
+    "id": "c53f6faf7dcf",
+    "text": "A complete virtual game console in 226 lines of Java. 32 opcodes, dual stack, memory-mapped I/O.",
+    "file_path": "src/MakoVM.java",
+    "line_number": 1,
+    "repo_id": "mako-vm",
+    "repo_name": "Mako VM (John Earnest)",
+    "language": "Java",
+    "year": 2012,
+    "tags": [
+      "minimalism",
+      "vm",
+      "forth",
+      "gaming"
+    ],
+    "interesting_score": 17.0,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4.0,
+      "emotions": {
+        "elegance": 4.0,
+        "pride": 2.0
+      },
+      "technical_context": "Stack-based virtual game console inspired by Forth",
+      "human_story": "A game console in 226 lines. Tech debt rating: 1 star."
+    },
+    "appraiser_note": "226行でゲーム機を実装。VM上にForth処理系を再実装する狂気。"
+  },
+  {
+    "id": "1a5c19f050e1",
+    "text": "DATA GS/0.0D0, 21140.2D0, ... coefficients from Dougherty et al. (2018) Cassini Grand Finale",
+    "file_path": "src/saturn_int.f",
+    "line_number": 16,
+    "repo_id": "saturn-mag-model",
+    "repo_name": "Saturn Mag Model (NASA/Cassini)",
+    "language": "Fortran",
+    "year": 2019,
+    "tags": [
+      "nasa",
+      "space",
+      "science",
+      "cassini"
+    ],
+    "interesting_score": 16.0,
+    "ai_analysis": {
+      "primary_emotion": "reverence",
+      "emotion_intensity": 3.0,
+      "emotions": {
+        "reverence": 3.0,
+        "dedication": 2.0
+      },
+      "technical_context": "Saturn magnetic field coefficients from Cassini data",
+      "human_story": "Cassini burned up in 2017 but its data lives in Fortran DATA statements"
+    },
+    "appraiser_note": "Cassiniが燃え尽きた後も土星を計算し続けるFortranコード。"
+  },
+  {
+    "id": "f980909911b1",
+    "text": "this subroutine was adabpted to the Saturn magnetic field model",
+    "file_path": "src/tailsheet_sym.f",
+    "line_number": 2,
+    "repo_id": "saturn-mag-model",
+    "repo_name": "Saturn Mag Model (NASA/Cassini)",
+    "language": "Fortran",
+    "year": 2019,
+    "tags": [
+      "typo",
+      "human",
+      "science"
+    ],
+    "interesting_score": 12.0,
+    "ai_analysis": {
+      "primary_emotion": "human",
+      "emotion_intensity": 1.5,
+      "emotions": {
+        "human": 2.0
+      },
+      "technical_context": "Typo: adabpted instead of adapted",
+      "human_story": "Scientists are human too"
+    },
+    "appraiser_note": "「adabpted」adaptedのタイプミス。NASAのコードにも人間の痕跡。"
   }
 ]
