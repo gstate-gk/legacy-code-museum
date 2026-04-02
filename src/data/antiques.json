@@ -5200,5 +5200,545 @@
       "human_story": "Scientists are human too"
     },
     "appraiser_note": "「adabpted」adaptedのタイプミス。NASAのコードにも人間の痕跡。"
+  },
+  {
+    "text": "IS IT BECAUSE YOU ARE (.*) THAT YOU CAME TO ME",
+    "file_path": "script/doctor.txt",
+    "line_number": 0,
+    "repo_id": "eliza",
+    "repo_name": "ELIZA (MIT, 1966)",
+    "language": "MAD-SLIP",
+    "year": 1966,
+    "tags": [
+      "AI",
+      "pattern-matching",
+      "historic"
+    ],
+    "interesting_score": 18.0,
+    "ai_analysis": {
+      "primary_emotion": "empathy",
+      "emotion_intensity": 3.0,
+      "emotions": {
+        "empathy": 3.0,
+        "curiosity": 2.0
+      },
+      "technical_context": "World's first chatbot pattern matching rule",
+      "human_story": "Weizenbaum's secretary asked him to leave the room so she could talk to ELIZA privately"
+    },
+    "appraiser_note": "世界初のチャットボット。パターンマッチングだけで人間が心を開いた——ELIZA Effect の始まり。",
+    "id": "4bc184f92dcb"
+  },
+  {
+    "text": "BDOS ENTRY",
+    "file_path": "bdos.asm",
+    "line_number": 1,
+    "repo_id": "cpm",
+    "repo_name": "CP/M (Digital Research, 1974)",
+    "language": "8080 Assembly",
+    "year": 1974,
+    "tags": [
+      "OS",
+      "historic",
+      "pioneer"
+    ],
+    "interesting_score": 16.0,
+    "ai_analysis": {
+      "primary_emotion": "determination",
+      "emotion_intensity": 2.0,
+      "emotions": {
+        "determination": 2.0
+      },
+      "technical_context": "Basic Disk Operating System entry point",
+      "human_story": "Gary Kildall refused IBM's NDA. Microsoft bought QDOS for $50K. Kildall died at 52."
+    },
+    "appraiser_note": "パーソナルコンピュータOS始祖。IBMのNDA拒否がMS-DOSの台頭を招いた。Pacific Grove Box 579。",
+    "id": "da439efbff41"
+  },
+  {
+    "text": "I made up the term 'object-oriented', and I can tell you I didn't have C++ in mind.",
+    "file_path": "docs/design_principles.st",
+    "line_number": 0,
+    "repo_id": "smalltalk80",
+    "repo_name": "Smalltalk-80 (Xerox PARC, 1980)",
+    "language": "Smalltalk",
+    "year": 1980,
+    "tags": [
+      "OOP",
+      "philosophy",
+      "pioneer"
+    ],
+    "interesting_score": 17.0,
+    "ai_analysis": {
+      "primary_emotion": "philosophy",
+      "emotion_intensity": 3.0,
+      "emotions": {
+        "philosophy": 3.0,
+        "frustration": 1.0
+      },
+      "technical_context": "Alan Kay's vision of OOP was message-passing, not inheritance hierarchies",
+      "human_story": "Steve Jobs visited PARC and saw the future. Xerox failed to capitalize on their own invention."
+    },
+    "appraiser_note": "GUI/OOP/MVC/IDEの始祖。Alan Kayの哲学、Dan Ingallsの35年、Steve Jobsの訪問、Xeroxの失敗。",
+    "id": "88ac83eed893"
+  },
+  {
+    "text": "May you do good and not evil. May you find forgiveness for yourself and forgive others. May you share freely, never taking more than you give.",
+    "file_path": "src/sqlite.h.in",
+    "line_number": 1,
+    "repo_id": "sqlite",
+    "repo_name": "SQLite (2000)",
+    "language": "C",
+    "year": 2000,
+    "tags": [
+      "blessing",
+      "philosophy",
+      "license"
+    ],
+    "interesting_score": 19.0,
+    "ai_analysis": {
+      "primary_emotion": "compassion",
+      "emotion_intensity": 5.0,
+      "emotions": {
+        "compassion": 5.0,
+        "generosity": 4.0
+      },
+      "technical_context": "SQLite's blessing instead of a license - in 1 trillion devices",
+      "human_story": "Born from a US Navy destroyer's Informix crash. Tests 590x more code than product. Committed to support until 2050."
+    },
+    "appraiser_note": "1兆個のデバイスに搭載されたDB。ライセンスの代わりに「祝福文」。テストがコードの590倍。",
+    "id": "2385121f9cbd"
+  },
+  {
+    "text": "Rotoscoped animation frames - filmed my brother David running, jumping, and fighting",
+    "file_path": "01 POP Source/Source/COPTABLE.S",
+    "line_number": 0,
+    "repo_id": "prince-of-persia",
+    "repo_name": "Prince of Persia (Apple II, 1989)",
+    "language": "6502 Assembly",
+    "year": 1989,
+    "tags": [
+      "animation",
+      "rotoscope",
+      "family"
+    ],
+    "interesting_score": 17.0,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 3.0,
+      "emotions": {
+        "creativity": 3.0,
+        "family": 2.0
+      },
+      "technical_context": "Rotoscoping brother's movements into 6502 assembly",
+      "human_story": "Source code lost for 22 years, found on floppy disks in father's closet"
+    },
+    "appraiser_note": "父の押入れから22年ぶりに発掘されたフロッピー。弟の動きをロトスコープで6502アセンブリに。",
+    "id": "7e3b4f0a36aa"
+  },
+  {
+    "text": "BURN_BABY_BURN",
+    "file_path": "Luminary099/BURN_BABY_BURN--MASTER_IGNITION_ROUTINE.agc",
+    "line_number": 1,
+    "repo_id": "apollo11",
+    "repo_name": "Apollo 11 AGC (NASA, 1969)",
+    "language": "AGC Assembly",
+    "year": 1969,
+    "tags": [
+      "NASA",
+      "humor",
+      "historic"
+    ],
+    "interesting_score": 20.0,
+    "ai_analysis": {
+      "primary_emotion": "humor",
+      "emotion_intensity": 5.0,
+      "emotions": {
+        "humor": 5.0,
+        "courage": 3.0
+      },
+      "technical_context": "Master ignition routine filename - 64KB to land on the Moon",
+      "human_story": "Programmers hid jokes in the code that sent humans to the Moon"
+    },
+    "appraiser_note": "人類を月に送った64KBのコード。マスター点火ルーチンの名前が「BURN_BABY_BURN」。",
+    "id": "12993c6fb844"
+  },
+  {
+    "text": "/* FIXME - this is a total hack */",
+    "file_path": "WOLFSRC/WL_DRAW.C",
+    "line_number": 0,
+    "repo_id": "wolf3d",
+    "repo_name": "Wolfenstein 3D (id Software, 1992)",
+    "language": "C",
+    "year": 1992,
+    "tags": [
+      "HACK",
+      "FIXME",
+      "FPS"
+    ],
+    "interesting_score": 14.0,
+    "ai_analysis": {
+      "primary_emotion": "urgency",
+      "emotion_intensity": 2.0,
+      "emotions": {
+        "urgency": 2.0,
+        "humor": 1.0
+      },
+      "technical_context": "Ray-casting renderer with self-modifying code",
+      "human_story": "The door to 3D gaming - 90-degree walls only"
+    },
+    "appraiser_note": "FPSの「扉」。90度の壁だけで3D世界を構築。セルフモディファイングコードまで使った。",
+    "id": "7920de8bdda1"
+  },
+  {
+    "text": "/* This module is part of the Multics ring 0 supervisor */",
+    "file_path": "src/Multics/ldd/system_library_1/source/bound_active_1.s.archive",
+    "line_number": 0,
+    "repo_id": "multics",
+    "repo_name": "Multics (MIT/Bell Labs/GE, 1965)",
+    "language": "PL/I",
+    "year": 1965,
+    "tags": [
+      "OS",
+      "ring-protection",
+      "pioneer"
+    ],
+    "interesting_score": 18.0,
+    "ai_analysis": {
+      "primary_emotion": "ambition",
+      "emotion_intensity": 4.0,
+      "emotions": {
+        "ambition": 4.0,
+        "determination": 3.0
+      },
+      "technical_context": "Ring 0 protection - invented the concept that every modern OS uses",
+      "human_story": "Ken Thompson called Unix a 'castrated Multics'. His wife's vacation birthed the replacement."
+    },
+    "appraiser_note": "全OSの先祖。リング型プロテクションを発明。「去勢されたMultics」がUnixになった。",
+    "id": "c54324d952fd"
+  },
+  {
+    "text": "@",
+    "file_path": "rogue.h",
+    "line_number": 0,
+    "repo_id": "rogue",
+    "repo_name": "Rogue (BSD Unix, 1980)",
+    "language": "C",
+    "year": 1980,
+    "tags": [
+      "game",
+      "roguelike",
+      "ascii-art"
+    ],
+    "interesting_score": 16.0,
+    "ai_analysis": {
+      "primary_emotion": "playfulness",
+      "emotion_intensity": 3.0,
+      "emotions": {
+        "playfulness": 3.0,
+        "creativity": 2.0
+      },
+      "technical_context": "@ = 'where you're at' - the player character",
+      "human_story": "D&D dice rolls in code. Save file deleted on load = permadeath. The cursed author joined reluctantly."
+    },
+    "appraiser_note": "ローグライクの始祖。@はプレイヤー「where you're at」。セーブ即削除のパーマデス。",
+    "id": "518ed2952573"
+  },
+  {
+    "text": "This is TeX, a document compiler intended to produce typesetting of high quality.",
+    "file_path": "tex.web",
+    "line_number": 1,
+    "repo_id": "tex",
+    "repo_name": "TeX (Knuth, 1978)",
+    "language": "WEB/Pascal",
+    "year": 1978,
+    "tags": [
+      "typesetting",
+      "perfectionism",
+      "literate-programming"
+    ],
+    "interesting_score": 18.0,
+    "ai_analysis": {
+      "primary_emotion": "perfectionism",
+      "emotion_intensity": 5.0,
+      "emotions": {
+        "perfectionism": 5.0,
+        "pride": 3.0
+      },
+      "technical_context": "Version number converges to pi. Bug bounty doubles each time ($327.68 max).",
+      "human_story": "Planned 2 weeks, took 10 years. Knuth quit email in 1990. Source code IS the book."
+    },
+    "appraiser_note": "Knuthの完璧主義。2週間→10年。バージョン番号がπに収束。バグ報奨金$327.68。",
+    "id": "af075c73c53c"
+  },
+  {
+    "text": "I WILL BE YOUR EYES AND HANDS. DIRECT ME WITH COMMANDS OF 1 OR 2 WORDS.",
+    "file_path": "advent.for",
+    "line_number": 0,
+    "repo_id": "adventure",
+    "repo_name": "Colossal Cave Adventure (1976)",
+    "language": "FORTRAN IV",
+    "year": 1976,
+    "tags": [
+      "game",
+      "adventure",
+      "family"
+    ],
+    "interesting_score": 17.0,
+    "ai_analysis": {
+      "primary_emotion": "love",
+      "emotion_intensity": 4.0,
+      "emotions": {
+        "love": 4.0,
+        "creativity": 3.0
+      },
+      "technical_context": "First text adventure game - real Mammoth Cave mapped into code",
+      "human_story": "A divorced father's gift to his daughters. XYZZY was his sister's nonsense word."
+    },
+    "appraiser_note": "全アドベンチャーの祖。離婚した父が娘に贈った洞窟。XYZZYは妹のわがまま。",
+    "id": "e78f80d5b469"
+  },
+  {
+    "text": "/* Strstruggling for strstrength */",
+    "file_path": "src/eat.c",
+    "line_number": 0,
+    "repo_id": "nethack",
+    "repo_name": "NetHack (1987-present)",
+    "language": "C",
+    "year": 1987,
+    "tags": [
+      "game",
+      "roguelike",
+      "memorial"
+    ],
+    "interesting_score": 18.0,
+    "ai_analysis": {
+      "primary_emotion": "memorial",
+      "emotion_intensity": 5.0,
+      "emotions": {
+        "memorial": 5.0,
+        "community": 4.0
+      },
+      "technical_context": "36 years of anonymous development. Cockatrice corpse = stone. Schrodinger's cat = quantum mechanics.",
+      "human_story": "Izchak Miller (philosophy professor, 1935-1994) lives forever as the lamp shopkeeper in Minetown."
+    },
+    "appraiser_note": "36年間匿名開発。哲学教授Izchak Millerがランプ屋として永遠に生存。2022年MoMA収蔵。",
+    "id": "1efdc5c6c750"
+  },
+  {
+    "text": "/* If it's editable, we can edit it */",
+    "file_path": "WorldWideWeb/Sources/HyperText.m",
+    "line_number": 0,
+    "repo_id": "worldwideweb",
+    "repo_name": "WorldWideWeb (CERN, 1990)",
+    "language": "Objective-C",
+    "year": 1990,
+    "tags": [
+      "web",
+      "pioneer",
+      "read-write"
+    ],
+    "interesting_score": 19.0,
+    "ai_analysis": {
+      "primary_emotion": "vision",
+      "emotion_intensity": 5.0,
+      "emotions": {
+        "vision": 5.0,
+        "generosity": 4.0
+      },
+      "technical_context": "First web browser was also an editor - the Web was meant to be read-write",
+      "human_story": "Tim Berners-Lee's boss wrote 'Vague but exciting' on the proposal. No patent filed."
+    },
+    "appraiser_note": "世界最初のWebブラウザ。ブラウザ兼エディタ——Webは読み書き両方だった。特許を取らなかった。",
+    "id": "4af193806c43"
+  },
+  {
+    "text": "shell:\n   lac d1\n   sys write; ready; 1",
+    "file_path": "src/cmd/sh.s",
+    "line_number": 1,
+    "repo_id": "pdp7-unix",
+    "repo_name": "PDP-7 Unix (Bell Labs, 1969)",
+    "language": "PDP-7 Assembly",
+    "year": 1969,
+    "tags": [
+      "OS",
+      "unix",
+      "historic",
+      "shell"
+    ],
+    "interesting_score": 20.0,
+    "ai_analysis": {
+      "primary_emotion": "origin",
+      "emotion_intensity": 5.0,
+      "emotions": {
+        "origin": 5.0,
+        "simplicity": 4.0
+      },
+      "technical_context": "World's first Unix shell. Prompt was 'ready', not $ or %. Fork was 27 lines.",
+      "human_story": "Written in 3 weeks while wife Bonnie visited California with their newborn. Found in Ritchie's estate after his death."
+    },
+    "appraiser_note": "全てのUnixの種子。プロンプトは「ready」。妻の帰省中に3週間で書かれた3,000行。",
+    "id": "d881050820d7"
+  },
+  {
+    "text": "// MONDO HACK!",
+    "file_path": "linuxdoom-1.10/wi_stuff.c",
+    "line_number": 755,
+    "repo_id": "doom",
+    "repo_name": "DOOM (id Software, 1993)",
+    "language": "C",
+    "year": 1993,
+    "tags": [
+      "HACK",
+      "game",
+      "FPS"
+    ],
+    "interesting_score": 17.0,
+    "ai_analysis": {
+      "primary_emotion": "urgency",
+      "emotion_intensity": 4.0,
+      "emotions": {
+        "urgency": 4.0,
+        "humor": 3.0
+      },
+      "technical_context": "BSP tree from academic papers. Zone memory allocator with sentinel 0x1d4a11.",
+      "human_story": "Carmack: 'This is a kludgy mess.' Also Carmack: 'Bug, dear Shawn.' Code as team communication."
+    },
+    "appraiser_note": "FPSジャンルを定義。「MONDO HACK!」と叫びながら学術論文のBSPを実装。13ヶ月でゲーム史を変えた。",
+    "id": "5e697034f465"
+  },
+  {
+    "text": "// Bug, dear Shawn.\n// Insufficient malloc, caused spurious realloc errors.",
+    "file_path": "linuxdoom-1.10/d_main.c",
+    "line_number": 291,
+    "repo_id": "doom",
+    "repo_name": "DOOM (id Software, 1993)",
+    "language": "C",
+    "year": 1993,
+    "tags": [
+      "BUG",
+      "human",
+      "communication"
+    ],
+    "interesting_score": 16.0,
+    "ai_analysis": {
+      "primary_emotion": "camaraderie",
+      "emotion_intensity": 3.0,
+      "emotions": {
+        "camaraderie": 3.0,
+        "humor": 2.0
+      },
+      "technical_context": "Bug report as source code comment addressed to colleague Shawn Green",
+      "human_story": "Source code as team communication - a letter to a colleague embedded in C"
+    },
+    "appraiser_note": "同僚Shawnへの手紙のようなバグ報告。ソースコードがチームのコミュニケーション手段だった。",
+    "id": "892f1f1fa03f"
+  },
+  {
+    "text": "// This is a kludgy mess.",
+    "file_path": "linuxdoom-1.10/p_map.c",
+    "line_number": 390,
+    "repo_id": "doom",
+    "repo_name": "DOOM (id Software, 1993)",
+    "language": "C",
+    "year": 1993,
+    "tags": [
+      "kludge",
+      "self-deprecation",
+      "wall-sliding"
+    ],
+    "interesting_score": 15.0,
+    "ai_analysis": {
+      "primary_emotion": "self-deprecation",
+      "emotion_intensity": 3.0,
+      "emotions": {
+        "self-deprecation": 3.0,
+        "pragmatism": 2.0
+      },
+      "technical_context": "Wall slide movement - Carmack admits the code is messy but it works",
+      "human_story": "Millions of players ran on this 'kludgy mess' without knowing"
+    },
+    "appraiser_note": "壁スライド移動。Carmack自身が「ごちゃごちゃだ」と認めたコード。しかし何百万人がプレイした。",
+    "id": "5641642cd946"
+  },
+  {
+    "text": "LDA SPKR          ; Toggle speaker",
+    "file_path": "ca65/vc.s",
+    "line_number": 0,
+    "repo_id": "visicalc",
+    "repo_name": "VisiCalc (Apple II, 1979)",
+    "language": "6502 Assembly",
+    "year": 1979,
+    "tags": [
+      "spreadsheet",
+      "pioneer",
+      "UI"
+    ],
+    "interesting_score": 17.0,
+    "ai_analysis": {
+      "primary_emotion": "invention",
+      "emotion_intensity": 4.0,
+      "emotions": {
+        "invention": 4.0,
+        "pragmatism": 3.0
+      },
+      "technical_context": "Speaker toggle for UI feedback beep - UX design in 6502 assembly",
+      "human_story": "Invented 'spreadsheet'. $100 software sold $2,000 computers. Couldn't patent it (10% chance). Killed by Lotus 1-2-3."
+    },
+    "appraiser_note": "世界初のスプレッドシート。スピーカー直接トグルでUI音。100ドルのソフトが2,000ドルのPCを売った。",
+    "id": "e032635fcc28"
+  },
+  {
+    "text": "Qargs, Qctl, Qfd, Qmem, Qregs, Qstatus",
+    "file_path": "sys/src/9/port/devproc.c",
+    "line_number": 0,
+    "repo_id": "plan9",
+    "repo_name": "Plan 9 from Bell Labs (1992)",
+    "language": "C",
+    "year": 1992,
+    "tags": [
+      "OS",
+      "everything-is-a-file",
+      "unix-successor"
+    ],
+    "interesting_score": 18.0,
+    "ai_analysis": {
+      "primary_emotion": "idealism",
+      "emotion_intensity": 5.0,
+      "emotions": {
+        "idealism": 5.0,
+        "elegance": 4.0
+      },
+      "technical_context": "Process args, control, memory, registers - ALL as files. VPN = just mount remote /net.",
+      "human_story": "UTF-8 designed on a diner placemat. Wed design, Thu code, Fri OS migration, Mon adopted. Go language = Plan 9 reborn."
+    },
+    "appraiser_note": "Unixの「次」。全てが本当にファイル。UTF-8はダイナーの紙ナプキンから。Go言語に魂が転生。",
+    "id": "3199d490441c"
+  },
+  {
+    "text": "vmain()\n{\n    for (;;) {\n        TSYNC();",
+    "file_path": "vax/ex_vmain.c",
+    "line_number": 1,
+    "repo_id": "vi",
+    "repo_name": "vi (BSD Unix, 1976)",
+    "language": "C",
+    "year": 1976,
+    "tags": [
+      "editor",
+      "modal",
+      "POSIX"
+    ],
+    "interesting_score": 17.0,
+    "ai_analysis": {
+      "primary_emotion": "constraint",
+      "emotion_intensity": 4.0,
+      "emotions": {
+        "constraint": 4.0,
+        "ingenuity": 3.0
+      },
+      "technical_context": "Visual mode infinite loop. Operator x Motion = composable editing. ADM-3A terminal had arrows on HJKL keys.",
+      "human_story": "300 baud modem shaped the design. Tape drive broke = lost multiwindow code (18 year delay). 75 copies became POSIX standard."
+    },
+    "appraiser_note": "300ボーのモデムが生んだキーバインド。ADM-3Aのhjkl矢印が50年後も使われている。テープ故障で歴史が18年遅れた。",
+    "id": "ea75a361019c"
   }
 ]
