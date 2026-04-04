@@ -5849,5 +5849,86 @@
       "human_story": "Java launched the same year. Carmack independently built a bytecode VM inside a game engine."
     },
     "appraiser_note": "Java登場の翌年、ゲームエンジンの中にバイトコード仮想マシン。スタック深度32がMOD開発者を悩ませた。"
+  },
+  {
+    "id": "7286a7f622a8",
+    "text": "As the majority of hobbyists must be aware, most of you steal your software.",
+    "file_path": "An Open Letter to Hobbyists",
+    "line_number": 1,
+    "repo_id": "altair-basic",
+    "repo_name": "Altair BASIC (Microsoft, 1975)",
+    "language": "text",
+    "year": 1976,
+    "tags": [
+      "historical",
+      "business",
+      "drama"
+    ],
+    "interesting_score": 20.0,
+    "ai_analysis": {
+      "primary_emotion": "outrage",
+      "emotion_intensity": 5.0,
+      "emotions": {
+        "outrage": 5.0,
+        "righteousness": 3.0
+      },
+      "technical_context": "Open Letter to Hobbyists by Bill Gates, February 3, 1976",
+      "human_story": "The birth of commercial software. Hobbyists were sharing BASIC tapes freely; Gates said no."
+    },
+    "appraiser_note": "商業ソフトウェア産業の産声。20歳のGatesが「ソフトウェアは商品だ」と宣言した。"
+  },
+  {
+    "id": "c8ca1af35521",
+    "text": "MEMORY SIZE?",
+    "file_path": "altair-basic startup message",
+    "line_number": 1,
+    "repo_id": "altair-basic",
+    "repo_name": "Altair BASIC (Microsoft, 1975)",
+    "language": "8080 Assembly",
+    "year": 1975,
+    "tags": [
+      "historical",
+      "legendary",
+      "origin"
+    ],
+    "interesting_score": 18.0,
+    "ai_analysis": {
+      "primary_emotion": "awe",
+      "emotion_intensity": 4.5,
+      "emotions": {
+        "awe": 4.5,
+        "relief": 3.0
+      },
+      "technical_context": "First output of Altair BASIC. Allen wrote the bootloader on the plane before landing.",
+      "human_story": "Gates and Allen had never touched a real Altair. This was their first time seeing their code run on real hardware."
+    },
+    "appraiser_note": "8週間、実機なしで開発したコードが初めて動いた瞬間。AllenはAltairを見る前に着陸直前にブートローダーを書いた。"
+  },
+  {
+    "id": "9ada54fc69b1",
+    "text": "RST 1 -> SYNCHK ; RST 2 -> CHRGET ; RST 4 -> COMPAR ; RST 5 -> FSIGN",
+    "file_path": "BASIC disassembly-source.lst",
+    "line_number": 0,
+    "repo_id": "altair-basic",
+    "repo_name": "Altair BASIC (Microsoft, 1975)",
+    "language": "8080 Assembly",
+    "year": 1975,
+    "tags": [
+      "optimization",
+      "hack",
+      "minimalism"
+    ],
+    "interesting_score": 17.0,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 4.0,
+      "emotions": {
+        "ingenuity": 4.0,
+        "constraint": 3.0
+      },
+      "technical_context": "Interrupt vectors repurposed as hot routine slots. CALL(3 bytes) -> RST(1 byte).",
+      "human_story": "When you have 4KB, you steal bytes from wherever you can. Even from the hardware interrupt system."
+    },
+    "appraiser_note": "割り込みベクタを横領して頻出ルーティン置き場に。4KBという制約が生んだ美しい盗用。"
   }
 ]
