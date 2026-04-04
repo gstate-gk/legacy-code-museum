@@ -5930,5 +5930,89 @@
       "human_story": "When you have 4KB, you steal bytes from wherever you can. Even from the hardware interrupt system."
     },
     "appraiser_note": "割り込みベクタを横領して頻出ルーティン置き場に。4KBという制約が生んだ美しい盗用。"
+  },
+  {
+    "id": "a0538a992366",
+    "text": "/* XXXbe push this into jsobj.c or jsscope.c */\n/* XXX bad API */",
+    "file_path": "js/src/jsapi.c",
+    "line_number": 1,
+    "repo_id": "netscape",
+    "repo_name": "Netscape Navigator (1994)",
+    "language": "C",
+    "year": 1998,
+    "tags": [
+      "todo",
+      "legendary",
+      "javascript",
+      "human"
+    ],
+    "interesting_score": 19.0,
+    "ai_analysis": {
+      "primary_emotion": "humility",
+      "emotion_intensity": 3.5,
+      "emotions": {
+        "humility": 3.5,
+        "urgency": 2.0
+      },
+      "technical_context": "XXXbe = Brendan Eich's initials. Netscape convention: mark your own TODOs with your initials.",
+      "human_story": "Eich wrote JavaScript in 10 days. These XXXbe markers are the fingerprints of that sprint, surviving until the 1998 open source release."
+    },
+    "appraiser_note": "beはBrendan Eichのイニシャル。10日間で書いたJavaScriptの痕跡が1998年のオープンソース化まで生き延びた。"
+  },
+  {
+    "id": "4cb3755db839",
+    "text": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "file_path": "HTTP User-Agent header (Chrome 120, 2024)",
+    "line_number": 0,
+    "repo_id": "netscape",
+    "repo_name": "Netscape Navigator (1994)",
+    "language": "text",
+    "year": 1994,
+    "tags": [
+      "historical",
+      "irony",
+      "legacy",
+      "browser-wars"
+    ],
+    "interesting_score": 20.0,
+    "ai_analysis": {
+      "primary_emotion": "irony",
+      "emotion_intensity": 5.0,
+      "emotions": {
+        "irony": 5.0,
+        "legacy": 4.0
+      },
+      "technical_context": "Every major browser still identifies as Mozilla/5.0 in 2024 — a chain of impersonation that started when IE 3 claimed to be Mozilla-compatible in 1996.",
+      "human_story": "Netscape is dead. But its codename 'Mozilla' lives in every browser on earth. The loser named all the winners."
+    },
+    "appraiser_note": "Netscapeは死に、そのコードネーム「Mozilla」だけが全ブラウザに残った。敗者の名が勝者全員を命名した。"
+  },
+  {
+    "id": "dddaea23d834",
+    "text": "The Book of Mozilla, 3:31\n\"And the beast shall be made legion.\"",
+    "file_path": "about:mozilla (Easter egg)",
+    "line_number": 1,
+    "repo_id": "netscape",
+    "repo_name": "Netscape Navigator (1994)",
+    "language": "text",
+    "year": 1998,
+    "tags": [
+      "easter-egg",
+      "poetry",
+      "drama",
+      "historical"
+    ],
+    "interesting_score": 18.0,
+    "ai_analysis": {
+      "primary_emotion": "defiance",
+      "emotion_intensity": 4.0,
+      "emotions": {
+        "defiance": 4.0,
+        "hope": 3.0
+      },
+      "technical_context": "3:31 = March 31 — the date Netscape open-sourced its code. Written by Jamie Zawinski.",
+      "human_story": "On the day they lost, Zawinski wrote a manifesto calling Microsoft 'Mammon' and the open source community 'legion'. Then he registered mozilla.org."
+    },
+    "appraiser_note": "3:31は3月31日。敗北の日に書かれた解放の詩。「Mammon（マモン）」=Microsoft。Zawinskiはこの日にmozilla.orgを登録した。"
   }
 ]
