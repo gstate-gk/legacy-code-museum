@@ -5740,5 +5740,114 @@
     },
     "appraiser_note": "300ボーのモデムが生んだキーバインド。ADM-3Aのhjkl矢印が50年後も使われている。テープ故障で歴史が18年遅れた。",
     "id": "ea75a361019c"
+  },
+  {
+    "id": "bb1ab33af68d",
+    "text": "i  = 0x5f3759df - ( i >> 1 );               // what the fuck?",
+    "file_path": "quake3/code/game/q_math.c",
+    "line_number": 71,
+    "repo_id": "quake",
+    "repo_name": "Quake (id Software, 1996)",
+    "language": "C",
+    "year": 1996,
+    "tags": [
+      "optimization",
+      "math",
+      "legendary",
+      "humor"
+    ],
+    "interesting_score": 20.0,
+    "ai_analysis": {
+      "primary_emotion": "awe",
+      "emotion_intensity": 5.0,
+      "emotions": {
+        "awe": 5.0,
+        "humor": 3.0
+      },
+      "technical_context": "Fast inverse square root using floating point bit manipulation",
+      "human_story": "The programmer was so surprised by this trick they wrote 'what the fuck?' in the code"
+    },
+    "appraiser_note": "コンピュータ史上最も有名なコメント。Greg Walshが書いたトリックをCarmackが「what the fuck?」と呟いた。"
+  },
+  {
+    "id": "5f39fad1e414",
+    "text": "i  = * ( long * ) &y;                       // evil floating point bit level hacking",
+    "file_path": "quake3/code/game/q_math.c",
+    "line_number": 70,
+    "repo_id": "quake",
+    "repo_name": "Quake (id Software, 1996)",
+    "language": "C",
+    "year": 1996,
+    "tags": [
+      "optimization",
+      "hack",
+      "legendary"
+    ],
+    "interesting_score": 19.0,
+    "ai_analysis": {
+      "primary_emotion": "transgression",
+      "emotion_intensity": 4.0,
+      "emotions": {
+        "transgression": 4.0,
+        "pride": 3.0
+      },
+      "technical_context": "Reinterpreting float bits as integer - a deliberate type-safety violation",
+      "human_story": "The programmer called their own code 'evil' - and meant it as a compliment"
+    },
+    "appraiser_note": "自分のコードを「邪悪なハッキング」と呼んだ。1996年のプログラマの誇り。"
+  },
+  {
+    "id": "058912f8705f",
+    "text": "Romero is no longer with id Software. The comments made recently about our projects by him will not be happening.",
+    "file_path": ".plan",
+    "line_number": 1,
+    "repo_id": "quake",
+    "repo_name": "Quake (id Software, 1996)",
+    "language": "text",
+    "year": 1996,
+    "tags": [
+      "historical",
+      "human",
+      "drama"
+    ],
+    "interesting_score": 18.0,
+    "ai_analysis": {
+      "primary_emotion": "grief",
+      "emotion_intensity": 3.5,
+      "emotions": {
+        "grief": 3.5,
+        "restraint": 2.0
+      },
+      "technical_context": "Unix .plan file used as developer blog",
+      "human_story": "The end of the two Johns. Written by Carmack on August 8, 1996."
+    },
+    "appraiser_note": "1996年8月8日。世界初のデベロッパーブログに刻まれた、二人のJohnの別れ。"
+  },
+  {
+    "id": "20643f1ad51f",
+    "text": "#define MAX_STACK_DEPTH\t\t32\n#define LOCALSTACK_SIZE\t\t2048",
+    "file_path": "pr_exec.c",
+    "line_number": 14,
+    "repo_id": "quake",
+    "repo_name": "Quake (id Software, 1996)",
+    "language": "C",
+    "year": 1996,
+    "tags": [
+      "vm",
+      "quakec",
+      "architecture"
+    ],
+    "interesting_score": 16.0,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 4.0,
+      "emotions": {
+        "ingenuity": 4.0,
+        "pioneering": 3.0
+      },
+      "technical_context": "QuakeC virtual machine stack limits",
+      "human_story": "Java launched the same year. Carmack independently built a bytecode VM inside a game engine."
+    },
+    "appraiser_note": "Java登場の翌年、ゲームエンジンの中にバイトコード仮想マシン。スタック深度32がMOD開発者を悩ませた。"
   }
 ]
