@@ -6014,5 +6014,86 @@
       "human_story": "On the day they lost, Zawinski wrote a manifesto calling Microsoft 'Mammon' and the open source community 'legion'. Then he registered mozilla.org."
     },
     "appraiser_note": "3:31は3月31日。敗北の日に書かれた解放の詩。「Mammon（マモン）」=Microsoft。Zawinskiはこの日にmozilla.orgを登録した。"
+  },
+  {
+    "id": "fd9d2057de52",
+    "text": "init_at_funcs();",
+    "file_path": "main.c (recovered from COFF symbols)",
+    "line_number": 1,
+    "repo_id": "lotus-1-2-3",
+    "repo_name": "Lotus 1-2-3 (1983)",
+    "language": "C",
+    "year": 1983,
+    "tags": [
+      "historical",
+      "design",
+      "elegance"
+    ],
+    "interesting_score": 16.0,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4.5,
+      "emotions": {
+        "elegance": 4.5,
+        "influence": 4.0
+      },
+      "technical_context": "The @ prefix convention for spreadsheet functions, recovered from COFF binary symbols.",
+      "human_story": "Jonathan Sachs chose @ as the universal function prefix. Excel copied it, Google Sheets kept it. 40 years later it is still the law."
+    },
+    "appraiser_note": "@記号を「関数の印」として採用した瞬間。競合にコピーされることで永遠になった設計。"
+  },
+  {
+    "id": "5a02c3b86f23",
+    "text": "slash_convert  /* DOS backslash to UNIX slash */",
+    "file_path": "internal symbols (recovered from COFF, UNIX port 1989)",
+    "line_number": 1,
+    "repo_id": "lotus-1-2-3",
+    "repo_name": "Lotus 1-2-3 (1983)",
+    "language": "C",
+    "year": 1989,
+    "tags": [
+      "historical",
+      "compat",
+      "legacy"
+    ],
+    "interesting_score": 13.5,
+    "ai_analysis": {
+      "primary_emotion": "nostalgia",
+      "emotion_intensity": 3.5,
+      "emotions": {
+        "nostalgia": 3.5,
+        "irony": 3.0
+      },
+      "technical_context": "COFF symbol recovered from the 1989 UNIX port. DOS backslash converter survived the platform transition intact.",
+      "human_story": "Tavis Ormandy found ~20,000 forgotten symbols in the UNIX binary in 2015. Six years of development history, preserved by accident."
+    },
+    "appraiser_note": "1983年のDOS設計が1989年のUNIX版にそのまま生き残っていた。Tavis Ormandyが2015年に発見した20,000個の忘れられたシンボル。"
+  },
+  {
+    "id": "99da7921beda",
+    "text": "/* I think these are all the flags 123 uses */",
+    "file_path": "wrappers.c (123elf by Tavis Ormandy, 2015)",
+    "line_number": 1,
+    "repo_id": "lotus-1-2-3",
+    "repo_name": "Lotus 1-2-3 (1983)",
+    "language": "C",
+    "year": 2015,
+    "tags": [
+      "TODO",
+      "reverse-engineering",
+      "pragmatic"
+    ],
+    "interesting_score": 14.0,
+    "ai_analysis": {
+      "primary_emotion": "pragmatism",
+      "emotion_intensity": 3.5,
+      "emotions": {
+        "pragmatism": 3.5,
+        "humility": 3.0
+      },
+      "technical_context": "Comment in wrappers.c of 123elf. The 1989 UNIX binary ran perfectly on modern Linux 35 years later.",
+      "human_story": "Ormandy's comment is the honest voice of every reverse engineer: 'I don't know the right way, but this works.' And it did."
+    },
+    "appraiser_note": "「正しい方法を知らないが、動作する実装を優先する」。1983年の設計35年後も動いた。"
   }
 ]

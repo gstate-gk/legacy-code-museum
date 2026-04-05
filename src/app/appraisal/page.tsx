@@ -185,6 +185,13 @@ const PUBLISHED_ARTICLES = [
     language: "Java/Forth → TypeScript+Canvas",
     year: 2012,
   },
+  {
+    number: "54",
+    title: "鑑定書#054 Lotus 1-2-3 — VisiCalcを1年で葬ったキラーアプリ",
+    url: null,
+    language: "8086 Assembly → C",
+    year: 1983,
+  },
 ];
 
 export default function AppraisalPage() {
