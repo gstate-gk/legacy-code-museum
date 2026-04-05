@@ -6095,5 +6095,86 @@
       "human_story": "Ormandy's comment is the honest voice of every reverse engineer: 'I don't know the right way, but this works.' And it did."
     },
     "appraiser_note": "「正しい方法を知らないが、動作する実装を優先する」。1983年の設計35年後も動いた。"
+  },
+  {
+    "id": "d028e722d075",
+    "text": "INLINE($B4/$00 / $8A/$46/$04 / $CD/$10);",
+    "file_path": "turbo-pascal-3-inline-example.pas",
+    "line_number": 1,
+    "repo_id": "turbo-pascal",
+    "repo_name": "Turbo Pascal (Borland, 1983)",
+    "language": "Pascal",
+    "year": 1985,
+    "tags": [
+      "historical",
+      "elegance",
+      "design"
+    ],
+    "interesting_score": 15.0,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 4.5,
+      "emotions": {
+        "ingenuity": 4.5,
+        "pragmatism": 4.0
+      },
+      "technical_context": "Turbo Pascal 3.0 INLINE directive. Machine code bytes embedded directly in Pascal source — Pascal safety with assembly speed in one product.",
+      "human_story": "Anders Hejlsberg bridged the gap: write safe Pascal, drop to machine code when you need raw speed. The $CD/$10 is BIOS interrupt 10h — video mode switching, hand-crafted bytes in a high-level language."
+    },
+    "appraiser_note": "Pascalの安全性とアセンブリの速度を一本で。Hejlsbergが設計した「脱出口」。"
+  },
+  {
+    "id": "8631c4d1872e",
+    "text": "{ Turbo Pascal: read source once, emit machine code immediately. No disk. No temp files. 6,000-12,000 lines/minute. }",
+    "file_path": "compiler-design-comment (single-pass architecture)",
+    "line_number": 1,
+    "repo_id": "turbo-pascal",
+    "repo_name": "Turbo Pascal (Borland, 1983)",
+    "language": "Pascal",
+    "year": 1983,
+    "tags": [
+      "historical",
+      "performance",
+      "elegance"
+    ],
+    "interesting_score": 17.0,
+    "ai_analysis": {
+      "primary_emotion": "awe",
+      "emotion_intensity": 5.0,
+      "emotions": {
+        "awe": 5.0,
+        "elegance": 4.5
+      },
+      "technical_context": "Turbo Pascal single-pass compiler: lexer + parser + code generator run simultaneously. No intermediate files. Competitors (UCSD Pascal, Microsoft Pascal) took seconds per compile; Turbo Pascal was instant.",
+      "human_story": "The name 'Turbo' was literal. Philippe Kahn sold it for $49.95 when competitors charged $495. IBM refused to carry it — 'minimum $200 price policy'. It outsold every IBM PC language anyway."
+    },
+    "appraiser_note": "読んだ瞬間に機械語が出る。競合の60倍速いコンパイラ。$49.95という価格がIBMを怒らせた。"
+  },
+  {
+    "id": "ff3bc24ee7d9",
+    "text": "PolyPascal (1981) → Turbo Pascal (1983) → Delphi (1995) → C# (2001) → TypeScript (2012)",
+    "file_path": "Anders Hejlsberg career timeline",
+    "line_number": 1,
+    "repo_id": "turbo-pascal",
+    "repo_name": "Turbo Pascal (Borland, 1983)",
+    "language": "text",
+    "year": 1983,
+    "tags": [
+      "historical",
+      "legacy",
+      "drama"
+    ],
+    "interesting_score": 19.0,
+    "ai_analysis": {
+      "primary_emotion": "wonder",
+      "emotion_intensity": 5.0,
+      "emotions": {
+        "wonder": 5.0,
+        "legacy": 4.5
+      },
+      "technical_context": "Anders Hejlsberg wrote PolyPascal as a student in Denmark. Borland licensed it. He later designed Delphi at Borland, then C# and TypeScript at Microsoft.",
+      "human_story": "Everyone who used Turbo Pascal was unknowingly using the same compiler design as the future designer of C#. The 'property' keyword in C# comes directly from Delphi. TypeScript's gradual typing echoes Turbo Pascal's INLINE escape hatch — safety with an exit door."
+    },
+    "appraiser_note": "Turbo Pascalを買った人は知らないまま、C#を設計した人と同じコンパイラを使っていた。40年間、同じ一本の線。"
   }
 ]

@@ -192,6 +192,13 @@ const PUBLISHED_ARTICLES = [
     language: "8086 Assembly → C",
     year: 1983,
   },
+  {
+    number: "55",
+    title: "鑑定書#055 Turbo Pascal — $49.95の稲妻、観光ビザでIDEを発明",
+    url: null,
+    language: "Z80 → 8086 Assembly",
+    year: 1983,
+  },
 ];
 
 export default function AppraisalPage() {
