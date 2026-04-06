@@ -6257,5 +6257,77 @@
       "human_story": "Ward Cunningham invented Wiki because he wanted 'a networked version of my HyperCard stack'. Brendan Eich borrowed HyperTalk's event model for JavaScript. HyperCard's children built the Web that HyperCard couldn't become."
     },
     "appraiser_note": "扉は消えた。でも扉を通った風は今も吹いている。Wiki・JavaScript・Flash——全てHyperCardの子供たちが作った。"
+  },
+  {
+    "id": "ece4d173-056",
+    "repo_name": "Perl/perl5",
+    "language": "C",
+    "year": 1987,
+    "file_path": "perl.h",
+    "line_number": 1,
+    "text": "/* $Header: perl.h,v 1.0 87/12/18 13:05:38 root Exp $ */",
+    "tags": [
+      "perl",
+      "header",
+      "1987",
+      "larry-wall"
+    ],
+    "ai_analysis": {
+      "interpretation": "RCS (Revision Control System) の自動生成ヘッダー。1987年12月18日13時05分38秒、Larry Wall が perl.h の最初のバージョンをコミットした瞬間の記録。バージョン番号 1.0 がそのまま残る。",
+      "emotions": {
+        "歴史性": 5,
+        "簡潔さ": 4,
+        "記録性": 5
+      }
+    },
+    "appraiser_note": "1987年12月18日。この一行に世界が変わった日付が刻まれている。JPL（NASA ジェット推進研究所）のワークステーションで打たれたコミット。"
+  },
+  {
+    "id": "36638092-e73",
+    "repo_name": "Perl/perl5",
+    "language": "C",
+    "year": 1987,
+    "file_path": "util.c",
+    "line_number": 18,
+    "text": "/* paranoid version of malloc */",
+    "tags": [
+      "perl",
+      "malloc",
+      "paranoid",
+      "defensive-programming"
+    ],
+    "ai_analysis": {
+      "interpretation": "「妄想的な版のmalloc」。malloc(0) が NASTY だと知っていて、size?size:1 と書いた。/*NOTREACHED*/ でコンパイラに念押しまでする。防衛的プログラミングの哲学がコメント一行に凝縮されている。",
+      "emotions": {
+        "防衛性": 5,
+        "経験則": 5,
+        "ユーモア": 4
+      }
+    },
+    "appraiser_note": "paranoid（妄想的）という形容詞をコードに使ったのは Larry Wall の個性。1987年のシステムでは malloc(0) の挙動が実装依存だった実体験が滲む。"
+  },
+  {
+    "id": "1d402191-779",
+    "repo_name": "Perl/perl5",
+    "language": "Text",
+    "year": 1987,
+    "file_path": "Wishlist",
+    "line_number": 1,
+    "text": "date support\ncase statement\nioctl() support\nrandom numbers\ndirectory reading via <>",
+    "tags": [
+      "perl",
+      "wishlist",
+      "todo",
+      "larry-wall"
+    ],
+    "ai_analysis": {
+      "interpretation": "バージョン1.0公開時点での「やりたいことリスト」。5行のみ。case文すら未実装で世に出した。完成を待たず「今の状態で役に立つ」と判断した瞬間の記録。",
+      "emotions": {
+        "謙虚さ": 5,
+        "実用主義": 5,
+        "未完成の美": 4
+      }
+    },
+    "appraiser_note": "case文もない、日付もない、乱数もない状態で公開した。この5行が後に25万本のCPANモジュールを生む言語の出発点。"
   }
 ]

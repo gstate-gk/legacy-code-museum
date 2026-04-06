@@ -206,6 +206,13 @@ const PUBLISHED_ARTICLES = [
     language: "68000 Assembly + C",
     year: 1987,
   },
+  {
+    number: "57",
+    title: "鑑定書#057 Perl 1.0 — awkとsedを殺すつもりはなかった実用主義の奇跡",
+    url: null,
+    language: "C + yacc",
+    year: 1987,
+  },
 ];
 
 export default function AppraisalPage() {
