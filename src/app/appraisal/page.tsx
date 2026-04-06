@@ -199,6 +199,13 @@ const PUBLISHED_ARTICLES = [
     language: "Z80 → 8086 Assembly",
     year: 1983,
   },
+  {
+    number: "56",
+    title: "鑑定書#056 HyperCard — Webを発明できたのに、しなかった扉",
+    url: null,
+    language: "68000 Assembly + C",
+    year: 1987,
+  },
 ];
 
 export default function AppraisalPage() {

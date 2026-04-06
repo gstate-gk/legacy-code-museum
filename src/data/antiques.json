@@ -6176,5 +6176,86 @@
       "human_story": "Everyone who used Turbo Pascal was unknowingly using the same compiler design as the future designer of C#. The 'property' keyword in C# comes directly from Delphi. TypeScript's gradual typing echoes Turbo Pascal's INLINE escape hatch — safety with an exit door."
     },
     "appraiser_note": "Turbo Pascalを買った人は知らないまま、C#を設計した人と同じコンパイラを使っていた。40年間、同じ一本の線。"
+  },
+  {
+    "id": "781583de66e9",
+    "text": "on mouseUp\n  go to next card\nend mouseUp",
+    "file_path": "HyperTalk script (HyperCard, 1987)",
+    "line_number": 1,
+    "repo_id": "hypercard",
+    "repo_name": "Apple HyperCard (1987)",
+    "language": "HyperTalk",
+    "year": 1987,
+    "tags": [
+      "historical",
+      "design",
+      "elegance"
+    ],
+    "interesting_score": 16.0,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4.5,
+      "emotions": {
+        "elegance": 4.5,
+        "accessibility": 4.0
+      },
+      "technical_context": "HyperTalk event handler. The 'on mouseUp' naming convention was adopted by JavaScript (onmouseup). Dan Winkler designed HyperTalk to read like English.",
+      "human_story": "Non-programmers were called 'authors', not programmers. 'Scripting' not 'programming'. Brendan Eich cited HyperTalk as a direct influence on JavaScript's event model."
+    },
+    "appraiser_note": "プログラマーを「オーサー」と呼んだ。onmouseupの命名はここで生まれた。Eichが直接インスピレーションと認めた。"
+  },
+  {
+    "id": "8550aa6a5a8b",
+    "text": "put 5 * 4 into theResult\nif theResult > 15 then go to card \"success\"",
+    "file_path": "HyperTalk script example",
+    "line_number": 1,
+    "repo_id": "hypercard",
+    "repo_name": "Apple HyperCard (1987)",
+    "language": "HyperTalk",
+    "year": 1987,
+    "tags": [
+      "historical",
+      "design",
+      "natural-language"
+    ],
+    "interesting_score": 14.5,
+    "ai_analysis": {
+      "primary_emotion": "wonder",
+      "emotion_intensity": 4.0,
+      "emotions": {
+        "wonder": 4.0,
+        "accessibility": 4.5
+      },
+      "technical_context": "HyperTalk puts the variable at the end of the statement, matching natural English word order. No variable declarations. Implicit type conversion. 'go to card' is a hyperlink.",
+      "human_story": "This is a hyperlink from 1987, two years before Berners-Lee proposed the WWW. If HyperCard had been network-enabled, Atkinson says it could have been the first web browser."
+    },
+    "appraiser_note": "1987年のハイパーリンク。WWW提案より2年早い。ネットワークさえあれば——Atkinsonの最大の後悔。"
+  },
+  {
+    "id": "42cc80a5dc5b",
+    "text": "/* If I had been in a network-centric culture like Sun, HyperCard might have become the first web browser. That is my greatest regret. — Bill Atkinson */",
+    "file_path": "Bill Atkinson interview (retrospective)",
+    "line_number": 1,
+    "repo_id": "hypercard",
+    "repo_name": "Apple HyperCard (1987)",
+    "language": "text",
+    "year": 2004,
+    "tags": [
+      "historical",
+      "drama",
+      "regret"
+    ],
+    "interesting_score": 20.0,
+    "ai_analysis": {
+      "primary_emotion": "regret",
+      "emotion_intensity": 5.0,
+      "emotions": {
+        "regret": 5.0,
+        "wonder": 4.5
+      },
+      "technical_context": "HyperCard (1987) had hyperlinks, card/stack data model, and scripting — all core WWW concepts. The only missing piece: network access across machines.",
+      "human_story": "Ward Cunningham invented Wiki because he wanted 'a networked version of my HyperCard stack'. Brendan Eich borrowed HyperTalk's event model for JavaScript. HyperCard's children built the Web that HyperCard couldn't become."
+    },
+    "appraiser_note": "扉は消えた。でも扉を通った風は今も吹いている。Wiki・JavaScript・Flash——全てHyperCardの子供たちが作った。"
   }
 ]
