@@ -6329,5 +6329,77 @@
       }
     },
     "appraiser_note": "case文もない、日付もない、乱数もない状態で公開した。この5行が後に25万本のCPANモジュールを生む言語の出発点。"
+  },
+  {
+    "id": "gnumake-001-0356570",
+    "repo_name": "mirror/make",
+    "language": "C",
+    "year": 1988,
+    "file_path": "read.c",
+    "line_number": 0,
+    "text": "/* This line starts with a tab but was not caught above\n   because there was no preceding target, and the line\n   might have been usable as a variable definition.\n   But now we know it is definitely lossage.  */",
+    "tags": [
+      "gnu-make",
+      "tab",
+      "lossage",
+      "hacker-slang"
+    ],
+    "ai_analysis": {
+      "interpretation": "「lossage」はMITハッカー文化由来の俗語で「ひどい状態」を意味する。タブで始まるがターゲットのないMakefile行を検出したときのコメント。1988年のコードが今日もこのメッセージを生み続けている。",
+      "emotions": {
+        "絶望感": 5,
+        "ハッカー精神": 4,
+        "時代": 5
+      }
+    },
+    "appraiser_note": "Stuart Feldmanが「最大の後悔」と言ったタブルールの番人。「lossage」という単語の選択が、1988年の開発現場の空気を伝える。"
+  },
+  {
+    "id": "gnumake-002-f478d35",
+    "repo_name": "mirror/make",
+    "language": "C",
+    "year": 1988,
+    "file_path": "default.c",
+    "line_number": 0,
+    "text": "/* RCS.  */\n{ \"%\", \"%,v\",\n    \"\" },\n{ \"%\", \"RCS/%,v\",\n    \"\" },",
+    "tags": [
+      "gnu-make",
+      "rcs",
+      "implicit-rules",
+      "fossil"
+    ],
+    "ai_analysis": {
+      "interpretation": "GNU MakeがRCS（Revision Control System）と統合していた証拠。ファイルが存在しなくてもRCSリポジトリにあれば自動チェックアウトする暗黙ルール。Git登場前の1988年のVCS文化の化石。",
+      "emotions": {
+        "考古学的驚き": 5,
+        "時代の変化": 4,
+        "設計の広さ": 4
+      }
+    },
+    "appraiser_note": "今やほとんどの開発者がRCSを知らない。しかしGNU MakeはGitが生まれる前のVCSをまだ覚えている。default.cに化石として刻まれた1988年のソフトウェア開発環境。"
+  },
+  {
+    "id": "gnumake-003-ee15d5d",
+    "repo_name": "mirror/make",
+    "language": "Text",
+    "year": 1988,
+    "file_path": "ChangeLog",
+    "line_number": 0,
+    "text": "* Fixed a minor grammaticaly error.\n* Second release.",
+    "tags": [
+      "gnu-make",
+      "typo",
+      "commit-message",
+      "roland-mcgrath"
+    ],
+    "ai_analysis": {
+      "interpretation": "文法エラーを修正したコミットメッセージに文法エラー（grammaticaly → grammatically）。1988年6月28日、Roland McGrathによるRelease2のコミット。人間らしいミスがコードの歴史に永遠に刻まれた。",
+      "emotions": {
+        "ユーモア": 5,
+        "人間味": 5,
+        "急いでいた感": 4
+      }
+    },
+    "appraiser_note": "文法エラーを直したコミットに文法エラー。世界中のビルドシステムを支えるソフトウェアも、書いたのは急いでいた人間だった。1988年のRoland McGrathに親近感を覚える一行。"
   }
 ]

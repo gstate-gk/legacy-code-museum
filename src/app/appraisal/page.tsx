@@ -213,6 +213,13 @@ const PUBLISHED_ARTICLES = [
     language: "C + yacc",
     year: 1987,
   },
+  {
+    number: "58",
+    title: "鑑定書#058 GNU Make — タブ文字の呪い、35年の共犯者",
+    url: null,
+    language: "C",
+    year: 1988,
+  },
 ];
 
 export default function AppraisalPage() {
