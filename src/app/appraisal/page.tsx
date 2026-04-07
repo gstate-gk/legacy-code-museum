@@ -220,6 +220,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1988,
   },
+  {
+    number: "59",
+    title: "鑑定書#059 sendmail — インターネットメールの守門者、30年の混沌",
+    url: null,
+    language: "C",
+    year: 1983,
+  },
 ];
 
 export default function AppraisalPage() {

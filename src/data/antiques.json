@@ -6401,5 +6401,78 @@
       }
     },
     "appraiser_note": "文法エラーを直したコミットに文法エラー。世界中のビルドシステムを支えるソフトウェアも、書いたのは急いでいた人間だった。1988年のRoland McGrathに親近感を覚える一行。"
+  },
+  {
+    "id": "sendmail-001-cde9595",
+    "repo_name": "weiss/original-bsd",
+    "language": "C",
+    "year": 1983,
+    "file_path": "usr.sbin/sendmail/src/main.c",
+    "line_number": 1,
+    "text": "/*\n**  SENDMAIL -- Post mail to a set of destinations.\n**\n**\tAuthor:\n**\t\tEric Allman, UCB/INGRES (until 10/81)\n**\t\t\t     Britton-Lee, Inc., purveyors of fine\n**\t\t\t\tdatabase computers (from 11/81)\n**\t\tThe support of the INGRES Project and Britton-Lee is\n**\t\t\tgratefully acknowledged.  Britton-Lee in\n**\t\t\tparticular had absolutely nothing to gain from\n**\t\t\tmy involvement in this project.\n*/",
+    "tags": [
+      "sendmail",
+      "eric-allman",
+      "oss",
+      "humor",
+      "self-deprecating"
+    ],
+    "ai_analysis": {
+      "interpretation": "「Britton-Lee は特に、私がこのプロジェクトに関わることから何も得るものがなかった。」転職先の会社時間を使ってOSS開発を続けたAlmanの自虐的な感謝。著作権表示の直下に刻まれた告白。",
+      "emotions": {
+        "自虐": 5,
+        "誠実さ": 5,
+        "ユーモア": 4
+      }
+    },
+    "appraiser_note": "コードの冒頭に「雇用主は何も得ていない」と書ける人間はそう多くない。Eric Allmanの人柄が最もよく出るコメント。1983年のインターネット黎明期、誰も報酬を受けずに世界のメールインフラを作った。"
+  },
+  {
+    "id": "sendmail-002-946353f",
+    "repo_name": "weiss/original-bsd",
+    "language": "C",
+    "year": 1983,
+    "file_path": "usr.sbin/sendmail/src/sendmail.h",
+    "line_number": 0,
+    "text": "# define M_UGLYUUCP\t'U'\t/* this wants an ugly UUCP from line */\n# define M_EXPENSIVE\t'e'\t/* it costs to use this mailer.... */",
+    "tags": [
+      "sendmail",
+      "uucp",
+      "naming",
+      "honest-comment"
+    ],
+    "ai_analysis": {
+      "interpretation": "UUCP の「From 」行（スペース付き）はRFC 822と非互換。それを率直に「ugly（醜い）」と命名。M_EXPENSIVEも隣に並ぶ。技術的な事実を感情的な言葉で表現するAlmanスタイルの典型。",
+      "emotions": {
+        "率直さ": 5,
+        "実用主義": 4,
+        "UUCP時代の記憶": 5
+      }
+    },
+    "appraiser_note": "M_UGLYUUCP——「醜いUUCP fromライン」。コードの命名は仕様書でもある。1983年のインターネットがどれほど混沌としていたかを、この一行が証明している。"
+  },
+  {
+    "id": "sendmail-003-879bd0e",
+    "repo_name": "weiss/original-bsd",
+    "language": "C",
+    "year": 1983,
+    "file_path": "usr.sbin/sendmail/src/main.c",
+    "line_number": 0,
+    "text": "#ifdef DAEMON\n#ifndef SMTP\nERROR %%%%   Cannot have daemon mode without SMTP   %%%% ERROR\n#endif /* SMTP */\n#endif /* DAEMON */",
+    "tags": [
+      "sendmail",
+      "hack",
+      "compile-time-error",
+      "pre-ansi-c"
+    ],
+    "ai_analysis": {
+      "interpretation": "1983年当時、#errorディレクティブはANSI Cに含まれていなかった。「DAEMON モードはSMTPなしでは動かせない」という制約を、意図的に文法エラーを起こすことでコンパイル時チェックとした。ERROR %%%%は正式なC構文ではない——それが目的だ。",
+      "emotions": {
+        "創意工夫": 5,
+        "時代の制約": 4,
+        "実用主義": 5
+      }
+    },
+    "appraiser_note": "#errorが存在しない時代に、意図的な文法エラーで制約を表現した。1983年のCプログラマーが直面した制約と、それを乗り越えるハックの痕跡。"
   }
 ]
