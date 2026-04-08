@@ -227,6 +227,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1983,
   },
+  {
+    number: "60",
+    title: "鑑定書#060 dBase II — 「dBase I」は存在しない、.DBFの不死",
+    url: null,
+    language: "8080 Assembly",
+    year: 1981,
+  },
 ];
 
 export default function AppraisalPage() {

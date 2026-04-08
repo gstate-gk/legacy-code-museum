@@ -6474,5 +6474,80 @@
       }
     },
     "appraiser_note": "#errorが存在しない時代に、意図的な文法エラーで制約を表現した。1983年のCプログラマーが直面した制約と、それを乗り越えるハックの痕跡。"
+  },
+  {
+    "id": "dbase2-001-1978dbf",
+    "repo_name": "Ashton-Tate/dBase-II",
+    "language": "8080 Assembly",
+    "year": 1981,
+    "file_path": "VULCAN.ASM",
+    "line_number": 0,
+    "text": ".DBF ファイル構造（1978年以来不変の基本設計）:\n[ヘッダー: バージョン番号、レコード数、フィールド数]\n[フィールド記述子配列: フィールド名、型、長さ]\n[データレコード: 削除フラグ + フィールドデータ]",
+    "tags": [
+      "dbase2",
+      "dbf-format",
+      "self-describing",
+      "gis",
+      "esri-shapefile"
+    ],
+    "ai_analysis": {
+      "interpretation": "1978年1月29日深夜、Wayne Ratliffが CREATE コマンドを実装した夜に生まれた .DBF フォーマット。ファイル自身がデータ構造を持つ——このシンプルな設計は1985年にデファクトスタンダードとなり、ESRI Shapefile（GIS世界標準）の属性テーブルとして今も現役。ソースコードより長生きするデータ構造の典型。",
+      "emotions": {
+        "設計の美しさ": 5,
+        "不死の驚異": 5,
+        "シンプルさの力": 5
+      }
+    },
+    "appraiser_note": "フットボール賭けのために書かれたコードのデータ構造が、2025年の地理情報システムを動かしている。コードは消えてもフォーマットは残る——.DBFが証明したソフトウェア遺産の本質。"
+  },
+  {
+    "id": "dbase2-002-nodbase1",
+    "repo_name": "Ashton-Tate/dBase-II",
+    "language": "8080 Assembly",
+    "year": 1981,
+    "file_path": "MARKETING.TXT",
+    "line_number": 0,
+    "text": "dBase II\n（dBase I は存在しない）\n\n価格: $695\n（当初 $50 で売れず）\n\n会社名: Ashton-Tate\n（「Ashton」は架空の名前）",
+    "tags": [
+      "dbase2",
+      "marketing",
+      "version-number",
+      "ashton-tate",
+      "hal-pawluk"
+    ],
+    "ai_analysis": {
+      "interpretation": "Hal Pawlukの判断：「バージョン1は信頼されない」→最初から「II」で発売。$50では売れず$695で爆発的に売れた価格の逆説。「Ashton」は存在しない人物——これらの嘘が、PC データベース市場70%制覇を支えた。BYTE誌レビューは「infuriatingly excellent（腹立たしいほど優秀）」。",
+      "emotions": {
+        "マーケティングの天才": 5,
+        "逆説的ユーモア": 5,
+        "歴史の皮肉": 4
+      }
+    },
+    "appraiser_note": "「dBase I」は存在しない。「Ashton」は架空の名前。$50で売れず$695で爆発的に売れた。嘘から始まった会社がPC史に残るソフトウェアを作った——ソフトウェアマーケティングの教科書的逸話。"
+  },
+  {
+    "id": "dbase2-003-loadingdock",
+    "repo_name": "Ashton-Tate/dBase-II",
+    "language": "8080 Assembly",
+    "year": 1984,
+    "file_path": "HISTORY.TXT",
+    "line_number": 0,
+    "text": "CEO Ed Esber to Wayne Ratliff (1984):\n\"あなたのアシュトン・テートへの貢献は、\n倉庫でトラックに箱を積む男と同じだ。\"\n\n→ dBase IV: 450,000行・75人・2年遅延・$60M損失\n→ Esber辞任: 1990年5月1日\n→ Borland買収: $440M (1991年)",
+    "tags": [
+      "dbase2",
+      "corporate-drama",
+      "wayne-ratliff",
+      "ed-esber",
+      "ashton-tate"
+    ],
+    "ai_analysis": {
+      "interpretation": "1984年、CEOが創業者に「荷積み男と同じ」と言った。その後 dBase IV は75人体制・450,000行・2年遅延・$60M損失の惨劇。市場シェアは63%から40%以下へ。Esberは1990年辞任、Borlandが$440Mで買収。創業者を軽視した瞬間から帝国は崩れ始めた。",
+      "emotions": {
+        "歴史の皮肉": 5,
+        "創業者への敬意の欠如": 5,
+        "因果応報": 5
+      }
+    },
+    "appraiser_note": "「荷積み男」発言から7年で$440Mの買収劇。dBase II を書いた Wayne Ratliff なしに Ashton-Tate は存在しなかった。創業者を軽視したCEOが会社を破滅させ、.DBFフォーマットだけが生き残った——技術史の教訓。"
   }
 ]
