@@ -6549,5 +6549,89 @@
       }
     },
     "appraiser_note": "「荷積み男」発言から7年で$440Mの買収劇。dBase II を書いた Wayne Ratliff なしに Ashton-Tate は存在しなかった。創業者を軽視したCEOが会社を破滅させ、.DBFフォーマットだけが生き残った——技術史の教訓。"
+  },
+  {
+    "id": "dartmouth-basic-001-hello",
+    "text": "10 PRINT \"HELLO, WORLD\"",
+    "file_path": "BASIC.SRC",
+    "line_number": 1,
+    "repo_id": "dtss-backup",
+    "repo_name": "Dartmouth BASIC (DTSS, 1964)",
+    "language": "BASIC",
+    "year": 1964,
+    "tags": [
+      "historic",
+      "origin",
+      "education"
+    ],
+    "interesting_score": 15.0,
+    "ai_analysis": {
+      "primary_emotion": "historic",
+      "emotion_intensity": 5.0,
+      "emotions": {
+        "historic": 5.0,
+        "democratic": 4.0,
+        "simple": 3.0
+      },
+      "technical_context": "The first BASIC program — line numbers, simple syntax, designed for non-scientists",
+      "human_story": "Kemeny & Kurtz designed this for liberal arts students. This line started the democratization of computing."
+    },
+    "appraiser_note": "すべてのBASICの祖。行番号10。シンプルさは哲学だった——FORTRANもCOBOLも複雑すぎた。"
+  },
+  {
+    "id": "dartmouth-basic-002-compiler",
+    "text": "C     BASIC COMPILER FOR THE GE-225/235\nC     DARTMOUTH COLLEGE, 1964\nC     J.G. KEMENY AND T.E. KURTZ",
+    "file_path": "BASIC Compiler.pdf (scan)",
+    "line_number": 1,
+    "repo_id": "dtss-backup",
+    "repo_name": "Dartmouth BASIC (DTSS, 1964)",
+    "language": "FORTRAN II",
+    "year": 1965,
+    "tags": [
+      "historic",
+      "compiler",
+      "fortran"
+    ],
+    "interesting_score": 14.0,
+    "ai_analysis": {
+      "primary_emotion": "historic",
+      "emotion_intensity": 4.5,
+      "emotions": {
+        "historic": 5.0,
+        "ironic": 3.5,
+        "pioneering": 4.0
+      },
+      "technical_context": "BASIC compiler written in FORTRAN II — the hard language used to build the easy language. Compiler, not interpreter.",
+      "human_story": "Undergrad students built a compiler in FORTRAN to create a language that non-programmers could use."
+    },
+    "appraiser_note": "FORTRANでBASICを作る。難しい言語で簡単な言語を作った皮肉。しかもコンパイラ方式——後のAltair BASICとは違う。"
+  },
+  {
+    "id": "dartmouth-basic-003-fornext",
+    "text": "FOR I = 1 TO 10\n  PRINT I, I*I\nNEXT I",
+    "file_path": "BASIC.SRC",
+    "line_number": 10,
+    "repo_id": "dtss-backup",
+    "repo_name": "Dartmouth BASIC (DTSS, 1964)",
+    "language": "BASIC",
+    "year": 1964,
+    "tags": [
+      "historic",
+      "loop",
+      "readable"
+    ],
+    "interesting_score": 13.0,
+    "ai_analysis": {
+      "primary_emotion": "democratic",
+      "emotion_intensity": 4.0,
+      "emotions": {
+        "democratic": 4.0,
+        "elegant": 3.5,
+        "historic": 4.5
+      },
+      "technical_context": "FOR-NEXT loop — the most readable loop syntax of its era.",
+      "human_story": "Designed for a history student or an economics major who had never programmed before."
+    },
+    "appraiser_note": "FOR-NEXT。当時最も読みやすいループ構文。11の設計原則の結晶——誰でも読めることが最優先だった。"
   }
 ]

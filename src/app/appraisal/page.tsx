@@ -234,6 +234,13 @@ const PUBLISHED_ARTICLES = [
     language: "8080 Assembly",
     year: 1981,
   },
+  {
+    number: "61",
+    title: "鑑定書#061 Dartmouth BASIC — 教授が無償で配った種、商人が刈り取った実",
+    url: null,
+    language: "FORTRAN II + GE-235 Assembly",
+    year: 1964,
+  },
 ];
 
 export default function AppraisalPage() {
