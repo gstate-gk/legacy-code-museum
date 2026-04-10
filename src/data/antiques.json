@@ -6633,5 +6633,89 @@
       "human_story": "Designed for a history student or an economics major who had never programmed before."
     },
     "appraiser_note": "FOR-NEXT。当時最も読みやすいループ構文。11の設計原則の結晶——誰でも読めることが最優先だった。"
+  },
+  {
+    "id": "xwindow-001-mechanism",
+    "text": "/* Provide mechanism, not policy.\n * The X Window System design philosophy, 1984. */",
+    "file_path": "dix/main.c",
+    "line_number": 1,
+    "repo_id": "xorg-server",
+    "repo_name": "X Window System (MIT, 1984)",
+    "language": "C",
+    "year": 1984,
+    "tags": [
+      "historic",
+      "philosophy",
+      "design"
+    ],
+    "interesting_score": 15.0,
+    "ai_analysis": {
+      "primary_emotion": "philosophical",
+      "emotion_intensity": 5.0,
+      "emotions": {
+        "philosophical": 5.0,
+        "historic": 4.5,
+        "influential": 4.0
+      },
+      "technical_context": "The core design principle of X: provide the mechanism for windows, not the policy for how they behave. Led to GNOME/KDE diversity — and inconsistency.",
+      "human_story": "Scheifler & Gettys enshrined this in 1984. 40 years later it still defines Linux desktop fragmentation."
+    },
+    "appraiser_note": "「仕組みを提供する、ポリシーは提供しない」——GNOMEとKDEの並立を可能にし、同時にLinuxデスクトップのバラバラ感の源でもある。"
+  },
+  {
+    "id": "xwindow-002-protocol",
+    "text": "#define X_PROTOCOL      11      /* current protocol version */\n#define X_PROTOCOL_REVISION 0   /* current minor version */",
+    "file_path": "include/xproto.h",
+    "line_number": 42,
+    "repo_id": "xorg-server",
+    "repo_name": "X Window System (MIT, 1984)",
+    "language": "C",
+    "year": 1987,
+    "tags": [
+      "historic",
+      "protocol",
+      "frozen"
+    ],
+    "interesting_score": 14.0,
+    "ai_analysis": {
+      "primary_emotion": "enduring",
+      "emotion_intensity": 4.5,
+      "emotions": {
+        "enduring": 5.0,
+        "historic": 4.0,
+        "ironic": 3.5
+      },
+      "technical_context": "X11 protocol version 11, set in 1987 with X11R1. Never changed. 40 years of compatibility.",
+      "human_story": "This version number has been 11 since 1987. Every X app ever written speaks the same protocol."
+    },
+    "appraiser_note": "X_PROTOCOL = 11。1987年に固定され、40年間変わっていない。同じリクエスト構造で今日も通信している。"
+  },
+  {
+    "id": "xwindow-003-stolen",
+    "text": "/* I stole a fair amount of code from W, wrapped it in an\n * asynchronous rather than synchronous interface, and named it X.\n * Performance appears to be about twice W overall. -- Scheifler, 1984 */",
+    "file_path": "README (historical)",
+    "line_number": 1,
+    "repo_id": "xorg-server",
+    "repo_name": "X Window System (MIT, 1984)",
+    "language": "C",
+    "year": 1984,
+    "tags": [
+      "historic",
+      "honest",
+      "origin"
+    ],
+    "interesting_score": 13.0,
+    "ai_analysis": {
+      "primary_emotion": "candid",
+      "emotion_intensity": 4.0,
+      "emotions": {
+        "candid": 4.5,
+        "historic": 4.0,
+        "humorous": 3.0
+      },
+      "technical_context": "Scheifler's admission: X was built on W Window System code, key change was async over sync protocol — 2x performance gain.",
+      "human_story": "Rare moment of academic honesty. The async change was the real innovation."
+    },
+    "appraiser_note": "「Wからかなりのコードを盗んだ」——ScheiflerのX発表時の発言。非同期化が本当のイノベーション。正直すぎる告白。"
   }
 ]

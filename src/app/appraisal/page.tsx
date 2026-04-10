@@ -241,6 +241,13 @@ const PUBLISHED_ARTICLES = [
     language: "FORTRAN II + GE-235 Assembly",
     year: 1964,
   },
+  {
+    number: "62",
+    title: "鑑定書#062 X Window System — 仕組みを提供する、ポリシーは提供しない",
+    url: null,
+    language: "C",
+    year: 1984,
+  },
 ];
 
 export default function AppraisalPage() {
