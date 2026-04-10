@@ -248,6 +248,16 @@ Forth言語の歴史（1968年の望遠鏡制御）からMako VM（2010年代の
 
 ---
 
+## スクリーンショット
+
+![Mako VM メイン画面](images/mako_main.png)
+
+![ROM アップロード画面](images/mako_rom_upload.png)
+
+![テスト ROM 実行](images/mako_test_rom.png)
+
+---
+
 ## 鑑定人所見
 
 Mako VMは「引き算の芸術」だ。
