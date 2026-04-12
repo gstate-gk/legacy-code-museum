@@ -248,6 +248,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1984,
   },
+  {
+    number: "63",
+    title: "鑑定書#063 AWK — 3人の頭文字がPerlを生んだ、48年現役の1行言語",
+    url: null,
+    language: "C + yacc",
+    year: 1977,
+  },
 ];
 
 export default function AppraisalPage() {

@@ -6717,5 +6717,74 @@
       "human_story": "Rare moment of academic honesty. The async change was the real innovation."
     },
     "appraiser_note": "「Wからかなりのコードを盗んだ」——ScheiflerのX発表時の発言。非同期化が本当のイノベーション。正直すぎる告白。"
+  },
+  {
+    "id": "awk-001-pastat",
+    "repo_name": "onetrueawk/awk",
+    "language": "C (yacc)",
+    "year": 1977,
+    "file_path": "awkgram.y",
+    "line_number": 85,
+    "text": "pa_stat:\n  pa_pat { 12310 = stat2(PASTAT, , stat2(PRINT, rectonode(), NIL)); }\n  | pa_pat lbrace stmtlist '}'  { 12310 = stat2(PASTAT, , ); }\n  | lbrace stmtlist '}'       { 12310 = stat2(PASTAT, NIL, ); }",
+    "tags": [
+      "pattern-action",
+      "language-design",
+      "yacc"
+    ],
+    "ai_analysis": {
+      "interpretation": "AWKの全プログラムはこのpa_stat（Pattern-Action Statement）の連なりに過ぎない。パターン単独ならデフォルトでprint、アクション単独なら全行適用——最小の文法で最大の表現力を実現している。",
+      "emotions": {
+        "elegance": 5,
+        "minimalism": 5,
+        "insight": 4
+      }
+    },
+    "appraiser_note": "3行の文法定義が、47年間使われ続けるパラダイムを定義した。「条件があれば処理、なければ全行」——これ以上削れない。"
+  },
+  {
+    "id": "awk-002-subsep",
+    "repo_name": "onetrueawk/awk",
+    "language": "C",
+    "year": 1977,
+    "file_path": "tran.c",
+    "line_number": 54,
+    "text": "subseploc = setsymtab(SUBSEP, 034, 0.0, STR|DONTFREE, symtab);\nSUBSEP = &subseploc->sval;\n/* subscript separator for a[i,j,k]; default \u001c */",
+    "tags": [
+      "associative-array",
+      "hack",
+      "ascii"
+    ],
+    "ai_analysis": {
+      "interpretation": "AWKには本来の多次元配列がない。a[i,j]は内部でa[i SUBSEP j]という文字列連結に変換される。\u001c（ASCII文字列分離符）は通常テキストに現れない制御文字——1977年の実用主義的ハックが今も動いている。",
+      "emotions": {
+        "pragmatism": 5,
+        "cleverness": 4,
+        "simplicity": 4
+      }
+    },
+    "appraiser_note": "多次元配列を「制御文字による文字列連結」で実現する。制約から生まれた発明で、今日のPythonの辞書型の遠い先祖。"
+  },
+  {
+    "id": "awk-003-cell",
+    "repo_name": "onetrueawk/awk",
+    "language": "C",
+    "year": 1977,
+    "file_path": "awk.h",
+    "line_number": 55,
+    "text": "typedef struct Cell {\n    uschar    ctype;   /* OCELL, OBOOL, OJUMP, etc. */\n    char     *sval;    /* string value */\n    Awkfloat  fval;    /* value as number */\n    int       tval;    /* type info: STR|NUM|ARR|FCN|FLD|CON */\n} Cell;",
+    "tags": [
+      "type-system",
+      "dynamic-typing",
+      "design"
+    ],
+    "ai_analysis": {
+      "interpretation": "AWKのすべての値はこのCell構造体で表現される。sval（文字列）とfval（数値）を同時に保持し、コンテキストで自動変換する。「型」という概念を意識させない1977年のシェル世界観がここに結晶化されている。",
+      "emotions": {
+        "pragmatism": 4,
+        "insight": 4,
+        "simplicity": 3
+      }
+    },
+    "appraiser_note": "文字列でも数値でもある——この曖昧さが1行でログを集計できる柔軟性を生んだ。Pythonのダック・タイピングの先祖がここにいる。"
   }
 ]
