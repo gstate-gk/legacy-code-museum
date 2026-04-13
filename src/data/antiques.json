@@ -7068,5 +7068,74 @@
       }
     },
     "appraiser_note": "g/.../dのn^2回避がコメント付きでインライン実装されている。1969年に既にプロファイリングして最適化していた。そしてこのglobal()関数こそが「grep」の概念の産室——g/re/pはここにある。"
+  },
+  {
+    "id": "dc-001-blk-base100",
+    "repo_name": "dspinellis/unix-history-repo",
+    "language": "C",
+    "year": 1969,
+    "file_path": "usr/src/cmd/dc/dc.h",
+    "line_number": 1,
+    "text": "struct blk {\n\tchar *rd;\n\tchar *wt;\n\tchar *beg;\n\tchar *last;\n};\n#define sgetc(p)  (((p)->rd==(p)->wt)?EOF:*(p)->rd++)\n#define sbackc(p) (((p)->rd==(p)->beg)?EOF:*(--(p)->rd))\n#define sputc(p,c) {if((p)->wt==(p)->last)more(p); *(p)->wt++ = c; }",
+    "tags": [
+      "data-structure",
+      "arbitrary-precision",
+      "base-100"
+    ],
+    "ai_analysis": {
+      "interpretation": "dcの任意精度演算の核。struct blkは4つのポインタで双方向シークを実現するバイトバッファ。数値はbase-100（1バイト=2十進桁）でリトルエンディアンに格納。sgetc/sbackcで前後双方向に走査。dc.hはほぼ全体がこの構造体を操作するマクロ群で構成される。1969年のビッグナム実装。",
+      "emotions": {
+        "elegance": 4,
+        "cleverness": 5,
+        "historical": 5
+      }
+    },
+    "appraiser_note": "base-100という選択が面白い。1バイトに2十進桁を詰め込み、桁を越えたとき繰り上がりは100で割る。sgetc/sbackcの双方向ポインタが加算（下位から）と除算（上位から）を同じ構造で処理できる。"
+  },
+  {
+    "id": "dc-002-macro-turing",
+    "repo_name": "dspinellis/unix-history-repo",
+    "language": "C",
+    "year": 1969,
+    "file_path": "usr/src/cmd/dc/dc.c",
+    "line_number": 497,
+    "text": "case '[':\n    n = 0;\n    p = salloc(0);\n    while(1){\n        if((c = readc()) == ']'){\n            if(n == 0)break;\n            n--;\n        }\n        sputc(p,c);\n        if(c == '[')n++;  /* 入れ子カウント */\n    }\n    pushp(p);  /* 文字列をスタックに積む */",
+    "tags": [
+      "macro",
+      "turing-complete",
+      "meta-programming"
+    ],
+    "ai_analysis": {
+      "interpretation": "[...]で文字列をスタックに積み、xで実行するマクロ機構。入れ子ブラケットを正しく処理する。</>=/!=条件付き実行と組み合わせるとループ・分岐・再帰が可能。readstk[100]が100レベルのコールスタック。dcは1969年にチューリング完全だった。",
+      "emotions": {
+        "cleverness": 5,
+        "surprise": 4,
+        "historical": 5
+      }
+    },
+    "appraiser_note": "[フィボナッチ計算dc]とxで再帰が書ける。1969年の電卓がプログラミング言語だった。単なるRPN計算機でなく、bcはこの上にyacc文法で中置記法を被せただけ。"
+  },
+  {
+    "id": "dc-003-Y-debug",
+    "repo_name": "dspinellis/unix-history-repo",
+    "language": "C",
+    "year": 1969,
+    "file_path": "usr/src/cmd/dc/dc.c",
+    "line_number": 36,
+    "text": "case 'Y':\n    sdump(\"stk\",*stkptr);\n    printf(\"all %ld rel %ld headmor %ld\n\",all,rel,headmor);\n    printf(\"nbytes %ld\n\",nbytes);\n    continue;",
+    "tags": [
+      "debug",
+      "undocumented",
+      "memory"
+    ],
+    "ai_analysis": {
+      "interpretation": "大文字Yはドキュメント外のデバッグコマンド。スタックダンプと、all（総確保バイト）、rel（解放バイト）、headmor（ヒープ拡張回数）、nbytes（現在バイト数）を出力する。1969年のメモリデバッガがコマンドとして55年間残り続けている。",
+      "emotions": {
+        "nostalgia": 5,
+        "humor": 3,
+        "historical": 5
+      }
+    },
+    "appraiser_note": "大文字Yを入力するとメモリ状態が全部出てくる。ドキュメントに載っていない。1969年に開発者がデバッグ用に入れたコマンドが削除されずに現代まで生き残っている。"
   }
 ]

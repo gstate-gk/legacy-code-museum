@@ -283,6 +283,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1969,
   },
+  {
+    number: "68",
+    title: "鑑定書#068 dc — bcより古い、1969年のRPN電卓とチューリング完全マクロ",
+    url: null,
+    language: "C",
+    year: 1969,
+  },
 ];
 
 export default function AppraisalPage() {
