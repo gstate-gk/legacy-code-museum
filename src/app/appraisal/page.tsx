@@ -262,6 +262,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "65",
+    title: "鑑定書#065 grep — 一晩で書かれた道具、動詞になった名前",
+    url: null,
+    language: "C",
+    year: 1973,
+  },
 ];
 
 export default function AppraisalPage() {

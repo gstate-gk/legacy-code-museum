@@ -6858,5 +6858,76 @@
       }
     },
     "appraiser_note": "パイプラインとリダイレクトの実装がIF...THEN...FIで書かれている。Algolの構文でUnixのパイプを実装した唯一の男。"
+  },
+  {
+    "id": "grep-001-opcodes",
+    "repo_name": "dspinellis/unix-history-repo",
+    "language": "C",
+    "year": 1973,
+    "file_path": "usr/src/cmd/grep.c",
+    "line_number": 13,
+    "text": "#define CBRA\t1\n#define CCHR\t2\n#define CDOT\t4\n#define CCL\t6\n#define CDOL\t10\n#define CEOF\t11\n#define CBACK\t18\n\n#define STAR\t01\t/* ORして「0回以上」 */",
+    "tags": [
+      "regex",
+      "bytecode",
+      "design",
+      "1bit-flag"
+    ],
+    "ai_analysis": {
+      "interpretation": "STARは独立したopcodeではなく他のopcodeに1ビットORするだけ——CCHR|STAR=3、CDOT|STAR=5。1バイトに命令と修飾子の2情報を詰める設計。1973年のメモリ制約がデザインを決定した。",
+      "emotions": {
+        "elegance": 5,
+        "constraint": 4,
+        "cleverness": 5
+      }
+    },
+    "appraiser_note": "1ビットORで0回以上の繰り返しを表現する。メモリが貴重だった1973年の設計が、美しい直交性を生んだ。"
+  },
+  {
+    "id": "grep-002-advance-star",
+    "repo_name": "dspinellis/unix-history-repo",
+    "language": "C",
+    "year": 1973,
+    "file_path": "usr/src/cmd/grep.c",
+    "line_number": 235,
+    "text": "case CDOT|STAR:\n\tcurlp = lp;\n\twhile (*lp++);\n\tgoto star;\n\ncase CCHR|STAR:\n\tcurlp = lp;\n\twhile (*lp++ == *ep);\n\tep++;\n\tgoto star;\n\nstar:\n\tdo {\n\t\tif (advance(lp, ep))\n\t\t\treturn(1);\n\t} while (lp-- > curlp);\n\treturn(0);",
+    "tags": [
+      "regex",
+      "backtracking",
+      "goto",
+      "greedy"
+    ],
+    "ai_analysis": {
+      "interpretation": "3つのSTARケースが「goto star」で合流する。最長マッチしてから右へ後退——greedy + backtracking。gotoが共通処理の重複を避ける。1973年の設計が現代の正規表現エンジンと同じアルゴリズムを実装している。",
+      "emotions": {
+        "cleverness": 5,
+        "efficiency": 4,
+        "historical_weight": 5
+      }
+    },
+    "appraiser_note": "goto starで3ケースを束ねる。1973年に書かれた貪欲マッチ + バックトラックは、現代の正規表現エンジンと本質的に同じだ。"
+  },
+  {
+    "id": "grep-003-yflag",
+    "repo_name": "dspinellis/unix-history-repo",
+    "language": "C",
+    "year": 1973,
+    "file_path": "usr/src/cmd/grep.c",
+    "line_number": 75,
+    "text": "} else if (islower(*p)) {\n\t*s++ = '[';\n\t*s++ = toupper(*p);  /* 'a' → '[Aa]' */\n\t*s++ = *p++;\n\t*s++ = ']';\n}",
+    "tags": [
+      "case-insensitive",
+      "hack",
+      "regex-transform"
+    ],
+    "ai_analysis": {
+      "interpretation": "大文字小文字無視（-yフラグ）をエンジン改修なしで実現する方法：パターンをコンパイル前に変換する。'hello'を'[Hh][Ee][Ll][Ll][Oo]'に変換してから通常コンパイル。エンジンに触れずに機能を追加する実用主義。",
+      "emotions": {
+        "pragmatism": 5,
+        "cleverness": 4,
+        "simplicity": 5
+      }
+    },
+    "appraiser_note": "大文字小文字無視をエンジン改修ゼロで実現。パターンを事前変換するだけ。1973年のハックが今日も通じる発想だ。"
   }
 ]
