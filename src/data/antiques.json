@@ -6929,5 +6929,74 @@
       }
     },
     "appraiser_note": "大文字小文字無視をエンジン改修ゼロで実現。パターンを事前変換するだけ。1973年のハックが今日も通じる発想だ。"
+  },
+  {
+    "id": "diff-001-algorithm-comment",
+    "repo_name": "dspinellis/unix-history-repo",
+    "language": "C",
+    "year": 1974,
+    "file_path": "usr/src/cmd/diff.c",
+    "line_number": 1,
+    "text": "The cleverness lies in routine stone. This marches through the lines of file0, developing a vector klist of \"k-candidates\". At step i a k-candidate is a matched pair of lines x,y such that there is a common subsequence of length k between the first i lines of file0 and the first y lines of file1, but there is no such subsequence for any smaller y.",
+    "tags": [
+      "algorithm",
+      "documentation",
+      "unix"
+    ],
+    "ai_analysis": {
+      "interpretation": "1974年のdiff.cの冒頭コメント。Harold Stoneのk候補法（最長共通部分列）を完全に説明している。「The cleverness lies in routine stone」——アルゴリズムの核心を一文で指摘。Unix源コードの中で最高水準のアルゴリズム文書化の一つ。",
+      "emotions": {
+        "elegance": 5,
+        "clarity": 5,
+        "historical": 5
+      }
+    },
+    "appraiser_note": "50行のコメントでアルゴリズム全体を説明している。「The cleverness lies in routine stone」という一文が秀逸。コードを書いた人間がどこに美しさがあるかを知っていた。git diffの祖先にふさわしいドキュメント。"
+  },
+  {
+    "id": "diff-002-stone-pred-chain",
+    "repo_name": "dspinellis/unix-history-repo",
+    "language": "C",
+    "year": 1974,
+    "file_path": "usr/src/cmd/diff.c",
+    "line_number": 75,
+    "text": "struct cand {\n\tint x;\n\tint y;\n\tint pred;\n} cand;\n/* ... */\nif(clist[c[k]].y<y)\t/*quick look for typical case*/\n\treturn(k+1);",
+    "tags": [
+      "data-structure",
+      "optimization",
+      "lcs"
+    ],
+    "ai_analysis": {
+      "interpretation": "k候補構造体のpredフィールドが経路復元の鍵。各候補はk-1候補をpredで指す連鎖構造。search()の「quick look for typical case」はk+1返却のO(1)ショートカット——末尾追加が最も頻繁なケースという洞察。",
+      "emotions": {
+        "cleverness": 5,
+        "elegance": 4,
+        "pragmatism": 5
+      }
+    },
+    "appraiser_note": "predフィールドによる連鎖がunravel()でLCS全体を復元する。「quick look for typical case」のコメントが実データへの洞察を示している。1974年のO(1)マイクロ最適化。"
+  },
+  {
+    "id": "diff-003-jackpot",
+    "repo_name": "dspinellis/unix-history-repo",
+    "language": "C",
+    "year": 1974,
+    "file_path": "usr/src/cmd/diff.c",
+    "line_number": 440,
+    "text": "jackpot = 0;\n/* ... */\nif(c!=d) {\n    jackpot++;\n    J[i] = 0;\n    /* ... */\n}\n/*\n    if(jackpot)\n        mesg(\"jackpot\",empty);\n*/",
+    "tags": [
+      "naming",
+      "hash-collision",
+      "commented-out"
+    ],
+    "ai_analysis": {
+      "interpretation": "ハッシュ衝突による偽マッチを検出する変数名がjackpot。スロットマシンの「当たり」——しかし本物ではない。診断メッセージはコメントアウトされたが変数名は残った。コメントによれば「a harmless matter」。",
+      "emotions": {
+        "humor": 4,
+        "nostalgia": 4,
+        "poetry": 5
+      }
+    },
+    "appraiser_note": "jackpotという命名が詩的。偽の当たり——ハッシュは一致したが内容は違う。診断メッセージはコメントアウトされて消えたが、変数名だけが生き残った。50年後のgit diffにもこのDNAが流れている。"
   }
 ]

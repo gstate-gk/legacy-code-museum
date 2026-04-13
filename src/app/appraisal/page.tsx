@@ -269,6 +269,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1973,
   },
+  {
+    number: "66",
+    title: "鑑定書#066 diff — jackpot、git diffの祖先、1974年の645行",
+    url: null,
+    language: "C",
+    year: 1974,
+  },
 ];
 
 export default function AppraisalPage() {
