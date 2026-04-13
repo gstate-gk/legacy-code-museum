@@ -6786,5 +6786,77 @@
       }
     },
     "appraiser_note": "文字列でも数値でもある——この曖昧さが1行でログを集計できる柔軟性を生んだ。Pythonのダック・タイピングの先祖がここにいる。"
+  },
+  {
+    "id": "bourne-shell-001-mac-h",
+    "repo_name": "dspinellis/unix-history-repo",
+    "language": "C",
+    "year": 1979,
+    "file_path": "usr/src/cmd/sh/mac.h",
+    "line_number": 1,
+    "text": "#define IF    if(\n#define THEN  ){\n#define ELSE  } else {\n#define FI    ;}\n\n#define WHILE while(\n#define DO    ){\n#define OD    ;}\n\n#define ANDF  &&\n#define ORF   ||",
+    "tags": [
+      "algol",
+      "macros",
+      "style",
+      "c"
+    ],
+    "ai_analysis": {
+      "interpretation": "Steve BourneはAlgol 68の実装者だった。Cで書いたシェルにもAlgolの構文をマクロで持ち込んだ。28行のヘッダーがコード全体の文体を決定する——IF...THEN...FIで書かれたCは、Cコンパイラには通常コードに見えるが人間にはAlgolに見える。",
+      "emotions": {
+        "strangeness": 5,
+        "authenticity": 5,
+        "elegance": 3
+      }
+    },
+    "appraiser_note": "プログラマーの出自が言語設計に滲み出た最も純粋な例。28行のマクロが、Cで書かれたAlgolを生んだ。"
+  },
+  {
+    "id": "bourne-shell-002-namnod",
+    "repo_name": "dspinellis/unix-history-repo",
+    "language": "C",
+    "year": 1979,
+    "file_path": "usr/src/cmd/sh/name.h",
+    "line_number": 14,
+    "text": "struct namnod {\n\tNAMPTR\tnamlft;\n\tNAMPTR\tnamrgt;\n\tSTRING\tnamid;\n\tSTRING\tnamval;\n\tSTRING\tnamenv;\n\tINT\tnamflg;\n};",
+    "tags": [
+      "variables",
+      "bst",
+      "environment",
+      "design"
+    ],
+    "ai_analysis": {
+      "interpretation": "シェル変数を二分探索木で管理する設計。N_EXPORTフラグでexportをモデル化し、namenvで環境変数コピーを保持する。$PATH、$HOMEはここで初めて定義された——今日すべてのLinuxユーザーが使う変数の起源。",
+      "emotions": {
+        "insight": 4,
+        "pragmatism": 4,
+        "historical_weight": 5
+      }
+    },
+    "appraiser_note": "$PATH、$HOME、$PS1はここで初めて定義された。1979年の二分探索木が、45年後のすべてのシェルで動いている。"
+  },
+  {
+    "id": "bourne-shell-003-execute",
+    "repo_name": "dspinellis/unix-history-repo",
+    "language": "C",
+    "year": 1979,
+    "file_path": "usr/src/cmd/sh/xec.c",
+    "line_number": 22,
+    "text": "execute(argt, execflg, pf1, pf2)\n\tTREPTR\t\targt;\n\tINT\t\t*pf1, *pf2;\n{\n\tIF (t=argt) ANDF execbrk==0\n\tTHEN\tSWITCH type IN\n\n\t\tcase TCOM:\n\t\t\tIF argn ANDF (flags&noexec)==0\n\t\t\tTHEN execute...\n\t\t\tFI\n\tFI\n}",
+    "tags": [
+      "execution",
+      "algol-style",
+      "pipeline",
+      "shell"
+    ],
+    "ai_analysis": {
+      "interpretation": "コマンド実行エンジンの核心。IF...THEN...FIで書かれたCが、パイプライン・リダイレクト・組み込みコマンドの分岐を処理する。TREPTRはコマンドツリーへのポインタ——全コマンドは木構造で表現され実行される。",
+      "emotions": {
+        "clarity": 4,
+        "strangeness": 5,
+        "functionality": 5
+      }
+    },
+    "appraiser_note": "パイプラインとリダイレクトの実装がIF...THEN...FIで書かれている。Algolの構文でUnixのパイプを実装した唯一の男。"
   }
 ]

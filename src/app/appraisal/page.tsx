@@ -255,6 +255,13 @@ const PUBLISHED_ARTICLES = [
     language: "C + yacc",
     year: 1977,
   },
+  {
+    number: "64",
+    title: "鑑定書#064 Bourne Shell — Cで書いたAlgol、45年後も/bin/shに宿る",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
