@@ -7137,5 +7137,60 @@
       }
     },
     "appraiser_note": "大文字Yを入力するとメモリ状態が全部出てくる。ドキュメントに載っていない。1969年に開発者がデバッグ用に入れたコマンドが削除されずに現代まで生き残っている。"
+  },
+  {
+    "id": "sed-001-opcode-dna",
+    "era": "1974",
+    "language": "C",
+    "source": "Bell-32V Unix (1979)",
+    "repository": "dspinellis/unix-history-repo",
+    "file": "usr/src/cmd/sed/sed.h",
+    "lines": "1-10",
+    "code": "#define CBRA\t1\n#define\tCCHR\t2\n#define\tCDOT\t4\n#define\tCCL\t6\n#define\tCEOF\t11\n#define\tSTAR\t01",
+    "note": "ed.c（1969年）・grep.c（1973年）と完全に同じ数値。正規表現エンジンのDNAが3世代にわたって直接継承されている。",
+    "tags": [
+      "regex",
+      "unix",
+      "bell-labs",
+      "sed",
+      "dna"
+    ]
+  },
+  {
+    "id": "sed-002-holdsp",
+    "era": "1974",
+    "language": "C",
+    "source": "Bell-32V Unix (1979)",
+    "repository": "dspinellis/unix-history-repo",
+    "file": "usr/src/cmd/sed/sed.h",
+    "lines": "30-33",
+    "code": "char\tlinebuf[LBSIZE+1];   /* パターンスペース：現在行 */\nchar\tholdsp[LBSIZE+1];    /* ホールドスペース：補助記憶 */",
+    "note": "grepにはない補助バッファ。h/H/g/G/xコマンドで操作。b/tによる分岐と組み合わさり、sedはチューリング完全なストリーム処理言語になった。",
+    "tags": [
+      "streaming",
+      "state",
+      "unix",
+      "bell-labs",
+      "sed",
+      "turing-complete"
+    ]
+  },
+  {
+    "id": "sed-003-ycomp",
+    "era": "1974",
+    "language": "C",
+    "source": "Bell-32V Unix (1979)",
+    "repository": "dspinellis/unix-history-repo",
+    "file": "usr/src/cmd/sed/sed0.c",
+    "lines": "460-475",
+    "code": "while((c = *sp++ & 0177) != seof) {\n    ep[c] = *tsp++;   /* 変換テーブルを構築 */\n}\nfor(c = 0; !(c & 0200); c++)\n    if(ep[c] == 0)\n        ep[c] = c;    /* 変換なしは自分自身 */\nreturn(ep + 0200);   /* 256バイトのテーブルを返す */",
+    "note": "y/abc/xyz/ コマンドの実装。256バイトの配列が変換テーブルそのもの。実行は while(*p1 = p2[*p1]) p1++ の1行。",
+    "tags": [
+      "transliteration",
+      "lookup-table",
+      "unix",
+      "bell-labs",
+      "sed"
+    ]
   }
 ]

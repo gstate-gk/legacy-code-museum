@@ -290,6 +290,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1969,
   },
+  {
+    number: "69",
+    title: "鑑定書#069 sed — edの子、grepの兄弟、holdspaceで記憶を持った1974年のストリームエディタ",
+    url: null,
+    language: "C",
+    year: 1974,
+  },
 ];
 
 export default function AppraisalPage() {
