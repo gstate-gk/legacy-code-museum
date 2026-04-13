@@ -276,6 +276,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1974,
   },
+  {
+    number: "67",
+    title: "鑑定書#067 ed — すべての正規表現は1969年から、g/re/pの産室",
+    url: null,
+    language: "C",
+    year: 1969,
+  },
 ];
 
 export default function AppraisalPage() {

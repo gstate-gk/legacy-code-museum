@@ -6998,5 +6998,75 @@
       }
     },
     "appraiser_note": "jackpotという命名が詩的。偽の当たり——ハッシュは一致したが内容は違う。診断メッセージはコメントアウトされて消えたが、変数名だけが生き残った。50年後のgit diffにもこのDNAが流れている。"
+  },
+  {
+    "id": "ed-001-star-opcode-origin",
+    "repo_name": "dspinellis/unix-history-repo",
+    "language": "C",
+    "year": 1969,
+    "file_path": "usr/src/cmd/ed.c",
+    "line_number": 16,
+    "text": "#define CBRA  1\n#define CCHR  2\n#define CDOT  4\n#define CCL   6\n#define CDOL 10\n#define CEOF 11\n#define STAR 01\n/* ... */\ncase '*':\n    *lastep |= STAR;  /* 直前のopcodeにSTARビットをOR */",
+    "tags": [
+      "regex",
+      "opcode",
+      "inheritance",
+      "unix"
+    ],
+    "ai_analysis": {
+      "interpretation": "1969年のedで生まれたopcode定義。STAR=01（8進数1）を他のopcodeにORするトリックはここが起源。4年後grep（1973）が、翌年sed（1974）がこの定数をそのまま引き継いだ。CCHR|STAR=3、CDOT|STAR=5——1ビットに2つの情報を詰め込む設計が三世代生き続けた。",
+      "emotions": {
+        "historical": 5,
+        "elegance": 5,
+        "inheritance": 5
+      }
+    },
+    "appraiser_note": "grep.cのSTAR=01を見たとき既視感があった。sed.hも同じ。答えはed.cにあった——1969年にThompsonが定義した定数がgrep、sedにそのまま引き継がれている。三世代53年の継承。"
+  },
+  {
+    "id": "ed-002-error-Q-empty",
+    "repo_name": "dspinellis/unix-history-repo",
+    "language": "C",
+    "year": 1969,
+    "file_path": "usr/src/cmd/ed.c",
+    "line_number": 28,
+    "text": "char Q[] = \"\";\n/* ... */\nerror(s)\nchar *s;\n{\n    putchr('?');\n    puts(s);\n    longjmp(savej, 1);\n}",
+    "tags": [
+      "error-handling",
+      "minimalism",
+      "unix-philosophy"
+    ],
+    "ai_analysis": {
+      "interpretation": "edの有名な「?」エラーの実装。Q=\"\"（空文字列）にQという変数名をつけ、error(Q)は「?」と空文字列を出力する——結果は「?」だけ。ソース中60回以上登場。エラー詳細を教えないという1969年の設計哲学。longjmpでmainのsetjmpに戻る例外処理も同時に実装。",
+      "emotions": {
+        "minimalism": 5,
+        "humor": 3,
+        "philosophy": 5
+      }
+    },
+    "appraiser_note": "char Q[] = \"\" ——空文字列にQという名前をつけた謎が解けた。error(Q)は「?」+空文字列=「?」だけ。edが何も教えてくれない理由はここにある。60回以上同じ1行で。"
+  },
+  {
+    "id": "ed-003-global-grep-origin",
+    "repo_name": "dspinellis/unix-history-repo",
+    "language": "C",
+    "year": 1969,
+    "file_path": "usr/src/cmd/ed.c",
+    "line_number": 980,
+    "text": "/*\n * Special case: g/.../d (avoid n^2 algorithm)\n */\nif (globuf[0]=='d' && globuf[1]=='\n' && globuf[2]=='\u0000') {\n    gdelete();\n    return;\n}",
+    "tags": [
+      "optimization",
+      "global",
+      "grep-origin"
+    ],
+    "ai_analysis": {
+      "interpretation": "global()関数の中のインライン最適化。g/.../d（全マッチ行を削除）がO(n^2)になるケースを特別扱い。1969年のプロファイリング結果がコメントとして残っている。この関数自体がgrepの概念的起源——マッチした行にフラグを立てて順に処理する構造がgrep(1973)に受け継がれた。",
+      "emotions": {
+        "pragmatism": 5,
+        "historical": 5,
+        "cleverness": 4
+      }
+    },
+    "appraiser_note": "g/.../dのn^2回避がコメント付きでインライン実装されている。1969年に既にプロファイリングして最適化していた。そしてこのglobal()関数こそが「grep」の概念の産室——g/re/pはここにある。"
   }
 ]
