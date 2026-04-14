@@ -7246,5 +7246,60 @@
       "yacc",
       "lalr"
     ]
+  },
+  {
+    "id": "bc-001-fork-pipe-exec",
+    "era": "1975",
+    "language": "C + yacc",
+    "source": "Bell-32V Unix (1979)",
+    "repository": "dspinellis/unix-history-repo",
+    "file": "usr/src/cmd/bc.y",
+    "lines": "270-290",
+    "code": "pipe(p);\nif (fork()==0) {\n    close(1); dup(p[1]);\n    yyparse();   /* bcコードをdcコードに変換してパイプへ */\n    exit();\n}\nclose(0); dup(p[0]);\nexecl(\"/bin/dc\", \"dc\", \"-\", 0);  /* 親がdcになる */",
+    "note": "bcはfork+pipe+execlで2プロセスに分裂する。子プロセスがyacc文法でbcコードを解析してdcコードをパイプに書き出し、親プロセスがdcになって実行する。bcは一瞬も計算しない。",
+    "tags": [
+      "architecture",
+      "unix",
+      "bell-labs",
+      "bc",
+      "pipe",
+      "fork"
+    ]
+  },
+  {
+    "id": "bc-002-bundle-codetree",
+    "era": "1975",
+    "language": "C + yacc",
+    "source": "Bell-32V Unix (1979)",
+    "repository": "dspinellis/unix-history-repo",
+    "file": "usr/src/cmd/bc.y",
+    "lines": "220-240",
+    "code": "bundle(a){\n    int i, *p, *q;\n    p = &a; i = *p++;\n    q = b_sp_nxt;\n    while(i-- > 0) *b_sp_nxt++ = *p++;\n    *b_sp_nxt++ = 0;\n    yyval = q;\n    return(q);\n}",
+    "note": "コード生成の核心。bundle(3,$1,$3,\"+\")で式a+bをdc命令列\"a b +\"に変換するポインタツリーを構築する。b_space[]内のアドレスなら別のbundle、そうでなければリテラルdcコマンド文字列。",
+    "tags": [
+      "codegen",
+      "compiler",
+      "bell-labs",
+      "bc",
+      "yacc"
+    ]
+  },
+  {
+    "id": "bc-003-comparison-reversal",
+    "era": "1975",
+    "language": "C + yacc",
+    "source": "Bell-32V Unix (1979)",
+    "repository": "dspinellis/unix-history-repo",
+    "file": "usr/src/cmd/bc.y",
+    "lines": "115-125",
+    "code": "re  :  e EQ e  = bundle(3, $1, $3, \"=\" );\n    |  e '<' e = bundle(3, $1, $3, \">\" );  /* bcの < -> dcの > */\n    |  e '>' e = bundle(3, $1, $3, \"<\" );  /* bcの > -> dcの < */\n    |  e GE e  = bundle(3, $1, $3, \"!>\" );\n    |  e LE e  = bundle(3, $1, $3, \"!<\" );",
+    "note": "bcの比較演算子は文法レベルで反転する。dcはLIFOスタックのためプッシュ順序が逆転するが、bcコンパイラがこれを透明に補正する。ユーザーは< >と書けばよい。",
+    "tags": [
+      "compiler",
+      "design",
+      "bell-labs",
+      "bc",
+      "stack"
+    ]
   }
 ]

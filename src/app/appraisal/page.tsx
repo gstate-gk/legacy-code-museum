@@ -304,6 +304,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1975,
   },
+  {
+    number: "71",
+    title: "鑑定書#071 bc.y — yacc文法1枚が生んだ2プロセスJIT、パイプ越しにdcを動かす300行のコンパイラ",
+    url: null,
+    language: "C + yacc",
+    year: 1975,
+  },
 ];
 
 export default function AppraisalPage() {
