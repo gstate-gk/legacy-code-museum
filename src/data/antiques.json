@@ -7192,5 +7192,59 @@
       "bell-labs",
       "sed"
     ]
+  },
+  {
+    "id": "yacc-001-ratfor-dead",
+    "era": "1975",
+    "language": "C",
+    "source": "Bell-32V Unix (1979)",
+    "repository": "dspinellis/unix-history-repo",
+    "file": "usr/src/cmd/yacc/yaccnews",
+    "lines": "1-5",
+    "code": "5/18/78\n***  Ratfor and EFL Yacc are dead.  Long live C!",
+    "note": "1978年5月、RatforとEFLのyacc廃止を告げるリリースノート。Bell LabsがCを中心言語に据えた瞬間の一次資料。y2.cにはerror(\"Ratfor Yacc is dead: sorry...\n\")が今も残る。",
+    "tags": [
+      "historical",
+      "bell-labs",
+      "yacc",
+      "ratfor",
+      "c-language"
+    ]
+  },
+  {
+    "id": "yacc-002-dollar-a-template",
+    "era": "1975",
+    "language": "C",
+    "source": "Bell-32V Unix (1979)",
+    "repository": "dspinellis/unix-history-repo",
+    "file": "usr/src/cmd/yacc/yaccpar",
+    "lines": "85-90",
+    "code": "    switch(yym){\n        \n    }\n    goto yystack;  /* stack new state and value */",
+    "note": "yaccが生成するC関数のテンプレート。はすべてのユーザーアクションのプレースホルダーでyacc生成時に置換される。LALRパーサのyystack:/yynewstate:/yydefault:ラベルが解析の全状態遷移を実装する。",
+    "tags": [
+      "metaprogramming",
+      "template",
+      "bell-labs",
+      "yacc",
+      "lalr"
+    ]
+  },
+  {
+    "id": "yacc-003-ntbase-encoding",
+    "era": "1975",
+    "language": "C",
+    "source": "Bell-32V Unix (1979)",
+    "repository": "dspinellis/unix-history-repo",
+    "file": "usr/src/cmd/yacc/dextern",
+    "lines": "5-8",
+    "code": "/* base of nonterminal internal numbers */\n# define NTBASE 010000\n\n# define ERRCODE  8190\n# define ACCEPTCODE 8191",
+    "note": "NTBASE=010000(8進=10進4096)。終端記号は1〜127、非終端記号はNTBASE以上。単一のintで終端/非終端を区別する。ERRCODEとACCEPTCODEが特殊アクションを表す。",
+    "tags": [
+      "encoding",
+      "design",
+      "bell-labs",
+      "yacc",
+      "lalr"
+    ]
   }
 ]

@@ -297,6 +297,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1974,
   },
+  {
+    number: "70",
+    title: "鑑定書#070 yacc — コンパイラを生むコンパイラ、AWK/bc/Perlを産んだメタツール",
+    url: null,
+    language: "C",
+    year: 1975,
+  },
 ];
 
 export default function AppraisalPage() {
