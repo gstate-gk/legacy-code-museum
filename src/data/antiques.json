@@ -7535,5 +7535,41 @@
     "description": "lint.cの-pフラグ用サイズ定数。SZCHAR=8、SZINT=16（PDP-11の16ビットint）、SZFLOAT=32等を定義。コードが別のマシンに移ると壊れるという問題を静的解析ツールに組み込んだ最初の実装。",
     "code": "/* these are appropriate for the -p flag */\nint  SZCHAR = 8;\nint  SZINT = 16;\nint  SZFLOAT = 32;\nint  SZDOUBLE = 64;\nint  SZLONG = 32;\nint  SZSHORT = 16;\nint SZPOINT = 16;",
     "appraisal": 75
+  },
+  {
+    "id": "pcc-001-asg-unary-macros",
+    "title": "ASG 1+ / UNARY 2+ ——マクロを前置演算子として使う記法",
+    "source": "manifest",
+    "year": 1977,
+    "language": "C",
+    "project": "pcc",
+    "category": "language_design",
+    "description": "manifest の #define ASG 1+ / #define UNARY 2+ はマクロを前置演算子として機能させる。ASG PLUS = 1+PLUS、UNARY MUL = 2+MUL。二項・代入・単項演算子を連続した番号空間に配置し、switch文のcaseを読みやすくする1977年のC言語の極技。",
+    "code": "#define ASG    1+\n#define UNARY  2+\n#define NOASG  (-1)+\n#define NOUNARY (-2)+\n\n/* 使用例 */\ncase UNARY MUL:  /* 間接参照 * */\ncase ASG PLUS:   /* += */",
+    "appraisal": 76
+  },
+  {
+    "id": "pcc-002-tword-incref",
+    "title": "INCREF/DECREF——2ビットシフトで型修飾子を積み重ねるTWORD",
+    "source": "manifest",
+    "year": 1977,
+    "language": "C",
+    "project": "pcc",
+    "category": "type_system",
+    "description": "unsigned int 1つ（TWORD）に型修飾子（PTR/FTN/ARY）を2ビットシフトで積み重ねる設計。INCREF(x)でポインタ1段追加、DECREF(x)で除去。int **pの型をビット操作マクロ2回で表現できる。LLVMのType階層の直接の祖先。",
+    "code": "#define PTR   020\n#define TSHIFT   2\n#define INCREF(x)  (((x&~BTMASK)<<TSHIFT)|PTR|(x&BTMASK))\n#define DECREF(x)  (((x>>TSHIFT)&~BTMASK)|(x&BTMASK))\n#define ISPTR(x)   (((x)&TMASK)==PTR)",
+    "appraisal": 76
+  },
+  {
+    "id": "pcc-003-portability-include-order",
+    "title": "-I$M -I. ——インクルードパス順序がポータビリティの鍵",
+    "source": "Makefile",
+    "year": 1977,
+    "language": "C",
+    "project": "pcc",
+    "category": "portability",
+    "description": "pccのMakefileはcc -I$M -I.の順序で同一ソース(trees.c等)を異なるアーキテクチャ向けにビルドする。アーキテクチャ固有のmacdefs（SZINT=32 for VAX / SZINT=16 for PDP-11）だけを差し替えることでPDP-11/VAX/Interdata 8/32への移植を実現。CMake・autoconf・LLVMのtarget tripleの直接の祖先。",
+    "code": "M=/usr/src/cmd/mip\n\ntrees.o: $M/manifest macdefs $M/mfile1 $M/trees.c\n    cc -c $(CFLAGS) -I$M -I. $M/trees.c\n\n/* VAX macdefs: SZINT=32 / PDP-11 macdefs: SZINT=16 */",
+    "appraisal": 76
   }
 ]

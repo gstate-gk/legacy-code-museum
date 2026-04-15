@@ -339,6 +339,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1977,
   },
+  {
+    number: "76",
+    title: "鑑定書#076 pcc — UNARY MUL、Steve Johnsonが2ビットシフトで型を表現した1977年の移植可能なCコンパイラ",
+    url: null,
+    language: "C + yacc",
+    year: 1977,
+  },
 ];
 
 export default function AppraisalPage() {
