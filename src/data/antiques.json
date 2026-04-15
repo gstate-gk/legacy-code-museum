@@ -7427,5 +7427,77 @@
       "interpretation": "lexの仕様ファイルパーサはparser.yというyacc文法で実装されている。つまりlexはyaccで書かれ、yaccはlexを使う。鶏と卵の関係。最初のbootstrapのみ手書きで、以後は相互に生成し合う。"
     },
     "appraiser_note": "lexはyaccで書かれ、yaccはlexを使う。Bell Labsのツールチェーンの中核にある循環依存。最初のbootstrapは手書きのパーサ/字句解析器で実現した。"
+  },
+  {
+    "id": "make-001-ident-changelog",
+    "text": "char *xxxvers =  \"\nMAKE.  VERSION 2.54     29 AUGUST 1978\n\" ;\n\n/*\n2.1 4/24/76\tBase version\n...\n2.20\t\tAdded -q flag for Mike Lesk\n...\n*/",
+    "file_path": "usr/src/cmd/make/ident.c",
+    "line_number": 1,
+    "repo_id": "bell-32v",
+    "repo_name": "Bell Labs Unix 32V (1979)",
+    "language": "C",
+    "year": 1976,
+    "tags": [
+      "NOTE"
+    ],
+    "interesting_score": 18.5,
+    "ai_analysis": {
+      "primary_emotion": "diligence",
+      "emotion_intensity": 2.5,
+      "emotions": {
+        "diligence": 2.5,
+        "historical": 2.0
+      },
+      "interpretation": "バージョン管理システムのない時代に、Stuart Feldmanがバグ修正のたびにident.cへ手書きで追記した54回分の変更履歴。2.1(1976-04-24)から2.54(1978-08-29)まで。'2.20 Added -q flag for Mike Lesk'など、Bell Labs内のコラボレーションの記録でもある。"
+    },
+    "appraiser_note": "git commitのない時代のコミットメッセージ。54行の変更履歴が一つのCファイルに収まっている。makeはyaccで書かれたパーサとlexで書かれた字句解析器を持ち、自身もmakeでビルドされる。"
+  },
+  {
+    "id": "make-002-files-toolchain",
+    "text": "char *builtin[] =\n\t{\n\t\".SUFFIXES : .out .o .c .f .e .r .y .yr .ye .l .s\",\n\t\"YACC=yacc\",\n\t\"YACCR=yacc -r\",\n\t\"LEX=lex\",\n\t\"CC=cc\",\n\t\"RC=f77\",\n\t\".y.o :\",\n\t\"\t$(YACC) $(YFLAGS) $<\",\n\t\".l.c :\",\n\t\"\t$(LEX) $<\",\n\t\"\tmv lex.yy.c $@\",\n\t0\n\t};",
+    "file_path": "usr/src/cmd/make/files.c",
+    "line_number": 1,
+    "repo_id": "bell-32v",
+    "repo_name": "Bell Labs Unix 32V (1979)",
+    "language": "C",
+    "year": 1976,
+    "tags": [
+      "NOTE"
+    ],
+    "interesting_score": 17.0,
+    "ai_analysis": {
+      "primary_emotion": "completeness",
+      "emotion_intensity": 2.0,
+      "emotions": {
+        "completeness": 2.0,
+        "historical": 2.0
+      },
+      "interpretation": "makeの組み込みルールにBell Labsの全ツールチェーンが記録されている。YACC=yacc、YACCR=yacc -r（Ratfor）、LEX=lex、CC=cc、RC=f77。自動変数$<と$@は1976年から現代GNU makeまで不変。.y.oルールと.l.cルールがyacc/lexの出力を自動処理する。"
+    },
+    "appraiser_note": "Bell Labsシリーズ（ed→grep→sed→dc→yacc→bc→AWK→sh→lex→make）の全体図がfiles.cの組み込みルールに凝縮されている。makeはそれら全ての道具を繋ぐ接着剤だった。"
+  },
+  {
+    "id": "make-003-funny-array",
+    "text": "metas(s)   /* Are there are any  Shell meta-characters? */\nregister char *s;\n{\nregister char c;\n\nwhile( (funny[c = *s++] & META) == 0 )\n\t;\nreturn( c );\n}",
+    "file_path": "usr/src/cmd/make/dosys.c",
+    "line_number": 18,
+    "repo_id": "bell-32v",
+    "repo_name": "Bell Labs Unix 32V (1979)",
+    "language": "C",
+    "year": 1976,
+    "tags": [
+      "HACK"
+    ],
+    "interesting_score": 15.5,
+    "ai_analysis": {
+      "primary_emotion": "efficiency",
+      "emotion_intensity": 2.0,
+      "emotions": {
+        "efficiency": 2.0,
+        "pragmatism": 1.5
+      },
+      "interpretation": "128バイトのfunny[]テーブルにMETAビットを立て、シェルメタキャラクタをO(1)で検出する最適化。メタキャラクタがなければdoexec()で直接execl()、あればdoshell()で/bin/sh -ce経由。この最適化設計は現代GNU makeにも継承されている。"
+    },
+    "appraiser_note": "シェルを起動しないことによる高速化。単純なコンパイルコマンドがfork+execで直接実行される理由は1976年のこのfunny[]配列に遡る。"
   }
 ]

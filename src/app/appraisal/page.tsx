@@ -325,6 +325,13 @@ const PUBLISHED_ARTICLES = [
     language: "C + yacc",
     year: 1976,
   },
+  {
+    number: "74",
+    title: "鑑定書#074 make — タブ文字という小さな罪、Stuart Feldmanが54回直せなかった1976年の接着剤",
+    url: null,
+    language: "C + yacc",
+    year: 1976,
+  },
 ];
 
 export default function AppraisalPage() {
