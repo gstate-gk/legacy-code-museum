@@ -7301,5 +7301,131 @@
       "bc",
       "stack"
     ]
+  },
+  {
+    "id": "lua1-001-never-released",
+    "era": "1993",
+    "language": "C",
+    "source": "Lua 1.0 historical archive (PUC-Rio, 2003)",
+    "repository": "necrophcodr/lua",
+    "file": "README",
+    "lines": "1-5",
+    "code": "This is Lua 1.0. It was never publicly released. This code is a snapshot of\nthe status of Lua on 28 Jul 1993.\n\nThe source files for the lexer and parser have been lost: all that is left is\nthe output of lex and yacc.",
+    "note": "1993年7月28日のスナップショット。公開されなかった最初のLua。Lua 10周年（2003年）に初公開。lex/yaccのソースは消失し生成済みコードのみ残存。",
+    "tags": [
+      "historical",
+      "lua",
+      "puc-rio",
+      "lost-source",
+      "brazil"
+    ]
+  },
+  {
+    "id": "lua1-002-no-boolean",
+    "era": "1993",
+    "language": "C",
+    "source": "Lua 1.0 historical archive (PUC-Rio, 2003)",
+    "repository": "necrophcodr/lua",
+    "file": "opcode.h",
+    "lines": "22-35",
+    "code": "typedef enum\n{\n T_MARK, T_NIL, T_NUMBER, T_STRING,\n T_ARRAY, T_FUNCTION, T_CFUNCTION, T_USERDATA\n} Type;\n\n/* T_BOOLEANが存在しない */\n/* 真偽値はT_NUMBER（真）とT_NIL（偽）で表現 */",
+    "note": "Lua 1.0にはbooleanがない。EQOPの結果はT_NUMBER(1.0)かT_NIL。boolean型はLua 4.0（2000年）で追加された。数値はdoubleではなくfloat。",
+    "tags": [
+      "type-system",
+      "lua",
+      "puc-rio",
+      "design",
+      "boolean"
+    ]
+  },
+  {
+    "id": "lua1-003-hash-1990",
+    "era": "1993",
+    "language": "C",
+    "source": "Lua 1.0 historical archive (PUC-Rio, 2003)",
+    "repository": "necrophcodr/lua",
+    "file": "hash.h",
+    "lines": "1-10",
+    "code": "/*\n** hash.h\n** hash manager for lua\n** Luiz Henrique de Figueiredo - 17 Aug 90\n** Modified by Waldemar Celes Filho\n** 26 Apr 93\n*/\n\ntypedef struct Hash {\n char           mark;   /* GCマーク */\n unsigned int   nhash;\n Node         **list;\n} Hash;",
+    "note": "1990年8月17日設計——Lua 1.0の3年前。ハッシュテーブルが言語設計より先に存在した。markフィールドはガベージコレクション用（GCはLua 1.0から設計済み）。任意のObjectがキーになれる設計が現代Luaのテーブル万能性の源流。",
+    "tags": [
+      "hash-table",
+      "lua",
+      "puc-rio",
+      "gc",
+      "design"
+    ]
+  },
+  {
+    "id": "lex-001-eric-schmidt",
+    "text": "/* Copyright 1976, Bell Telephone Laboratories, Inc.,\n    written by Eric Schmidt, August 27, 1976   */",
+    "file_path": "usr/src/cmd/lex/lmain.c",
+    "line_number": 6,
+    "repo_id": "bell-32v",
+    "repo_name": "Bell Labs Unix 32V (1979)",
+    "language": "C",
+    "year": 1976,
+    "tags": [
+      "NOTE"
+    ],
+    "interesting_score": 19.0,
+    "ai_analysis": {
+      "primary_emotion": "historical",
+      "emotion_intensity": 3.0,
+      "emotions": {
+        "historical": 3.0,
+        "pride": 1.5
+      },
+      "interpretation": "後にGoogleのCEOとなるEric Schmidtが、プリンストン卒業直後の1976年にBell Labsで書いた著作権コメント。lexの主ドライバlmain.cの冒頭。Mike Leskとの共同開発で、SchimidtがこのMainドライバを担当した。"
+    },
+    "appraiser_note": "Googleの未来のCEOが1976年に書いたコード。プリンストン卒業直後のBell Labs在籍時。UNIX V6のmanページには'M.E. Lesk and E. Schmidt'と記録されている。"
+  },
+  {
+    "id": "lex-002-ncform-template",
+    "text": "fother = fopen(ratfor?ratname:cname,\"r\");\nif(fother == NULL)\n    error(\"Lex driver missing, file %s\",ratfor?ratname:cname);\nwhile ( (i=getc(fother)) != EOF)\n    putc(i,fout);",
+    "file_path": "usr/src/cmd/lex/lmain.c",
+    "line_number": 95,
+    "repo_id": "bell-32v",
+    "repo_name": "Bell Labs Unix 32V (1979)",
+    "language": "C",
+    "year": 1976,
+    "tags": [
+      "HACK"
+    ],
+    "interesting_score": 17.5,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 2.5,
+      "emotions": {
+        "elegance": 2.5,
+        "pragmatism": 2.0
+      },
+      "interpretation": "lexが出力するCコードの後半部分は'生成'ではなくncformファイルをそのままコピーしている。DFAテーブル（前半）とDFA実行エンジン（後半）をyycrank変数名で結合するコードテンプレート手法。現代のコード生成器のスケルトンアプローチの1976年版。"
+    },
+    "appraiser_note": "コードを生成するのではなく、テンプレートファイル(ncform)をコピーする。yycrank変数名で前後を接続する設計。EBCDICマシン向けには別テンプレート(ebcform)を使う。"
+  },
+  {
+    "id": "lex-003-yacc-circularity",
+    "text": "%token CHAR CCL NCCL STR DELIM SCON ITER NEWE NULLS\n%left SCON '/' NEWE\n%left '|'\n%left '$' '^'\n%left CHAR CCL NCCL '(' '.' STR NULLS\n%{\n# include \"ldefs.c\"\n%}",
+    "file_path": "usr/src/cmd/lex/parser.y",
+    "line_number": 1,
+    "repo_id": "bell-32v",
+    "repo_name": "Bell Labs Unix 32V (1979)",
+    "language": "C + yacc",
+    "year": 1976,
+    "tags": [
+      "NOTE"
+    ],
+    "interesting_score": 18.0,
+    "ai_analysis": {
+      "primary_emotion": "paradox",
+      "emotion_intensity": 2.5,
+      "emotions": {
+        "paradox": 2.5,
+        "elegance": 2.0
+      },
+      "interpretation": "lexの仕様ファイルパーサはparser.yというyacc文法で実装されている。つまりlexはyaccで書かれ、yaccはlexを使う。鶏と卵の関係。最初のbootstrapのみ手書きで、以後は相互に生成し合う。"
+    },
+    "appraiser_note": "lexはyaccで書かれ、yaccはlexを使う。Bell Labsのツールチェーンの中核にある循環依存。最初のbootstrapは手書きのパーサ/字句解析器で実現した。"
   }
 ]

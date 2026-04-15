@@ -311,6 +311,20 @@ const PUBLISHED_ARTICLES = [
     language: "C + yacc",
     year: 1975,
   },
+  {
+    number: "72",
+    title: "鑑定書#072 Lua 1.0 — 公開されなかった最初のLua、失われたソースと@()の時代",
+    url: null,
+    language: "C",
+    year: 1993,
+  },
+  {
+    number: "73",
+    title: "鑑定書#073 lex — Eric Schmidtが1976年に書いたコード生成器、lexはyaccで書かれyaccはlexを使う",
+    url: null,
+    language: "C + yacc",
+    year: 1976,
+  },
 ];
 
 export default function AppraisalPage() {
