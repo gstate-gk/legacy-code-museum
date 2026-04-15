@@ -7499,5 +7499,41 @@
       "interpretation": "128バイトのfunny[]テーブルにMETAビットを立て、シェルメタキャラクタをO(1)で検出する最適化。メタキャラクタがなければdoexec()で直接execl()、あればdoshell()で/bin/sh -ce経由。この最適化設計は現代GNU makeにも継承されている。"
     },
     "appraiser_note": "シェルを起動しないことによる高速化。単純なコンパイルコマンドがfork+execで直接実行される理由は1976年のこのfunny[]配列に遡る。"
+  },
+  {
+    "id": "lint-001-lintlibrary-varargs",
+    "title": "/* LINTLIBRARY */ と /* VARARGS */ ——1977年の型アノテーション",
+    "source": "llib-lc",
+    "year": 1977,
+    "language": "C",
+    "project": "lint",
+    "category": "annotation",
+    "description": "llib-lcの冒頭にある/* LINTLIBRARY */はライブラリインターフェース定義マーカー。/* VARARGS */はprintf等の可変長引数関数の型チェック免除アノテーション。<stdarg.h>、va_list、__attribute__((format(...)))へ続く系譜の起点。",
+    "code": "    /* LINTLIBRARY */\n    /* VARARGS */\n    printf( s ) char *s; {;}\n    /* VARARGS */\n    scanf( f ) char *f; {return(1); }",
+    "appraisal": 75
+  },
+  {
+    "id": "lint-002-struct-line-crossfile",
+    "title": "struct line ——ヘッダファイルなしで複数ファイルをまたいだ型チェック",
+    "source": "lpass2.c",
+    "year": 1977,
+    "language": "C",
+    "project": "lint",
+    "category": "architecture",
+    "description": "lpass2.cのstruct lineは関数シグネチャを記録するデータ構造。name[8]（8文字制限）、atyp[50]（最大50引数）、file[100]でクロスファイルの型整合性を検査。ヘッダファイルの慣習が確立する前に人間がやっていた確認を自動化した。",
+    "code": "struct line {\n    char name[8];\n    int decflag;\n    atype type;\n    int nargs;\n    atype atyp[50];\n    int fline;\n    char file[100];\n    }",
+    "appraisal": 75
+  },
+  {
+    "id": "lint-003-portability-sizes",
+    "title": "SZINT=16——1977年の移植性チェックフラグ",
+    "source": "lint.c",
+    "year": 1977,
+    "language": "C",
+    "project": "lint",
+    "category": "portability",
+    "description": "lint.cの-pフラグ用サイズ定数。SZCHAR=8、SZINT=16（PDP-11の16ビットint）、SZFLOAT=32等を定義。コードが別のマシンに移ると壊れるという問題を静的解析ツールに組み込んだ最初の実装。",
+    "code": "/* these are appropriate for the -p flag */\nint  SZCHAR = 8;\nint  SZINT = 16;\nint  SZFLOAT = 32;\nint  SZDOUBLE = 64;\nint  SZLONG = 32;\nint  SZSHORT = 16;\nint SZPOINT = 16;",
+    "appraisal": 75
   }
 ]

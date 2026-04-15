@@ -332,6 +332,13 @@ const PUBLISHED_ARTICLES = [
     language: "C + yacc",
     year: 1976,
   },
+  {
+    number: "75",
+    title: "鑑定書#075 lint — yaccを書いた男が書いた2パスのCコード品質検査、/* VARARGS */とstruct lineの1977年",
+    url: null,
+    language: "C",
+    year: 1977,
+  },
 ];
 
 export default function AppraisalPage() {
