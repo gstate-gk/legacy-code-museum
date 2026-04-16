@@ -7643,5 +7643,32 @@
     "description": "outcode()がC演算子をFortran .xxx. 記法に文字単位で変換。== → .eq.、!= → .ne.、<= → .le.、&& → .and.、|| → .or.、! → .not.。これが\"Rational\"（合理的）の意味——FortranのDOT記法をC記法に統一する。",
     "code": "== → .eq.\n!= → .ne.\n<= → .le.\n>= → .ge.\n&& → .and.\n|| → .or.\n!  → .not.",
     "appraisal": 78
+  },
+  {
+    "id": "crypt-001",
+    "name": "considerably trivialized",
+    "year": 1976,
+    "language": "C",
+    "description": "cmd/crypt.c冒頭のコメント。Enigmaに着想を得た1ローター暗号機を「大幅に骨抜きにした」と作者自身が告白。輸出規制対応で意図的に弱化された暗号の自白がコードに埋め込まれている。",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 79
+  },
+  {
+    "id": "crypt-002",
+    "name": "salt × 4096",
+    "year": 1976,
+    "language": "C",
+    "description": "libc/gen/crypt.c のsalt実装。2文字×12ビットでE置換テーブルを変形し4096通りの異なるDESを生成。辞書攻撃（後のレインボーテーブル）を無効化する設計が1976年時点で完成している。/etc/passwd形式の起源。",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 79
+  },
+  {
+    "id": "crypt-003",
+    "name": "Federal Register, March 17, 1975",
+    "year": 1975,
+    "language": "C",
+    "description": "libc/gen/crypt.cの冒頭コメントに引用されたFIPS DES提案の日付（40FR12134）。Bell LabsはDES標準化提案から間もなく完全実装をUnixに組み込んだ。IP/FP/Sbox/KS[16][48]の完全なFeistel構造。",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 79
   }
 ]

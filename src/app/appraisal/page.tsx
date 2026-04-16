@@ -360,6 +360,13 @@ const PUBLISHED_ARTICLES = [
     language: "C + yacc",
     year: 1974,
   },
+  {
+    number: "79",
+    title: "鑑定書#079 crypt — considerably trivialized、Ken ThompsonがEnigmaを意図的に骨抜きにした1976年と同じUnixに共存したFIPS DESの完全実装",
+    url: null,
+    language: "C",
+    year: 1976,
+  },
 ];
 
 export default function AppraisalPage() {
