@@ -7697,5 +7697,221 @@
     "description": "f77/defsの定数定義。Fortranの変数名最大6文字制限（1954年規格）をCの定数1つで表現。char varname[VL]として全namblockに適用。1954年の制約が1978年のC実装に刻まれている。",
     "source": "Bell-32V Unix (1978)",
     "appraisalNumber": 80
+  },
+  {
+    "id": "eliza-002-computer50",
+    "text": "key: computer 50\n  decomp: *\n    reasmb: Do computers worry you ?\n    reasmb: Why do you mention computers ?\n    reasmb: What do you think machines have to do with your problem ?",
+    "file_path": "script/doctor.txt",
+    "line_number": 119,
+    "repo_id": "eliza",
+    "repo_name": "ELIZA (MIT, 1966)",
+    "language": "MAD-SLIP",
+    "year": 1966,
+    "tags": [
+      "AI",
+      "pattern-matching",
+      "NOTE"
+    ],
+    "interesting_score": 17.0,
+    "ai_analysis": {
+      "primary_emotion": "irony",
+      "emotion_intensity": 4.0,
+      "emotions": {
+        "irony": 4.0,
+        "curiosity": 3.0
+      },
+      "technical_context": "Priority 50 = highest in the script. Computer keyword triggers every time.",
+      "human_story": "The machine that asks about machines. Weizenbaum never intended ELIZA to be taken seriously."
+    },
+    "appraiser_note": "priority 50 = スクリプト最高優先度。コンピュータについて話しかけると必ず反応する——人間が機械に心を打ち明ける1966年の逆説的仕掛け。"
+  },
+  {
+    "id": "eliza-003-memory-marker",
+    "text": "decomp: $ * my *\n  reasmb: Lets discuss further why your (2) .\n  reasmb: Earlier you said your (2) .\n  reasmb: But your (2) .",
+    "file_path": "script/doctor.txt",
+    "line_number": 263,
+    "repo_id": "eliza",
+    "repo_name": "ELIZA (MIT, 1966)",
+    "language": "MAD-SLIP",
+    "year": 1966,
+    "tags": [
+      "AI",
+      "memory",
+      "pattern-matching"
+    ],
+    "interesting_score": 18.0,
+    "ai_analysis": {
+      "primary_emotion": "deception",
+      "emotion_intensity": 4.0,
+      "emotions": {
+        "deception": 4.0,
+        "empathy": 2.0
+      },
+      "technical_context": "The $ prefix marks a memory decomposition rule. ELIZA stores the match and retrieves it later.",
+      "human_story": "Earlier you said your mother -- ELIZA appears to remember. It is an illusion built with one character."
+    },
+    "appraiser_note": "`$`マーカーが「記憶」の合図——以前の発言を参照して返す。心理療法士が覚えているかのような錯覚は、1文字の仕掛けで生まれた。"
+  },
+  {
+    "id": "cpm-002-copyright-box579",
+    "text": "Copyright (c) 1978, 1979, 1980\nDigital Research, Box 579, Pacific Grove, California",
+    "file_path": "BDOS.asm",
+    "line_number": 1,
+    "repo_id": "cpm",
+    "repo_name": "CP/M (Digital Research, 1974)",
+    "language": "8080 Assembly",
+    "year": 1978,
+    "tags": [
+      "NOTE",
+      "copyright",
+      "historic"
+    ],
+    "interesting_score": 16.0,
+    "ai_analysis": {
+      "primary_emotion": "poignancy",
+      "emotion_intensity": 4.0,
+      "emotions": {
+        "poignancy": 4.0,
+        "nostalgia": 3.0
+      },
+      "technical_context": "Box 579 is a PO Box. Digital Research ran from Kildall's home in Pacific Grove, CA.",
+      "human_story": "A town of 15,000 people, a monarch butterfly sanctuary. The world PC OS standard shipped from a PO Box here."
+    },
+    "appraiser_note": "Pacific Grove, Box 579——私書箱。人口1万5千人の海辺の町から、世界のパーソナルコンピュータ標準OSが出荷された。"
+  },
+  {
+    "id": "cpm-003-fcb-83format",
+    "text": "FCB (File Control Block):\n  byte 1-8:   filename (8 chars, space-padded)\n  byte 9-11:  extension (3 chars)\n  byte 12:    extent number\n  byte 16-31: disk allocation map",
+    "file_path": "BDOS.asm",
+    "line_number": 44,
+    "repo_id": "cpm",
+    "repo_name": "CP/M (Digital Research, 1974)",
+    "language": "8080 Assembly",
+    "year": 1974,
+    "tags": [
+      "filesystem",
+      "design",
+      "historic"
+    ],
+    "interesting_score": 17.0,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 4.0,
+      "emotions": {
+        "legacy": 4.0,
+        "constraint": 3.0
+      },
+      "technical_context": "FCB byte layout physically defines the 8.3 filename format. 36 bytes total.",
+      "human_story": "Windows 95 added long filename support in 1995. 20 years of 8-character filename limit from this struct."
+    },
+    "appraiser_note": "8文字+拡張子3文字——「8.3形式」の物理的起源。36バイトのFCBの配置が、Windows 95まで20年間のファイル名制約を決めた。"
+  },
+  {
+    "id": "smalltalk-002-fetchclassof",
+    "text": "arrayClass <- memory fetchClassOf: array.\nself success: (arrayClass=ClassArrayPointer) | (arrayClass=ClassStringPointer).",
+    "file_path": "src/interpreter.cpp",
+    "line_number": 124,
+    "repo_id": "smalltalk80",
+    "repo_name": "Smalltalk-80 (Xerox PARC, 1980)",
+    "language": "Smalltalk / C++",
+    "year": 1980,
+    "tags": [
+      "OOP",
+      "object-model",
+      "Blue-Book"
+    ],
+    "interesting_score": 16.0,
+    "ai_analysis": {
+      "primary_emotion": "philosophical",
+      "emotion_intensity": 3.0,
+      "emotions": {
+        "philosophical": 3.0,
+        "elegance": 3.0
+      },
+      "technical_context": "fetchClassOf works on any object, including classes themselves. Everything is an object.",
+      "human_story": "Blue Book pseudocode and C++ implementation side by side. Dan Ingalls implemented the Blue Book spec literally."
+    },
+    "appraiser_note": "fetchClassOf——クラスもオブジェクト。Blue Book疑似コードとC++が同じファイルに共存する、Dan Ingallsの35年の実装の痕跡。"
+  },
+  {
+    "id": "smalltalk-003-doesnotunderstand",
+    "text": "[currentClass~=NilPointer] whileTrue:\n    [(self lookupMethodInDictionary: dictionary) ifTrue: [^true].\n    currentClass <- self superclassOf: currentClass].\nmessageSelector <- DoesNotUnderstandSelector.",
+    "file_path": "src/interpreter.cpp",
+    "line_number": 1373,
+    "repo_id": "smalltalk80",
+    "repo_name": "Smalltalk-80 (Xerox PARC, 1980)",
+    "language": "Smalltalk / C++",
+    "year": 1980,
+    "tags": [
+      "OOP",
+      "message-passing",
+      "design"
+    ],
+    "interesting_score": 18.0,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4.0,
+      "emotions": {
+        "elegance": 4.0,
+        "philosophy": 3.0
+      },
+      "technical_context": "Method lookup climbs the superclass chain. If not found, sends doesNotUnderstand: -- the foundation of metaprogramming.",
+      "human_story": "doesNotUnderstand: is not an error handler. It is a design feature. Ruby, Python, and JavaScript all inherited this idea."
+    },
+    "appraiser_note": "継承ツリーを登りきっても見つからなければ `doesNotUnderstand:` を送る——エラーではなくメッセージ。Ruby、Python、JavaScriptの動的ディスパッチの源流。"
+  },
+  {
+    "id": "sqlite-002-ipkey-rowid",
+    "text": "** Table.iPKey is set to -1 if there is no INTEGER PRIMARY KEY.\n** No index is created for INTEGER PRIMARY KEYs.\npTab->iPKey = iCol;",
+    "file_path": "src/build.c",
+    "line_number": 1823,
+    "repo_id": "sqlite",
+    "repo_name": "SQLite (2000)",
+    "language": "C",
+    "year": 2000,
+    "tags": [
+      "design",
+      "optimization",
+      "rowid"
+    ],
+    "interesting_score": 16.0,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 3.0,
+      "emotions": {
+        "elegance": 3.0,
+        "insight": 3.0
+      },
+      "technical_context": "iPKey == -1 means no INTEGER PRIMARY KEY. When iPKey >= 0, that column IS the rowid -- no separate index needed.",
+      "human_story": "One of SQLite's quiet design gems: INTEGER PRIMARY KEY is not a column. It is an alias for the 64-bit rowid."
+    },
+    "appraiser_note": "`iPKey = -1`が「存在しない」を表す——INTEGER PRIMARY KEYは列ではなく64ビットrowidの別名。インデックス不要の設計がSQLiteの軽量さを支える。"
+  },
+  {
+    "id": "sqlite-003-template-header",
+    "text": "#define SQLITE_VERSION        \"--VERS--\"\n#define SQLITE_VERSION_NUMBER --VERSION-NUMBER--",
+    "file_path": "src/sqlite.h.in",
+    "line_number": 149,
+    "repo_id": "sqlite",
+    "repo_name": "SQLite (2000)",
+    "language": "C",
+    "year": 2000,
+    "tags": [
+      "build",
+      "template",
+      "NOTE"
+    ],
+    "interesting_score": 14.0,
+    "ai_analysis": {
+      "primary_emotion": "craftsmanship",
+      "emotion_intensity": 2.0,
+      "emotions": {
+        "craftsmanship": 2.0,
+        "pragmatism": 2.0
+      },
+      "technical_context": "sqlite.h.in is a template. Build process replaces --VERS-- and --VERSION-NUMBER-- with real values to produce sqlite3.h.",
+      "human_story": "Richard Hipp's build system generates the public header from this template. The .in extension signals it is never shipped raw."
+    },
+    "appraiser_note": "`--VERS--`はプレースホルダー——ビルド時に置換される。sqlite.h.inはテンプレートであり、直接配布されることはない。Richard Hippの自動化の痕跡。"
   }
 ]
