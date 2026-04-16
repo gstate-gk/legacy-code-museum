@@ -374,6 +374,20 @@ const PUBLISHED_ARTICLES = [
     language: "C + yacc",
     year: 1978,
   },
+  {
+    number: "81",
+    title: "鑑定書#081 eqn — int from 0 to inf、KernighanとCherryの1974年数式翻訳機、ギリシャ文字24字がtroff呪文に変わる166行の文法",
+    url: null,
+    language: "C + yacc",
+    year: 1974,
+  },
+  {
+    number: "82",
+    title: "鑑定書#082 troff — #define INCH 432、CAT写植機に話しかける言語、Joe OssannaとKernighanが継いだ8,224行",
+    url: null,
+    language: "C",
+    year: 1973,
+  },
 ];
 
 export default function AppraisalPage() {
