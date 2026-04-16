@@ -353,6 +353,13 @@ const PUBLISHED_ARTICLES = [
     language: "C + yacc",
     year: 1977,
   },
+  {
+    number: "78",
+    title: "鑑定書#078 Ratfor — GOKという名のトークン、Brian KernighanがFortranに構造化プログラミングを接ぎ木した1974年",
+    url: null,
+    language: "C + yacc",
+    year: 1974,
+  },
 ];
 
 export default function AppraisalPage() {

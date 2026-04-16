@@ -7607,5 +7607,41 @@
     "description": "FILE *olist[11]で10チャンネルの一時ファイル出力を管理。divert(N)で出力先を/tmp/m4aNに切り替え、divert(-1)で捨て、delexit()時に正しい順序で結合。autoconf(1991)が依存する仕組みの原型。Bell 32V m4→SysV m4→GNU m4→autoconf→Linuxカーネルビルドへ。",
     "code": "FILE *olist[11] = { stdout };\nFILE *curfile = { stdout };\n\n/* divert(N): curfile=olist[N] */\n/* divert(-1): curfile=NULL (出力捨て) */\n/* delexit(): 全バッファをstdoutへ */",
     "appraisal": 77
+  },
+  {
+    "id": "ratfor-001-gok-token",
+    "title": "GOK——\"God Only Knows\"、Ratforが知らないトークンへの正直な名前",
+    "source": "r.g",
+    "year": 1974,
+    "language": "C + yacc",
+    "project": "ratfor",
+    "category": "language_design",
+    "description": "Ratforのyacc文法r.gには15のキーワードとGOKトークンがある。GOKは\"God Only Knows\"——Ratforが認識しないトークンはすべてGOKとして通過し、加工なしでFortranとして出力される。「理解できないものは理解しない」という前処理器の本質を体現。",
+    "code": "%term IF ELSE FOR WHILE BREAK NEXT DIGITS DO GOK DEFINE INCLUDE\n      REPEAT UNTIL RETURN SWITCH CASE DEFAULT",
+    "appraisal": 78
+  },
+  {
+    "id": "ratfor-002-genlab-goto",
+    "title": "genlab()——全構造化構文をFortran GOTOに機械変換する",
+    "source": "r1.c",
+    "year": 1974,
+    "language": "C",
+    "project": "ratfor",
+    "category": "algorithm",
+    "description": "genlab(n)は23000番台からn個の連続ラベルを払い出す。while/for/if-else/repeat-untilは全てCONTINUEラベル+gotoに変換。ASTなし、純粋なテキスト変換。break N/next NでN段上のループを脱出（brkstk[]スタック管理）。1974年に多重ループ脱出を実装。",
+    "code": "/* while変換 */\nL1    CONTINUE\n      if (.not. COND) goto L2\n      <body>\n      goto L1\nL2    CONTINUE\n\n/* break 2 = brkstk[ptr+2]の脱出ラベルへgoto */",
+    "appraisal": 78
+  },
+  {
+    "id": "ratfor-003-operator-translation",
+    "title": "== → .eq. / && → .and.——C記法からFortran記法への変換テーブル",
+    "source": "r2.c",
+    "year": 1974,
+    "language": "C",
+    "project": "ratfor",
+    "category": "language_design",
+    "description": "outcode()がC演算子をFortran .xxx. 記法に文字単位で変換。== → .eq.、!= → .ne.、<= → .le.、&& → .and.、|| → .or.、! → .not.。これが\"Rational\"（合理的）の意味——FortranのDOT記法をC記法に統一する。",
+    "code": "== → .eq.\n!= → .ne.\n<= → .le.\n>= → .ge.\n&& → .and.\n|| → .or.\n!  → .not.",
+    "appraisal": 78
   }
 ]
