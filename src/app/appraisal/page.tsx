@@ -346,6 +346,13 @@ const PUBLISHED_ARTICLES = [
     language: "C + yacc",
     year: 1977,
   },
+  {
+    number: "77",
+    title: "鑑定書#077 m4 — マクロは自分自身を展開する、KernighanとRitchieが900行で書いたプッシュバックバッファの機械",
+    url: null,
+    language: "C + yacc",
+    year: 1977,
+  },
 ];
 
 export default function AppraisalPage() {

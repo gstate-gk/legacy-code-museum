@@ -7571,5 +7571,41 @@
     "description": "pccのMakefileはcc -I$M -I.の順序で同一ソース(trees.c等)を異なるアーキテクチャ向けにビルドする。アーキテクチャ固有のmacdefs（SZINT=32 for VAX / SZINT=16 for PDP-11）だけを差し替えることでPDP-11/VAX/Interdata 8/32への移植を実現。CMake・autoconf・LLVMのtarget tripleの直接の祖先。",
     "code": "M=/usr/src/cmd/mip\n\ntrees.o: $M/manifest macdefs $M/mfile1 $M/trees.c\n    cc -c $(CFLAGS) -I$M -I. $M/trees.c\n\n/* VAX macdefs: SZINT=32 / PDP-11 macdefs: SZINT=16 */",
     "appraisal": 76
+  },
+  {
+    "id": "m4-001-pushback-buffer",
+    "title": "putbak/getchr——プッシュバックバッファによる再帰展開",
+    "source": "m4.c",
+    "year": 1977,
+    "language": "C",
+    "project": "m4",
+    "category": "algorithm",
+    "description": "m4の再帰展開はibuf[4096+128]のプッシュバックバッファで実現。putbak(c)で展開結果を入力ストリームに戻し、getchr()でプッシュバックバッファ優先で読む。スタックなしで自然に再帰展開が実現する設計。",
+    "code": "char ibuf[SAVS+TOKS];\nchar *ip = ibuf;\n\n#define putbak(c)  *ip++ = c\n#define getchr()   (ip>cur_ip ? *--ip : getc(infile[infptr]))",
+    "appraisal": 77
+  },
+  {
+    "id": "m4-002-shift-not-implemented",
+    "title": "shift not yet implemented——1977年から変わらないTODO",
+    "source": "m4.c",
+    "year": 1977,
+    "language": "C",
+    "project": "m4",
+    "category": "curiosity",
+    "description": "組み込みマクロshiftは未実装のまま出荷された。呼び出すと\"shift not yet implemented\"を出力する。KernighanとRitchieのコードにもTODO残しはあった。",
+    "code": "/* shift は未実装 */\n\"shift not yet implemented\"",
+    "appraisal": 77
+  },
+  {
+    "id": "m4-003-divert-autoconf",
+    "title": "divert/undivert——10チャンネルの出力切り替え、autoconfの基盤",
+    "source": "m4.c",
+    "year": 1977,
+    "language": "C",
+    "project": "m4",
+    "category": "design",
+    "description": "FILE *olist[11]で10チャンネルの一時ファイル出力を管理。divert(N)で出力先を/tmp/m4aNに切り替え、divert(-1)で捨て、delexit()時に正しい順序で結合。autoconf(1991)が依存する仕組みの原型。Bell 32V m4→SysV m4→GNU m4→autoconf→Linuxカーネルビルドへ。",
+    "code": "FILE *olist[11] = { stdout };\nFILE *curfile = { stdout };\n\n/* divert(N): curfile=olist[N] */\n/* divert(-1): curfile=NULL (出力捨て) */\n/* delexit(): 全バッファをstdoutへ */",
+    "appraisal": 77
   }
 ]
