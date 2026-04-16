@@ -7670,5 +7670,32 @@
     "description": "libc/gen/crypt.cの冒頭コメントに引用されたFIPS DES提案の日付（40FR12134）。Bell LabsはDES標準化提案から間もなく完全実装をUnixに組み込んだ。IP/FP/Sbox/KS[16][48]の完全なFeistel構造。",
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 79
+  },
+  {
+    "id": "f77-001",
+    "name": "FAMILY==SCJ",
+    "year": 1978,
+    "language": "C",
+    "description": "f77/defines の定数定義。SCJ=S.C. Johnson、DMR=D.M. Ritchie。Bell LabsのFortran 77コンパイラがpcc（Portable C Compiler）の第2パスバイナリ/lib/f1を流用する設計を示す1行。FortranコンパイラがCコンパイラの部品で動く。",
+    "source": "Bell-32V Unix (1978)",
+    "appraisalNumber": 80
+  },
+  {
+    "id": "f77-002",
+    "name": "sed+cat+yacc",
+    "year": 1978,
+    "language": "Makefile",
+    "description": "f77/Makefileのビルド技法。gram.head/dcl/expr/exec/ioの5分割yacc文法ファイルをsedでtokdefs変換し、catで結合してからyaccに渡す。MakefileがFortran文法コンパイルの前処理パイプラインになっている。",
+    "source": "Bell-32V Unix (1978)",
+    "appraisalNumber": 80
+  },
+  {
+    "id": "f77-003",
+    "name": "VL=6",
+    "year": 1978,
+    "language": "C",
+    "description": "f77/defsの定数定義。Fortranの変数名最大6文字制限（1954年規格）をCの定数1つで表現。char varname[VL]として全namblockに適用。1954年の制約が1978年のC実装に刻まれている。",
+    "source": "Bell-32V Unix (1978)",
+    "appraisalNumber": 80
   }
 ]

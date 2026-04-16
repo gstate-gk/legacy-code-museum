@@ -367,6 +367,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1976,
   },
+  {
+    number: "80",
+    title: "鑑定書#080 f77 — FAMILY==SCJ、Steve JohnsonのCコンパイラ第2パスを乗っ取ったBell Labsの1978年Fortran 77コンパイラ",
+    url: null,
+    language: "C + yacc",
+    year: 1978,
+  },
 ];
 
 export default function AppraisalPage() {
