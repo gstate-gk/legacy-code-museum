@@ -388,6 +388,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1973,
   },
+  {
+    number: "83",
+    title: "鑑定書#083 tbl — l c r n、Mike Leskの4文字が表を定義し、tblがtroff呪文を生成する2,391行",
+    url: null,
+    language: "C",
+    year: 1975,
+  },
 ];
 
 export default function AppraisalPage() {
