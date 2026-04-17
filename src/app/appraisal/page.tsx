@@ -395,6 +395,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1975,
   },
+  {
+    number: "84",
+    title: "鑑定書#084 pic — of the way between、英語を食べる図形言語、KernighanのFOR/IF付きDSL、4,624行",
+    url: null,
+    language: "C + lex + yacc",
+    year: 1984,
+  },
 ];
 
 export default function AppraisalPage() {
