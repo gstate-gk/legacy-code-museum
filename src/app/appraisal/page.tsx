@@ -402,6 +402,13 @@ const PUBLISHED_ARTICLES = [
     language: "C + lex + yacc",
     year: 1984,
   },
+  {
+    number: "85",
+    title: "鑑定書#085 spell — ssen→ily、逆順で並ぶ接尾辞テーブル、McIlroyのBloom filterと600行が英語の形態論を解く",
+    url: null,
+    language: "C + Shell",
+    year: 1975,
+  },
 ];
 
 export default function AppraisalPage() {
