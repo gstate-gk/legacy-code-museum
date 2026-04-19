@@ -409,6 +409,13 @@ const PUBLISHED_ARTICLES = [
     language: "C + Shell",
     year: 1975,
   },
+  {
+    number: "86",
+    title: "鑑定書#086 refer — false drops、ハッシュ衝突を後から弾く2段階検索、Mike Leskの参考文献エンジンと/usr/dict/papersに眠るBell Labs論文データベース",
+    url: null,
+    language: "C",
+    year: 1978,
+  },
 ];
 
 export default function AppraisalPage() {
