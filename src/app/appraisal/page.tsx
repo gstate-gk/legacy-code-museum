@@ -416,6 +416,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1978,
   },
+  {
+    number: "87",
+    title: "鑑定書#087 sort — fold[128+']']、256要素の変換テーブル4枚、MEM=32768バイトのメモリソートとN=7本のN-wayマージが作る902行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
