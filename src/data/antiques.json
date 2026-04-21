@@ -8243,5 +8243,38 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 90,
     "appraiser_note": "465行で次元解析エンジンを実装する——struct unitの2フィールドで物理全体を表現する優雅さ。`|`が割り算という発見も面白い。"
+  },
+  {
+    "id": "dd-001",
+    "name": "etoa[] atoe[] atoibm[]——3枚の変換テーブル",
+    "year": 1979,
+    "language": "C",
+    "description": "dd.cの先頭に3枚の256バイト変換テーブル。etoa（EBCDIC→ASCII）、atoe（ASCII→EBCDIC）、atoibm（ASCII→IBM 360/370 EBCDIC）。EBCDICにも方言があり、!（ASCII 0x21）がatoe[33]=0117、atoibm[33]=0132と異なる。1979年、IBMメインフレームのテープをUnixで読むには3種類の対応表が必要だった。",
+    "code": "char etoa[] = {\n    0000,0001,0002,0003,0234,0011,0206,0177,\n    ...\n};\nchar atoe[]   = { ... };  /* 標準EBCDIC */\nchar atoibm[] = { ... };  /* IBM 360/370 */",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 91,
+    "appraiser_note": "3枚のEBCDICテーブルを見た瞬間、1979年のコンピュータ業界の分裂が見えた。ASCIIとEBCDICが戦っていた時代の化石。"
+  },
+  {
+    "id": "dd-002",
+    "name": "if= of= conv=——JCLが転生した構文",
+    "year": 1979,
+    "language": "C",
+    "description": "ddの引数構文はIBM JCL（Job Control Language）のDD（Data Definition）を模倣している。`dd if=/dev/tape of=data.bin bs=512 conv=ascii`——Unixがあえてメインフレームの書き方を踏襲した。cbs=（conversion buffer size）で固定長80バイトのパンチカード形式とUnix改行区切りを相互変換する。",
+    "code": "dd if=/dev/tape of=data.bin bs=512 conv=ascii\n/* IBM JCL: //DD1 DD DSN=... */",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 91,
+    "appraiser_note": "ddがJCLから来た名前だと知ったとき、1979年のメインフレームとUnixの共存が見えた。Unixはメインフレームを否定せず、橋を架けた。"
+  },
+  {
+    "id": "dd-003",
+    "name": "sbrk(64) For good measure",
+    "year": 1979,
+    "language": "C",
+    "description": "入出力バッファ確保後にさらに64バイトを確保するコード。コメントは'For good measure'（念のため）。BIG=2147483647（2^31-1）が「無制限」の上限値。conv=swabは隣接2バイトをポインタ演算で入れ替え（エンディアン変換）。Ctrl-Cでも統計（N+M records in/out）が出力される。",
+    "code": "sbrk(64);\t/* For good measure */\n#define BIG 2147483647\n/* stats: 1024+3 records in / 1024+0 records out */",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 91,
+    "appraiser_note": "'For good measure'——ユーモアのある防衛的プログラミング。64バイトの護符がバッファオーバーランへの実用的な答えだった1979年。"
   }
 ]

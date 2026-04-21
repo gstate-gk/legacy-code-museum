@@ -444,6 +444,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "91",
+    title: "鑑定書#091 dd — etoa[] atoe[] atoibm[]、3枚の256バイト変換表、IBMメインフレームのテープをUnixで読むための1979年とJCLが転生したif= of=構文",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
