@@ -430,6 +430,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "89",
+    title: "鑑定書#089 struct — 消せるものだけ消す、Fortran 66のGOTOをRatforのWHILE/UNTILに変換する4フェーズ構造化器",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
