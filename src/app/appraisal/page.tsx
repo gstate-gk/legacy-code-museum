@@ -451,6 +451,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "92",
+    title: "鑑定書#092 expr — \"0\"と\"\"が偽、すべてが文字列の算術評価器、$((...))以前のシェルスクリプト計算機とcase LEQ: i = i>=0のバグ",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

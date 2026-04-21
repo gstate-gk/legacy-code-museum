@@ -8276,5 +8276,38 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 91,
     "appraiser_note": "'For good measure'——ユーモアのある防衛的プログラミング。64バイトの護符がバッファオーバーランへの実用的な答えだった1979年。"
+  },
+  {
+    "id": "expr-001",
+    "name": "case LEQ: i = i>=0——1979年のコピーミス",
+    "year": 1979,
+    "language": "C",
+    "description": "expr.yのrel()関数にあるswitch文。LEQ（以下）の比較条件がi>=0——これはGEQ（以上）と全く同じだ。正しくはi<=0であるべきところ、コピーミスでGEQの行が複製された。`expr 3 \\<= 5`が1（真）を返すはずなのに0（偽）を返す。Bell Labs 1979年のオリジナルコードに実在するバグ。",
+    "code": "case EQ:  i = i==0; break;\ncase GT:  i = i>0;  break;\ncase GEQ: i = i>=0; break;\ncase LT:  i = i<0;  break;\ncase LEQ: i = i>=0; break;  /* ← バグ: GEQと同じ！ */\ncase NEQ: i = i!=0; break;",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 92,
+    "appraiser_note": "LEQがGEQと同じ条件——コピーミスがそのまま出荷された。45年後に発掘されるバグ。`expr 3 \\<= 5`が偽を返す1979年のexpr。"
+  },
+  {
+    "id": "expr-002",
+    "name": "yylex()——argv配列をトークンストリームとして消費",
+    "year": 1979,
+    "language": "C",
+    "description": "exprの字句解析器は標準入力を読まない。コマンドライン引数の配列Av[]をArgi++で直接消費し、引数が尽きたらNOARGを返す。yacc文法の最上位規則は「expr NOARG」——式の後に引数終了というパターン。「=」と「==」は両方EQにマップ。演算子テーブルを線形探索（19個なので十分）。",
+    "code": "yylex() {\n    if(Argi >= Ac) return NOARG;\n    p = Av[Argi++];\n    for(i = 0; *operators[i]; ++i)\n        if(EQL(operators[i], p))\n            return op[i];\n    yylval = p;\n    return A_STRING;\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 92,
+    "appraiser_note": "字句解析器がargv配列を直接消費する——標準入力を読まないパーサー。NOARGという番兵でyaccに「式の終端」を伝える独特の設計。"
+  },
+  {
+    "id": "expr-003",
+    "name": "\"0\"と\"\"が偽——全値がchar*の算術評価器",
+    "year": 1979,
+    "language": "C",
+    "description": "exprに数値型は存在しない。全ての値はchar*（文字列）として生まれ、arith()でatol()→計算→sprintf()と変換され、また文字列に戻る。終了コードは\"0\"または\"\"なら1（偽）、それ以外は0（真）——C言語の0=falseと逆のシェル規約。rel()は\"-*[0-9]*$\"正規表現で実行時に数値かどうかを判断する動的型付け。substr()は元のargv文字列に\\0を書き込む破壊的実装。",
+    "code": "exit((!strcmp($1,\"0\") || !strcmp($1,\"\\0\")) ? 1 : 0);\n/* arith(): atol(r1) → 計算 → sprintf(rv, \"%D\", i1) */\n/* rel(): ematch(r1, \"-*[0-9]*$\") で数値か判断 */",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 92,
+    "appraiser_note": "数値型のないプログラミング言語——全値がchar*で、算術の瞬間だけ整数になる。$((...))が来るまでの10年間、669行がシェルスクリプトの計算を支えた。"
   }
 ]
