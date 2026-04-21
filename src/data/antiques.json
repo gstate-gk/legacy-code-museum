@@ -8210,5 +8210,38 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 89,
     "appraiser_note": "53ファイル中唯一の文献引用——それがHecht-Ullmanだ。制御フロー解析の基盤となるアルゴリズムへの敬意が、この1コメントに凝縮されている。"
+  },
+  {
+    "id": "units-001",
+    "name": "dollar *f*——次元の一つがドル",
+    "year": 1979,
+    "language": "C",
+    "description": "/usr/lib/unitsの次元定義。m(*a*)、kg(*b*)、sec(*c*)の並びに`dollar(*f*)`が入っている。SI7次元ではなく10次元を選び、dollar（経済）、bit（情報量）、erlang（通信トラフィック）を物理と同列に置いた。Bell Labsが情報理論・通信工学・物理を同じ軸で考えていた証拠。",
+    "code": "/ dimensions\nm\t\t*a*\nkg\t\t*b*\nsec\t\t*c*\ncoul\t\t*d*\ncandela\t\t*e*\ndollar\t\t*f*\nradian\t\t*g*\nbit\t\t*h*\nerlang\t\t*i*\ndegC\t\t*j*",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 90,
+    "appraiser_note": "`dollar *f*`——ドルがメートルと同じ次元空間にある。SIにない3次元（dollar/bit/erlang）がBell Labsの世界観を正直に映している。"
+  },
+  {
+    "id": "units-002",
+    "name": "fuzz——測定不確かさを単位として持つ",
+    "year": 1979,
+    "language": "C",
+    "description": "fuzzは無次元係数1.0の特別な単位。光速(c)、電子電荷(e)、天文単位(au)、太陽年(year)など精度が有限な測定値に付与される。「この値は実験的測定値であり、定義値ではない」という意味論的マーカー。epoch Nov 10, 1978 WSJで28通貨の為替レートも収録。",
+    "code": "fuzz\t\t1\nc\t\t2.997925+8 m/sec fuzz\ne\t\t1.6021917-19 coul fuzz\nyear\t\t365.24219879 day fuzz\n/ epoch Nov 10, 1978 wall st j\njapanyen\t.005332 $",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 90,
+    "appraiser_note": "光速に`fuzz`がついている——「定義値ではなく測定値」という区別をコードに埋め込む。1978年11月10日のWSJ相場は凍りついたまま。"
+  },
+  {
+    "id": "units-003",
+    "name": "struct unit { double factor; char dim[NDIM]; }",
+    "year": 1979,
+    "language": "C",
+    "description": "unitsのコアデータ構造。全ての単位をfactor（係数）×dim[10]（次元指数ベクトル）で表現する。単位の積はdimの加算、商は減算。m²はdimを2回加算。lookup()では接頭辞（kilo-/micro-等）を自動的に剥がし、末尾のsも除去して英語複数形を自動処理。NTAB=601（素数）のオープンアドレッシングハッシュ。",
+    "code": "#define NDIM 10\nstruct unit {\n    double  factor;\n    char    dim[NDIM];\n};\n/* 1|180 pi-radian = 1度 (|はパイプでなく分数) */",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 90,
+    "appraiser_note": "465行で次元解析エンジンを実装する——struct unitの2フィールドで物理全体を表現する優雅さ。`|`が割り算という発見も面白い。"
   }
 ]

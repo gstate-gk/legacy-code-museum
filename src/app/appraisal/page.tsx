@@ -437,6 +437,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "90",
+    title: "鑑定書#090 units — `dollar *f*`、次元の一つがドル、1978年11月10日のWSJ相場と10次元ベクトルが全ての単位を表現する",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
