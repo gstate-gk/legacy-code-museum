@@ -8342,5 +8342,38 @@
     "source": "Bell-32V Unix (1979)",
     "appraiser_note": "popen(\"pwd\",\"r\")——getcwd()がない世界でカレントディレクトリを知る唯一の方法。関数の中の#include <pwd.h>も1979年の正直な実装だ。",
     "appraisalNumber": 93
+  },
+  {
+    "id": "od-001",
+    "name": "base = 010——8進数ダンプが自分自身のベースを8進数で初期化する",
+    "year": 1979,
+    "language": "C",
+    "description": "od.cの冒頭の宣言。baseの初期値が010——C言語では010は8進数の8だ。8進数ダンプのプログラムが自分の動作モードの初期値を8進数で書いている。意図的かどうかは分からないが、1979年のBell Labsらしい自然さだ。PDP-11の機械語は3ビット区切りで意味を持ち、ls -lのパーミッション（755、644）も8進数。8進数が自然な表現だった時代の産物。",
+    "code": "int base =\t010;\nint conv;\nint max;\nlong addr;\nunsigned short word[8];\nunsigned short lastword[8];",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 94,
+    "appraiser_note": "base = 010——この1行で1979年のコンピュータ科学者の世界観が見えた。8進数が自然な表現だった時代。x86が来るまでの話だ。"
+  },
+  {
+    "id": "od-002",
+    "name": "`*`——同一ブロックを圧縮する番兵、45年後も現役",
+    "year": 1979,
+    "language": "C",
+    "description": "odの繰り返しブロック圧縮。前の16バイトブロックと完全一致すれば`*`を1行だけ出力してスキップする。same=-1（前ブロックなし）、same=0（まだ*未出力）、same=1（*出力済み）の3状態で管理。goto notsameで差異発見時に即座に通常出力へ。ゼロ埋めの大ファイルも`*`1行で表現される。現代のGNU odでも同じ動作。",
+    "code": "if (same==0) {\n    printf(\"*\\n\");\n    same = 1;\n}\ncontinue;\n/* 差異があれば */\nnotsame:\n    line(addr, word, n);",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 94,
+    "appraiser_note": "`*`——たった1文字が「ここからここまで同じ」を伝える。1979年から変わらない圧縮の番兵。"
+  },
+  {
+    "id": "od-003",
+    "name": "conv |= 001——ビットマスクで5フォーマット同時出力、putn()はdcと同じ再帰",
+    "year": 1979,
+    "language": "C",
+    "description": "odのフォーマット管理。convのビット1つが1フォーマット（o=001/d=002/x=010/c=020/b=040）に対応し、od -ocxで8進・文字・16進を同時出力できる。c<<=1でビットシフトしながらlineが全フォーマットを走査。putn()は再帰で上位桁から展開する基数変換——dc(#068)のoprint()と同じイディオム。`case 'x': case 'h':`——hexに2つの名前がある歴史的経緯も残る。",
+    "code": "case 'o': conv |= 001; break;  /* 8進 */\ncase 'x':\ncase 'h': conv |= 010; break;  /* 16進（2つの名前） */\n/* line()の走査 */\nfor(c=1; c; c<<=1) {\n    if((c&conv)==0) continue;\n    putx(w[i], c);\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 94,
+    "appraiser_note": "convのビットマスクとc<<=1の走査——5フォーマットをビット1つで管理する。putn()の再帰パターンはdcと同じ。Bell Labsで共有されたイディオム。"
   }
 ]

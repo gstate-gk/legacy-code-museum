@@ -465,6 +465,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "94",
+    title: "鑑定書#094 od — base = 010、自分自身も8進数で初期化するバイナリダンパー、PDP-11の語単位と`*`繰り返し圧縮",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
