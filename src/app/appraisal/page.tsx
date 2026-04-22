@@ -472,6 +472,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "95",
+    title: "鑑定書#095 find — (*exlist->F)(exlist)、述語を関数ポインタのASTで評価する1979年のfind、{}の誕生とopendir()がなかった時代のディレクトリ生読み",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

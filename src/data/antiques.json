@@ -8375,5 +8375,38 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 94,
     "appraiser_note": "convのビットマスクとc<<=1の走査——5フォーマットをビット1つで管理する。putn()の再帰パターンはdcと同じ。Bell Labsで共有されたイディオム。"
+  },
+  {
+    "id": "find-001",
+    "name": "struct anode { int (*F)(); L, R; }——述語を関数ポインタのASTで表現",
+    "year": 1979,
+    "language": "C",
+    "description": "findの述語評価エンジン。-name/-mtime/-exec等の述語を関数ポインタと左右子ノードを持つ木として表現し、Node[100]の固定プールに積む（malloc不使用）。ファイル発見時に(*exlist->F)(exlist)を呼ぶ——ノードが自分自身の評価関数を呼ぶ設計。and()は短絡評価で左辺が偽なら右辺を評価しない。再帰下降パーサexp/e1/e2/e3が演算子優先順位を実現する。",
+    "code": "struct anode {\n    int (*F)();\n    struct anode *L, *R;\n} Node[100];\n\nand(p) register struct anode *p; {\n    return(((*p->L->F)(p->L)) && ((*p->R->F)(p->R))? 1: 0);\n}\n/* descend()内 */\n(*exlist->F)(exlist);",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 95,
+    "appraiser_note": "(*exlist->F)(exlist)——ノードが自分自身を評価する関数ポインタ。1979年のOOP。Node[100]の固定プールに述語ツリーを積む優雅さ。"
+  },
+  {
+    "id": "find-002",
+    "name": "doex()——`{}`をPathnameに置換する-exec {} \\;の誕生",
+    "year": 1979,
+    "language": "C",
+    "description": "findの-execオプションの実装。コマンドライン引数を走査し、{}という文字列をPathnameに置換してfork+execvpで実行する。chdir(Home)で実行前にホームに戻る。-okは同じdoex()をインタラクティブ確認（< rm ... ./foo.c > ?）付きで呼ぶ。find . -exec rm {} \\;という記法はdoex()のstrcmp(na,\"{}\")から生まれた。",
+    "code": "while (na = Argv[com++]) {\n    if(strcmp(na, \";\") == 0) break;\n    if(strcmp(na, \"{}\") == 0) nargv[np++] = Pathname;\n    else nargv[np++] = na;\n}\nif(fork()) wait(&ccode);\nelse { chdir(Home); execvp(nargv[0], nargv, np); }",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 95,
+    "appraiser_note": "{}という記法はここで生まれた——strcmp(na,\"{}\")という1行から。45年後も同じ形でfind -exec {} \\;が動いている。"
+  },
+  {
+    "id": "find-003",
+    "name": "opendir()なし——struct direct[]でディレクトリブロックを512バイト単位で生読み",
+    "year": 1979,
+    "language": "C",
+    "description": "opendir()/readdir()はBSD 4.2（1983年）で追加された。1979年のfindはディレクトリを通常ファイルとしてopen()して512バイト単位で生読みする。struct direct {short d_ino; char d_name[14];}の16バイト構造体を直接キャスト。entries=dsize>>4はdsize/16。if(dir>10){close(dir);}でfd番号が大きければ即closeしてfd枯渇を防ぐ。scomp()のコメントは「funny signed compare」。",
+    "code": "struct direct dentry[32];\nread(dir, (char *)dentry, dsize);\nfor(dp=dentry, entries=dsize>>4; entries; --entries, ++dp) {\n    if(dp->d_ino==0 || ...) continue;\n    descend(name, Fname, exlist);\n}\nif(dir > 10) { close(dir); dir = 0; }",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 95,
+    "appraiser_note": "entries=dsize>>4——ディレクトリエントリが16バイトだから右4ビットシフト。opendir()がなかった時代の生々しい実装。"
   }
 ]
