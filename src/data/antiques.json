@@ -8408,5 +8408,38 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 95,
     "appraiser_note": "entries=dsize>>4——ディレクトリエントリが16バイトだから右4ビットシフト。opendir()がなかった時代の生々しい実装。"
+  },
+  {
+    "id": "who-001",
+    "name": "struct utmp {ut_line[8]; ut_name[8]; ut_time}——20バイトが接続者全員を記録するバイナリ名簿",
+    "year": 1979,
+    "language": "C",
+    "description": "who.cが読む/etc/utmpのデータ構造。tty名8バイト・ユーザー名8バイト・ログイン時刻4バイトの合計20バイト。この構造体が端末の数だけ並んだバイナリファイルが/etc/utmpだ。who.cはfread()で直接struct utmpに読み込む——テキストパースなし。ut_name[0]=='\\0'は誰もログインしていない端末エントリ。%-8.8sフォーマットでユーザー名は8文字固定幅。対になるlogin.cがSCPYN(strncpy+sizeof)マクロでutmpに書き込む。",
+    "code": "struct utmp {\n    char    ut_line[8];  /* tty名 */\n    char    ut_name[8];  /* ユーザー名 */\n    long    ut_time;     /* ログイン時刻 */\n};\n\nwhile (fread((char *)&utmp, sizeof(utmp), 1, fi) == 1) {\n    if(utmp.ut_name[0] == '\\0' && argc==1)\n        continue;\n    putline();\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 96,
+    "appraiser_note": "20バイトのstruct utmpが「今このマシンに誰がいるか」を記録する。fread()で直接読み込む——インデックスもハッシュもなし、線形スキャンで十分だ。"
+  },
+  {
+    "id": "who-002",
+    "name": "`argc==3`——`who am i` の検出は引数の内容ではなく個数、`who loves you` も同じ動作",
+    "year": 1979,
+    "language": "C",
+    "description": "who am iを実行するとargc==3（who・am・iの3引数）になる。-sや--selfというフラグではない——引数の個数で動作が変わる。argv[1]もargv[2]の内容も見ない。who am iもwho are youもwho loves youも同じ動作だ。ttyname(0)でstdinのデバイス名を取得し、rindex(tp,'/')+1でtty名を切り出す。ttyが取得できない場合はgetpwuid(getuid())でフォールバック、tty名を\"tty??\"とする。62行中唯一の条件コンパイル#ifdef vaxがここにある——VAX環境で\"(Vax) \"を表示。",
+    "code": "if (argc==3) {\n    tp = ttyname(0);\n    if (tp)\n        tp = rindex(tp, '/') + 1;\n    else {\n        pw = getpwuid(getuid());\n        strcpy(utmp.ut_name, pw? pw->pw_name: \"?\");\n        strcpy(utmp.ut_line, \"tty??\");\n        putline();\n        exit(0);\n    }\n}\n#ifdef vax\n    printf(\"(Vax) \");\n#endif",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 96,
+    "appraiser_note": "argc==3——who・am・iと3語で問いかければ自分の端末だけ表示。コマンドを対話的に使う状況を正確に想像していた設計。"
+  },
+  {
+    "id": "who-003",
+    "name": "`cbuf+4` と `%.12s`——ctime()の出力から曜日をスキップして月日時分12文字を切り出す",
+    "year": 1979,
+    "language": "C",
+    "description": "putline()の日付フォーマット処理。ctime()は\"Mon Apr 22 12:34:56 2026\\n\"という文字列を返す。cbuf+4で先頭4文字（曜日と空白\"Mon \"）をポインタ加算でスキップし、%.12sで12文字だけ出力——結果は\"Apr 22 12:34\"。年も秒も曜日も表示しない。1979年の端末環境では同年内のセッションが前提で、月日と時分で十分だった。引数2つで/etc/utmpの代わりに任意ファイルを読む——who /var/adm/wtmpで過去のログイン記録を参照できる、last(1)コマンドの原型だ。",
+    "code": "putline()\n{\n    register char *cbuf;\n    printf(\"%-8.8s %-8.8s\", utmp.ut_name, utmp.ut_line);\n    cbuf = ctime(&utmp.ut_time);\n    printf(\"%.12s\\n\", cbuf+4);  /* \"Mon Apr 22...\" → \"Apr 22 12:34\" */\n}\n\ns = \"/etc/utmp\";\nif(argc == 2)\n    s = argv[1];",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 96,
+    "appraiser_note": "cbuf+4でポインタをずらして%.12sで12文字——算術的な日付フォーマット。年も秒も不要だった1979年の割り切り。"
   }
 ]

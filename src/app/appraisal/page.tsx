@@ -479,6 +479,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "96",
+    title: "鑑定書#096 who — `who am i` は `argc==3`、utmpの20バイトを読んで接続者を列挙する62行と `cbuf+4` の日付フォーマット",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
