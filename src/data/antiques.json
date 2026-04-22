@@ -8309,5 +8309,38 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 92,
     "appraiser_note": "数値型のないプログラミング言語——全値がchar*で、算術の瞬間だけ整数になる。$((...))が来るまでの10年間、669行がシェルスクリプトの計算を支えた。"
+  },
+  {
+    "id": "cpio-001",
+    "name": "TRAILER!!!——45年後もLinux initramfsに生きる終端文字列",
+    "year": 1979,
+    "language": "C",
+    "description": "cpioアーカイブの終端を告げる番兵文字列。Bell-32V 1979年のcpio.cで定義されたこの文字列は、2024年のLinuxカーネルが起動するinitramfsの中にそのまま存在する。RPMパッケージの内部形式もcpio形式だ。tarに「負けた」はずのcpioは、070707というマジックナンバーとTRAILER!!!という終端とともに45年後も現役だった。",
+    "code": "strcpy(Hdr.h_name, \"TRAILER!!!\");\nMKSHORT(Hdr.h_filesize, 0L);\nHdr.h_namesize = strlen(\"TRAILER!!!\") + 1;\nbwrite(&Hdr, HDRSIZE+Hdr.h_namesize);",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 93,
+    "appraiser_note": "TRAILER!!!——この文字列を見た瞬間、45年の連続性が見えた。1979年のBell-32V cpio.cが、今日のLinuxカーネルのinitramfsを終えている。"
+  },
+  {
+    "id": "cpio-002",
+    "name": "makdir()——fork+execl(\"/bin/mkdir\")でディレクトリを作る",
+    "year": 1979,
+    "language": "C",
+    "description": "cpioのディレクトリ作成関数。fork()してからexecl(\"/bin/mkdir\")を呼ぶ——mkdir()システムコールはまだ存在しなかった。それはBSD 4.2（1983年）以降の機能だ。1979年のUnixではmkdirは/bin/mkdirという独立した実行ファイルで、特権を使ってディレクトリを作成していた。close(2)でstderrを閉じてからexecする小技も残っている。",
+    "code": "makdir(namep) register char *namep; {\n    static status;\n    if(fork())\n        wait(&status);\n    else {\n        close(2);\n        execl(\"/bin/mkdir\", \"mkdir\", namep, 0);\n        exit(1);\n    }\n    return ((status>>8) & 0377)? 0: 1;\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraiser_note": "mkdirがforkだった——この一点で1979年のUnixの現実が見えた。syscallではなく外部コマンドとしてのmkdir。BSD 4.2まで4年待つことになる。",
+    "appraisalNumber": 93
+  },
+  {
+    "id": "cpio-003",
+    "name": "popen(\"pwd\", \"r\")——getcwd()がなかった時代のカレントディレクトリ取得",
+    "year": 1979,
+    "language": "C",
+    "description": "cpioのpwd()関数。getcwd()がまだ存在しないため、popen(\"pwd\", \"r\")で/bin/pwdをサブプロセスとして起動し出力を読む。同じファイルにはpentry()関数の中に#include <pwd.h>が書かれている——関数スコープでincludeする1979年の局所化の試み。MKSHORT/mklongマクロはunionでVAX（リトルエンディアン）とInterdata（ビッグエンディアン）を実行時判定で両対応する。",
+    "code": "pwd() {\n    FILE *dir;\n    dir = popen(\"pwd\", \"r\");\n    fgets(Fullname, 128, dir);\n    pclose(dir);\n    Fullname[strlen(Fullname)-1] = '/';\n}\n/* pentry()の中: */\n#include <pwd.h>   /* ← 関数の中にinclude */",
+    "source": "Bell-32V Unix (1979)",
+    "appraiser_note": "popen(\"pwd\",\"r\")——getcwd()がない世界でカレントディレクトリを知る唯一の方法。関数の中の#include <pwd.h>も1979年の正直な実装だ。",
+    "appraisalNumber": 93
   }
 ]

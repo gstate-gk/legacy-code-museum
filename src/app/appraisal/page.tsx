@@ -458,6 +458,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "93",
+    title: "鑑定書#093 cpio — TRAILER!!!と070707、mkdirをforkで呼んだ1979年のアーカイバとLinux initramfsに今も生きるcpio形式",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
