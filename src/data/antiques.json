@@ -8441,5 +8441,38 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 96,
     "appraiser_note": "cbuf+4でポインタをずらして%.12sで12文字——算術的な日付フォーマット。年も秒も不要だった1979年の割り切り。"
+  },
+  {
+    "id": "ar-001",
+    "name": "ARMAG = 0177545——arアーカイブの先頭2バイト、45年後もfileコマンドに登録されているマジックナンバー",
+    "year": 1979,
+    "language": "C",
+    "description": "arアーカイブのマジックナンバー。8進数の0177545は10進数65381、16進数0xFF65。arファイルの先頭2バイトがこの値でなければ即エラー。PDP-11ではsizeof(int)==2なのでintとして読んでARMAGと比較する。struct ar_hdrは26バイト——ar_name[14]（当時のUnixファイル名上限）+ar_date(long)+ar_uid(char)+ar_gid(char)+ar_mode(int)+ar_size(long)。arアーカイブ構造は[ARMAG(2バイト)][ar_hdr(26バイト)+data(偶数バイト)]の繰り返し。libc.aのような静的ライブラリを作る705行のアーカイバだ。",
+    "code": "#define ARMAG   0177545\nstruct  ar_hdr {\n    char    ar_name[14];  /* ファイル名 */\n    long    ar_date;      /* 更新時刻 */\n    char    ar_uid;\n    char    ar_gid;\n    int     ar_mode;\n    long    ar_size;\n};\n\nif (read(af, (char *)&mbuf, sizeof(int)) != sizeof(int)\n    || mbuf != ARMAG) {\n    fprintf(stderr, \"ar: %s not in archive format\\n\", arnam);\n    done(1);\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 97,
+    "appraiser_note": "ARMAG = 0177545——この2バイトが「arアーカイブ」を定義する。1979年の約束は45年後のfileコマンドにも生きている。"
+  },
+  {
+    "id": "ar-002",
+    "name": "`if(i&1)`——PDP-11のワード境界パディング、IODD/OODD/HEAD/SKIPの4フラグで全操作を表現",
+    "year": 1979,
+    "language": "C",
+    "description": "copyfil()のアライメント処理。PDP-11はワード（2バイト）境界でデータにアクセスするため、奇数バイトのファイルをそのまま並べるとアライメントエラーになる。if(i&1)でファイルサイズが奇数なら1バイト余分に読み書きして偶数境界を保つ。4つのフラグ（SKIP=1/IODD=2/OODD=4/HEAD=8）のビットマスクがcopyfil()の全操作を表現する——IODD+OODD+HEADでヘッダ付き通常コピー、IODD+SKIPでスキップ、IODDのみで出力なし読み飛ばし。3本の一時ファイル(/tmp/vXXXXX,v1XXXXX,v2XXXXX)でアトミック置換。シグナル割り込み時もdone()がunlink()で確実に削除する。",
+    "code": "if(arbuf.ar_size < i) {\n    i = o = arbuf.ar_size;\n    if(i&1) {\n        if(flag & IODD) i++;  /* 入力を偶数に切り上げ */\n        if(flag & OODD) o++;  /* 出力を偶数に切り上げ */\n    }\n}\n/* 一時ファイルクリーンアップ */\ndone(c) {\n    if(tfnam)  unlink(tfnam);\n    if(tf1nam) unlink(tf1nam);\n    if(tf2nam) unlink(tf2nam);\n    exit(c);\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 97,
+    "appraiser_note": "if(i&1)——奇数バイトのファイルを1バイト余分に読み書きしてPDP-11のワード境界を守る。4フラグのビットマスクが全操作を表現する簡潔さ。"
+  },
+  {
+    "id": "ar-003",
+    "name": "`pmode()`——データ駆動のパーミッション表示、`int *m[]`配列が9ビットの表示規則を定義する",
+    "year": 1979,
+    "language": "C",
+    "description": "arのverbose一覧（-v）で使うパーミッション表示エンジン。各エントリはint配列で{count, bitflag, char_if_set, ..., char_if_not}という可変長フォーマット。m3は2エントリでSUIDなら's'、XOWNなら'x'、どちらでもなければ'-'の3通りをcount=2で表現する。select()がcount分のビットフラグを順に試して最初にマッチした文字を出力。longt()では同じctime()トリックをwho.c(#096)と共有しつつ、cp+4（月日時分）+cp+20（年4文字）でwhoより4文字多く表示——ライブラリファイルには年が必要なため。qcmd()のquick appendは一時ファイルなしで末尾追記するが、Bell-32Vにはまだranlibがなくリンカは線形スキャンしていた。",
+    "code": "int m1[] = { 1, ROWN, 'r', '-' };\nint m3[] = { 2, SUID, 's', XOWN, 'x', '-' };\nint *m[] = { m1, m2, m3, m4, m5, m6, m7, m8, m9};\n\nselect(pairp) int *pairp; {\n    register int n, *ap;\n    ap = pairp;\n    n = *ap++;\n    while (--n>=0 && (arbuf.ar_mode & *ap++) == 0)\n        ap++;\n    putchar(*ap);\n}\n/* longt()の日付 */\ncp = ctime(&arbuf.ar_date);\nprintf(\" %-12.12s %-4.4s \", cp+4, cp+20);",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 97,
+    "appraiser_note": "int *m[]の配列が9ビットのパーミッション表示規則を定義する——データ駆動設計。cp+20で年も表示するのはwho.cとの違い。用途が精度を決める。"
   }
 ]

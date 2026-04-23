@@ -486,6 +486,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "97",
+    title: "鑑定書#097 ar — `ARMAG = 0177545`、PDP-11のワード境界と `ar_name[14]`、静的リンクを可能にした705行のライブラリアーカイバ",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
