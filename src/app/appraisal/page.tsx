@@ -500,6 +500,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "99",
+    title: "鑑定書#099 csh — `\"Too dangerous to alias that\"`、alias が alias を上書きできない1979年の csh、! がLexerで展開されるhistory置換とBill Joyの発明",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

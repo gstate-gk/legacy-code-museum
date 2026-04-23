@@ -8507,5 +8507,38 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 98,
     "appraiser_note": "revsort_flg=±1——乗算の符号反転で正順/逆順を1つのcomparatorが担う。シンプルな数学でif/elseを消した設計。"
+  },
+  {
+    "id": "csh-001",
+    "name": "`struct Hist`——Hlex(トークン列)+Hnum+Href+Hnext、`/* avoid a looping snafu */` が守るhistory list",
+    "year": 1979,
+    "language": "C",
+    "description": "cshのhistory管理データ構造。Hlexはstruct wordentのトークン列（入力をパース済みで保存）、Hnumはイベント番号、Hrefは参照カウント（老化のため）、HnextはリストのNext。savehist()が毎コマンドをHistlistの先頭に追加し、histlenを超えた古いエントリをhfree()で解放する。history変数が数値でない場合（set history=foo）のlooping snafu対策として\"10\"にリセットするコメントが有名。dohist1()は再帰でリストの末尾まで辿ってから戻りながらphist()で出力——古いイベントが先、新しいイベントが後の表示順を実現するための再帰設計だ。",
+    "code": "struct Hist {\n    struct wordent  Hlex;   /* 入力をトークン列として保存 */\n    int             Hnum;   /* イベント番号 */\n    int             Href;   /* 参照カウント（老化のため） */\n    struct Hist     *Hnext; /* 次のhistoryエントリ */\n} Histlist;\n\n/* avoid a looping snafu */\nif (*cp)\n    set(\"history\", \"10\");\n\ndohist1(hp->Hnext);  /* 末尾へ再帰 */\nphist(hp);           /* 戻りながら出力（古い順） */",
+    "source": "3BSD Unix (1979), BSD-3-Snapshot-Development",
+    "appraisalNumber": 99,
+    "appraiser_note": "「avoid a looping snafu」——historyが数値でなければ\"10\"にリセット。軍隊スラングのsnafu（Situation Normal All Fouled Up）がコメントに残る1979年のcsh。"
+  },
+  {
+    "id": "csh-002",
+    "name": "`!` はLexerで展開される——`peekc/peekd/peekread` の3段バッファと入力ストリームへの割り込み挿入",
+    "year": 1979,
+    "language": "C",
+    "description": "cshのhistory置換はパーサではなく字句解析（lexer）レベルで処理される。getC()が!を読んだ瞬間にgetexcl()を呼んで、history listから対応するトークン列を取り出しexclp/exclnxtにセットする。次のgetC()からはそのトークン列が流れ出す——入力ストリームへの「割り込み挿入」だ。3段バッファ（peekc/peekd/peekread）が必要な理由はコメントが説明する：history routinesが先読みして入力に差し込む際、押し戻したい文字は差し込んだテキストの「後ろ」に置かなければならない。^lef^ritはinttyチェック付きの!:s^lef^rit省略形——getexcl()のsc=='^'分岐でsと^を押し戻してsubstラベルに飛ぶ。",
+    "code": "char peekc, peekd;   /* getC の2段ペーク */\nchar peekread;       /* readc のペーク */\nchar *exclp;         /* ! 置換の現在の単語（残り） */\nstruct wordent *exclnxt;\n\n/*\n * history routines will read ahead and then insert\n * stuff into the input stream. If they push back a\n * character then they must push it behind the text\n * substituted by the history substitution.\n */\n\nif (c == '^' && intty)\n    getexcl(c);  /* ^lef^rit は !:s^lef^rit の省略 */",
+    "source": "3BSD Unix (1979), BSD-3-Snapshot-Development",
+    "appraisalNumber": 99,
+    "appraiser_note": "!置換をLexerレベルで実装——peekc/peekd/peekreadの3段バッファが「割り込み挿入」を支える。^lef^ritでコマンドを即座に修正できる対話設計。"
+  },
+  {
+    "id": "csh-003",
+    "name": "`\"Too dangerous to alias that\"`——alias/unaliasの自己上書き禁止と変数・aliasを共有する`struct varent`",
+    "year": 1979,
+    "language": "C",
+    "description": "doalias()のalias自己防衛機構。alias alias rmを許すとaliasコマンド自体がrmとして動作しaliasを解除する方法がなくなる——ループや自己破壊の罠。Bill Joyはaliasとunaliasの2つを明示的に禁止した。struct varentは変数リスト（shvhed）とaliasリスト（aliases）の両方に使われる同一構造体——adrof1()が両方を検索できる。vecはchar**でaliasは単語の配列として保存される（alias ls 'ls -F'は{\"ls\",\"-F\",NULL}という配列）。struct biltins{bname/bfunct/minargs/maxargs}のbfunc[]テーブルはar.c/find.cと同じ関数ポインタ方式に引数制約を加えたもの。#define INF 1000で無制限を表現。",
+    "code": "if (eq(p, \"alias\") || eq(p, \"unalias\")) {\n    setname(p);\n    bferr(\"Too dangerous to alias that\");\n}\n\nstruct varent {\n    char    **vec;   /* aliasは単語の配列 */\n    char    *name;\n    struct varent *link;\n} shvhed, aliases;  /* 変数とaliasが同じ構造体 */\n\nstruct biltins {\n    char    *bname;\n    int     (*bfunct)();\n    short   minargs, maxargs;\n} bfunc[];",
+    "source": "3BSD Unix (1979), BSD-3-Snapshot-Development",
+    "appraisalNumber": 99,
+    "appraiser_note": "\"Too dangerous to alias that\"——Bill Joyが最初から罠を知っていた。aliasとunaliasの自己上書きを1行の文字列で永遠に封じた1979年の判断。"
   }
 ]

@@ -201,6 +201,31 @@
 - [ ] レビュー
 - [ ] note.com 公開
 
+### ARTICLE_23: QBasic → React 変換 + 鑑定書 #014（Oregon Trail, 1971）
+- [x] 変換実装（QBasic 685行 → React+TypeScript 1,519行）
+- [x] 解析・推理 — GOTO 105個、変数32個が1-2文字、葬式のブラックユーモア
+- [x] ドラフト作成 — [ARTICLE_23_OREGON_TRAIL.md](https://github.com/gstate-gk/legacy-code-archive/blob/master/articles/ARTICLE_23_OREGON_TRAIL.md)
+- [ ] NOTE_FORMAT作成
+- [x] Museum 反映
+- [ ] レビュー
+- [ ] note.com 公開
+
+### ARTICLE_24: Ada → React 変換（Whitaker's WORDS ラテン語辞書）
+- [x] 変換実装（Ada 27,670行 → React+TypeScript 547行、辞書検索特化版）
+- [ ] ドラフト作成
+- [ ] NOTE_FORMAT作成
+- [x] Museum 反映
+- [ ] レビュー
+- [ ] note.com 公開
+
+### ARTICLE_25: Java/Forth → TypeScript 変換（Mako VM 仮想ゲームコンソール）
+- [x] 変換実装（Java 1,965行 → TypeScript+Canvas 1,054行）
+- [ ] ドラフト作成
+- [ ] NOTE_FORMAT作成
+- [x] Museum 反映
+- [ ] レビュー
+- [ ] note.com 公開
+
 ---
 
 ## GEO最適化版（SEO/AIO対応リライト）
@@ -218,6 +243,7 @@
 ## データ基盤
 - コメント収集パイプライン: 383,418件（12リポジトリ、8言語）
 - Museum: https://gstate-gk.github.io/legacy-code-museum/
+
 
 
 
