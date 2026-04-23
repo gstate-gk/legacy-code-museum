@@ -1,0 +1,155 @@
+================================================================
+note.com 投稿用ガイド — ARTICLE_109 (鑑定書 #098 nm)
+================================================================
+
+【連載情報】
+Bell Labsの道具箱　第35回　毎週月曜日掲載中
+
+【タイトル欄に入力】
+`A_MAGIC1 = 0407`——a.outの4つのマジックと `toupper()` で外部性を表すシンボル型文字、239行のオブジェクトファイル読み手
+
+【サムネイル画像】
+struct nlist の定義またはN_EXT/toupper()の型文字変換コード部分（1280×670px）
+
+================================================================
+
+★見出し: はじめに
+
+★コード
+#define A_MAGIC1    0407    /* normal */
+#define A_MAGIC2    0410    /* read-only text */
+#define A_MAGIC3    0411    /* separated I&D */
+#define A_MAGIC4    0405    /* overlay */
+
+#define BADMAG  MAGIC!=A_MAGIC1 && MAGIC!=A_MAGIC2 \
+        && MAGIC!=A_MAGIC3 && MAGIC!=A_MAGIC4
+★コードここまで
+
+★太字→nm←太字ここまで はオブジェクトファイルやライブラリのシンボルテーブルを表示する道具だ。Bell-32V 1979年の ★太字→nm.c←太字ここまで は239行。4つのマジックナンバー（全て8進数）が ★太字→a.out←太字ここまで の4形態を表す——0407（通常）・0410（テキスト読み取り専用）・0411（I&D分離）・0405（オーバーレイ）。デバッガとリンカをつなぐ「シンボルの窓」だ。
+
+★見出し: `struct exec`——a.outヘッダの8フィールド
+
+★コード
+struct exec {   /* a.out header */
+    int      a_magic;   /* magic number */
+    unsigned a_text;    /* size of text segment */
+    unsigned a_data;    /* size of initialized data */
+    unsigned a_bss;     /* size of uninitialized data */
+    unsigned a_syms;    /* size of symbol table */
+    unsigned a_entry;   /* entry point */
+    unsigned a_trsize;  /* size of text relocation */
+    unsigned a_drsize;  /* size of data relocation */
+};
+★コードここまで
+
+★太字→a.out←太字ここまで は ★太字→assembler output←太字ここまで の略。nmはヘッダからシンボルテーブルの位置を計算して飛ぶ：
+
+★コード
+o = (long)exp.a_text + exp.a_data + exp.a_trsize + exp.a_drsize;
+fseek(fi, o, 1);
+n = exp.a_syms / sizeof(struct nlist);
+★コードここまで
+
+text + data + 再配置情報のバイト数を飛ばした先にシンボルテーブルがある。
+
+★見出し: `struct nlist`——16バイトのシンボルエントリ
+
+★コード
+struct nlist {  /* symbol table entry */
+    char     n_name[8];   /* symbol name */
+    char     n_type;      /* type flag */
+    char     n_other;
+    short    n_desc;
+    unsigned n_value;     /* value */
+};
+
+#define N_TYPE  037     /* mask */
+#define N_EXT   01      /* external bit, or'ed in */
+★コードここまで
+
+シンボル名は最大8文字—— ★太字→ar_name[14]←太字ここまで （ar.c、#097）より短い。 ★太字→n_type←太字ここまで の1バイトにセグメント種別と外部性を同居させる設計だ。
+
+★見出し: `N_EXT = 01`——`toupper()` で外部性を表す型文字
+
+★コード
+switch (c & (N_TYPE - N_EXT)) {
+case N_UNDF:  c = 'u'; if (symp[n].n_value) c = 'c'; break;
+case N_TEXT:  c = 't'; break;
+case N_DATA:  c = 'd'; break;
+case N_BSS:   c = 'b'; break;
+case N_FN:    c = 'f'; break;
+}
+if (symp[n].n_type & N_EXT)
+    c = toupper(c);  /* 外部シンボルは大文字 */
+★コードここまで
+
+型文字は ★太字→u/a/t/d/b/f←太字ここまで の6種類。 ★太字→toupper()←太字ここまで を1回かけるだけで外部シンボル（大文字 ★太字→U/A/T/D/B/F←太字ここまで ）に変わる——今日の ★太字→nm←太字ここまで が出力する ★太字→T←太字ここまで や ★太字→U←太字ここまで はこの設計をそのまま引き継いでいる。
+
+★太字→N_UNDF←太字ここまで で ★太字→n_value != 0←太字ここまで なら ★太字→'c'←太字ここまで （common symbol）——初期化なしのグローバル変数。C言語の ★太字→int x;←太字ここまで （初期化なし）と ★太字→int x = 0;←太字ここまで （初期化あり）を区別する。
+
+★見出し: `arch_flg` と `SELECT`——arアーカイブの透過的処理
+
+★コード
+#define SELECT  arch_flg ? arp.ar_name : *argv
+
+fread((char *)&exp, 1, sizeof(MAGIC), fi);
+if (MAGIC == ARMAG)
+    arch_flg++;      /* arアーカイブと判定 */
+★コードここまで
+
+先頭マジックナンバーを読んで ★太字→ARMAG←太字ここまで （arのマジック）なら ★太字→arch_flg←太字ここまで を立てる。それ以降は ★太字→SELECT←太字ここまで マクロが名前の取得先を切り替えるだけ—— ★太字→.o←太字ここまで ファイルもライブラリも同じコードパスで処理できる。
+
+★見出し: `nextel()`——ar.cの`getdir()`と同じ役割
+
+★コード
+nextel(af) FILE *af; {
+    register r;
+    fseek(af, off, 0);
+    r = fread((char *)&arp, 1, sizeof(struct ar_hdr), af);
+    if (r <= 0) return(0);
+    if (arp.ar_size & 1)
+        ++arp.ar_size;   /* 奇数サイズは偶数に切り上げ */
+    off = ftell(af) + arp.ar_size;
+    return(1);
+}
+★コードここまで
+
+ar.c（#097）の ★太字→getdir()←太字ここまで と同じ役割。 ★太字→arp.ar_size & 1←太字ここまで のワード境界チェックも同じだ。 ★太字→off = ftell() + arp.ar_size←太字ここまで で次のエントリを追跡する。
+
+★見出し: `compare()`——`revsort_flg = ±1` の乗算で正順/逆順を切り替え
+
+★コード
+int revsort_flg = 1;
+
+compare(p1, p2) struct nlist *p1, *p2; {
+    if (numsort_flg) {
+        if (p1->n_value > p2->n_value) return(revsort_flg);
+        if (p1->n_value < p2->n_value) return(-revsort_flg);
+    }
+    /* 名前バイト比較 */
+    for(i=0; i<sizeof(p1->n_name); i++) ...
+        return(revsort_flg);  /* or -revsort_flg */
+}
+★コードここまで
+
+★太字→revsort_flg = 1←太字ここまで を ★太字→-1←太字ここまで に変えるだけで逆順になる——乗算による符号反転で1つのcomparatorが正順/逆順の両方を担う。
+
+★見出し: 鑑定
+★コード
+初版       : Bell-32V Unix（1979年）
+実装       : C（239行）
+対象       : a.outオブジェクトファイル + arアーカイブ
+a.outマジック: A_MAGIC1=0407/0410/0411/0405（全て8進数）
+struct exec: a_text/data/bss/syms/entry/trsize/drsize = 8フィールド
+struct nlist: n_name[8] + n_type + n_other + n_desc + n_value = 16バイト
+N_EXT=01   : 最下位ビットが外部性、toupper()で大文字に変換
+型文字     : u/a/t/d/b/f → U/A/T/D/B/F（toupper()1回）
+arch_flg   : ARMAG検出でarアーカイブも透過的に処理
+SELECT     : arch_flg ? arp.ar_name : *argv
+nextel()   : ar.cのgetdir()と同じ役割
+revsort_flg: ±1の乗算で正順/逆順を切り替え
+デフォルト : argc==0でa.outを読む
+後継       : GNU nm、llvm-nm、objdump -t、readelf -s
+★コードここまで
+
+★太字→nmは「リンカの辞書索引」だ。a.outというバイナリの中に人間が読める名前が潜んでいる——main、printf、errno。リンカはそれらのシンボルをつないでプログラムを完成させる。nmはそのシンボルテーブルをテキストとして取り出す道具だ。toupper()の1呼び出しで内部/外部を表現し、revsort_flg=±1の乗算で正順/逆順を切り替える——239行は最小限で最大限を表現している。←太字ここまで

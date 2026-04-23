@@ -493,6 +493,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "98",
+    title: "鑑定書#098 nm — `A_MAGIC1 = 0407`、a.outの4つのマジックと `toupper()` で外部性を表すシンボル型文字、239行のオブジェクトファイル読み手",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

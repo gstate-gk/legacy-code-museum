@@ -8474,5 +8474,38 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 97,
     "appraiser_note": "int *m[]の配列が9ビットのパーミッション表示規則を定義する——データ駆動設計。cp+20で年も表示するのはwho.cとの違い。用途が精度を決める。"
+  },
+  {
+    "id": "nm-001",
+    "name": "A_MAGIC1=0407——a.outの4つのマジックナンバー、BADMAGマクロが4形態を一括検査する",
+    "year": 1979,
+    "language": "C",
+    "description": "nmが読むa.outオブジェクトファイルの4形態を定義するマジックナンバー。全て8進数：0407（通常）・0410（テキスト読み取り専用）・0411（I&D分離）・0405（オーバーレイ）。BADMAGマクロが4条件のANDで「非a.outファイル」を検出する。先頭マジックナンバーがARMAGならarアーカイブと判定してarch_flgを立てる——.oファイルもlibc.aも同じコードパスで処理する透過的設計。struct execはa_text/data/bss/syms/entry/trsize/drsize=8フィールド。シンボルテーブルはtext+data+再配置情報のバイト数を飛ばした先にある。デフォルトファイル名はa.out（コンパイラのデフォルト出力と同じ）。",
+    "code": "#define A_MAGIC1  0407  /* normal */\n#define A_MAGIC2  0410  /* read-only text */\n#define A_MAGIC3  0411  /* separated I&D */\n#define A_MAGIC4  0405  /* overlay */\n#define BADMAG  MAGIC!=A_MAGIC1 && MAGIC!=A_MAGIC2 \\\n        && MAGIC!=A_MAGIC3 && MAGIC!=A_MAGIC4\n\no = (long)exp.a_text + exp.a_data + exp.a_trsize + exp.a_drsize;\nfseek(fi, o, 1);  /* シンボルテーブルへ */\nn = exp.a_syms / sizeof(struct nlist);",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 98,
+    "appraiser_note": "A_MAGIC1=0407——4つの8進数マジックが4形態のa.outを定義する。BADMAGマクロの4条件ANDが「非a.out」を一括検出する簡潔さ。"
+  },
+  {
+    "id": "nm-002",
+    "name": "`N_EXT = 01`——最下位ビットが外部性、`toupper()`1回で大文字シンボル型文字に変換",
+    "year": 1979,
+    "language": "C",
+    "description": "nmのシンボル型文字変換。struct nlistのn_typeは1バイトでセグメント種別（N_TYPE=037マスク）と外部性（N_EXT=01、最下位ビット）を同居させる。型文字u/a/t/d/b/fにtoupper()を1回かけるだけで外部シンボルU/A/T/D/B/Fに変わる——今日のnmが出力するT/Uはこの設計をそのまま引き継いでいる。N_UNDFでn_value!=0なら'c'（common symbol）——初期化なしグローバル変数と初期化ありの区別。STABTYPEフラグが立つデバッグシンボルは別フォーマット（n_type/other/descを生の16進数で出力）。シンボル名はn_name[8]で最大8文字。",
+    "code": "switch (c & (N_TYPE - N_EXT)) {\ncase N_UNDF: c = 'u'; if (symp[n].n_value) c = 'c'; break;\ncase N_TEXT: c = 't'; break;\ncase N_DATA: c = 'd'; break;\ncase N_BSS:  c = 'b'; break;\n}\nif (symp[n].n_type & N_EXT)\n    c = toupper(c);  /* 外部シンボルは大文字 */",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 98,
+    "appraiser_note": "toupper()1回で内部/外部を表現——N_EXT=01という最下位ビットの設計が生む優雅さ。今日のnmのT/Uはここから来た。"
+  },
+  {
+    "id": "nm-003",
+    "name": "`revsort_flg = ±1`——乗算の符号反転で正順/逆順を切り替える`compare()`",
+    "year": 1979,
+    "language": "C",
+    "description": "nmのqsortコンパレータ設計。revsort_flg=1（デフォルト）を-rフラグで-1に変えるだけで逆順になる。comparator内でrevsort_flgを乗算することで正順/逆順を1関数で担う——if/elseなし。-nフラグ（numsort_flg）で数値ソートに切り替え。シンボルは1エントリずつrealloc()で動的拡張（sizeof(nlist)×(i+1)）、-pフラグ（nosort_flg）でソート抑制。nextel()はar.cのgetdir()と同じ役割でoff=ftell()+arp.ar_sizeで次エントリを追跡、arp.ar_size&1のワード境界チェックもar.cと共通のイディオム。SELECTマクロがarch_flg?arp.ar_name:*argvで名前取得先を切り替える。",
+    "code": "int revsort_flg = 1;  /* -r で -1 に変わる */\n\ncompare(p1, p2) struct nlist *p1, *p2; {\n    if (numsort_flg) {\n        if (p1->n_value > p2->n_value) return(revsort_flg);\n        if (p1->n_value < p2->n_value) return(-revsort_flg);\n    }\n    /* 名前比較 */\n    if (p1->n_name[i] > p2->n_name[i]) return(revsort_flg);\n    else return(-revsort_flg);\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 98,
+    "appraiser_note": "revsort_flg=±1——乗算の符号反転で正順/逆順を1つのcomparatorが担う。シンプルな数学でif/elseを消した設計。"
   }
 ]
