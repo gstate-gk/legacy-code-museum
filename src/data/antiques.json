@@ -8540,5 +8540,38 @@
     "source": "3BSD Unix (1979), BSD-3-Snapshot-Development",
     "appraisalNumber": 99,
     "appraiser_note": "\"Too dangerous to alias that\"——Bill Joyが最初から罠を知っていた。aliasとunaliasの自己上書きを1行の文字列で永遠に封じた1979年の判断。"
+  },
+  {
+    "id": "at-001",
+    "name": "`HOUR = 100`——時刻はHHMM整数（粒）、`val%HOUR >= 60` で不正な分フィールドを検出する",
+    "year": 1979,
+    "language": "C",
+    "description": "atコマンドの時刻表現。HOUR=100と定義することで時刻をHHMM整数（grain=粒）として扱う。HALFDAY=1200が正午、DAY=2400が深夜0時。コメントが「in grains」と明言する。makeutime()が文字列→整数変換を担う——3桁未満ならval*=HOUR（時のみ→×100）、コロン後の分はval+=(10*c+c[1]-11*'0')で加算。val%HOUR>=60で不正な分フィールドを弾く（HOUR=100なのでval%100が分になる）。'N'/'n'でval=HALFDAY（noon=1200）、'M'/'m'でval=0（midnight=0）。'A'/'a'でPM→AM変換（val-=HALFDAY）、'P'/'p'でAM→PM変換（val+=HALFDAY）。",
+    "code": "#define HOUR    100\n#define HALFDAY (12*HOUR)  /* 1200 = 正午 */\n#define DAY     (24*HOUR)  /* 2400 = 深夜0時 */\n\nint utime;  /* requested time in grains */\n\nif (p-pp < 3)\n    val *= HOUR;  /* 3桁未満なら時のみ → ×100 */\n\nif (val%HOUR >= 60) {\n    fprintf(stderr, \"at: illegal minute field\\n\");\n    exit(1);\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 100,
+    "appraiser_note": "HOUR=100——秒でも分でもなくHHMM整数で時刻を管理する。val%HOUR>=60という検出式はHOUR=100だから成立する。コメント「in grains」が示す独自の時間哲学。"
+  },
+  {
+    "id": "at-002",
+    "name": "`popen(\"pwd\",\"r\")`——`getcwd()` のない1979年に子プロセスから現在ディレクトリを取得する",
+    "year": 1979,
+    "language": "C",
+    "description": "atコマンドがスケジュールジョブを登録する際の現在ディレクトリ取得方法。Bell-32V 1979年にはgetcwd()が存在しないため、popen()でpwdコマンドを子プロセスとして起動しfgets()で標準出力を読む。取得した結果を「cd <現在ディレクトリ>」としてジョブファイルの先頭に書く——実行時に正しいディレクトリで動くための仕組みだ。続いてchar **environから全環境変数をジョブファイルに出力（PATH/HOME/TERM等）。スケジュールされたジョブは登録時の環境を完全に再現する。chmod(fname,0644)をfopen直後に実行する点も特徴的。",
+    "code": "if ((pwfil = popen(\"pwd\", \"r\")) == NULL) {\n    fprintf(stderr, \"at: can't execute pwd\\n\");\n    exit(1);\n}\nfgets(pwbuf, 100, pwfil);\npclose(pwfil);\nfprintf(file, \"cd %s\", pwbuf);\n\nif (environ) {\n    char **ep = environ;\n    while(*ep)\n        fprintf(file, \"%s\\n\", *ep++);\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 100,
+    "appraiser_note": "getcwd()のない時代——popen(\"pwd\",\"r\")で子プロセスを辞書として使う。environ全体をジョブファイルに書き込む「環境の封印」。1979年のUnixの仕組みがよく見える。"
+  },
+  {
+    "id": "at-003",
+    "name": "`i += 53`——素数ステップで `(getpid()+i)%100` を巡回してジョブファイルの衝突を回避する",
+    "year": 1979,
+    "language": "C",
+    "description": "atのジョブファイル命名とファイル衝突回避。ファイル名はYY.DDD.HHMM.XX（年2桁.年通日3桁.時刻4桁.衝突回避2桁）。XXは(getpid()+i)%100。同じ時刻に複数ジョブが登録されると衝突する。i+=53のステップで0〜99を順に試す——53と100はgcd=1（互いに素）なので53ステップで全100値を巡回できる。access(fname,0)==-1（ファイル未存在）なら使用。prefix()関数は月名・曜日名の前方一致解析——「jan」「mo」「tue」を受け付け大文字小文字も吸収。同じ前方一致が2件以上なら「ambiguous month」でexit(1)。uyear%4==0のナイーブなうるう年判定も特徴的。",
+    "code": "for (i=0; ; i += 53) {\n    sprintf(fname, \"%s/%02d.%03d.%04d.%02d\", dir, y, d, t,\n       (getpid()+i)%100);\n    if (access(fname, 0) == -1)\n        return;  /* ファイルなし → 使用 */\n}\n/* 53と100はgcd=1 → 53ステップで0〜99を全巡回 */",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 100,
+    "appraiser_note": "i+=53——素数を選ぶことでgcd(53,100)=1、100ステップで全値を巡回。数論的な衝突回避を160行のジョブスケジューラに忍ばせた1979年のエンジニアリング。"
   }
 ]

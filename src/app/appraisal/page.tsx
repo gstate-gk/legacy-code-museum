@@ -507,6 +507,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "100",
+    title: "鑑定書#100 at — `HOUR = 100`、HHMMを「粒」で刻む時刻表現、`popen(\"pwd\",\"r\")` でサブプロセスから現在ディレクトリを取得する1979年のジョブスケジューラ",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
