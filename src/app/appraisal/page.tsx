@@ -514,6 +514,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "101",
+    title: "鑑定書#101 cal — `mon[9] = 19`、1752年9月は19日しかない、グレゴリオ暦改革をコードが記憶するカレンダー計算の204行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
