@@ -8606,5 +8606,38 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 101,
     "appraiser_note": "string[432]——6×72=432の計算が3ヶ月並列表示を支える。インターリーブ格納でsingle bufferに3列を同居させる簡潔な設計。"
+  },
+  {
+    "id": "login-001",
+    "name": "`nouser = {\"\" , \"nope\"}`——存在しないユーザーにも `\"Password:\"` を表示して応答速度からユーザー名の有効性を隠す",
+    "year": 1979,
+    "language": "C",
+    "description": "login.cのタイミング攻撃対策。ユーザー名が/etc/passwdに存在しない場合、getpwnam()はNULLを返す。このとき即座に「Login incorrect」とせず、pwd=&nouseで偽のpasswd構造体を使い続ける。nouser.pw_passwd=\"nope\"はcrypt()で有効なハッシュを生成できない文字列——どんなパスワードを入力してもstrcmp()は一致しない。存在するユーザーと存在しないユーザーの処理経路を同一にすることで、応答速度の差から攻撃者がユーザー名の存在を判定できなくなる。*pwd->pw_passwd!='\\0'のチェックでパスワードフィールドが空（\"\"）なら認証なしでログイン可能——ゲストアカウントの実装も同時に担う。",
+    "code": "struct passwd nouser = {\"\", \"nope\"};\n\nif ((pwd = getpwnam(utmp.ut_name)) == NULL)\n    pwd = &nouser;\nif (*pwd->pw_passwd != '\\0') {\n    namep = crypt(getpass(\"Password:\"), pwd->pw_passwd);\n    if (strcmp(namep, pwd->pw_passwd)) {\n        printf(\"Login incorrect\\n\");\n        goto loop;\n    }\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 102,
+    "appraiser_note": "nouser={\"\" ,\"nope\"}——正しい答えを返さないことで情報を守る。タイミング攻撃という概念がまだ命名されていなかった1979年に、その対策が149行のlogin.cに静かに実装されていた。"
+  },
+  {
+    "id": "login-002",
+    "name": "`alarm(60)` と `alarm(0)`——149行の両端を挟む対称構造、60秒タイムアウトとログイン成功でのキャンセル",
+    "year": 1979,
+    "language": "C",
+    "description": "login.cのタイムアウト設計。main()の冒頭でalarm(60)を設定——60秒以内にログインが完了しなければSIGALRMでプロセスが終了する。SIGQUIT/SIGINTはSIG_IGNで無視（ログイン画面から抜けられないように）。シェル起動直前のexeclp()の手前でalarm(0)によりアラームをキャンセルする。alarm(60)とalarm(0)が149行の最初と最後を挟む対称な構造だ。nice(-100)+nice(20)+nice(0)の3段階優先度リセットも特徴的——gettyが残した優先度をrootなら通常/非rootなら最低に正規化する。for(t=3;t<20;t++) close(t)で継承fdをNOFILE=20まで全て閉じる。",
+    "code": "alarm(60);              /* 冒頭でセット */\nsignal(SIGQUIT, SIG_IGN);\nsignal(SIGINT,  SIG_IGN);\n\nnice(-100);             /* rootなら最高優先度 */\nnice(20);               /* +20して通常に */\nnice(0);                /* 非rootなら最低優先度のまま */\n\nfor (t=3; t<20; t++)    /* NOFILE=20まで全fd閉じる */\n    close(t);\n\n/* ... ログイン処理 ... */\n\nalarm(0);               /* 成功時にキャンセル */\nexeclp(pwd->pw_shell, minusnam, 0);",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 102,
+    "appraiser_note": "alarm(60)とalarm(0)が149行の両端に立つ。nice×3でgettyの残した優先度をリセット。セキュリティ設計の基本要素が149行に凝縮されている。"
+  },
+  {
+    "id": "login-003",
+    "name": "`ttyslot()` で `/etc/utmp` に上書き、`lseek(f,0L,2)` で `/usr/adm/wtmp` に追記——`who`（#096）の producer",
+    "year": 1979,
+    "language": "C",
+    "description": "login.cのutmp/wtmp書き込み設計。2つのファイルに異なる書き込み方法を使う。/etc/utmp（現在のログインユーザー）へはttyslot()で端末番号を取得しlseek(f,(long)(t*sizeof(utmp)),0)でその位置に上書き——インデックスアクセス。/usr/adm/wtmp（ログイン履歴）へはlseek(f,0L,2)でファイル末尾に追記——シーケンシャルアペンド。who.c（#096）がfread()で/etc/utmpを読み「今誰がいるか」を表示するとき、そのデータを書いたのがlogin.cだ。environ=envinit で継承環境変数を全破棄しHOME+PATHの2変数のみで再構築。PATH=:/bin:/usr/binの先頭コロンはカレントディレクトリを意味する1979年のデフォルト。",
+    "code": "t = ttyslot();\nif (t>0 && (f = open(\"/etc/utmp\", 1)) >= 0) {\n    lseek(f, (long)(t*sizeof(utmp)), 0);  /* インデックスで上書き */\n    write(f, (char *)&utmp, sizeof(utmp));\n    close(f);\n}\nif (t>0 && (f = open(\"/usr/adm/wtmp\", 1)) >= 0) {\n    lseek(f, 0L, 2);                      /* 末尾に追記 */\n    write(f, (char *)&utmp, sizeof(utmp));\n    close(f);\n}\n\nchar *envinit[] = {homedir, \"PATH=:/bin:/usr/bin\", 0};\nenviron = envinit;  /* 環境変数を全破棄して再構築 */",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 102,
+    "appraiser_note": "login.cが書き、who.cが読む——producer-consumerの対称性。/etc/utmpは上書き（インデックス）、/usr/adm/wtmpは追記（末尾）。1979年のUnixはファイルの役割でアクセスパターンを使い分けていた。"
   }
 ]

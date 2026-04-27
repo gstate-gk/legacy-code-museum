@@ -521,6 +521,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "102",
+    title: "鑑定書#102 login — `nouser = {\"\" , \"nope\"}`、存在しないユーザーに必ず失敗する偽パスワードを与え `/etc/utmp` に書いて `who` に伝えるloginの149行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
