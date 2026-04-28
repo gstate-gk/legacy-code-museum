@@ -8672,5 +8672,27 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 103,
     "appraiser_note": "login.cが/etc/passwdを読み、passwd.cが書く——producer-consumer。/etc/ptmpロック+getpwent()2回呼びで認証と書き換えを分離。exit(1)は成功時も同じ——gotoの迷路の副産物。"
+  },
+  {
+    "id": "su-001",
+    "name": "`setgid()` の後に `setuid()`——rootを手放す前にグループを変える順序、逆にするとグループ変更が失敗する",
+    "year": 1979,
+    "language": "C",
+    "description": "su.cの特権降格の核心。setuid()を先に呼ぶとroot権限を失い、非rootでは自分のグループにしか変更できなくなる——目的のグループへのsetgid()が失敗する。setgid()を先に呼べばroot権限を保ったまま任意のグループに変更でき、その後setuid()でrootを手放す。1行の順序がシステムセキュリティに直結する特権降格の鉄則。現代のLinuxでもsetgroups()/setgid()/setuid()の順序はセキュリティドキュメントで繰り返し強調される。su.c全体の本体はsetgid/setuid/execlのたった3行——45行プログラムの凝縮した核心。",
+    "code": "setgid(pwd->pw_gid);  /* 先にグループを変える */\nsetuid(pwd->pw_uid);  /* 後でユーザーを変える */\nexecl(shell, \"su\", 0);",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 104,
+    "appraiser_note": "setgid()→setuid()——1行の順序が特権降格の成否を決める。逆順では非rootになった後のsetgid()が失敗する。45行のsu.cが実装する特権委譲の鉄則。"
+  },
+  {
+    "id": "su-002",
+    "name": "`getuid() == 0`——root はパスワードなしで goto ok、`execl(shell,\"su\",0)` でログインシェルにならない",
+    "year": 1979,
+    "language": "C",
+    "description": "su.cの認証バイパスとシェル起動設計。pw_passwd[0]=='\\0'（空パスワード）またはgetuid()==0（root）ならgoto okでパスワード確認をスキップ——rootは誰にでもsuできる。login.c（#102）はexeclp(shell, \"-sh\", 0)でargv[0]=\"-sh\"にしてログインシェルとして起動するが、su.cはexecl(shell, \"su\", 0)でargv[0]=\"su\"——先頭ダッシュがないためログインシェルにならない。環境変数もHOMEも変わらない。現代の「su -」オプションは実装されていない。badsw=0は宣言・初期化されるが一度も変更されない死んだ変数——\"bad switch\"フラグの痕跡（未実装オプション）。exit 1/2/3の3段階で失敗種別を区別する——passwd.cの「成功もexit(1)」と対照的。",
+    "code": "if(pwd->pw_passwd[0] == '\\0' || getuid() == 0)\n    goto ok;\npassword = getpass(\"Password:\");\nif(badsw || (strcmp(pwd->pw_passwd,\n    crypt(password, pwd->pw_passwd)) != 0)) {\n    printf(\"Sorry\\n\");\n    exit(2);\n}\nok:\n    setgid(pwd->pw_gid);\n    setuid(pwd->pw_uid);\n    execl(shell, \"su\", 0);  /* argv[0]=\"su\"（非ログインシェル） */",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 104,
+    "appraiser_note": "goto okでrootの全権を1行で表現。execl(shell,\"su\",0)はargv[0]=\"su\"——login.cの\"-sh\"と対照的でログインシェルにならない。badsw=0は45行に残る未実装スイッチの痕跡。"
   }
 ]

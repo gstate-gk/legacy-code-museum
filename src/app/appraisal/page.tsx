@@ -535,6 +535,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "104",
+    title: "鑑定書#104 su — `setgid()` の後に `setuid()`、rootを手放す前にグループを変える順序と `execl(shell,\"su\",0)` でログインシェルにならない45行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
