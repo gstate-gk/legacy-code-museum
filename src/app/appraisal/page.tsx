@@ -528,6 +528,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "103",
+    title: "鑑定書#103 passwd — `salt & 077`、time()+getpid()を6ビットに刻み`+7`/`+6`でASCII塩文字に変換し `/etc/ptmp` で守るpasswdの140行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

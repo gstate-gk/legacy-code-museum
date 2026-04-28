@@ -8639,5 +8639,38 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 102,
     "appraiser_note": "login.cが書き、who.cが読む——producer-consumerの対称性。/etc/utmpは上書き（インデックス）、/usr/adm/wtmpは追記（末尾）。1979年のUnixはファイルの役割でアクセスパターンを使い分けていた。"
+  },
+  {
+    "id": "passwd-001",
+    "name": "`salt & 077`——time()+getpid()を6ビットに刻み`+7`/`+6`でASCII塩文字に変換するcrypt()ソルト生成",
+    "year": 1979,
+    "language": "C",
+    "description": "passwd.cのソルト生成ロジック。crypt()のソルトに使える文字は64種（./0-9A-Za-z）。ASCIIコード上で連続していないため、6ビット値（0〜63）を直接ASCIIにマッピングできない。salt & 077で6ビットを取り出し、'.'（ASCII 46）を加算して範囲46〜109にシフト。'9'（57）を超えたら+7で':'〜'@'の7文字を跳ばし、'Z'（90）を超えたら+6で'['〜'`'の6文字を跳ぶ。結果として正確に64種の文字にマッピングされる。salt = time() + getpid()で時刻とPIDを合成してランダム性を確保。64×64=4096通りのソルトで同じパスワードから4096通りの異なるハッシュが生まれる——1979年の辞書攻撃対策。",
+    "code": "time(&salt);\nsalt += getpid();\n\nsaltc[0] = salt & 077;       /* 0〜63 */\nsaltc[1] = (salt>>6) & 077;  /* 0〜63 */\nfor(i=0;i<2;i++){\n    c = saltc[i] + '.';\n    if(c>'9') c += 7;  /* ':;<=>?@'の7文字を跳ぶ */\n    if(c>'Z') c += 6;  /* '[\\]^_`'の6文字を跳ぶ */\n    saltc[i] = c;\n}\npw = crypt(pwbuf, saltc);",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 103,
+    "appraiser_note": "salt & 077——6ビットマスクと+7/+6ジャンプ。crypt()のソルト文字集合をASCIIの隙間から精密に拾い出す。time()+getpid()で4096通りのソルト、同じパスワードが4096通りのハッシュになる1979年の設計。"
+  },
+  {
+    "id": "passwd-002",
+    "name": "`flags >= 7 && pwlen >= 4`——bitORで文字種を4ビットに圧縮する1979年のパスワード品質検査",
+    "year": 1979,
+    "language": "C",
+    "description": "passwd.cのパスワード強度検証ロジック。文字種を4ビットのフラグに圧縮する：数字=1、小文字=2、大文字=4、記号=8。bitOR演算で1文字ずつ種類を記録。flags >= 7はflag値が1+2+4=7以上、つまり数字・小文字・大文字の3種類すべてが含まれる状態。ルール：3種以上なら4文字でOK、1種のみなら6文字必要、2種なら5文字必要。insistカウンタで最大2回の再入力を促すが3回目は弱いパスワードも受け付ける——強制はしない方針。'while(c = *p++)'の代入式をwhileの条件に使う古典的なKernighan&Ritchieスタイル。",
+    "code": "ok = 0; flags = 0; p = pwbuf;\nwhile(c = *p++){\n    if(c>='a' && c<='z') flags |= 2;\n    else if(c>='A' && c<='Z') flags |= 4;\n    else if(c>='0' && c<='9') flags |= 1;\n    else flags |= 8;\n}\nif(flags >= 7 && pwlen >= 4) ok = 1;  /* 3種以上→4文字 */\nif(((flags==2)||(flags==4)) && pwlen >= 6) ok = 1;  /* 1種→6文字 */\nif(((flags==3)||(flags==5)||(flags==6)) && pwlen >= 5) ok = 1;",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 103,
+    "appraiser_note": "flags >= 7は1+2+4=7——bitORで文字の多様性を4ビットに圧縮する。種類数と長さのトレードオフ規則が140行のpasswd.cに埋まっている1979年のパスワードポリシー。"
+  },
+  {
+    "id": "passwd-003",
+    "name": "`/etc/ptmp` ロックと `getpwent()` 2回呼び——認証フェーズと全行書き直しフェーズの分離",
+    "year": 1979,
+    "language": "C",
+    "description": "passwd.cのファイル更新戦略。/etc/passwdはテキストファイルで特定行だけ更新できない——全行の書き直しが必要。2パス構成：第1パスでgetpwent()を呼び対象ユーザーを見つけて旧パスワードを認証しendpwent()でリセット、第2パスで全行を/etc/ptmpに書き出し該当行だけ新ハッシュに差し替える。/etc/ptmpの存在チェック（access(temp,0)>=0）で同時実行を防ぐロック機構。creat(temp,0600)でロックファイル作成、out:ラベルのunlink(temp)で必ずロック解除。SIGHUP/SIGINT/SIGQUIT=SIG_IGNで書き換え中断を防ぐ。成功時も失敗時もexit(1)——gotoの連鎖でexit(0)が置き忘れられた副産物。",
+    "code": "if(access(temp, 0) >= 0) {\n    printf(\"Temporary file busy -- try again\\n\");\n    goto bex;\n}\nclose(creat(temp, 0600));  /* ロック作成 */\n\n/* 第1パス: 認証 */\nwhile(((pwd=getpwent()) != NULL) &&\n    (strcmp(pwd->pw_name,uname)!=0));\nendpwent();\n\n/* 第2パス: 全行書き換え */\nwhile((pwd=getpwent()) != NULL) {\n    if(strcmp(pwd->pw_name,uname) == 0)\n        pwd->pw_passwd = pw;\n    fprintf(tf,\"%s:%s:%d...\\n\", ...);\n}\nout:\n    unlink(temp);  /* ロック解除 */\nbex:\n    exit(1);       /* 成功時も exit(1) */",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 103,
+    "appraiser_note": "login.cが/etc/passwdを読み、passwd.cが書く——producer-consumer。/etc/ptmpロック+getpwent()2回呼びで認証と書き換えを分離。exit(1)は成功時も同じ——gotoの迷路の副産物。"
   }
 ]
