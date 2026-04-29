@@ -8674,6 +8674,28 @@
     "appraiser_note": "login.cが/etc/passwdを読み、passwd.cが書く——producer-consumer。/etc/ptmpロック+getpwent()2回呼びで認証と書き換えを分離。exit(1)は成功時も同じ——gotoの迷路の副産物。"
   },
   {
+    "id": "init-001",
+    "name": "`#define EVER ;;` と `#define ALL`——for ループに名前をつける、PID 1 の読めるコードへの意志",
+    "year": 1979,
+    "language": "C",
+    "description": "init.cのマクロ設計哲学。#define EVER ;;でfor(;;)に「永遠に」という名前をつける。#define ALL p=&itab[0]; p<&itab[TABSIZ]; p++で全100端末エントリの走査を1行に収める——for(ALL)と書けばfor文の残り（初期化・条件・更新）がすべて展開される。TABSIZ=100は同時管理できる端末数の上限。main()のfor(EVER)ループ内に5つの関数：shutdown()/single()/runcom()/merge()/multiple()——ブート手順を英語で読める状態機械として表現する意志がマクロの命名に現れている。setjmp(sjbuf)をfor(EVER)の前に置き、signal(SIGHUP,reset)でSIGHUPをreset()→longjmp(sjbuf,1)に結ぶ——SIGHUP到着時にPID 1プロセスを死なせず状態機械を先頭からやり直す設計。",
+    "code": "#define TABSIZ  100\n#define ALL     p = &itab[0]; p < &itab[TABSIZ]; p++\n#define EVER    ;;\n\nmain() {\n    setjmp(sjbuf);\n    signal(SIGHUP, reset);\n    for(EVER) {\n        shutdown();\n        single();\n        runcom();\n        merge();\n        multiple();\n    }\n}\n\nreset() { longjmp(sjbuf, 1); }",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 105,
+    "appraiser_note": "for(EVER)はfor(;;)、for(ALL)は全端末走査——マクロで意図を命名する。setjmp/longjmpでSIGHUPをプロセス再起動ではなく状態リセットに変える。kill -HUP 1の慣習はここから始まった。"
+  },
+  {
+    "id": "init-002",
+    "name": "`runcom()`——`/bin/sh /etc/rc` を実行する、\"rc\"=\"run commands\" 、`/etc/rc.local` の原型",
+    "year": 1979,
+    "language": "C",
+    "description": "init.cのブート手順：runcom()がexecl(shell,shell,runc,0)で/bin/sh /etc/rcを実行する。runc[]=\"/etc/rc\"——rcはrun commandsの略。マルチユーザーモード移行前のシステム初期化スクリプト。現代の/etc/rc.local、systemdのRC互換レイヤーの原型。single()はfork後にopen(ctty,2)/dup(0)/dup(0)でコンソールにstdin/stdout/stderrを束ねてexecl(shell,minus,0)——minusは\"-\"でloginシェルとして起動。コメントアウトされたalarm(300)はシングルユーザー5分タイムアウトの設計痕跡。multiple()はwait()で子プロセス終了を待ち続け、pid==-1（子なし）でreturnしfor(EVER)先頭のshutdown()へ戻る。dfork()でgettyを起動：chown/chmod/open/dup/execlのシーケンス、p->comnの1文字がボーレート指定。",
+    "code": "char runc[] = \"/etc/rc\";\nchar shell[] = \"/bin/sh\";\n\nruncom() {\n    pid = fork();\n    if(pid == 0) {\n        open(\"/\", 0); dup(0); dup(0);\n        execl(shell, shell, runc, (char *)0);\n        exit(0);\n    }\n    while(wait((int *)0) != pid) ;\n}\n\n/* single()内: alarm(300)はコメントアウト */\n/*\n    alarm(300);\n*/",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 105,
+    "appraiser_note": "runcom()が/bin/sh /etc/rcを実行——rcはrun commands。/etc/rc.localの原型。alarm(300)のコメントアウトはシングルユーザー5分タイムアウトの未実装痕跡。login.cのalarm(60)と対照的。"
+  },
+  {
     "id": "su-001",
     "name": "`setgid()` の後に `setuid()`——rootを手放す前にグループを変える順序、逆にするとグループ変更が失敗する",
     "year": 1979,

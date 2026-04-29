@@ -542,6 +542,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "105",
+    title: "鑑定書#105 init — `#define EVER ;;`、shutdown→single→runcom→merge→multipleの状態機械、setjmp/longjmpでSIGHUPをリセットに変えるPID 1の302行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
