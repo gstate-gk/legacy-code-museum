@@ -549,6 +549,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "106",
+    title: "鑑定書#106 write — `stbuf.st_mode & 02`、mesg n/y の実装原理、`write -` で全ユーザー一斉送信、`buf[0]=='!'` でシェルエスケープする183行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

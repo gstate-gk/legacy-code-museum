@@ -8696,6 +8696,28 @@
     "appraiser_note": "runcom()が/bin/sh /etc/rcを実行——rcはrun commands。/etc/rc.localの原型。alarm(300)のコメントアウトはシングルユーザー5分タイムアウトの未実装痕跡。login.cのalarm(60)と対照的。"
   },
   {
+    "id": "write-001",
+    "name": "`stbuf.st_mode & 02`——1ビットで `mesg n/y` を実装、`alarm(5)` で tty オープンに5秒タイムアウト",
+    "year": 1979,
+    "language": "C",
+    "description": "write.cのパーミッション確認とタイムアウト設計。stbuf.st_mode & 02は8進数2——「その他ユーザーの書き込み許可」ビット。mesg nはchmod o-w /dev/tty*と等価でこのビットを落とす。mesg yはchmod o+w /dev/tty*でビットを立てる。write.cはfstat()でビットを確認し0なら「Permission denied」で終了——1つのパーミッションビットがメッセージ受信の可否を制御するUnixの「ファイルはすべてだ」哲学の体現。alarm(5)で相手端末のオープンに5秒タイムアウト——ブロックしている端末に対して永遠には待たない。fopen()失敗とfstat()失敗どちらもgoto permで同じ「Permission denied」エラーに合流。",
+    "code": "signal(SIGALRM, timout);\nalarm(5);\nif ((tf = fopen(histty, \"w\")) == NULL)\n    goto perm;\nalarm(0);\nif (fstat(fileno(tf), &stbuf) < 0)\n    goto perm;\nif ((stbuf.st_mode & 02) == 0)\n    goto perm;\n/* Permission denied */",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 106,
+    "appraiser_note": "stbuf.st_mode & 02——1ビットがmesg n/yを実装する。alarm(5)で5秒タイムアウト。Unixの「ファイルはすべて」哲学が端末のパーミッションで会話の可否を決める。"
+  },
+  {
+    "id": "write-002",
+    "name": "`him[0] != '-'`——`write -` で全ユーザー一斉送信（wall の原型内蔵）、`buf[0]=='!'` でシェルエスケープ",
+    "year": 1979,
+    "language": "C",
+    "description": "write.cの2つの隠し機能。1つ目: him==\"-\"のとき条件 him[0]!='-'||him[1]!=0 が偽——ユーザー名比較をスキップして全utmpエントリにlogcnt++する。write -で全ログインユーザーにメッセージを送る一斉送信モード。現代のwall(1)コマンドはここから分離独立した。2つ目: メッセージ入力ループでbuf[0]=='!'なら残りの文字列を/bin/sh -cで実行するシェルエスケープ——!dateで現在時刻確認、チャットを中断せずシェルコマンドを実行できる。ed(#067)/vi/mailと共通する!慣習。sigs()関数でSIGHUP/SIGINT/SIGQUITを一括設定——3シグナルを同じハンドラに向けるユーティリティ。eof()はfprintf(tf,\"EOF\\n\")+exit(0)——相手端末に終了を通知してから退場。",
+    "code": "/* wall相当: write - */\nif(him[0] != '-' || him[1] != 0)\nfor(i=0; i<8; i++) {\n    if(c1 != c2) goto nomat;\n}\nlogcnt++;\n\n/* シェルエスケープ */\nif(buf[0] == '!') {\n    buf[i] = 0;\n    ex(buf);  /* /bin/sh -c bp+1 */\n    continue;\n}\nwrite(fileno(tf), buf, i);",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 106,
+    "appraiser_note": "write -で全員送信——wall(1)の原型が183行に内蔵。buf[0]=='!'でシェルエスケープ——ed/vi/mailと同じ慣習。init.c(#105)がutmpに書き、who.c(#096)が読み、write.cが送信先を特定する——utmpを中心に回るUnix。"
+  },
+  {
     "id": "su-001",
     "name": "`setgid()` の後に `setuid()`——rootを手放す前にグループを変える順序、逆にするとグループ変更が失敗する",
     "year": 1979,
