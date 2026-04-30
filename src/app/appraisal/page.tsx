@@ -556,6 +556,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "107",
+    title: "鑑定書#107 getty — `ERASE = '#'` と `KILL = '@'`、Backspaceより前の消去文字、`partab[128]` のパリティ付加、300→1200→150→110でボーレートを巡回する238行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

@@ -8718,6 +8718,28 @@
     "appraiser_note": "write -で全員送信——wall(1)の原型が183行に内蔵。buf[0]=='!'でシェルエスケープ——ed/vi/mailと同じ慣習。init.c(#105)がutmpに書き、who.c(#096)が読み、write.cが送信先を特定する——utmpを中心に回るUnix。"
   },
   {
+    "id": "getty-001",
+    "name": "`ERASE = '#'` と `KILL = '@'`——Backspaceより前のタイプライター時代の消去文字、`partab[128]` で7ビット端末にパリティを付加",
+    "year": 1979,
+    "language": "C",
+    "description": "getty.cの行編集とパリティ設計。ERASE='#'は1文字消去、KILL='@'は行全体消去——BackspaceキーもCtrl+Uも使わない。物理的に文字を消せないタイプライター端末の慣習がそのままUNIXに持ち込まれた。stty erase ^Hで変更できるようになったのは後のこと。partab[]は128バイトのパリティテーブル——ASCIIは7ビット、8ビット目をパリティビットとして使う端末への対応。putchr()はc|=partab[c&0177]&0200でビット7をパリティに応じてセットしてから送信する。spaceをアンダースコアに変換（c==' ' → c='_'）——Unixユーザー名にスペースが使えない慣習の源。\\033;/\\033:はDatascope端末固有のESCシーケンス。",
+    "code": "#define ERASE  '#'\n#define KILL   '@'\n\n} else if (c==ERASE) {\n    if (np > name) np--;\n    continue;\n} else if (c==KILL) {\n    putchr('\\r'); putchr('\\n');\n    np = name;\n    continue;\n} else if(c == ' ')\n    c = '_';\n\nputchr(cc) {\n    char c = cc;\n    c |= partab[c&0177] & 0200;  /* パリティ付加 */\n    write(1, &c, 1);\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 107,
+    "appraiser_note": "ERASE='#'/KILL='@'——Backspace/Ctrl+Uより前のタイプライター時代の消去慣習。partab[128]で7ビット端末のパリティを付加。238行に1970年代の端末の多様さが刻まれている。"
+  },
+  {
+    "id": "getty-002",
+    "name": "`itab[]` ボーレート巡回テーブル——300→1200→150→110→300、Enter で次の速度へ、LSI Chess Terminal 専用エントリ",
+    "year": 1979,
+    "language": "C",
+    "description": "getty.cのボーレート自動認識設計。tname/nnameで連結されたstruct tabのリストで端末速度テーブルを構成。getname()が0を返す（ユーザーがEnterのみ押した）とtabp->nnameで次のエントリへ進む——300→1200→150→110→300と巡回。ユーザーは文字化けが解消されるまでEnterを繰り返してボーレートを探す1979年の自動認識。最後のエントリ「table 'l' -- LSI Chess Terminal」はログインプロンプトが\"*\"の1文字——Bell Labsに実在したチェス専用端末専用。HUPCLフラグがコメントアウトされている。「table 'i' -- Interdata Console」はInterdata製ミニコンピュータ専用。init.c(#105)がdfork()でexecl(getty,minus,tty,0)を呼び、getty.cがボーレートを合わせ、login.c(#102)に引き渡す——1979年のログインシーケンス3段階。",
+    "code": "struct tab itab[] = {\n    '0', 1, ..., B300,  B300,  \"\\n\\r\\033;\\007login: \",\n    1,   2, ..., B1200, B1200, \"\\n\\r\\033;login: \",\n    2,   3, ..., B150,  B150,  \"\\n\\r\\033:\\006\\006\\017login: \",\n    3,  '0',..., B110,  B110,  \"\\n\\rlogin: \",\n    /* ... */\n    /* table 'l' -- LSI Chess Terminal */\n    'l', 'l', ANYP+RAW/*+HUPCL*/, ANYP+ECHO/*+HUPCL*/,\n    B300, B300, \"*\",\n};",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 107,
+    "appraiser_note": "itab[]のtname→nnameで300→1200→150→110→300を巡回——Enterで次の速度へ。LSI Chess Terminalのログインプロンプト\"*\"はBell Labsに実在したチェス端末の痕跡。init→getty→loginの3段階が揃った。"
+  },
+  {
     "id": "su-001",
     "name": "`setgid()` の後に `setuid()`——rootを手放す前にグループを変える順序、逆にするとグループ変更が失敗する",
     "year": 1979,
