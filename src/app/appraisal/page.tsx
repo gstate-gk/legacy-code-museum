@@ -563,6 +563,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "108",
+    title: "鑑定書#108 date — `{\"|\", \"\", 0}` と `{\"{\", \"\", 0}`、`|` と `{` がwtmpに刻む時刻変更の前後、`gtime()` が逆転する入力文字列、163行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

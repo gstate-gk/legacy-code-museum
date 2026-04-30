@@ -8760,5 +8760,27 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 104,
     "appraiser_note": "goto okでrootの全権を1行で表現。execl(shell,\"su\",0)はargv[0]=\"su\"——login.cの\"-sh\"と対照的でログインシェルにならない。badsw=0は45行に残る未実装スイッチの痕跡。"
+  },
+  {
+    "id": "date-001",
+    "name": "`{\"|\", \"\", 0}` と `{\"{\", \"\", 0}`——`|` と `{` がwtmpに刻む時刻変更の前後、ASCII表でZの隣・zの隣",
+    "year": 1979,
+    "language": "C",
+    "description": "date.cの時刻変更ログ機構。stime()で時刻を変更する前にwtmp[0].ut_timeに変更前の時刻を、変更後にwtmp[1].ut_timeに変更後の時刻を書き込んでから/usr/adm/wtmpに追記する。ut_nameフィールドには「|」（ASCII 0x7C）と「{」（ASCII 0x7B）が書かれる——大文字Zの次が[で、小文字zの次が{というASCII表上の隣人。通常のログインユーザー名はこの範囲の文字を使わないため、wtmpパーサーが「これは時刻変更エントリ」と識別できる。who(#096)が|と{のエントリを見てシステム時刻の変更履歴を追跡する——init→login→whoのutmp連鎖と並行するシステム管理のログ系譜。",
+    "code": "struct utmp wtmp[2] = { {\"|\", \"\", 0}, {\"{\", \"\", 0}};\n...\ntime(&wtmp[0].ut_time);\nif(stime(&timbuf) < 0) {\n    printf(\"date: no permission\\n\");\n} else if ((wf = open(\"/usr/adm/wtmp\", 1)) >= 0) {\n    time(&wtmp[1].ut_time);\n    lseek(wf, 0L, 2);\n    write(wf, (char *)wtmp, sizeof(wtmp));\n    close(wf);\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 108,
+    "appraiser_note": "\"|\"と\"{\"はASCII 0x7C/0x7B——utmpのut_nameフィールドに入る特殊マーカーで時刻変更の前後をwtmpに記録する。who(#096)がこの痕跡を読む。"
+  },
+  {
+    "id": "date-002",
+    "name": "`gtime()` が逆転する——`YYMMDDHHMM` を in-place で逆転してから `gp()` で先頭から2桁ずつ読む",
+    "year": 1979,
+    "language": "C",
+    "description": "date.cのコマンドライン日時パース戦略。gtime()はapが指す入力文字列をspとepの2ポインタで末尾から逆転してからspを先頭に戻す——「7903121530」は「0351213097」になる。その後gp()をsecs/mins/hour/day/month/yearの順に呼ぶが、逆転後の文字列なので実質的に末尾から2桁ずつ読むことになる。gp(dfault)はデフォルト値付きの2桁読み取り関数——gp(-1)は「省略不可、-1ならエラー」、gp(L->tm_mday)は「省略時は今日の日付」という2種類の用途をデフォルト値の違いで使い分ける。逆転済みなのでreturn(c+10*d)で一の位がc、十の位がd——スタックも再帰も使わずに逆順パースを実現する1979年のトリック。",
+    "code": "ep=ap;\nwhile(*ep) ep++;   /* ep を文字列末尾へ */\nsp=ap;\nwhile(sp<ep) {     /* 文字列を in-place で逆転 */\n    x = *sp;\n    *sp++ = *--ep;\n    *ep = x;\n}\nsp=ap;\n...\ngp(dfault)\n{\n    if(*sp==0) return(dfault);\n    c = (*sp++)-'0';\n    d = (*sp ? (*sp++)-'0' : 0);\n    if(c<0 || c>9 || d<0 || d>9) return(-1);\n    return(c+10*d);  /* 逆転済み: 一の位=c、十の位=d */\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 108,
+    "appraiser_note": "gtime()は入力をin-placeで逆転してから先頭から読む——スタックも再帰も使わない逆順パース。gp(dfault)のデフォルト値で必須/省略可を使い分ける163行のdate.cの核心。"
   }
 ]
