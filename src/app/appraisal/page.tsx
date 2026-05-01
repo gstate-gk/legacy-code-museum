@@ -591,6 +591,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "112",
+    title: "鑑定書#112 tr — `code[256]`/`squeez[256]`/`vect[256]` の三枚のテーブルが `if(c = code[c&0377]&0377)` の一行に合流する132行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

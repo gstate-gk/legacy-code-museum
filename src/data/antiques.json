@@ -8848,5 +8848,27 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 110,
     "appraiser_note": "6L*30L*24L*60L*60Lの6ヶ月境界は今日のls -lにも生きている。m1[]〜m9[]はrwxrwxrwxをデータとして定義。nomocore=「no more core」でmalloc失敗を静かに記憶する。"
+  },
+  {
+    "id": "tr-001",
+    "name": "`code[256]`/`squeez[256]`/`vect[256]` ——三枚のテーブルがセットアップフェーズで確定し `if(c = code[c&0377]&0377)` の一行に合流する132行の文字変換",
+    "year": 1979,
+    "language": "C",
+    "description": "tr.cの3テーブル設計。code[256]は変換テーブル——文字コードを添字として変換先を格納し、セットアップ後のメインループはO(1)ルックアップのみ。squeez[256]はsqueeze対象フラグ——string2に含まれる文字だけsqueez[d]=1。vect[256]は-c（補集合）計算の作業域——string1の存在フラグとして使い、ループ後にマークなし文字を前詰めして文字列バッファに変換する（compl=vect）。code[c&0377]=dflag?1:dはセットアップ時のキー行——dflagのとき変換先でなくプレースホルダー1を入れ、後のフィナライズループでcode[i]=0（削除マーク）に変換する。if(code[i]==0) code[i]=iはstring1に含まれない文字のidentity設定。メインループ if(c=code[c&0377]&0377) で0=削除を判定し、if(!sflag||c!=save||!squeez[c&0377]) でsqueezeを判定——dflag/sflag/cflag三フラグがすべてここに収束する。",
+    "code": "char code[256];\nchar squeez[256];\nchar vect[256];\n...\ncode[c&0377] = dflag?1:d;  /* 削除はプレースホルダー1 */\n...\nfor(i=0;i<256;i++) {\n    if(code[i]==0) code[i] = i;      /* identity */\n    else if(dflag) code[i] = 0;      /* 削除マーク */\n}\nwhile((c=getc(stdin)) != EOF ) {\n    if(c == 0) continue;\n    if(c = code[c&0377]&0377)\n        if(!sflag || c!=save || !squeez[c&0377])\n            putchar(save = c);\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 112,
+    "appraiser_note": "code[256]で変換、squeez[256]でsqueeze、vect[256]で補集合——三枚のテーブルがセットアップフェーズで役割を決め、メインループの一行に合流する。"
+  },
+  {
+    "id": "tr-002",
+    "name": "`struct string { int last, max; char *p; }` ——`last`/`max`/`p` の3フィールドでレンジ走査を記憶し、`lastd` がstring2の終端を繰り返す",
+    "year": 1979,
+    "language": "C",
+    "description": "tr.cの文字列走査設計。struct stringはlast（直前文字）/max（レンジ上限）/p（走査位置）の3フィールドを持つカーソル型。next()はこの状態を使ってa-zレンジを展開する——max>0のときlast++<maxで次の文字を返し、maxに達したらmax=last=0でレンジ終了。'-'検出時はnextc()でレンジ上限を取得し、max<last（逆順レンジz-a等）なら'-'をリテラルとして返す。nextc()は最大3桁の8進エスケープを手動パース——i<3&&c>='0'&&c<='7'の条件でn=n*8+c-'0'を積み上げ、桁数i>0なら文字コードnを返す。末尾のif(c==0) *--s->p=0はNULを番兵として戻してwhile(c=next())の終端検知を可能にする。lastd=0から始まり、if(d==0) d=lastdでstring2が尽きた後も最後の文字を繰り返す——tr 'a-z' 'X'なら26文字すべてXに変換。-c補集合はvect[c]=1マーク後にfor(i=1;i<256;i++) if(vect[i]==0) vect[j++]=iで同一配列をインプレース前詰め変換する。",
+    "code": "struct string { int last, max; char *p; } string1, string2;\n...\nnext(s) struct string *s; {\nagain:\n    if(s->max) {\n        if(s->last++ < s->max) return(s->last);\n        s->max = s->last = 0;\n    }\n    if(s->last && *s->p=='-') {\n        nextc(s);\n        s->max = nextc(s);\n        if(s->max==0) { s->p--; return('-'); }\n        if(s->max < s->last) { s->last = s->max-1; return('-'); }\n        goto again;\n    }\n    return(s->last = nextc(s));\n}\n...\nd = next(&string2);\nif(d==0) d = lastd;\nelse lastd = d;",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 112,
+    "appraiser_note": "struct stringのlast/max/pでレンジ走査状態を保持。nextc()が3桁8進エスケープを手動パース。lastdがstring2の終端を繰り返す——仕様をデータ構造に落とし込んだ設計。"
   }
 ]
