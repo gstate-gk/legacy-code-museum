@@ -8804,5 +8804,27 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 109,
     "appraiser_note": "\"0SWRIZT\"はswitch不要のルックアップテーブル。#define u zz.yyはカーネルu-areaをユーザー空間で模倣。p_addr[c]<<9でページを512バイトセクターに変換。if(0&&...)は削除されたtflgの封印。"
+  },
+  {
+    "id": "ls-001",
+    "name": "`union { char lname[15]; char *namep; }` ——15文字以内はインライン、`ISARG=0100000` でshortのビット15をフラグに、Small String Optimizationの原型",
+    "year": 1979,
+    "language": "C",
+    "description": "ls.cのファイル名格納最適化。struct lbufのlnフィールドはunion——ディレクトリから読んだエントリ（最大DIRSIZ=14文字）はlname[15]に直接コピーし、コマンドライン引数として渡されたパス（任意の長さ）はchar *namepで指す。判定は#define ISARG 0100000（8進=32768=ビット15）——lflags（short 16bit）の最上位ビットをコマンドライン引数フラグとして予約し、unionのどちら側を使うか識別する。printf(\"%s\",p->ln.namep)とprintf(\"%.14s\",p->ln.lname)の切り替えで読む。現代のC++ std::stringが採用するSmall String Optimization（SSO）の直系の先祖——15文字という境界値が1979年のPDP-11のDIRSIZから決まっている。",
+    "code": "struct lbuf {\n    union {\n        char  lname[15];\n        char  *namep;\n    } ln;\n    short lflags;\n    ...\n};\n#define ISARG 0100000  /* bit15 of short */\n...\n/* arg: ポインタ */  ep->ln.namep = *argv; ep->lflags |= ISARG;\n/* dir: 配列 */      for(j=0;j<DIRSIZ;j++) ep->ln.lname[j]=d.d_name[j];\n...\nif (p->lflags&ISARG) printf(\"%s\\n\",p->ln.namep);\nelse                 printf(\"%.14s\\n\",p->ln.lname);",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 110,
+    "appraiser_note": "union lname[15]/namepは15文字境界でインライン/ポインタを切り替えるSSO原型。ISARG=0100000でshortのビット15を識別フラグに流用。1979年のPDP-11 DIRSIZ=14が境界値を決めた。"
+  },
+  {
+    "id": "ls-002",
+    "name": "`year = lb.lmtime - 6L*30L*24L*60L*60L` ——6ヶ月境界で日付フォーマットが変わる、`m1[]〜m9[]` の配列駆動パーミッション表示、`nomocore` の静かな番人",
+    "year": 1979,
+    "language": "C",
+    "description": "ls.cの3つの設計。(1) 6ヶ月境界：year=lb.lmtime-6L*30L*24L*60L*60L（約15,552,000秒）で「6ヶ月前のUNIX時間」を計算。ctime()が返す固定フォーマット「Wed Sep 12 14:30:00 1979\\n」の cp+4（月日）とcp+20（年）をオフセットで切り出し、6ヶ月以内なら「Sep 12 14:30」、以前なら「Sep 12 1978」——今日のls -lも同じルール。(2)配列駆動パーミッション：m1[]={1,S_IREAD,'r','-'}〜m9[]={2,S_ISVTX,'t',S_IEXEC,'x','-'}の9配列にrwxrwxrwxの生成ルールを埋め込む。select()が条件数付き配列から最初にマッチした文字を出力。(3) nomocore：「no more core」——malloc()失敗後にstatic int nomocore=1にして以降のエントリを静かにスキップ。panicしない設計。getname()は/etc/passwdをfgetc()で1文字ずつパース、コロン数でフィールドを判定、lastuidで1段キャッシュ。",
+    "code": "year = lb.lmtime - 6L*30L*24L*60L*60L; /* 6 months ago */\n...\nif (p->lmtime < year)\n    printf(\" %-7.7s %-4.4s \", cp+4, cp+20); /* Sep 12 1978 */\nelse\n    printf(\" %-12.12s \", cp+4);             /* Sep 12 14:30 */\n...\nint m1[]={1,S_IREAD>>0,'r','-'};\nint m3[]={2,S_ISUID,'s',S_IEXEC>>0,'x','-'};\n...\nstatic int nomocore;\nif(nomocore) return(NULL);\nif(rep==NULL){ nomocore=1; return(NULL); }",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 110,
+    "appraiser_note": "6L*30L*24L*60L*60Lの6ヶ月境界は今日のls -lにも生きている。m1[]〜m9[]はrwxrwxrwxをデータとして定義。nomocore=「no more core」でmalloc失敗を静かに記憶する。"
   }
 ]

@@ -577,6 +577,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "110",
+    title: "鑑定書#110 ls — `union { char lname[15]; char *namep; }` でSSO、`6L*30L*24L*60L*60L` の6ヶ月境界で日付フォーマットが変わる、`nomocore` が静かに守る424行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
