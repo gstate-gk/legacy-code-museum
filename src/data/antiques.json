@@ -8782,5 +8782,27 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 108,
     "appraiser_note": "gtime()は入力をin-placeで逆転してから先頭から読む——スタックも再帰も使わない逆順パース。gp(dfault)のデフォルト値で必須/省略可を使い分ける163行のdate.cの核心。"
+  },
+  {
+    "id": "ps-001",
+    "name": "`nlist(\"/unix\", nl)` ——カーネルバイナリのシンボルテーブルを読み `/dev/kmem` を直接走査する",
+    "year": 1979,
+    "language": "C",
+    "description": "ps.cのカーネル直読み機構。struct nlist nl[]に{\"_proc\"}/{\"_swapdev\"}/{\"_swplo\"}を定義してnlist()に渡すと、/unixカーネルバイナリのシンボルテーブルから各シンボルのメモリアドレスがn_valueに書き戻される。そのアドレスでlseek(mem, (long)nl[0].n_value, 0)して/dev/kmemをread()——カーネルの仮想アドレス空間をファイルとして直走査する。/dev/kmemはカーネル仮想アドレス空間をファイルとして見せるデバイス。for (i=0; i<NPROC; i++) { read(mem, &mproc, sizeof mproc); }でプロセステーブルを順に読む——データベーステーブルスキャンをメモリ上で行う。現代では/proc/PID/statusがカーネルが自ら情報を公開するが、ps.cはカーネルの内側に踏み込んでいた。",
+    "code": "struct nlist nl[] = {\n    { \"_proc\" },\n    { \"_swapdev\" },\n    { \"_swplo\" },\n    { 0 },\n};\n...\nnlist(argc>2? argv[2]:\"/unix\", nl);\n...\nlseek(mem, (long)nl[0].n_value, 0);\nfor (i=0; i<NPROC; i++) {\n    read(mem, &mproc, sizeof mproc);\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 109,
+    "appraiser_note": "nlist()で/unixカーネルバイナリのシンボルアドレスを取得し、/dev/kmemをlseek/readで直走査——Unixのすべてはファイル哲学の最も生々しい実例。"
+  },
+  {
+    "id": "ps-002",
+    "name": "`\"0SWRIZT\"[p_stat]` と `p_addr[c]<<9` ——文字列添字でプロセス状態、`#define u zz.yy` でu-areaを再構築",
+    "year": 1979,
+    "language": "C",
+    "description": "ps.cの3つの設計の核心。(1)\"0SWRIZT\"[mproc.p_stat]：p_statは0〜6の整数でプロセス状態を表す。7文字の文字列を添字でアクセスするだけ——S=Sleep/W=Wait/R=Running/I=Idle/Z=Zombie/T=Stopをswitch不要でルックアップ。(2)union { struct user yy; int xx[128][UPAGES]; } zz; #define u zz.yy：カーネルの慣習u.u_xxxxをユーザー空間に模倣。unionのxx[128][UPAGES]でu-areaをページ単位（512バイト）で読み書き。SLOAD/SSPARTフラグでメモリ内かスワップか判定し、p_addr[c]<<9でページテーブルエントリを<<9して512バイトセクターバイトオフセットに変換してUPAGES個を集める。(3)& 0x7fffffff：-kフラグ（コアダンプ解析）でカーネル仮想アドレスのビット31を消して物理アドレスに変換——Interdata 8/32のカーネル空間マッピング。if (0 && lflg==0)の常にfalseな死んだブロックはold tflgの封印。",
+    "code": "printf(\"%3o %c%4d\", 0377 & mproc.p_flag,\n    \"0SWRIZT\"[mproc.p_stat], puid);\n...\nunion {\n    struct user yy;\n    int xx[128][UPAGES];\n} zz;\n#define u zz.yy\n...\nfor(c=0; c<UPAGES; c++) {\n    lseek(swmem, mproc.p_addr[c]<<9, 0);\n    read(swmem, ((int *)&u)+128*c, 512);  /* get u page */\n}\n...\nif (0 && lflg==0) { /* 0 == old tflg */ }",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 109,
+    "appraiser_note": "\"0SWRIZT\"はswitch不要のルックアップテーブル。#define u zz.yyはカーネルu-areaをユーザー空間で模倣。p_addr[c]<<9でページを512バイトセクターに変換。if(0&&...)は削除されたtflgの封印。"
   }
 ]

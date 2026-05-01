@@ -570,6 +570,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "109",
+    title: "鑑定書#109 ps — `nlist(\"/unix\", nl)` でカーネルシンボルを読み `/dev/kmem` を直接走査、`\"0SWRIZT\"[p_stat]` でプロセス状態を変換する323行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
