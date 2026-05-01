@@ -8806,6 +8806,28 @@
     "appraiser_note": "\"0SWRIZT\"はswitch不要のルックアップテーブル。#define u zz.yyはカーネルu-areaをユーザー空間で模倣。p_addr[c]<<9でページを512バイトセクターに変換。if(0&&...)は削除されたtflgの封印。"
   },
   {
+    "id": "pwd-001",
+    "name": "`chdir(dotdot)` ——`..` を辿りinode番号で「今いたディレクトリ」を探す逆歩行、`getcwd()` 以前の80行",
+    "year": 1979,
+    "language": "C",
+    "description": "pwd.cのメインアルゴリズム。getcwd()システムコールが存在しない時代の実装。stat(\"/\",&d)でルートのdev/inoを記録してから無限ループへ——stat(dot,&d)で現在地を取得し、ルートのrdev/rinoと一致したらprname()で出力して終了。一致しなければ..をopen/fstatしてchdir(dotdot)で実際に親に移動し、「今いたディレクトリのinode番号」を親ディレクトリのエントリから探す。同一デバイスならdir.d_ino比較のみ（高速）、マウントポイント越えならstat(dir.d_name)でdev+ino両方照合（低速）の2分岐。if(d.st_ino==dd.st_ino)はルートで.と..が同じinodeになるケースのショートカット。ループごとにcat()でパスコンポーネントを先頭に積み上げる。opendir()/readdir()はなく、struct direct 16バイトをread()で直接読む。d_inoはshort=最大65535 inode。Linux 2.1でsys_getcwd(2)が実装されるまでこのアプローチが続いた。",
+    "code": "stat(\"/\", &d);\nrdev = d.st_dev; rino = d.st_ino;\nfor (;;) {\n    stat(dot, &d);\n    if (d.st_ino==rino && d.st_dev==rdev) prname();\n    file = open(dotdot, 0);\n    fstat(file, &dd);\n    chdir(dotdot);\n    if(d.st_dev == dd.st_dev) {\n        if(d.st_ino == dd.st_ino) prname();\n        do read(file,(char*)&dir,sizeof(dir));\n        while(dir.d_ino != d.st_ino);\n    } else do {\n        read(file,(char*)&dir,sizeof(dir));\n        stat(dir.d_name, &dd);\n    } while(dd.st_ino!=d.st_ino || dd.st_dev!=d.st_dev);\n    cat();\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 111,
+    "appraiser_note": "getcwd()なしでは..を辿るしかない。同一デバイスはino比較のみ、マウント越えはstat+dev+ino——2分岐が1979年のファイルシステム知識を80行に凝縮する。"
+  },
+  {
+    "id": "pwd-002",
+    "name": "`cat()` ——既存文字列を右シフトして先頭挿入、`off=-1` が「まだパスなし」を示す逆順構築",
+    "year": 1979,
+    "language": "C",
+    "description": "pwd.cのパス構築関数。グローバル変数off=-1で初期化——offは「name[]配列の現在のパス末尾インデックス」。cat()呼び出しごとにfor(j=off+1;j>=0;--j) name[j+i+1]=name[j]で既存文字列をi+1バイト右にシフトし、先頭にdir.d_name（ディレクトリ名）とスラッシュを書き込む。例：/usr/binから起動なら、1回目のcat()でname[]=\"bin\"(off=2)、2回目でname[]=\"usr/bin\"(off=6)。prname()がwrite(1,\"/\",1)で先頭スラッシュを書いてからname[0..off+1]を書く——cat()はコンポーネント間のスラッシュのみ担当。off<0はルートディレクトリからの実行——/\\nを出力して終了。バッファ上限511バイト超過時もprname()で強制終了。memmove()なしで先頭挿入を右シフトコピーで実現する1979年のバッファ管理。",
+    "code": "int  off  = -1;\n\ncat()\n{\n    i = -1;\n    while (dir.d_name[++i] != 0);  /* 名前の長さ */\n    for(j=off+1; j>=0; --j)\n        name[j+i+1] = name[j];     /* 右シフト */\n    off = i+off+1;\n    name[i] = '/';                 /* スラッシュ */\n    for(--i; i>=0; --i)\n        name[i] = dir.d_name[i];   /* 名前を先頭に */\n}\n\nprname()\n{\n    write(1, \"/\", 1);\n    if (off<0) off = 0;\n    name[off] = '\\n';\n    write(1, name, off+1);\n    exit(0);\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 111,
+    "appraiser_note": "cat()は右シフトで先頭挿入——末端から積み上げることで/usr/binを正順に組み立てる。off=-1が「パスなし」の番兵。prname()はwrite()で直接出力してexit()。"
+  },
+  {
     "id": "ls-001",
     "name": "`union { char lname[15]; char *namep; }` ——15文字以内はインライン、`ISARG=0100000` でshortのビット15をフラグに、Small String Optimizationの原型",
     "year": 1979,

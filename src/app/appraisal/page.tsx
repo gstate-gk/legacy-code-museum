@@ -584,6 +584,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "111",
+    title: "鑑定書#111 pwd — `chdir(dotdot)` で `..` を辿りinode番号で逆歩行、マウント越えは `dev` まで比較、`cat()` が右シフトで先頭挿入する80行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
