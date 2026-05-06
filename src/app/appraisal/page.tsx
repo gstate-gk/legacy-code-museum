@@ -598,6 +598,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "113",
+    title: "鑑定書#113 time — `quant[] = { 6, 10, 10, 6, 10, 6, 10, 10, 10 }` の9数字が60HzティックをHHH:MM:SS.Tに分解する78行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

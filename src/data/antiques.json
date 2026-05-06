@@ -8870,5 +8870,27 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 112,
     "appraiser_note": "struct stringのlast/max/pでレンジ走査状態を保持。nextc()が3桁8進エスケープを手動パース。lastdがstring2の終端を繰り返す——仕様をデータ構造に落とし込んだ設計。"
+  },
+  {
+    "id": "time-001",
+    "name": "`quant[] = { 6, 10, 10, 6, 10, 6, 10, 10, 10 }` ——60Hzティックを混合基数で分解してHHH:MM:SS.Tに変換する9要素テーブル",
+    "year": 1979,
+    "language": "C",
+    "description": "time.cの混合基数設計。quant[9]は各桁の基数を定義——a%quant[i]で最下位桁を取り出し、a/=quant[i]で次桁へ進む。quant[0]=6が60Hzと10進数をつなぐ唯一の変換点（60÷10=6）。残りはすべて10か6——秒・分の六十進数を二桁ずつ表現する最小構成。i=0が1/10秒以下（表示なし）、i=1が1/10秒（T）、i=2〜3が秒、i=4〜5が分、i=6〜8が時間。sep[]=\"\\0\\0.\\0:\\0:\\0\\0\"はNUL文字を「出力なし」のマーカーとして使い、':'と'.'をインデックス位置に固定する——fprintf(\"%c\",'\\0')は何も出力しないという性質を利用した条件分岐なしのセパレーター埋め込み。nsep[]は先頭ゼロ域で':'をスペースに置換。pad[]=\"000      \"は秒以下pad[0..2]='0'で必ず表示、分以上pad[3..8]=' 'で先頭ゼロをスペースに変換。(after-before)*60でtime()の秒をtimes()の60Hzティックに変換し三値の単位を揃える。",
+    "code": "char quant[] = { 6, 10, 10, 6, 10, 6, 10, 10, 10 };\nchar *pad  = \"000      \";\nchar *sep  = \"\\0\\0.\\0:\\0:\\0\\0\";\nchar *nsep = \"\\0\\0.\\0 \\0 \\0\\0\";\n...\nfor(i=0; i<9; i++) {\n    digit[i] = a % quant[i];\n    a /= quant[i];\n}\n...\nwhile(--i>0) {\n    c = digit[i]!=0 ? digit[i]+'0':\n        nonzero ? '0':\n        pad[i];\n    fprintf(stderr,\"%c\",c);\n    nonzero |= digit[i];\n    c = nonzero?sep[i]:nsep[i];\n    fprintf(stderr,\"%c\",c);\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 113,
+    "appraiser_note": "quant[9]の9数字に時刻体系を閉じ込めた設計。60Hzティックを{6,10,10,6,10,6,10,10,10}で順に割るだけでHHH:MM:SS.Tの各桁が確定する。sep[]/nsep[]/pad[]の4配列が条件分岐なしに時刻フォーマットのすべてを処理する。"
+  },
+  {
+    "id": "time-002",
+    "name": "`while(wait(&status) != p) times(&obuffer)` ——他の子プロセス終了時にベースラインを更新し続け、累積CPU時間の混入を防ぐ",
+    "year": 1979,
+    "language": "C",
+    "description": "time.cの測定ロジック。wait()は最初に終了した子プロセスのPIDを返す——測定対象p以外の子（バックグラウンドプロセス等）が先に終了する場合がある。while(wait(&status)!=p) times(&obuffer)はそのたびにベースライン（測定前累積時間）を更新する——これがないと他プロセスのCPU時間が測定値に混入する。測定完了後にtimes(&buffer)で現在の累積を取得し、buffer.tms_cutime-obuffer.tms_cutimeで差分を計算する。tms_cutimeはwait()呼び出しごとに増加する累積値。(after-before)*60でtime()の秒（wall時間）をtimes()の60Hzティックに変換し、real/user/sysの三値をprintt()に統一単位で渡す。signal(SIGINT,SIG_IGN)でCtrl-Cを親プロセス（timeコマンド自身）が無視し、子プロセスにシグナルを届ける。status>>8で子プロセスの終了コードを伝播。",
+    "code": "signal(SIGINT, SIG_IGN);\nsignal(SIGQUIT, SIG_IGN);\ntimes(&obuffer);\nwhile(wait(&status) != p)\n    times(&obuffer);\ntime(&after);\nif((status&0377) != 0)\n    fprintf(stderr,\"Command terminated abnormally.\\n\");\ntimes(&buffer);\nprintt(\"real\", (after-before) * 60);\nprintt(\"user\", buffer.tms_cutime - obuffer.tms_cutime);\nprintt(\"sys \", buffer.tms_cstime - obuffer.tms_cstime);\nexit(status>>8);",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 113,
+    "appraiser_note": "while(wait!=p)の中でtimes(&obuffer)を更新し続ける——他の子プロセス終了による累積時間の混入を防ぐ精密な設計。(after-before)*60でwall時間をティックに変換し、three値の単位を揃える。"
   }
 ]
