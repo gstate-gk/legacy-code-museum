@@ -8892,5 +8892,49 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 113,
     "appraiser_note": "while(wait!=p)の中でtimes(&obuffer)を更新し続ける——他の子プロセス終了による累積時間の混入を防ぐ精密な設計。(after-before)*60でwall時間をティックに変換し、three値の単位を揃える。"
+  },
+  {
+    "id": "wall-001",
+    "name": "`ttyslot(2)` ——fd=2（stderr）で自分のutmpスロットを特定し、`fork()` で各ttyに `sleep(1)` 間隔で全員送信する",
+    "year": 1979,
+    "language": "C",
+    "description": "wall.cの設計。USERS=50のstruct utmp配列にfreadで/etc/utmpを一括読み込み。ttyslot(2)はfd=2（stderr）で自分の端末をutmpから特定——stdinやstdoutはリダイレクト済みの場合があるがstderrは通常端末に繋がっている。sline==0は端末不明で送信者がwho[9]=\"???\"のまま。ut_name[0]==0で空（未ログイン）スロットをスキップ。sleep(1)で1秒間隔を置きデバイスアクセス集中を防ぐ——50ユーザー全員なら最大50秒。sendmes()は呼ばれるたびにfork()し、if(i) return;で親は即座に戻る（wait()しない）。子プロセスがstrcpy(t,\"/dev/\")+strcat(t,tty)でデバイスパスを構築しfopen(t,\"w\")でデバイスファイルを書き込み用に開く。setbuf(f,buf)でバッファ設定後にfprintfヘッダー+fwrite本文を送信。mesg nで書き込み禁止の端末はfopenが失敗するだけで次ユーザーへ続行する。",
+    "code": "sline = ttyslot(2); /* 'utmp' slot no. of sender */\nif (sline) {\n    for (i=0;c=utmp[sline].ut_name[i];i++)\n        who[i]=c;\n    who[i] = '\\0';\n}\nfor(i=0; i<USERS; i++) {\n    p = &utmp[i];\n    if(p->ut_name[0] == 0) continue;\n    sleep(1);\n    sendmes(p->ut_line);\n}\n/* sendmes: */\ni = fork();\nif(i) return;  /* 親はすぐに戻る */\nstrcpy(t, \"/dev/\");\nstrcat(t, tty);\nf = fopen(t, \"w\");\nsetbuf(f, buf);\nfprintf(f, \"Broadcast Message from %s (%s) ...\\n\\n\", who, utmp[sline].ut_line);\nfwrite(mesg, msize, 1, f);\nexit(0);",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 114,
+    "appraiser_note": "ttyslot(2)のfd=2指定はstdinやstdoutがリダイレクトされていても正しく動くための工夫。sleep(1)のフロー制御とfork()-per-userの組み合わせ——親はwait()せず、子がorphanになってもinitが回収する。"
+  },
+  {
+    "id": "wall-002",
+    "name": "`fread((char *)utmp, sizeof(struct utmp), USERS, f)` ——utmpを一括読み込みして全端末を巡回し、`/dev/`+strcat でデバイスファイルを構築する",
+    "year": 1979,
+    "language": "C",
+    "description": "wall.cの全員送信アーキテクチャ。fread((char*)utmp, sizeof(struct utmp), USERS, f)で/etc/utmpの先頭から最大USERS(50)エントリを一括読み込み——ファイルが50エントリ未満でも問題ない。char mesg[3000]で最大3000バイトのメッセージを保持。char who[9]=\"???\"はデフォルト送信者名（ut_nameは8バイト）。全ユーザーへの送信はforループで全50スロットを走査——ut_name[0]==0でスキップ、sleep(1)で1秒待機、sendmes(p->ut_line)で送信。strcpy(t,\"/dev/\")+strcat(t,tty)でutmp.ut_line（\"tty03\"等）を/dev/tty03に変換してデバイスファイルを直接fopen。これはPOSIX以前の端末書き込みアプローチ。fprintf(f,\"Broadcast Message from %s (%s)...\\n\\n\")のヘッダー書式はwrite(1)コマンドと共通のルーツを示す。",
+    "code": "#define USERS 50\nchar mesg[3000];\nint  msize, sline;\nstruct utmp utmp[USERS];\nchar who[9] = \"???\";\n...\nfread((char *)utmp, sizeof(struct utmp), USERS, f);\n...\nstrcpy(t, \"/dev/\");\nstrcat(t, tty);\nif((f = fopen(t, \"w\")) == NULL) {\n    fprintf(stderr,\"cannot open %s\\n\", t);\n    exit(1);\n}\nsetbuf(f, buf);\nfprintf(f, \"Broadcast Message from %s (%s) ...\\n\\n\",who, utmp[sline].ut_line);\nfwrite(mesg, msize, 1, f);\nexit(0);",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 114,
+    "appraiser_note": "/etc/utmpを地図として全端末を巡回する設計。USERS=50の静的配列に丸ごとfreadし、/dev/+strcatでデバイスファイルを構築——POSIX以前のUnixらしい直接アプローチ。"
+  },
+  {
+    "id": "wc-001",
+    "name": "`' '<c&&c<0177` ——ASCII番号比較1行で「単語を構成する文字」を定義する",
+    "year": 1979,
+    "language": "C",
+    "description": "wc.cの単語定義。' '<c&&c<0177はASCII 0x21（'!'）から0x7E（'~'）の範囲——スペース（0x20）より大きくDEL（0x7F=0177）より小さい文字が「印刷可能な非空白文字」＝単語の一部。タブ（0x09）・改行（0x0A）・スペース（0x20）はここで弾かれ、DELも制御文字もすべて除外される。tokenフラグは単語の最初の1文字だけwordct++するバウンダリ検出——印刷可能文字が来て!tokenなら wordct++してtoken=1、同じ単語の2文字目以降はif(!token)が偽でcontinue、空白でtoken=0リセット。wd=\"lwc\"はデフォルト出力仕様文字列——-lwが渡されると++argv[1]で'-'をスキップしてwd=\"lw\"。wcp()はwhile(*wd) switch(*wd++)でwd文字列を走査してl/w/cを選択的にprintf——フラグ変数3つと条件分岐連鎖の代わりに文字列仕様を直接走査する設計。do{}while(++i<argc)でstdinと複数ファイルを統一処理。argc>2のみ合計行を出力（ファイル1つでは不要）。",
+    "code": "if(' '<c&&c<0177) {\n    if(!token) {\n        wordct++;\n        token++;\n    }\n    continue;\n}\nif(c=='\\n')\n    linect++;\nelse if(c!=' '&&c!='\\t')\n    continue;\ntoken = 0;",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 115,
+    "appraiser_note": "' '<c&&c<0177という算術比較1行に「単語とは何か」を閉じ込めた設計。辞書も形態論も使わない——'!'から'~'の範囲が単語の定義。"
+  },
+  {
+    "id": "wc-002",
+    "name": "`wd = \"lwc\"` ——出力仕様を文字列で保持し `while(*wd) switch(*wd++)` で走査する",
+    "year": 1979,
+    "language": "C",
+    "description": "wc.cのオプション処理設計。wd=\"lwc\"はデフォルト出力仕様——'l'（行数）、'w'（単語数）、'c'（文字数）の順を文字列で表現する。-lwが渡されると++argv[1]で'-'をスキップしてwdは\"lw\"に、-cのみならwdは\"c\"になる。wcp()関数はwhile(*wd) switch(*wd++)でwd文字列を1文字ずつ読みながらswitch分岐——case 'l'でprintf(\"%7ld\",linect)、case 'w'でprintf(\"%7ld \",wordct)、case 'c'でprintf(\"%7ld\",charct)。wdの文字列がそのまま出力仕様になっているため、フラグ変数lflag/wflag/cflag+if連鎖の代わりに文字列走査1ループで処理できる。do{if(argc>1&&(fp=fopen(argv[i],\"r\"))==NULL){continue;}...}while(++i<argc)でstdinと複数ファイルを統一——do loopなので最低1回（stdin処理）は実行される。argc>2のときのみtotal行出力。long型でtlinect/twordct/tcharctを別途集計する。",
+    "code": "wd = \"lwc\";\nif(argc > 1 && *argv[1] == '-') {\n    wd = ++argv[1];\n    argc--;\n    argv++;\n}\n...\nwcp(wd, charct, wordct, linect);\n...\nwcp(wd, charct, wordct, linect)\nregister char *wd;\nlong charct; long wordct; long linect;\n{\n    while (*wd) switch (*wd++) {\n    case 'l': printf(\"%7ld\", linect); break;\n    case 'w': printf(\"%7ld \", wordct); break;\n    case 'c': printf(\"%7ld\", charct); break;\n    }\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 115,
+    "appraiser_note": "wd=\"lwc\"文字列がそのまま出力仕様——while(*wd) switch(*wd++)で走査するだけでl/w/cの組み合わせを処理する。フラグ変数を使わない文字列仕様設計。"
   }
 ]

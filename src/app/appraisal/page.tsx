@@ -605,6 +605,20 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "114",
+    title: "鑑定書#114 wall — `ttyslot(2)` でfd=2から自分のutmpスロットを特定し `fork()` で各ttyに `sleep(1)` 間隔で全員送信する78行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
+  {
+    number: "115",
+    title: "鑑定書#115 wc — `' '<c&&c<0177` のASCII範囲比較1行が単語を定義し `wd = \"lwc\"` 文字列を `while(*wd) switch(*wd++)` で走査する86行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
