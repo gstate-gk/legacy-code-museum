@@ -654,6 +654,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "121",
+    title: "鑑定書#121 rev — `default: continue` がswitch内からforを継続し `goto eof` で二重ネストを一撃脱出、`while(--i>=0)` で逆順出力する44行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

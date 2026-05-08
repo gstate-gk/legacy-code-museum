@@ -9035,5 +9035,16 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 120,
     "appraiser_note": "ttyname(0)のfd=0選択はmesg.cのfd=2と対比——「端末を操作する」か「stdinが端末か問う」かで使い分け。exit(p?0:1)で機械可読な状態伝達。"
+  },
+  {
+    "id": "rev-001",
+    "name": "`default: continue` が `switch` の中から `for` を継続し `goto eof` がネストを一撃脱出する——44行の `rev.c`",
+    "year": 1979,
+    "language": "C",
+    "description": "rev.cの制御フロー設計。for(i=0;i<N;i++)の中にswitch(c)があり、case EOF: goto eof、default: continue、case '\\n': breakの3分岐。C言語のcontinueは「それを囲む最も内側の繰り返し文」に作用——switchは繰り返し文でないのでswitch内のcontinueはfor(i=0;...)に届いてi++される。defaultケースで普通の文字をcontinueでfor継続（line[i]に積み続ける）、'\\n'でbreak→switchを抜けてfor末尾のbreakでfor脱出、EOFでgoto eofで二重ネスト（外側for(;;)+内側for）を一撃脱出。goto eofが必要な理由はCにラベル付きbreakがないため——break1回では内側forを抜けるだけで外側for(;;)が回り続ける。eof:ラベルはfclose(input)直前。while(--i>=0) putc(line[i])で前デクリメントにより'\\n'位置をスキップして手前の文字から0まで逆順putc、最後にputc('\\n')。--iでなくi--なら'\\n'が出力されてしまう。do-while(argc>1)でstdinと複数ファイルを統一処理。",
+    "code": "for(i=0;i<N;i++) {\n    line[i] = c = getc(input);\n    switch(c) {\n    case EOF:\n        goto eof;\n    default:\n        continue;\n    case '\\n':\n        break;\n    }\n    break;\n}\nwhile(--i>=0)\n    putc(line[i],stdout);\nputc('\\n',stdout);\n...\neof:\n    fclose(input);",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 121,
+    "appraiser_note": "switch内continueがforに届く規則を利用した3方向分岐、goto eofで二重ネスト脱出、--iで改行スキップ——44行に制御フロー設計が3つ重なる。"
   }
 ]
