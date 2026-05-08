@@ -8980,5 +8980,27 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 117,
     "appraiser_note": "argc>1? argv[1]: \"y\"の三項演算子がprintfの引数——デフォルト値を変数なしで1式に閉じ込める。yesはy専用ではなく汎用無限文字列ジェネレーターだった。"
+  },
+  {
+    "id": "tee-001",
+    "name": "`int openf[20] = { 1 }` ——stdoutをfd=1で先頭に埋め込み、全出力先に配るファイルディスクリプタ配列",
+    "year": 1979,
+    "language": "C",
+    "description": "tee.cの出力先管理設計。openf[20] = { 1 }は出力先fdを20個保持する配列——最初の要素がstdout(fd=1)として静的初期化される。n=1はfd配列の現在サイズで最初からstdoutを含む。引数ファイルをopen/creatしてopenf[n++]に積む。stash(p)がfor(k=0;k<n;k++) write(openf[k],out+i,...)で配列全員に書く——分岐なし。-aフラグでopen(path,1)(O_WRONLY=1)失敗時にcreat(path,0666)でフォールバックし、lseek(fd,0L,2)(SEEK_END=2)で末尾へ——O_APPEND定義前の1979年式追記。stat()でS_IFCHRチェックし端末なら件数tを増やす。tは後段の挙動（即フラッシュ/16バイト刻み）を制御するカウンター。最大出力先数20はグローバル配列サイズの上限。コメント「tee-- pipe fitting」が設計意図を一言で語る。",
+    "code": "int openf[20] = { 1 };\nint n = 1;\n...\nwhile(argc-->1) {\n    openf[n++] = creat(argv[1],0666);\n    argv++;\n}\n...\nstash(p)\n{\n    int k;\n    int d;\n    d = t ? 16 : p;\n    for(i=0; i<p; i+=d)\n        for(k=0;k<n;k++)\n            write(openf[k], out+i, d<p-i?d:p-i);\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 118,
+    "appraiser_note": "openf[20]={1}でstdoutを先頭に静的初期化——引数ファイルを後から積んでstash()が全員に書く。分岐のない多出力設計。"
+  },
+  {
+    "id": "tee-002",
+    "name": "`t`カウンター ——`fstat(S_IFCHR)` と `lseek(ESPIPE)` の二段階で端末・パイプを検出し16バイト刻みを制御する",
+    "year": 1979,
+    "language": "C",
+    "description": "tee.cの端末/パイプ検出とバッファリング制御。fstat(1,&buf)でstdoutの属性取得、buf.st_mode&S_IFMTがS_IFCHRなら端末でt=1。次にlseek(1,0L,1)==-1&&errno==ESPIPEでパイプ検出——パイプはシーク不可なのでESPIPE(Illegal seek)が返る、これでt++。tは端末/パイプな出力先の数を記録するカウンター。コピーループでr>=w（in[]読み切り）かつt>0&&p>0（インタラクティブ出力あり&データあり）なら即break→stash()でフラッシュ——512バイト溜まるのを待たない。stash()ではd=t?16:p——tが1以上なら16バイト刻み、0なら全p一括。16バイトは当時の端末バッファの安全な粒度。tという1カウンターが即フラッシュ判断と書き込み粒度制御の両方を担う。二重ループfor(i=0;i<p;i+=d) for(k=0;k<n;k++) write()で「チャンクごとに全出力先」の順序で書く。",
+    "code": "fstat(1,&buf);\nt = (buf.st_mode&S_IFMT)==S_IFCHR;\nif(lseek(1,0L,1)==-1&&errno==ESPIPE)\n    t++;\n...\nif(r>=w) {\n    if(t>0&&p>0) break;\n    w = read(0,in,512);\n}\n...\nd = t ? 16 : p;\nfor(i=0; i<p; i+=d)\n    for(k=0;k<n;k++)\n        write(openf[k], out+i, d<p-i?d:p-i);",
+    "source": "Bell-32V Unix (1979)",
+    "appraiser_note": "tというカウンターがfstat+lseek/ESPIPEの二段階検出で端末/パイプ数を記録——即フラッシュと16バイト刻みの両方を1変数で制御する。",
+    "appraisalNumber": 118
   }
 ]

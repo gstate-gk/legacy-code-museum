@@ -633,6 +633,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "118",
+    title: "鑑定書#118 tee — `int openf[20] = { 1 }` でstdoutを先頭に埋め込み、lseek(ESPIPE)でパイプを検出し16バイト刻みで全出力先に書く95行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
