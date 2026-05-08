@@ -9002,5 +9002,27 @@
     "source": "Bell-32V Unix (1979)",
     "appraiser_note": "tというカウンターがfstat+lseek/ESPIPEの二段階検出で端末/パイプ数を記録——即フラッシュと16バイト刻みの両方を1変数で制御する。",
     "appraisalNumber": 118
+  },
+  {
+    "id": "cat-001",
+    "name": "`statb.st_dev==dev && statb.st_ino==ino` ——ファイル名ではなくinode番号で「入力と出力が同じファイル」を検出し警告する",
+    "year": 1979,
+    "language": "C",
+    "description": "cat.cのself-cat検出設計。cat file > fileとするとシェルがリダイレクト先を先に開いてファイルを空にするため、catが読もうとした時点でデータが消える——1979年から存在する典型的なミス。cat.cはfstat(fileno(stdout),&statb)で標準出力のデバイス番号(st_dev)とinode番号(st_ino)を取得して保存。各入力ファイルを開く際にfstat()で同様の値を取得し、st_dev==dev && st_ino==inoなら「入力と出力が同じファイル」と判定してcontinue。ファイル名の文字列比較ではなくinode番号で比較するため、/tmp/foo と ../tmp/foo と //tmp/fooがすべて同一ファイルとして検出できる。S_IFCHRやS_IFBLKのデバイスは検出対象外——ino=-1のまま。通常ファイルとパイプのみ保護する設計。ino変数を-1で初期化することで「保存前」と「検出済み」を区別する。",
+    "code": "int dev, ino = -1;\nstruct stat statb;\n\nfstat(fileno(stdout), &statb);\nstatb.st_mode &= S_IFMT;\nif (statb.st_mode!=S_IFCHR && statb.st_mode!=S_IFBLK) {\n    dev = statb.st_dev;\n    ino = statb.st_ino;\n}\n...\nfstat(fileno(fi), &statb);\nif (statb.st_dev==dev && statb.st_ino==ino) {\n    fprintf(stderr, \"cat: input %s is output\\n\",\n       fflg?\"-\": *argv);\n    fclose(fi);\n    continue;\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 119,
+    "appraiser_note": "st_dev+st_inoのinode比較でself-catを検出——パス名比較ではなくOSが保証する一意識別子で同一ファイルを判定する1979年の設計。"
+  },
+  {
+    "id": "cat-002",
+    "name": "`setbuf(stdout, stdbuf)` / `setbuf(stdout, (char*)NULL)` ——独自バッファと `-u` アンバッファードの明示的制御",
+    "year": 1979,
+    "language": "C",
+    "description": "cat.cのバッファリング設計。char stdbuf[BUFSIZ]をグローバルで宣言し、setbuf(stdout, stdbuf)でstdioのデフォルトバッファをこの配列に差し替える。-uフラグでsetbuf(stdout,(char*)NULL)——NULLはアンバッファードモードの指定。stdioのデフォルト挙動（端末なら行バッファ、ファイルなら完全バッファ）に頼らず、明示的にバッファを制御する設計。引数なしのときfflg=1にしてargc=2に設定——ループが1回走りstdinを読む。-という引数でもfflg条件が真になりstdinを読む。cat file1 - file2のようにファイル・stdin・ファイルを混在させたパイプライン構築が可能。fflg変数名はfile-flag、「ファイルを読むのではなくstdinを読む」フラグ。-uはunbuffered——パイプライン応答性やリアルタイム出力が必要な場合に使う。",
+    "code": "char stdbuf[BUFSIZ];\n\nsetbuf(stdout, stdbuf);\n...\ncase 'u':\n    setbuf(stdout, (char *)NULL);\n    continue;\n...\nif (argc < 2) {\n    argc = 2;\n    fflg++;\n}\nif (fflg || (*++argv)[0]=='-' && (*argv)[1]=='\\0')\n    fi = stdin;",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 119,
+    "appraiser_note": "setbuf()で独自バッファを明示設定、-uでNULLアンバッファード——stdioのデフォルトに頼らない制御。fflgでstdin混在パイプラインを実現。"
   }
 ]

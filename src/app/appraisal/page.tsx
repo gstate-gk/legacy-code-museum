@@ -640,6 +640,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "119",
+    title: "鑑定書#119 cat — `statb.st_dev==dev && statb.st_ino==ino` でinode番号が「入力と出力が同じファイル」を検出し警告する63行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
