@@ -619,6 +619,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "116",
+    title: "鑑定書#116 mesg — `chmod(tty, 0622)` でttyのパーミッション変更が「通信の許可」になり `sbuf.st_mode & 02` で状態を判定する55行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

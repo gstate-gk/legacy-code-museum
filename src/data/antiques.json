@@ -8936,5 +8936,27 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 115,
     "appraiser_note": "wd=\"lwc\"文字列がそのまま出力仕様——while(*wd) switch(*wd++)で走査するだけでl/w/cの組み合わせを処理する。フラグ変数を使わない文字列仕様設計。"
+  },
+  {
+    "id": "mesg-001",
+    "name": "`chmod(tty, 0622)` / `chmod(tty, 0600)` ——ttyのパーミッション変更が「通信の許可」になる",
+    "year": 1979,
+    "language": "C",
+    "description": "mesg.cの設計。ttyname(2)でfd=2（stderr）から自分の端末デバイスパスを取得——stdinはリダイレクト済みでもstderrは通常端末に繋がっているためfd=2を使う（wall.cのttyslot(2)と同じ発想）。stat(tty,&sbuf)で端末ファイルの属性取得。引数なしのとき sbuf.st_mode&02（others書き込みビット）で現在の通信許可状態を判定——1ビットが通信の許否を表す。mesg yはchmod(tty,0622)=rw--w--w-でグループ/他者書き込みを許可。mesg nはchmod(tty,0600)=rw-------で所有者のみ。writeもwallも送信先端末をfopen(\"/dev/ttyXX\",\"w\")で開くため、そのfopenが成功するかどうかがパーミッションに委ねられる。専用フラグファイルもカーネル特別呼び出しも不要——ファイルパーミッションそのものが通信制御機構。exit(r)でmesg n状態を終了コード1として伝播——スクリプトが状態を分岐できる。",
+    "code": "tty = ttyname(2);\nstat(tty, &sbuf);\nif(argc < 2) {\n    if(sbuf.st_mode & 02)\n        fprintf(stderr,\"is y\\n\");\n    else { r=1;\n        fprintf(stderr,\"is n\\n\"); }\n} else switch(*argv[1]) {\n    case 'y': newmode(0622); break;\n    case 'n': newmode(0600); r=1; break;\n}\nexit(r);\n\nnewmode(m) {\n    if(chmod(tty,m)<0)\n        error(\"cannot change mode\");\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 116,
+    "appraiser_note": "ファイルパーミッションを通信の許可証として使う設計。chmod(0622)でmesg y、chmod(0600)でmesg n——writeもwallもfopenの成否がパーミッションに委ねられる。「すべてはファイルだ」の原則が55行に凝縮。"
+  },
+  {
+    "id": "mesg-002",
+    "name": "`sbuf.st_mode & 02` ——others書き込みビット1本で通信許可状態を判定する",
+    "year": 1979,
+    "language": "C",
+    "description": "mesg.cのパーミッション判定。sbuf.st_mode&02はUNIXファイルパーミッションのothers書き込みビット（ビット1=8進数02）。このビットが立っていれば他ユーザーが端末ファイルに書き込めるため\"is y\"、立っていなければ\"is n\"。パーミッション9ビットのうち1ビットだけを見る——それだけで通信許可状態が判定できる。chmod(tty,0622)=rw--w--w-はothers書き込みビット(02)+group書き込みビット(020)+owner rw(0600)の合計。chmod(tty,0600)=rw-------はowner rwのみでothersビットは0。ttyname(2)のfd=2はwall.cのttyslot(2)と同じ原則——stderrは通常端末に直結しているためリダイレクトに安全。exit(r)でmesg n時にr=1を終了コードとして伝播する設計はメッセージ出力に加えて機械可読な状態伝達を兼ねる。",
+    "code": "struct stat sbuf;\n...\nstat(tty, &sbuf);\nif(sbuf.st_mode & 02)\n    fprintf(stderr,\"is y\\n\");\nelse {\n    r=1;\n    fprintf(stderr,\"is n\\n\");\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 116,
+    "appraiser_note": "sbuf.st_mode&02の1ビット判定が通信許可の判定そのもの。パーミッションビットをフラグとして使う——専用の状態変数が不要な設計。"
   }
 ]
