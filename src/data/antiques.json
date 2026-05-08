@@ -9079,5 +9079,16 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 124,
     "appraiser_note": "strcmp不使用の2文字比較、printf不使用のfputs、末尾スペースなしのi<argc-1パターン——echoの仕事に対して必要最小限だけを使う23行。"
+  },
+  {
+    "id": "sleep-001",
+    "name": "`while(c = *s++)` でポインタを進めながら `n = n*10 + c - '0'` で10進変換する21行",
+    "year": 1979,
+    "language": "C",
+    "description": "sleep.cの設計。while(c = *s++)は代入・ポインタ進行・NUL終端チェックを1行に統合するK&R Cの古典パターン。*sで現在の文字を読み、s++でポインタを次へ進め、c=で代入し、cが0になったとき（NUL文字）ループを終了する。ループ内のn = n*10 + c - '0'が10進変換——c-'0'で文字コードから数値へ変換し（'0'=48）、n*10で一桁繰り上げて加算。\"123\"を渡すとn=1→n=12→n=123と積み上がる。atoi()を使わない理由はバリデーション込みの統合設計——c<'0' || c>'9'でASCII範囲外の文字を検出して\"bad character\"で終了。atoi()は不正な文字を黙って無視するかゼロを返すのでバリデーションには使えない。エラー時もexit(0)で終了、エラーメッセージはstderrではなくstdoutへ——1979年のエラー処理文化。sleep(n)の戻り値は確認しない——シグナルで割り込まれても再sleep不要という割り切り。整数秒のみ対応、BSDが後に浮動小数点を加えた。",
+    "code": "s = argv[1];\nwhile(c = *s++) {\n    if(c<'0' || c>'9') {\n        printf(\"bad character\\n\");\n        exit(0);\n    }\n    n = n*10 + c - '0';\n}\nsleep(n);",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 125,
+    "appraiser_note": "while(c = *s++)の1行で進行・代入・終端チェックを統合、n = n*10 + c - '0'でatoi不使用の手動変換——バリデーションと変換を1ループに収めた21行。"
   }
 ]

@@ -682,6 +682,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "125",
+    title: "鑑定書#125 sleep — `while(c = *s++)` でポインタを進めながら `n = n*10 + c - '0'` で10進変換する21行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
