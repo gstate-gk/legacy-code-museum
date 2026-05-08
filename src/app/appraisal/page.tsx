@@ -626,6 +626,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "117",
+    title: "鑑定書#117 yes — `for(;;) printf(\"%s\\n\", argc>1? argv[1]: \"y\")` で無限ループと三項演算子が「永遠にYと答え続ける」6行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

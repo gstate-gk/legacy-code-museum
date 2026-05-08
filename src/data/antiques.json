@@ -8958,5 +8958,27 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 116,
     "appraiser_note": "sbuf.st_mode&02の1ビット判定が通信許可の判定そのもの。パーミッションビットをフラグとして使う——専用の状態変数が不要な設計。"
+  },
+  {
+    "id": "yes-001",
+    "name": "`for(;;) printf(\"%s\\n\", argc>1? argv[1]: \"y\")` ——無限ループと三項演算子で「永遠にYと答え続ける」6行",
+    "year": 1979,
+    "language": "C",
+    "description": "yes.cの全設計。for(;;)は初期化・条件・更新をすべて省略したfor文——C言語では条件式が空のとき常に真として扱われるため終わらない。while(1)と等価だがBell Labs / K&Rの慣習ではfor(;;)が好まれた。本体はprintf一行のみ——argc>1? argv[1]: \"y\"の三項演算子で引数があればそれを、なければ\"y\"をデフォルト出力する。変数不要、if文不要、関数呼び出しもなし。終了方法はパイプクローズまたは外部シグナル（SIGPIPE/SIGINT）のみ——内部に出口は存在しない。用途はパイプラインの源泉（source）——rm -i *.cが各ファイルにremove?と聞くとき、yes | rm -i *.cとすれば全部に自動応答できる。cat/grep/sortはフィルター（入力を受けて加工する）だがyesは入力不要——自らが無限の文字列を生成するパイプの始点。",
+    "code": "main(argc, argv)\nchar **argv;\n{\n\tfor (;;)\n\t\tprintf(\"%s\\n\", argc>1? argv[1]: \"y\");\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 117,
+    "appraiser_note": "for(;;)+printf三項演算子の2行が本体——6行のyes.cはパイプラインの「永遠の返答者」を体現する。コードの短さは問題が正確に定義された証拠。"
+  },
+  {
+    "id": "yes-002",
+    "name": "`argc>1? argv[1]: \"y\"` ——デフォルト\"y\"を三項演算子1式で埋め込む汎用無限文字列ジェネレーター",
+    "year": 1979,
+    "language": "C",
+    "description": "yes.cのデフォルト値設計。argc>1? argv[1]: \"y\"はprintfの引数に直接書かれた三項演算子——引数が1つ以上あればargv[1]を、なければ\"y\"をデフォルトとして出力する。変数宣言もif文も不要。yes noとすれば永遠にnoを出力し、yes pleaseとすれば永遠にpleaseを出力する——\"y\"はデフォルト値にすぎず、yesは汎用の無限文字列ジェネレーターとして機能する。スクリプトで特定の応答を無限に流し込みたいあらゆるケースに使える。for(;;)に終了条件がないため、パイプが閉じられてSIGPIPEが届くか、Ctrl+CでSIGINTが来るまで動き続ける。K&R Cの典型的なスタイル——main宣言でchar **argv;を別行に書くpre-ANSI形式、変数名はargc/argvの標準名のみで余計な変数を一切導入しない。",
+    "code": "printf(\"%s\\n\", argc>1? argv[1]: \"y\");",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 117,
+    "appraiser_note": "argc>1? argv[1]: \"y\"の三項演算子がprintfの引数——デフォルト値を変数なしで1式に閉じ込める。yesはy専用ではなく汎用無限文字列ジェネレーターだった。"
   }
 ]
