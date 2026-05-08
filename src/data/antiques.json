@@ -9068,5 +9068,16 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 123,
     "appraiser_note": "main() { sync(); }の5行——引数なしmain、ゼロロジック、カーネルとシェルを繋ぐ最短の橋。yes.cより1行短い史上最小の鑑定書。"
+  },
+  {
+    "id": "echo-001",
+    "name": "`fputs(argv[i], stdout)` と `argv[1][0]=='-' && argv[1][1]=='n'` ——printf不使用・strcmp不使用の必要最小限設計23行",
+    "year": 1979,
+    "language": "C",
+    "description": "echo.cの設計。argv[1][0]=='-' && argv[1][1]=='n'はstrcmpを使わない2文字比較でのフラグ解析——echoが扱うフラグは-nだけなので2文字確認で十分。nflg++でフラグ記録、argc--; argv++で引数列から-nを消してから残りを処理。fputs(argv[i], stdout)はprintf(\"%s\",argv[i])の代わり——fputsはフォーマット文字列を解析しないため速く、printf(argv[i])のようなフォーマット文字列攻撃の脆弱性を原理的に回避する。for(i=1;i<argc;i++)でargv[1]から最後の引数まで順番にfputs、if(i<argc-1) putchar(' ')で最後の引数以外の後にスペース——末尾スペースを出さないセパレーターパターン。if(nflg == 0) putchar('\\n')でフラグの「不在」を判定して改行制御。exit(0)でK&R C時代の明示的成功終了。",
+    "code": "if(argc > 1 && argv[1][0] == '-' && argv[1][1] == 'n') {\n    nflg++;\n    argc--;\n    argv++;\n}\nfor(i=1; i<argc; i++) {\n    fputs(argv[i], stdout);\n    if (i < argc-1)\n        putchar(' ');\n}\nif(nflg == 0)\n    putchar('\\n');\nexit(0);",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 124,
+    "appraiser_note": "strcmp不使用の2文字比較、printf不使用のfputs、末尾スペースなしのi<argc-1パターン——echoの仕事に対して必要最小限だけを使う23行。"
   }
 ]

@@ -675,6 +675,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "124",
+    title: "鑑定書#124 echo — `fputs(argv[i], stdout)` でprintf不使用、`argv[1][0]=='-' && argv[1][1]=='n'` の2文字比較だけで-nフラグを処理する23行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
