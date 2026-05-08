@@ -668,6 +668,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "123",
+    title: "鑑定書#123 sync — `main() { sync(); }` 引数なしmain・ゼロロジック・カーネルシステムコールをそのままコマンドにする5行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

@@ -9057,5 +9057,16 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 122,
     "appraiser_note": "atoi(argv[1]+1)のポインタ加算、**argvの二重間接、goto usageのラベル関数スコープ、kill(pid=atoi(...))の引数内代入——40行にCの言語仕様活用が4重なる。"
+  },
+  {
+    "id": "sync-001",
+    "name": "`main() { sync(); }` ——引数なしmain、ゼロロジック、カーネルシステムコールをそのままコマンドにする5行",
+    "year": 1979,
+    "language": "C",
+    "description": "sync.cの設計。5行——yes.cの6行より1行短い。main()は引数宣言なし——K&R Cでは省略可能で、syncは引数を取らないので省略が正確。sync()はカーネルシステムコールを直接呼ぶ1行——バリデーションもループもエラー処理もない。1979年のUnixはライトバックキャッシュを使用しており、電源オフ前にsync()を呼ばないとファイルシステムが破損した。sync.cはその危険を避けるためのシェルコマンドラッパー。nice/kill/syncはカーネル機能のユーザー空間ラッパーというUnix設計哲学の体現。{とsync();の間に空行がある——5行でもBell Labsのコーディング習慣（関数先頭の空行）を守る。yes.cはargc/argvを使うためmain(argc,argv)が必要だったが、sync.cは一切使わないのでmain()。「使わないものは宣言しない」という一貫性。",
+    "code": "main()\n{\n\n\tsync();\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 123,
+    "appraiser_note": "main() { sync(); }の5行——引数なしmain、ゼロロジック、カーネルとシェルを繋ぐ最短の橋。yes.cより1行短い史上最小の鑑定書。"
   }
 ]
