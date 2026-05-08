@@ -9024,5 +9024,16 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 119,
     "appraiser_note": "setbuf()で独自バッファを明示設定、-uでNULLアンバッファード——stdioのデフォルトに頼らない制御。fflgでstdin混在パイプラインを実現。"
+  },
+  {
+    "id": "tty-001",
+    "name": "`ttyname(0)` と `exit(p? 0: 1)` ——fd=0でstdinの端末名を取得し「端末かどうか」を終了コードで返す18行",
+    "year": 1979,
+    "language": "C",
+    "description": "tty.cの設計。ttyname(0)はfd=0（stdin）が繋がっている端末のデバイスパス（/dev/tty03等）を返す。mesg.cとwall.cがfd=2（stderr）を選んだのは「自分の端末を操作する」目的でリダイレクトに依存しないため。tty.cはfd=0——問いが「このプロセスのstdinは端末か？」であり、スクリプトがtty < /dev/tty03のようにstdinを明示指定する使い方も想定。-sフラグはsilent——if(argc==2 && !strcmp(argv[1],\"-s\")) ;のセミコロン空文でifブロックを「何もしない」として実装、elseのprintfを回避する。exit(p? 0: 1)はttyname成功（端末）なら0、NULL（非端末）なら1を終了コードで返す。if tty -s; thenのようにスクリプトが出力を解析せず終了コードだけで分岐できる。mesg.cのexit(r)と同じ「機械可読な状態伝達」の発想。(p? p: \"not a tty\")の三項演算子はprintfの引数に直接書く——変数宣言なし。",
+    "code": "p = ttyname(0);\nif(argc==2 && !strcmp(argv[1], \"-s\"))\n    ;\nelse\n    printf(\"%s\\n\", (p? p: \"not a tty\"));\nexit(p? 0: 1);",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 120,
+    "appraiser_note": "ttyname(0)のfd=0選択はmesg.cのfd=2と対比——「端末を操作する」か「stdinが端末か問う」かで使い分け。exit(p?0:1)で機械可読な状態伝達。"
   }
 ]

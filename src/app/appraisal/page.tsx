@@ -647,6 +647,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "120",
+    title: "鑑定書#120 tty — `ttyname(0)` と `exit(p? 0: 1)` でfd=0のstdin端末名を表示し「端末かどうか」を終了コードで返す18行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
