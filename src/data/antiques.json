@@ -9046,5 +9046,16 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 121,
     "appraiser_note": "switch内continueがforに届く規則を利用した3方向分岐、goto eofで二重ネスト脱出、--iで改行スキップ——44行に制御フロー設計が3つ重なる。"
+  },
+  {
+    "id": "kill-001",
+    "name": "`atoi(argv[1]+1)` と `**argv` の二重間接と `goto usage` ——Cのポインタ算術とラベルスコープを駆使した40行の `kill.c`",
+    "year": 1979,
+    "language": "C",
+    "description": "kill.cの設計。*argv[1]=='-'でシグナル番号指定を検出。atoi(argv[1]+1)はポインタ加算で'-'をスキップし残り文字列をatoiに渡す——argv[1][1]はchar（1文字）だがargv[1]+1はchar *（残り全文字列）なので-15のような2桁も処理できる。**argvはchar**の二重間接——*argvが現在の引数文字列(char *)、**argvがその先頭文字(char)。**argv<'0'||**argv>'9'でisdigit不使用の範囲比較バリデーション。kill(pid = atoi(*argv), signo)は引数内代入——代入式が値を持つC規則を使ってkill()への引数渡しと変数保存を1式で。goto usageはif(argc<=1)ブロック内の「usage:」ラベルへの前方goto——Cのラベルスコープは関数全体でブロック非依存のため、whileループ内からでも到達可能。usageメッセージの重複を避ける。exit(2)は引数エラー、errlev=1はkill失敗——終了コードで区別。sys_errlist[errno]はperror前身の直接配列参照。",
+    "code": "if (*argv[1] == '-') {\n    signo = atoi(argv[1]+1);\n    argc--;\n    argv++;\n} else\n    signo = SIGTERM;\nargv++;\nwhile (argc > 1) {\n    if (**argv<'0' || **argv>'9')\n        goto usage;\n    res = kill(pid = atoi(*argv), signo);\n    if (res<0) {\n        printf(\"%u: %s\\n\", pid, sys_errlist[errno]);\n        errlev = 1;\n    }\n    argc--;\n    argv++;\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 122,
+    "appraiser_note": "atoi(argv[1]+1)のポインタ加算、**argvの二重間接、goto usageのラベル関数スコープ、kill(pid=atoi(...))の引数内代入——40行にCの言語仕様活用が4重なる。"
   }
 ]

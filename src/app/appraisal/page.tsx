@@ -661,6 +661,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "122",
+    title: "鑑定書#122 kill — `atoi(argv[1]+1)` でハイフンをスキップし `**argv` の二重間接でPIDを検証、`goto usage` でifブロック内ラベルに飛ぶ40行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
