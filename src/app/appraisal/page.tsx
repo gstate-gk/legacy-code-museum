@@ -689,6 +689,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "126",
+    title: "鑑定書#126 mknod — `m = 060666` と `(a<<8) | b` ——8進数の魔法定数でファイルタイプを表し、メジャー/マイナー番号を1つのintに詰める42行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

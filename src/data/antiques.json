@@ -9090,5 +9090,16 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 125,
     "appraiser_note": "while(c = *s++)の1行で進行・代入・終端チェックを統合、n = n*10 + c - '0'でatoi不使用の手動変換——バリデーションと変換を1ループに収めた21行。"
+  },
+  {
+    "id": "mknod-001",
+    "name": "`m = 060666` と `(a<<8) | b` ——8進数の魔法定数とdev_tのビットパッキングで表現する42行",
+    "year": 1979,
+    "language": "C",
+    "description": "mknod.cの設計。060666と020666は<sys/stat.h>のS_IFBLK/S_IFCHRに相当する8進数の魔法定数を直書き——060000がブロックデバイス、020000がキャラクタデバイス、0666がrw-rw-rw-。上位3ビットがファイルタイプ、下位9ビットがパーミッション。OR演算の結果を直接書く1979年Cコードの流儀。*argv[2]=='b'/*argv[2]=='c'の1文字比較でデバイス種別を判定——echo.cと同じstrcmp不使用パターン。(a<<8)|bはPDP-11時代のdev_tのビットパッキング——上位8ビットがメジャー番号、下位8ビットがマイナー番号。後のMAJOR()/MINOR()/makedev()マクロの起源。number()関数はsleep.cと同じwhile(c = *s++)+n=n*10+c-'0'の手動10進変換だが、return(-1)でエラーを呼び出し元に通知——atoi()との違いはバリデーションができること。goto usageの集約エラー出口、exit(0)の成功時のみ明示終了——他のBell-32Vコマンドと共通の文体。",
+    "code": "if(*argv[2] == 'b')\n    m = 060666; else\nif(*argv[2] == 'c')\n    m = 020666; else\n    goto usage;\na = number(argv[3]);\nif(a < 0)\n    goto usage;\nb = number(argv[4]);\nif(b < 0)\n    goto usage;\nif(mknod(argv[1], m, (a<<8)|b) < 0)\n    perror(\"mknod\");",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 126,
+    "appraiser_note": "060666/020666の8進数魔法定数で<sys/stat.h>を直書き、(a<<8)|bでdev_tのメジャー/マイナーをビットパッキング——UNIXのデバイス表現を42行で見せる。"
   }
 ]
