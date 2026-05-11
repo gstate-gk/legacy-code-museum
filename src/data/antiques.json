@@ -9145,5 +9145,16 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 130,
     "appraiser_note": "fname[f++] = fnumber/26 + 'a' のbase-26エンコーディングで xaa, xab, ..., xzz を676ファイルまで生成、forとdo-whileの入れ子、遅延ファイル作成——81行のUNIX流ファイル分割。"
+  },
+  {
+    "id": "uniq-001",
+    "name": "`static char b1[1000], b2[1000]` ——2バッファ交互比較で隣接行重複を判定する142行",
+    "year": 1979,
+    "language": "C",
+    "description": "uniq.cの設計。static char b1[1000], b2[1000]は1979年に動的メモリ確保（malloc）を信頼しなかった時代の設計——最大1000バイトの行を仮定してスタックに静的確保、memcpyを避けるために物理的に2つ用意してleaderの役割を入れ替える。mode = argv[1][1]の1文字でchar変数1個に -c/-d/-u モードを覚える——enum/define不使用、'c'/'d'/'u'をcase ラベルに直接置く。int uniqというグローバル変数（コマンド名と同じ！）はequal()でuniq++されpline()でuniq=0にされる——比較結果を副作用としてグローバル更新、関数戻り値と並行で状態を伝える1979年Cの典型書法。-d は uniqが立っているときだけ出力（重複行のみ）、-uはuniqが立っていないときだけ出力（ユニーク行のみ）、-cはlinecで出現回数を前置。skip()関数はfields（-N）とletters（+N）で列・文字単位の前処理スキップ——uniq -2 +5 で「最初の2フィールドと5文字を無視」。gline()/pline()は自前のgetline/putline——fgets()の挙動が実装依存だった時代の確実な書き方。sort | uniqというUNIXパイプ流儀を成立させる隣接重複判定。",
+    "code": "static char b1[1000], b2[1000];\n...\nif(gline(b1)) exit(0);\nfor(;;) {\n    if(gline(b2)) { pline(b1); exit(0); }\n    if(!equal(b1, b2)) {\n        pline(b1);\n        do {\n            if(gline(b1)) { pline(b2); exit(0); }\n        } while(equal(b1, b2));\n        pline(b2);\n    }\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 131,
+    "appraiser_note": "static char b1[1000], b2[1000]の2バッファ交互で隣接行を比較、mode='c'/'d'/'u'の1文字モード切替、uniq変数（コマンド名と同じ）で重複状態を共有する142行——sort | uniqの片翼。"
   }
 ]

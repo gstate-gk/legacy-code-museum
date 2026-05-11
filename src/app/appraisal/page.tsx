@@ -724,6 +724,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "131",
+    title: "鑑定書#131 uniq — `static char b1[1000], b2[1000]` ——2バッファ交互比較で隣接行重複を判定し、`mode = argv[1][1]` の1文字で `-c`/`-d`/`-u` を切り替える142行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
