@@ -710,6 +710,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "129",
+    title: "鑑定書#129 random — `#define MAXINT 32768.` の `.` 一つで浮動小数点除算に変え、`exit()` 自体を乱数にする30行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

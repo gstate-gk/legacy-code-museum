@@ -9123,5 +9123,16 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 128,
     "appraiser_note": "if(*p1++ == '/') p2 = p1で最後の/の次の位置を1パスで覚える、*--p3 != *--p1でプリデクリメント逆比較するサフィックス削除——strrchrもstrlenも呼ばない29行。"
+  },
+  {
+    "id": "random-001",
+    "name": "`#define MAXINT 32768.` の `.` 一つで浮動小数点除算に変え、`exit()` 自体を乱数にする30行",
+    "year": 1979,
+    "language": "C",
+    "description": "random.cの設計。#define MAXINT 32768.の末尾の.が全コードの鍵——32768と書くと整数除算になりrand()/32768は常に0になるが、32768.と書くと浮動小数点除算になりrand()/MAXINTが[0.0, 1.0)になる。Cの暗黙の型推論ルールに賭けた書き方。float fract = 2, atof()はK&R C風の宣言——atofのプロトタイプがない時代に戻り値の型を宣言する慣習、同時にfract変数も初期化。fract引数は「1/N の N」——random 2で50%、random 10で10%、random 100で1%。整数で書きやすい発想。フィルタ式 rand()/MAXINT*fract<1 で[0.0, fract)が1未満なら通すという確率計算。exit((int)(rand()/MAXINT*fract))は終了コード自体が乱数——シェルスクリプトで if random; then ... と書けば確率的分岐ができる。-eフラグは入力処理スキップで乱数1個だけ欲しいときの軽量モード。time(&tvec)+srand((int)tvec)は秒単位シードで連続起動だと重複の可能性、本格的乱数性は1990年代の/dev/randomを待つ。30行で「乱数フィルタ」「終了コード乱数」「軽量モード」3用途を兼ねるUNIX初期smalltools哲学の典型。",
+    "code": "#define MAXINT 32768.\nfloat fract = 2, atof();\n\ntime(&tvec);\nsrand((int)tvec);\n...\nfor(; eflag==0;)\n{   gets(line);\n    if(feof(stdin)) break;\n    if(rand()/MAXINT*fract<1) puts(line);\n}\nexit((int)(rand()/MAXINT*fract));",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 129,
+    "appraiser_note": "#define MAXINT 32768.の.一つで浮動小数点除算に変え、rand()/MAXINT*fract<1で確率1/Nのフィルタ、exit((int)...)で終了コードも乱数にする30行。"
   }
 ]
