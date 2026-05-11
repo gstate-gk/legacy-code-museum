@@ -717,6 +717,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "130",
+    title: "鑑定書#130 split — `fname[f++] = fnumber/26 + 'a'` ——base-26エンコーディングで xaa〜xzz を676ファイルまで生成する81行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

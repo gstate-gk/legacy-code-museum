@@ -9134,5 +9134,16 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 129,
     "appraiser_note": "#define MAXINT 32768.の.一つで浮動小数点除算に変え、rand()/MAXINT*fract<1で確率1/Nのフィルタ、exit((int)...)で終了コードも乱数にする30行。"
+  },
+  {
+    "id": "split-001",
+    "name": "`fname[f++] = fnumber/26 + 'a'` ——base-26エンコーディングで xaa〜xzz を676ファイルまで生成する81行",
+    "year": 1979,
+    "language": "C",
+    "description": "split.cの設計。fname[f++] = fnumber/26 + 'a'; fname[f++] = fnumber%26 + 'a'の2行でファイル名を生成——fnumberを26で割って上位桁、26で割った余りで下位桁を取り、それぞれ'a'を加えてアルファベットへ変換。fnumber=0→aa, 1→ab, 26→ba, 675→zzで最大676ファイル。デフォルトofil=\"x\"でxaa, xab, xac...というUNIX伝統の命名規則の発明者。for(i=0; i<count; i++) do {...} while(c != '\\n')はforとdo-whileを波括弧なしで入れ子——「count回、改行が来るまでgetc」つまりcount行を読む。f=1の遅延ファイル作成フラグはEOFで空ファイルを残さない設計——次の入力を待つ状態でEOFが来たら新しいxabを作らずexit。case '\\0'は-単独で「ここから先はファイル名」という区切り記号、これがstdinを意味する-慣習の起源。case '0'〜case '9'は10ケース並べてfallthroughで「-500で500行ずつ」のコンパクト構文。goto loopで次の出力ファイルへ。81行の中にbase-26ファイル名生成・遅延ファイル作成・stdin区切り記号というUNIX流の小さな工夫が詰まっている。",
+    "code": "fname[f++] = fnumber/26 + 'a';\nfname[f++] = fnumber%26 + 'a';\nfname[f] = '\\0';\nfnumber++;\nif((os=fopen(fname,\"w\")) == NULL) {\n    fprintf(stderr,\"Cannot create output\\n\");\n    exit(1);\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 130,
+    "appraiser_note": "fname[f++] = fnumber/26 + 'a' のbase-26エンコーディングで xaa, xab, ..., xzz を676ファイルまで生成、forとdo-whileの入れ子、遅延ファイル作成——81行のUNIX流ファイル分割。"
   }
 ]
