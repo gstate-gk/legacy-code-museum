@@ -738,6 +738,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "133",
+    title: "鑑定書#133 bcd — `chtab[64]` の8進数66個と `(chtab[c]>>(j-1))&1` ——1979年UnixがASCIIアートでIBMパンチカードを描く133行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
