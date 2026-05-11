@@ -703,6 +703,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "128",
+    title: "鑑定書#128 basename — `if(*p1++ == '/') p2 = p1` ——最後の/の次の位置を1パスで覚え、`*--p3 != *--p1`で末尾から逆比較する29行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

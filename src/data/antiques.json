@@ -9112,5 +9112,16 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 127,
     "appraiser_note": "nice(nicarg)+execvp(argv[1], &argv[1])の2行が本体——状態を変えてからexecするラッパーパターンの最小実装、後のtime/chroot/sudoの祖先26行。"
+  },
+  {
+    "id": "basename-001",
+    "name": "`if(*p1++ == '/') p2 = p1` ——最後の/の「次の位置」を1パスで覚え、`*--p3 != *--p1`で末尾から逆比較する29行",
+    "year": 1979,
+    "language": "C",
+    "description": "basename.cの設計。p2 = p1の代入をif(*p1++ == '/')の本体に置くことで「最後に見つけた/の直後」を常にp2が指す——strrchr()を呼ばず1パスでファイル名部分の先頭を特定する。サフィックス削除はfor(p3=argv[2]; *p3; p3++) ; のセミコロン1個ループでstrlen()不使用、while(p1>p2 && p3>argv[2]) if(*--p3 != *--p1) goto outputで末尾から逆方向にプリデクリメント比較する。サフィックス全一致なら*p1='\\0'で切り詰め、不一致ならgoto outputで*p1='\\0'をスキップして元の文字列を出力。puts(p2, stdout)はBell-32Vの2引数puts——echoのfputsと同じシグネチャ、ANSI Cが1989年にputs(s)を1引数に固定するまでの過渡期の関数。argc<2はputchar('\\n')+exit(1)で改行のみ出力——usage表示なし。29行で「文字列を1パスで処理する」UNIX初期Cの典型的書き方を体現。",
+    "code": "p1 = argv[1];\np2 = p1;\nwhile (*p1) {\n    if (*p1++ == '/')\n        p2 = p1;\n}\nif (argc>2) {\n    for(p3=argv[2]; *p3; p3++)\n        ;\n    while(p1>p2 && p3>argv[2])\n        if(*--p3 != *--p1)\n            goto output;\n    *p1 = '\\0';\n}\noutput:\n    puts(p2, stdout);",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 128,
+    "appraiser_note": "if(*p1++ == '/') p2 = p1で最後の/の次の位置を1パスで覚える、*--p3 != *--p1でプリデクリメント逆比較するサフィックス削除——strrchrもstrlenも呼ばない29行。"
   }
 ]
