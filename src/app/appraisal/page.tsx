@@ -752,6 +752,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "135",
+    title: "鑑定書#135 test — `[ expression ]` の `[` と `]` は同じプログラム、`exit(exp() ? 0 : 1)` で終了コードに真偽を渡す189行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

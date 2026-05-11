@@ -9189,5 +9189,16 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 134,
     "appraiser_note": "MAXOPNF=12でPDP-11時代のfd上限まで並列オープン、RUB '\\177'を「区切りなし」の番人に流用、k=(k+1)%delcountで複数区切り巡回、-sで旧Version 127の直列動作も後方互換で残す137行——splitの対称。"
+  },
+  {
+    "id": "test-001",
+    "name": "`[ expression ]` の `[` と `]` は同じプログラム、`exit(exp() ? 0 : 1)` で終了コードに真偽を渡す189行",
+    "year": 1979,
+    "language": "C",
+    "description": "test.cの設計。シェルスクリプトの心臓部—— if [ -f file ]; then ... と書くときその[〜]の中で動いている。衝撃の事実: [とtestは同じプログラム、/bin/[というシンボリックリンクがtestを指している。]は単なる装飾でargv[0]=='['なら最後の引数が']'であることだけ確認、argv[ac]=0で実質削除。シェル統合プロトコル: exit(exp()?0:1)で真ならexit(0)・偽ならexit(1)、シェルのifは終了コード0を真として扱う「0=成功=真」のUnix慣習。再帰下降パーサー: exp→e1→e2→e3の4階層で優先度を実装、-o(or)がexp最低、-a(and)がe1、!(not)がe2、単項/二項がe3最高。p1 | exp()と p1 & e1()はビット演算で論理を実装——p1もexp()も0/1なので||&&の代わりに使える（短絡評価しないが副作用なし前提）。EQ(a,b)マクロは#define EQ(a,b) ((tmp=a)==0?0:(strcmp(tmp,b)==0))——グローバル変数tmpへの代入でマクロ展開時のaの2回評価を回避（aがnxtarg(0)のような副作用ありの式の場合）。e3()は-r/-w/-d/-f/-s/-t/-n/-zの単項テスト、=/!=/-eq/-ne/-gt/-lt/-ge/-leの二項比較、-l \"string\"で文字列長を整数として使う書き方を実装。synbad()は構文エラー時exit(255)で特別な終了コード。189行のCコードが、シェルスクリプトの全条件分岐の基盤になる——1979年に確立された形が今もすべてのUnix系シェルで同じ動作を続けている。",
+    "code": "main(argc, argv)\nchar *argv[];\n{\n    ac = argc; av = argv; ap = 1;\n    if(EQ(argv[0],\"[\")) {\n        if(!EQ(argv[--ac],\"]\"))\n            synbad(\"] missing\",\"\");\n    }\n    argv[ac] = 0;\n    if (ac<=1) exit(1);\n    exit(exp()?0:1);\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 135,
+    "appraiser_note": "[と]は同じプログラム（]は飾り）、exit(exp()?0:1)でシェルに真偽を返し、exp/e1/e2/e3の再帰下降パーサーが-o/-a/!の優先度を実装する189行——シェルスクリプトの心臓部。"
   }
 ]
