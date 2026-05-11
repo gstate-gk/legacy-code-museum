@@ -696,6 +696,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "127",
+    title: "鑑定書#127 nice — `nice(nicarg); execvp(argv[1], &argv[1])` ——プロセス優先度を下げてから自分を別プログラムに置き換える、ラッパーパターンの26行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

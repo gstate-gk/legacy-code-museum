@@ -9101,5 +9101,16 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 126,
     "appraiser_note": "060666/020666の8進数魔法定数で<sys/stat.h>を直書き、(a<<8)|bでdev_tのメジャー/マイナーをビットパッキング——UNIXのデバイス表現を42行で見せる。"
+  },
+  {
+    "id": "nice-001",
+    "name": "`nice(nicarg); execvp(argv[1], &argv[1])` ——優先度を下げてから自分を別プログラムに置き換える26行",
+    "year": 1979,
+    "language": "C",
+    "description": "nice.cの設計。int nicarg = 10でデフォルト+10——「nice付けるならそれなりに譲りなさい」という暗黙の流儀。argv[1][0] == '-'の1文字フラグ判定 + atoi(&argv[1][1])でハイフン後の数値を取得（kill.cと同じポインタ加算パターン）。本体は2行——nice(nicarg)で自プロセス優先度を変更、execvp(argv[1], &argv[1])で自分を別プログラムに置き換える。&argv[1]はargv配列のスライスをポインタとして渡すことで「新コマンドのargv」が完成する巧妙さ——コピーも変換も不要。execvpは成功すれば戻ってこないので、その次の行に到達したらエラー確定——UNIX常套句。extern errnoは型省略のK&R C流儀（暗黙のint）、sys_errlist[errno]は1988年POSIXのstrerror()前身——9年早い配列ベースエラー文字列。exit(1)で非ゼロ終了——sleep.cの「エラーでも0」と違って正しいエラー処理。nice/time/chroot/setuid/sudoという「ラッパーコマンド」の系譜の起点——状態を変えてからexecするというUNIX組み合わせ哲学の最小実装。",
+    "code": "int nicarg = 10;\nextern errno;\nextern char *sys_errlist[];\n\nif(argc > 1 && argv[1][0] == '-') {\n    nicarg = atoi(&argv[1][1]);\n    argc--;\n    argv++;\n}\nnice(nicarg);\nexecvp(argv[1], &argv[1]);\nfprintf(stderr, \"%s: %s\\n\", sys_errlist[errno], argv[1]);\nexit(1);",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 127,
+    "appraiser_note": "nice(nicarg)+execvp(argv[1], &argv[1])の2行が本体——状態を変えてからexecするラッパーパターンの最小実装、後のtime/chroot/sudoの祖先26行。"
   }
 ]
