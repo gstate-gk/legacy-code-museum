@@ -9156,5 +9156,16 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 131,
     "appraiser_note": "static char b1[1000], b2[1000]の2バッファ交互で隣接行を比較、mode='c'/'d'/'u'の1文字モード切替、uniq変数（コマンド名と同じ）で重複状態を共有する142行——sort | uniqの片翼。"
+  },
+  {
+    "id": "comm-001",
+    "name": "`ldr[0]=\"\"; ldr[1]=\"\\t\"; ldr[2]=\"\\t\\t\"` ——3列を進行的タブ文字列で表現し、`compare()`が0/1/2を返してそのまま列番号になる166行",
+    "year": 1979,
+    "language": "C",
+    "description": "comm.cの設計。ldr[3]はchar*配列で「列1=空文字」「列2=\\t」「列3=\\t\\t」と進行的タブで3列の位置を表現——printf(\"%s%s\\n\", ldr[n-1], str)で列のインデント+本文を出すだけのシンプルな出力ロジック。-1/-2/-3フラグは2つの効果を持つ——列の出力抑制（one/two/threeフラグ）と同時にldr[]の対応位置を'\\0'で破壊して後続列のタブを詰める表示調整。compare()関数はstrcmpの慣習（負/0/正）と違い0/1/2を返す——0=等しい→列3、1=a<b→列1、2=a>b→列2と列番号に直対応するため、switch(compare())→wr(buf, n)が「比較結果→出力列」を1対1で結ぶ綺麗な設計。3-way mergeアルゴリズムは両ファイルがソート済み前提で1行ずつ取って比較、case 0で両方進める、case 1でfile1だけ進める、case 2でfile2だけ進める。EOFになるとcopy()で残りを流し出して自分でexit。openfil()は s[0]=='-' && s[1]==0 で\"-\"単独をstdinとして扱うUNIX慣習。166行というサイズは3列の対称性を保つコスト。",
+    "code": "char *ldr[3];\nldr[0] = \"\";\nldr[1] = \"\\t\";\nldr[2] = \"\\t\\t\";\n...\nswitch(compare(lb1,lb2)) {\n    case 0: wr(lb1,3); ...   // 両方にある\n    case 1: wr(lb1,1); ...   // file1のみ\n    case 2: wr(lb2,2); ...   // file2のみ\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 132,
+    "appraiser_note": "ldr[0/1/2]の進行的タブで3列出力を表現、compare()が0/1/2を返してそのまま列番号、3-way mergeで集合演算を実現する166行。"
   }
 ]

@@ -731,6 +731,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "132",
+    title: "鑑定書#132 comm — `ldr[0]=\"\"; ldr[1]=\"\\t\"; ldr[2]=\"\\t\\t\"` ——3列を進行的タブ文字列で表現し、`compare()`が0/1/2を返してそのまま列番号になる166行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
