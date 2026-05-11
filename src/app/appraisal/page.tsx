@@ -759,6 +759,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "136",
+    title: "鑑定書#136 cmp — `lflg = 1`を`-s`で`--`、`-l`で`++`する1変数3モード制御、`otoi()`がC数値リテラル準拠で先頭0=8進数を解釈する121行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

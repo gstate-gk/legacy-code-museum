@@ -9200,5 +9200,16 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 135,
     "appraiser_note": "[と]は同じプログラム（]は飾り）、exit(exp()?0:1)でシェルに真偽を返し、exp/e1/e2/e3の再帰下降パーサーが-o/-a/!の優先度を実装する189行——シェルスクリプトの心臓部。"
+  },
+  {
+    "id": "cmp-001",
+    "name": "`lflg = 1`を`-s`で`--`、`-l`で`++`する1変数3モード制御と、`otoi()`がC数値リテラル準拠で先頭0=8進数、それ以外=10進数を解釈する121行",
+    "year": 1979,
+    "language": "C",
+    "description": "cmp.cの設計。lflgという1つの整数変数で3モードを表現——初期値1がデフォルト、-sでlflg--で0（silent）、-lでlflg++で2（long）。enumもdefineも使わずif(lflg == N)の連鎖でモード分岐。lflg=0は出力なし終了コードのみ、lflg=1は最初の差分位置を1行表示、lflg=2は全差分を8進数ペアでダンプ。「-sが下、-lが上」というオプションの直感性が変数の増減に対応する。otoi()は自前の数値変換——先頭が'0'ならbase=8、それ以外はbase=10。これはC言語の数値リテラルと同じ規則（int x = 0100は8進数で64）。skip1/skip2は第3・第4引数で「比較開始のバイトオフセット」を指定、cmp file1 file2 0100 で64バイト目から比較。バイナリオフセットを8進数で書くPDP-11時代の慣習。差分ダンプは%6ld %3o %3o\\nのフォーマット——chrは10進6桁、c1/c2は8進3桁（1バイト=8ビット=8進3桁で過不足なし）。エラー処理はnarg（引数不足）、barg（ファイル開けない）、earg（予期せぬEOF）の3つのgotoラベルに細分化。終了コード0/1/2でファイル同一/差分あり/エラーの3状態を表す——シェルスクリプトでif cmp -s a b; thenが書ける。-はfile1のみstdinとして扱う（file2は必ず実ファイル、対称ではない）。",
+    "code": "int lflg = 1;\n...\nif(arg[0] == '-' && arg[1] == 's') {\n    lflg--;\n    ...\n}\nif(arg[0] == '-' && arg[1] == 'l') {\n    lflg++;\n    ...\n}\n...\nif(lflg == 0)\n    exit(1);\n...\nif(lflg == 1) {\n    printf(\"%s %s differ: char %ld, line %ld\\n\", argv[1], arg, chr, line);\n    exit(1);\n}\n...\nprintf(\"%6ld %3o %3o\\n\", chr, c1, c2);",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 136,
+    "appraiser_note": "lflg=1を-sでlflg--、-lでlflg++する1変数3モード制御、otoi()がC数値リテラル準拠で先頭0=8進、%6ld %3o %3oで1バイト=8進3桁の差分ダンプ——121行のバイナリ比較ツール。"
   }
 ]
