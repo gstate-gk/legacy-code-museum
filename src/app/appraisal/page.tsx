@@ -745,6 +745,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "134",
+    title: "鑑定書#134 paste — `inptr[MAXOPNF]` で12ファイル並列、`del[k]; k = (k+1) % delcount` で区切り文字巡回、`RUB '\\177'` を「区切りなし」の番人にする137行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

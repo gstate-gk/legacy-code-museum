@@ -9178,5 +9178,16 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 133,
     "appraiser_note": "chtab[64]の8進数66個と(chtab[c]>>(j-1))&1のビットシフト——1979年UnixがASCIIアートでIBM 029パンチカードを描く133行、独自puts()で全出力を大文字化する遊び道具。"
+  },
+  {
+    "id": "paste-001",
+    "name": "`inptr[MAXOPNF]` で12ファイル並列、`del[k]; k = (k+1) % delcount` で区切り文字巡回、`RUB '\\177'` を「区切りなし」の番人にする137行",
+    "year": 1979,
+    "language": "C",
+    "description": "paste.cの設計。splitがファイルを行ごとに切り分けるなら、pasteはファイルを「列」として並列に繋げる——splitの逆操作。MAXOPNF=12はPDP-11時代の1プロセスあたりfd上限（通常20、stdin/stdout/stderr除いて入力可能数）に基づく現実的制限。inptr[12]に全入力ファイルを同時オープンしてから、do-whileの外側で「行」を繰り返し、内側forで各ファイルから1行ずつ読みoutbufに追記。RUB='\\177'はASCII DEL文字を「区切り文字を出さない」マーカーに流用——del[k]==RUBなら区切り出力スキップ。なぜ必要か：-d \"\\0\"のように区切りなしを指定したいとき、del[]配列に'\\0'を入れると文字列終端と区別がつかないため、move()関数で\\0→RUBに変換しておく。del[]は1文字でなく文字列、-d \":;,\"なら巡回区切り文字が3つ。k = (k+1) % delcountの%演算で循環使用——paste -d \":;,\" で aA:bB;cC,dD:eE のような出力。-sフラグで挙動が変わる：並列モード（デフォルト、新動作）では「Nファイルから1行ずつ横に並べる」、-sモード（旧Version 127互換）では「1ファイルの全行を区切り文字で繋いで1行に」。後方互換性のため両モードを内蔵。diag()はwrite(2, ...)のraw stderr出力でstdioに依存しない。",
+    "code": "# define MAXOPNF 12\n# define RUB  '\\177'\nchar del[MAXLINE] = {\"\\t\"};\n\nfor (i = 0; i < nfiles; i++) {\n    while((c = getc(inptr[i])) != '\\n' && c != EOF) {\n        if (++j <= MAXLINE - 2) *p++ = c;\n    }\n    if ((l = del[k]) != RUB) *p++ = l;\n    k = (k + 1) % delcount;\n    if(c == EOF) eofcount++;\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 134,
+    "appraiser_note": "MAXOPNF=12でPDP-11時代のfd上限まで並列オープン、RUB '\\177'を「区切りなし」の番人に流用、k=(k+1)%delcountで複数区切り巡回、-sで旧Version 127の直列動作も後方互換で残す137行——splitの対称。"
   }
 ]
