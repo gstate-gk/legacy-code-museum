@@ -773,6 +773,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "138",
+    title: "鑑定書#138 tsort — `DEAD/LIVE/VISITED`の3状態と`firstnode`「成長する番人」、再帰DFSで循環検出する205行のトポロジカルソート",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

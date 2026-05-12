@@ -9222,5 +9222,16 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 137,
     "appraiser_note": "tape[i] = args[1][j]で文字列リテラルの数字を書き換え（K&R C合法・ANSI C未定義動作）、open→read→closeのcloseでrewind-on-closeが発動して磁気テープが物理的に巻き戻る26行——絶滅したハードウェアとUNIXの出会い。"
+  },
+  {
+    "id": "tsort-001",
+    "name": "`DEAD/LIVE/VISITED`の3状態と再帰DFSによる循環検出、`firstnode`を「成長する番人」として使う205行",
+    "year": 1979,
+    "language": "C",
+    "description": "tsort.cの設計。トポロジカルソート——「a が b より先に来るべき」というペアを大量に受け取り、すべての制約を満たす順序を出力する。lorder | tsortというイディオムが代表的：lorderがオブジェクトファイルの依存関係を抽出し、tsortがその制約を満たす順序を出す、make以前のライブラリ構築の必須ツール。各ノードは3状態を持つ——DEAD（既に出力済み）、LIVE（まだ出力していない）、VISITED（循環検出中の一時マーク）。トポロジカルソートの本体は2状態で済むが、循環検出のために3状態目を加え、findloop()終了後にVISITED→LIVEで復元する。firstnodeという名前のグローバル構造体は実態は「末尾の番人」——コメントに「the nodelist always has an empty element at the end to make it easy to grow in natural order」とあり、新ノード追加時に番人だったスロットを使って新ノードを作り、新たにmallocしたnextnodeが次の番人になる「番人の役割が次々と末尾に移動する」設計。findloop()/mark()は再帰DFSによる循環検出——mark(i)はDEADならNULL、VISITEDならi自身を返す（循環発見の証拠）、それ以外はVISITEDをマークしてすべての前提ノードに再帰。independent cmp()は1/0を返す（strcmpの負/0/正と違う）、文字列管理もstrlen/strcpy不使用でwhile(*t++ = *s++)など自前実装。1979年のグラフアルゴリズム実装、makeの依存解決やldのシンボル解決の起源。",
+    "code": "#define DEAD 0      /* already printed */\n#define LIVE 1      /* not yet printed */\n#define VISITED 2   /* used only in findloop() */\n\nstruct nodelist {\n    struct nodelist *nextnode;\n    struct predlist *inedges;\n    char *name;\n    int live;\n} firstnode = {NULL, NULL, NULL, DEAD};\n\nstruct nodelist *\nmark(i)\nregister struct nodelist *i;\n{\n    if(i->live == DEAD) return(NULL);\n    if(i->live == VISITED) return(i);\n    i->live = VISITED;\n    for(t = i->inedges; t != NULL; t = t->nextpred) {\n        j = mark(t->pred);\n        if(j != NULL) { note(i->name, empty); return(j); }\n    }\n    return(NULL);\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 138,
+    "appraiser_note": "DEAD/LIVE/VISITEDの3状態でトポロジカルソートと循環検出を統合、firstnodeが「成長する番人」として末尾を保ち、再帰DFSで循環の一部ノードを返す205行——lorder | tsortの片翼。"
   }
 ]
