@@ -9211,5 +9211,16 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 136,
     "appraiser_note": "lflg=1を-sでlflg--、-lでlflg++する1変数3モード制御、otoi()がC数値リテラル準拠で先頭0=8進、%6ld %3o %3oで1バイト=8進3桁の差分ダンプ——121行のバイナリ比較ツール。"
+  },
+  {
+    "id": "rew-001",
+    "name": "`tape[i] = args[1][j]` ——文字列リテラル書き換えでデバイスパスを構築し、`open()`→`read()`→`close()` で磁気テープを巻き戻す26行",
+    "year": 1979,
+    "language": "C",
+    "description": "rew.cの設計。tape = \"/dev/tap0\"の文字列リテラルポインタを取り、tape[i] = args[1][j]で8文字目（'0'の位置）をユーザー指定のデバイス番号で上書きする——現代のCでは未定義動作だが、1979年のK&R Cでは文字列リテラルが書き換え可能なメモリに置かれていた合法な操作。'm'プレフィックス（rew m3）なら/dev/mt0系統に切り替え、i=7（'mt'は'tap'より1文字短い）。本体3行: open(tape, 0)でテープデバイスを読み取り専用で開く、read(i, &j, sizeof(j))でsizeof(int)バイト読む（値は使わない、デバイスに触れる確実性のため）、close(i)で閉じる。なぜこれで巻き戻るか——/dev/tap0のような「rewind」系のテープデバイスはclose()するときにテープを物理的に巻き戻すrewind-on-close慣習を持つ、ユーザープログラムは特別なioctlを呼ぶ必要がない。「open→closeするだけで物理動作が起きる」UNIXの「すべてはファイル」抽象が極限まで使われた設計。エラー処理なし、戻り値確認なし、main()の末尾に到達して終了。usage:ラベルが書かれているが他のgoto先がない孤立ラベル（書きかけかコピーペースト跡）。/dev/tap*と/dev/mt*はDEC TU10/TM11等の異なるテープインターフェースを区別する名前——絶滅したハードウェア。tarの'tape archive'と同じ世界の言葉。",
+    "code": "tape = \"/dev/tap0\";\nif (argc > 1) {\n    j = 0;\n    if (args[1][j] == 'm') {\n        tape = \"/dev/mt0\";\n        i = 7;\n        j++;\n    }\n    else i = 8;\n    if (args[1][j] != '\\0') tape[i] = args[1][j];\n}\ni = open(tape, 0);\nread(i, &j, sizeof(j));\nclose(i);",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 137,
+    "appraiser_note": "tape[i] = args[1][j]で文字列リテラルの数字を書き換え（K&R C合法・ANSI C未定義動作）、open→read→closeのcloseでrewind-on-closeが発動して磁気テープが物理的に巻き戻る26行——絶滅したハードウェアとUNIXの出会い。"
   }
 ]

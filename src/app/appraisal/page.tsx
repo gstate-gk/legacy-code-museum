@@ -766,6 +766,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "137",
+    title: "鑑定書#137 rew — `tape[i] = args[1][j]` ——文字列リテラル書き換えでデバイスパスを構築し、`open()`→`read()`→`close()` で磁気テープを巻き戻す26行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
