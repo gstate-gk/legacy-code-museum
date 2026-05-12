@@ -9244,5 +9244,16 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 139,
     "appraiser_note": "0410/0411/0407のa.out魔法数と4言語のキーワード辞書、english()のETAOIN SHRDLU母音頻度統計でファイル種別を判定する321行——fileコマンドの祖先、libmagicの種。"
+  },
+  {
+    "id": "cron-001",
+    "name": "`for(;; itime+=60, slp())` の毎分ティック、`EXACT/ANY/LIST/RANGE/EOS`の5状態でcrontabをバイナリ符号化、double-forkで子プロセスを切り離す252行",
+    "year": 1979,
+    "language": "C",
+    "description": "cron.cの設計。今でも/etc/crontabで使う定期ジョブスケジューラの最初のバージョン——cron daemonのコア概念がすべてこの252行に揃っている。daemon化の儀式: setuid(1)でdaemonユーザーへ降格、if(fork()) exit(0)でシェルから切り離してinitの養子に、chdir(\"/\")でumountを妨げない、freopen(\"/\", \"r\", stdout)とstderrで標準出力を実質無効化、signal(SIGHUP/INT/QUIT, SIG_IGN)で典型的なkillシグナルを無視。メインループfor(;; itime+=60, slp())は絶対時刻にsleepしてドリフト補正——itimeを最初に分の境界（00秒）に切り下げ、毎回60秒進めて、現在時刻との差分だけsleep。固定sleepと違って累積ドリフトしない古典技法。crontabを5状態（EXACT n / ANY / LIST n n n LIST / RANGE lo hi / EOS）でバイナリ符号化してメモリ保持、cmp()が各フィールドを1呼び出しで判定。double-fork（fork→wait→fork→exit→exec）でジョブの孫プロセスをinit養子にする、cronはwait義務から解放されてジョブ実行時間を気にしなくて良い。stat()でmtime監視——crontab編集すると次の分で自動反映、cron再起動不要のlive reload。1979年は/usr/lib/crontabの単一ファイル、ユーザー別crontabはまだない。crond/vixie-cron/systemd timerなど実装は変わったが、コア概念は252行の中にすべて揃っていた。",
+    "code": "char crontab[] = \"/usr/lib/crontab\";\n\nmain()\n{\n    setuid(1);\n    if (fork()) exit(0);\n    chdir(\"/\");\n    freopen(crontab, \"r\", stdin);\n    freopen(\"/\", \"r\", stdout);\n    freopen(\"/\", \"r\", stderr);\n    signal(SIGHUP, SIG_IGN);\n    signal(SIGINT, SIG_IGN);\n    signal(SIGQUIT, SIG_IGN);\n    time(&itime);\n    itime -= localtime(&itime)->tm_sec;\n    fclose(stdin);\n\n    for (;; itime+=60, slp()) {\n        ...\n    }\n}",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 140,
+    "appraiser_note": "for(;; itime+=60, slp())の毎分ティックでドリフト補正、EXACT/ANY/LIST/RANGE/EOSでcrontabをバイナリ符号化、double-forkでジョブを切り離し、stat() mtimeでlive reload——cron daemonのコア252行。"
   }
 ]

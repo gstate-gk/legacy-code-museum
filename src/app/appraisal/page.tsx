@@ -787,6 +787,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "140",
+    title: "鑑定書#140 cron — `for(;; itime+=60, slp())` の毎分ティック、`EXACT/ANY/LIST/RANGE/EOS`の5状態でcrontabをバイナリ符号化、double-forkで子プロセスを切り離す252行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
