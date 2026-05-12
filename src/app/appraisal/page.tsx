@@ -780,6 +780,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "139",
+    title: "鑑定書#139 file — `0410/0411/0407` の a.out 魔法数と4言語のキーワード辞書、`english()`のETAOIN SHRDLU統計でファイル種別を当てる321行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

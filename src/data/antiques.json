@@ -9233,5 +9233,16 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 138,
     "appraiser_note": "DEAD/LIVE/VISITEDの3状態でトポロジカルソートと循環検出を統合、firstnodeが「成長する番人」として末尾を保ち、再帰DFSで循環の一部ノードを返す205行——lorder | tsortの片翼。"
+  },
+  {
+    "id": "file-001",
+    "name": "`0410/0411/0407` の a.out 魔法数とキーワード辞書、`vow*5 >= n-ct[' '] && freq >= 10*rare` の英語判定統計でファイル種別を当てる321行",
+    "year": 1979,
+    "language": "C",
+    "description": "file.cの設計。fileコマンドの最初のバージョン——今でもfile image.pngで「PNG image」と返るあのfileの祖先。判定は3段階: stat()でinode情報からS_IFDIR/CHR/BLKの特殊ファイルを即判定、通常ファイルなら先頭512バイトを読んで最初のintを魔法数として比較、魔法数不一致なら辞書とヒューリスティックでテキスト判定。a.out実行ファイル形式の魔法数3種: 0407 (OMAGIC=標準), 0410 (NMAGIC=pure), 0411 (ZMAGIC=separate)——0407はPDP-11アセンブリでbr . + 16の分岐命令にもなりOSが誤って実行してもループしない安全弁。0177545はar.cと同じARMAGアーカイブ魔法数を直書き、0177555は更に古いアーカイブ形式の後方互換。4言語のキーワード辞書: c[]={int,char,float,double,struct,extern}, fort[]={function,subroutine,common,...}, as[]={globl,byte,align,...}, asc[]={chmk,mov,tst,clr,jmp}でC/Fortran/asmディレクティブ/asm命令を分類。lookup(tab)はキーワード走査後の境界文字（空白/改行/タブ/{/）でint{は型宣言だがinterestingは違うを区別。english()関数の統計判定: vow*5 >= n-spacesで母音率20%以上、freq >= 10*rareでETAOIN SHRDLUの上位文字が下位文字の10倍以上、2*ct[';']>ct['e']でCコード排除、ct['>']+ct['<']+ct['/']>ct['e']でシェルスクリプト排除、bp[j]|040のASCII大文字→小文字変換（bit5を立てる）。多段階判定はnotc/notfort/notas/outaの巨大なgotoグラフで実装。現代のlibmagicは数千エントリの判定ルールを持つが、その種はこの321行に撒かれた。",
+    "code": "switch(*(int *)buf) {\ncase 0410: printf(\"pure \"); goto exec;\ncase 0411: printf(\"separate \");\ncase 0407:\nexec:\n    printf(\"executable\");\n    if(((int *)buf)[4] != 0) printf(\" not stripped\");\n    printf(\"\\n\");\n    goto out;\ncase 0177555: printf(\"old archive\\n\"); goto out;\ncase 0177545: printf(\"archive\\n\"); goto out;\n}\n...\nvow = ct['a'] + ct['e'] + ct['i'] + ct['o'] + ct['u'];\nfreq = ct['e'] + ct['t'] + ct['a'] + ct['i'] + ct['o'] + ct['n'];\nrare = ct['v'] + ct['j'] + ct['k'] + ct['q'] + ct['x'] + ct['z'];\nreturn (vow*5 >= n-ct[' '] && freq >= 10*rare);",
+    "source": "Bell-32V Unix (1979)",
+    "appraisalNumber": 139,
+    "appraiser_note": "0410/0411/0407のa.out魔法数と4言語のキーワード辞書、english()のETAOIN SHRDLU母音頻度統計でファイル種別を判定する321行——fileコマンドの祖先、libmagicの種。"
   }
 ]
