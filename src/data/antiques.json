@@ -9767,5 +9767,86 @@
       "human_story": "Same six lines of code lived in dozens of Bell-32V commands. printf could format octal but had nothing to read it. The chmod author shrugged and wrote (i << 3) + (c - '0'); the next person writing a permission-aware command would copy-paste it. ANSI C 1989 finally standardized strtol(), and these hand-parsers slowly migrated out of code."
     },
     "appraiser_note": "8 行の自前 8 進数パーサ——(i << 3) + (c - '0') で 1 桁ずつシフト。1979 年の C 標準ライブラリには strtol() がなく（ANSI C 1989 まで）、atoi() は 10 進数限定なので手書き。空文字列なら i=0 を返して symbolic mode 解釈にフォールスルー——「ヘッダー文字を見ずに、空チェックで分岐」が美しい。同じパターンが Bell-32V の他コマンドにも散在。"
+  },
+  {
+    "id": "chown-001-anyone-could-give",
+    "text": "for(c=2; c<argc; c++) {\n    stat(argv[c], &stbuf);\n    if(chown(argv[c], uid, stbuf.st_gid) < 0) {\n        perror(argv[c]);\n        status = 1;\n    }\n}",
+    "file_path": "usr/src/cmd/chown.c",
+    "line_number": 37,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "security",
+      "history"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "naivety",
+      "emotion_intensity": 5,
+      "emotions": {
+        "naivety": 5,
+        "trust": 4
+      },
+      "technical_context": "chown.c performs no permission check. The kernel allowed the file's owner OR root to chown the file. A normal user could 'chown bob attack.sh' to give a setuid file to bob, enabling privilege escalation. 4.2BSD (1983) introduced _POSIX_CHOWN_RESTRICTED, banning chown for non-root processes.",
+      "human_story": "1979 Unix trusted users to use chown safely. The attack vector—craft a setuid binary, give it to another user, hijack their privileges when they execute it—was understood but accepted. Four years later, BSD removed that trust at the kernel level. The chown.c source code did not change; the syscall it called now refused to work for non-root callers."
+    },
+    "appraiser_note": "1979 年の chown.c はファイル所有者なら誰でも譲渡できる前提。一般ユーザーが setuid root のファイルを別ユーザーに `chown bob attack.sh` で渡せたため、権限昇格攻撃が成立した。4.2BSD (1983) で root 専用に制限——コードは変えず、カーネルの permission check 1 つで Unix セキュリティモデルが根本転換した。"
+  },
+  {
+    "id": "chown-002-stat-then-chown",
+    "text": "stat(argv[c], &stbuf);\nif(chown(argv[c], uid, stbuf.st_gid) < 0) { ... }",
+    "file_path": "usr/src/cmd/chown.c",
+    "line_number": 38,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "syscall-design",
+      "race"
+    ],
+    "interesting_score": 17,
+    "ai_analysis": {
+      "primary_emotion": "pragmatism",
+      "emotion_intensity": 4,
+      "emotions": {
+        "pragmatism": 4,
+        "compromise": 3
+      },
+      "technical_context": "chown(2) takes both uid and gid. To change only uid, the program must first stat() the file and pass the current st_gid back. There is no 'don't change' magic value (POSIX -1 arrives later). The window between stat and chown is a small race—if another process changes gid in between, that change is silently overwritten.",
+      "human_story": "Modern POSIX lets you say chown(file, uid, (gid_t)-1) to leave gid alone. 1979 chown had to read the current gid and pass it back. Two syscalls instead of one, with a race in the middle—accepted in 1979 because multi-user contention was rare."
+    },
+    "appraiser_note": "chown(2) は uid と gid 両方を取り、'変えない' マジック値 (POSIX -1) が無い時代——gid を保存するには stat で読んでから chown に渡す 2 ステップ。stat と chown の間に他プロセスが gid を変えると上書きされる微小な race condition があるが、当時はマルチユーザー競合が少なく実害なし。"
+  },
+  {
+    "id": "chown-003-isnumber-getpwnam",
+    "text": "if(isnumber(argv[1])) {\n    uid = atoi(argv[1]);\n    goto cho;\n}\nif((pwd=getpwnam(argv[1])) == NULL) {\n    printf(\"unknown user id: %s\\n\",argv[1]);\n    exit(4);\n}\nuid = pwd->pw_uid;\n\nisnumber(s)\nchar *s;\n{\n    register c;\n\n    while(c = *s++)\n        if(!isdigit(c))\n            return(0);\n    return(1);\n}",
+    "file_path": "usr/src/cmd/chown.c",
+    "line_number": 25,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "passwd",
+      "argument-parsing"
+    ],
+    "interesting_score": 16,
+    "ai_analysis": {
+      "primary_emotion": "convenience",
+      "emotion_intensity": 4,
+      "emotions": {
+        "convenience": 4,
+        "polymorphism": 3
+      },
+      "technical_context": "chown accepts both 'chown 1042 file' and 'chown bob file'. The decision rule: if all characters are digits, parse as numeric uid; otherwise look up via getpwnam(). This means a user named '42' is unreachable by name; you must use a different rule (GNU coreutils adds +42 syntax later).",
+      "human_story": "C standard library lacked 'is this string entirely numeric' predicate in 1979. Every command that took uid/gid/pid as flexible input rolled its own isnumber(). It is 7 lines. Half a century later, atoi/strtol exist but isnumber-style checks still appear in shell scripts and CLI tools, because the predicate is small enough to not need a library."
+    },
+    "appraiser_note": "isnumber() 7 行で uid 数値と username 文字列を判別。全文字 isdigit() なら atoi() で uid に、そうでなければ getpwnam() で /etc/passwd を引く。1979 年は C 標準ライブラリに「全数字判定」が無く、毎回手書き。「42」という名前のユーザーは数値解釈されて引けない——後の GNU coreutils が +42 で「数字として強制」する拡張を追加。"
   }
 ]
