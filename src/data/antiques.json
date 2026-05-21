@@ -10010,5 +10010,86 @@
       "human_story": "Disk space was precious in 1979. Allocating a separate bitmap for free blocks would have wasted megabytes on a 100 MB disk. V7 file system stored the free-block chain inside the free blocks themselves—zero overhead for a free block. The cleverness comes at a cost: random allocation patterns fragment the chain badly, hurting sequential read performance. 4.2BSD FFS adopted cylinder groups + bitmaps because disks grew and the trade-off flipped."
     },
     "appraiser_note": "V7 file system の free list は「フリーブロック自身が次のフリーリストを格納する」再帰的設計。super block の s_free[NICFREE=50] が起点で、尽きたら最後に取ったブロックを `struct fblk` として read、その中の df_free[50] を super block に補充——分離した bitmap や free-list 領域を持たず、フリーブロックがその空き空間を自分のメタデータに使う。ディスク容量が貴重だった時代の節約設計。"
+  },
+  {
+    "id": "du-001-chdir-recursion",
+    "text": "if(chdir(fname) == -1)\n    return 0;\n...\nfor(offset=0; offset < dirsize; offset += 512) {\n    ...\n    blocks += descend(np, endofname+1);\n    ...\n}\n*endofname = '\\0';\n...\nif(chdir(\"..\") == -1) { ... }",
+    "file_path": "usr/src/cmd/du.c",
+    "line_number": 100,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "recursion",
+      "fs"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "frugality": 4
+      },
+      "technical_context": "du descends via chdir(fname) and returns via chdir(\"..\") rather than carrying full paths in memory. The kernel's cwd holds the recursion state; user-space PATH_MAX (256 in V7) is never exhausted. Trade-off: not thread-safe (irrelevant in 1979), and chdir(\"..\") failures leave the program in an unknown working directory—handled with absolute-path fallback.",
+      "human_story": "If you carry the full path string through recursion, deep trees blow the 256-byte buffer. The 1979 author let the kernel hold the recursion stack via cwd. Reading the source feels strange to modern eyes—the program walks the filesystem with its 'self' rather than its 'memory'."
+    },
+    "appraiser_note": "du の再帰は chdir(fname) で潜り、chdir(\"..\") で戻る——カーネルの cwd を再帰のスタックに使う。ユーザー空間の PATH_MAX (256 in V7) を消費しない。失敗時は絶対パスでもう 1 回 chdir を試みるリカバリ付き。スレッドセーフではないが 1979 年は問題なし。「自分の位置」を memory ではなく kernel に持たせる、独特な再帰スタイル。"
+  },
+  {
+    "id": "du-002-hardlink-table",
+    "text": "struct {\n    int dev,\n        ino;\n} ml[ML];   /* ML = 1000 */\n...\nif(Statb.st_nlink > 1 && (Statb.st_mode&S_IFMT)!=S_IFDIR) {\n    static linked = 0;\n\n    for(i = 0; i <= linked; ++i) {\n        if(ml[i].ino==Statb.st_ino && ml[i].dev==Statb.st_dev)\n            return 0;\n    }\n    if (linked < ML) {\n        ml[linked].dev = Statb.st_dev;\n        ml[linked].ino = Statb.st_ino;\n        ++linked;\n    }\n}",
+    "file_path": "usr/src/cmd/du.c",
+    "line_number": 79,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "hardlink",
+      "deduplication"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "rigor",
+      "emotion_intensity": 4,
+      "emotions": {
+        "rigor": 4,
+        "compromise": 3
+      },
+      "technical_context": "When a file has nlink > 1, du records its (dev, ino) in ml[1000] and skips later encounters. This prevents double-counting hardlinked files. The table is statically sized; ml[] silently stops adding past 1000 entries. Directories are excluded because their nlink is always >=2 (. and ..). Linear search means O(N²) worst case but acceptable in typical usage.",
+      "human_story": "ln a b creates two names for one inode but one disk allocation. Counting both would lie about disk usage. 1979 du built a 1000-entry table indexed by (dev, ino) and refused to count any duplicate. The author chose static array over dynamic allocation—classic Bell Labs minimalism. Modern du uses hash tables; the semantic guarantee is identical."
+    },
+    "appraiser_note": "ml[1000] の (dev, ino) テーブルでハードリンク二重カウントを防止。st_nlink > 1 のファイル (ディレクトリ除く) を見るたびに線形検索、未登録なら追加。テーブル満杯時はサイレント諦め——1000 個のハードリンクは 1979 年の VAX には十分。malloc を使わない静的配列の選択は Bell Labs ミニマリズム。"
+  },
+  {
+    "id": "du-003-fd-reopen",
+    "text": "if(!dir) {\n    if((dir=open(\".\",0))<0) { ... }\n    if(offset) lseek(dir, (long)offset, 0);\n    if(read(dir, (char *)dentry, dsize)<0) { ... }\n    if(dir > 10) {\n        close(dir);\n        dir = 0;\n    }\n}",
+    "file_path": "usr/src/cmd/du.c",
+    "line_number": 113,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "fd-management",
+      "self-defense"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "self-defense",
+      "emotion_intensity": 5,
+      "emotions": {
+        "self-defense": 5,
+        "pragmatism": 4
+      },
+      "technical_context": "V7 Unix limited each process to NOFILE = 20 open file descriptors. Recursing 18+ directories deep would exhaust them. du's heuristic: if the just-opened fd is > 10 (over half the limit), close it immediately after reading and reopen on the next iteration, lseek-ing back to the saved offset. The recursion still works but at the cost of double the open() calls per directory.",
+      "human_story": "V7 had hard limits—NOFILE = 20 meant 20 simultaneously open files per process. A program that opened more crashed. du's defensive 'close at fd>10' is a microoptimization that turns 'crashable on 18-deep trees' into 'works on any depth at half speed'. The pragmatism is striking: fail gracefully by paying a constant-factor cost."
+    },
+    "appraiser_note": "V7 Unix の NOFILE = 20 制約への自己防衛——`if (dir > 10) close(dir);` で fd が枯渇しそうな時に一度閉じる。次のループで再 open し、保存していた offset へ lseek で復元する reopen-on-demand パターン。深さ 18 以上のディレクトリツリーでも fd が枯れずに巡回できる。コードを 2 倍呼ぶ代わりに、どんな深さでも動く実用性を取った 1979 年のプログラマの判断。"
   }
 ]
