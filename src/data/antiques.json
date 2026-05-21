@@ -7699,6 +7699,33 @@
     "appraisalNumber": 80
   },
   {
+    "id": "eliza-001-pronoun-flip",
+    "text": "post: am are\npost: your my\npost: me you\npost: myself yourself\npost: yourself myself\npost: i you\npost: you I\npost: my your\npost: i'm you are",
+    "file_path": "doctor.txt",
+    "line_number": 23,
+    "repo_id": "eliza",
+    "repo_name": "ELIZA (MIT, 1966)",
+    "language": "MAD-SLIP",
+    "year": 1966,
+    "tags": [
+      "AI",
+      "pattern-matching",
+      "core"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "irony": 3
+      },
+      "technical_context": "post: rules invert pronouns before composing the reply: 'I am sad' becomes the kernel 'you are sad'. The entire mirror trick of ELIZA fits in nine lines.",
+      "human_story": "Weizenbaum did not need to understand language. He only needed to flip the pronouns and ask for more. Patients filled in the rest, and many believed the machine understood."
+    },
+    "appraiser_note": "ELIZA の鏡返しの仕掛けはたった9行の post: テーブル。\"i\" と \"you\"、\"my\" と \"your\" を入れ替えるだけで、患者は自分の言葉を「セラピストが返した」と錯覚する。世界初のチャットボットの核は『理解』ではなく『反転』だった。"
+  },
+  {
     "id": "eliza-002-computer50",
     "text": "key: computer 50\n  decomp: *\n    reasmb: Do computers worry you ?\n    reasmb: Why do you mention computers ?\n    reasmb: What do you think machines have to do with your problem ?",
     "file_path": "script/doctor.txt",
@@ -7751,6 +7778,33 @@
       "human_story": "Earlier you said your mother -- ELIZA appears to remember. It is an illusion built with one character."
     },
     "appraiser_note": "`$`マーカーが「記憶」の合図——以前の発言を参照して返す。心理療法士が覚えているかのような錯覚は、1文字の仕掛けで生まれた。"
+  },
+  {
+    "id": "cpm-001-bdos-call5",
+    "text": "; To invoke a BDOS function:\n;   MVI  C, <function-number>   ; e.g. 2 = Console Output\n;   MVI  E, <param>             ; e.g. ASCII char for Function 2\n;   CALL 0005H                  ; BDOS entry point\n;\n; Function numbers (excerpt):\n;   0 = System Reset    1 = Console Input    2 = Console Output\n;   9 = Print String   13 = Reset Disk     15 = Open File\n;  16 = Close File     22 = Make File      40 = Write Random",
+    "file_path": "BDOS.asm",
+    "line_number": 100,
+    "repo_id": "cpm",
+    "repo_name": "CP/M (Digital Research, 1974)",
+    "language": "8080 Assembler",
+    "year": 1974,
+    "tags": [
+      "OS",
+      "ABI",
+      "legacy"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "longevity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "longevity": 5,
+        "respect": 4
+      },
+      "technical_context": "Load C with function number, DE with parameter, CALL 0005H. This 3-line invocation pattern was inherited almost verbatim by QDOS, then by MS-DOS as INT 21h.",
+      "human_story": "Tim Paterson studied this calling convention while writing QDOS. The same numbers (2 = Console Output, 9 = Print String) still surface in DOS programs forty years later. CP/M is dead; its ABI is not."
+    },
+    "appraiser_note": "BDOS の呼び出し規約はたった3行のテンプレート。レジスタ C に関数番号、DE にパラメータ、CALL 0005H。これがそのまま QDOS、MS-DOS の INT 21h に継承され、Function 2 (Console Output) や Function 9 (Print String) は50年経った今もコマンドラインに息づく。"
   },
   {
     "id": "cpm-002-copyright-box579",
@@ -7807,6 +7861,33 @@
     "appraiser_note": "8文字+拡張子3文字——「8.3形式」の物理的起源。36バイトのFCBの配置が、Windows 95まで20年間のファイル名制約を決めた。"
   },
   {
+    "id": "smalltalk-001-message-send",
+    "text": "// Every Smalltalk expression is: <receiver> <selector> [<arg> ...]\n// e.g.:   3 + 4            (Integer 3 receives +: 4)\n//        #(1 2 3) size    (Array receives size)\n//        true ifTrue: []  (true receives ifTrue:)\n//\n// No statements, no operators, no control structures.\n// Only objects sending messages to other objects.",
+    "file_path": "src/interpreter.cpp",
+    "line_number": 1,
+    "repo_id": "smalltalk80",
+    "repo_name": "Smalltalk-80 (Xerox PARC, 1980)",
+    "language": "C++ (interpreter for Smalltalk-80)",
+    "year": 1980,
+    "tags": [
+      "OOP",
+      "language-design",
+      "core"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "purity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "purity": 5,
+        "vision": 4
+      },
+      "technical_context": "Smalltalk has no statements, no operators, no control structures—only message sends. 3 + 4 is parsed as: object 3 receives the message +: with argument 4. Even ifTrue:/ifFalse: are messages, not keywords.",
+      "human_story": "Alan Kay later said: 'I'm sorry I coined OOP—the message-passing part is the essence.' Java and C++ borrowed the class part. Smalltalk-80 kept the message part. Erlang's actors, Ruby's blocks, and React's components all trace back to this one idea."
+    },
+    "appraiser_note": "Smalltalk のコア哲学は1行で表せる: 「<受信者> <セレクタ> [<引数>...]」。3 + 4 は「Integer 3 に +: メッセージを送る」。文も演算子も制御構文も存在せず、全てがメッセージ送信。Alan Kay の本意は class でも継承でもなく、この一行にある。"
+  },
+  {
     "id": "smalltalk-002-fetchclassof",
     "text": "arrayClass <- memory fetchClassOf: array.\nself success: (arrayClass=ClassArrayPointer) | (arrayClass=ClassStringPointer).",
     "file_path": "src/interpreter.cpp",
@@ -7859,6 +7940,33 @@
       "human_story": "doesNotUnderstand: is not an error handler. It is a design feature. Ruby, Python, and JavaScript all inherited this idea."
     },
     "appraiser_note": "継承ツリーを登りきっても見つからなければ `doesNotUnderstand:` を送る——エラーではなくメッセージ。Ruby、Python、JavaScriptの動的ディスパッチの源流。"
+  },
+  {
+    "id": "sqlite-001-blessing",
+    "text": "/*\n** 2001-09-15\n**\n** The author disclaims copyright to this source code.  In place of\n** a legal notice, here is a blessing:\n**\n**    May you do good and not evil.\n**    May you find forgiveness for yourself and forgive others.\n**    May you share freely, never taking more than you give.\n*/",
+    "file_path": "src/sqlite.h.in",
+    "line_number": 1,
+    "repo_id": "sqlite",
+    "repo_name": "SQLite (D. Richard Hipp, 2000-)",
+    "language": "C",
+    "year": 2001,
+    "tags": [
+      "public-domain",
+      "philosophy",
+      "license"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "generosity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "generosity": 5,
+        "humility": 4
+      },
+      "technical_context": "Public domain dedication via blessing rather than legal text. The same comment block appears at the top of every public SQLite source file from 2001 onward.",
+      "human_story": "D. Richard Hipp wrote this when SQLite was a side project to handle databases on naval destroyers. Twenty-five years later, SQLite is the most deployed software in history (>1 trillion devices), and the blessing still leads every file. No copyright. Only good wishes."
+    },
+    "appraiser_note": "SQLite の全ファイル冒頭に置かれた「祝福」。著作権の代わりに「善をなし、悪をなさぬように。自分を許し、他者を許すように。惜しみなく分かち合い、受け取る以上に奪わぬように。」と書かれている。1兆台超のデバイスにデプロイされた人類最大のソフトウェアは、ライセンス文ではなく祈りで始まる。"
   },
   {
     "id": "sqlite-002-ipkey-rowid",
