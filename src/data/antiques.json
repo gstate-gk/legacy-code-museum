@@ -10172,5 +10172,86 @@
       "human_story": "1979 VAX systems mounted 2-3 partitions, not 16. The author chose to skip the 'mtab full' error path entirely; it would never fire in practice. Linux Docker environments today mount 100+, and that limit is wholly unimaginable in 1979. The silence reflects the era's typical scale—if you hit 16 mounts you would already be doing something weird, and discover the silence yourself."
     },
     "appraiser_note": "mtab[16] が満杯なら for ループは何も処理せず exit(0) に到達する——警告なし、errno なし、ユーザーは成功と勘違いする。1979 年の VAX は 2-3 個マウントするだけだったので、16 個の上限は現実に起きない設計。mount(2) は成功するのでカーネルは新マウントを保持、/etc/mtab だけが古いまま——カーネルと /etc/mtab の不整合が静かに発生する稀ケース。"
+  },
+  {
+    "id": "umount-001-sync-before-detach",
+    "text": "sync();\nmf = open(\"/etc/mtab\", 0);\nread(mf, (char *)mtab, NMOUNT*2*NAMSIZ);\nif(argc != 2) { ... }\nif (umount(argv[1]) < 0) {\n    perror(\"umount\");\n    return(1);\n}",
+    "file_path": "usr/src/cmd/umount.c",
+    "line_number": 11,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "filesystem",
+      "safety"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "vigilance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "vigilance": 5,
+        "responsibility": 4
+      },
+      "technical_context": "umount.c calls sync() as its very first action. Unix buffer cache delays writes; if a filesystem is detached while dirty buffers remain, the data is lost. sync() requests a flush of all dirty buffers to disk before umount(2) detaches the filesystem from kernel mount table. Note: sync() does not wait for completion (best-effort); the safer fsync(2) per-file existed but no system-wide synchronous flush.",
+      "human_story": "mount.c has no sync(); umount.c has sync() in line 11—the first action. The asymmetry tells you which operation is dangerous. Reading a filesystem after mount is harmless; detaching one while writes are pending eats your data. The 1979 author moved sync() to the very top of umount.c so no code path could skip it."
+    },
+    "appraiser_note": "umount.c はプログラム冒頭で sync() を呼ぶ——buffer cache のダーティバッファを全部 flush してから umount(2) でカーネルからファイルシステムを切り離す。mount.c には sync() がない非対称性が「unmount の方がデータ損失リスクが高い」事実を物語る。ただし sync() は best-effort で、完了を待たない。fsync(2) が個別ファイル用にあったが、システム全体の同期版は無い時代。"
+  },
+  {
+    "id": "umount-002-zero-out-entry",
+    "text": "for (mp = mtab; mp < &mtab[NMOUNT]; mp++) {\n    p1 = argv[1];\n    p2 = &mp->spec[0];\n    while (*p1++ == *p2)\n        if (*p2++ == 0) {\n            for (p1 = mp->file; p1 < &mp->file[NAMSIZ*2];)\n                *p1++ = 0;\n            ...\n        }\n}",
+    "file_path": "usr/src/cmd/umount.c",
+    "line_number": 36,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "memory",
+      "stdlib-absence"
+    ],
+    "interesting_score": 17,
+    "ai_analysis": {
+      "primary_emotion": "directness",
+      "emotion_intensity": 4,
+      "emotions": {
+        "directness": 4,
+        "concreteness": 4
+      },
+      "technical_context": "To remove an mtab entry, the code zeroes 64 bytes (file[32] + spec[32]) one byte at a time via for-loop. memset() is not yet standardized (arrives with ANSI C 1989); BSD's bzero() arrives with 4.2BSD (1983). 1979 Bell-32V writes the loop inline. The zeroed slot becomes 'empty' and will be reused by the next mount, mirroring mount.c's 'if file[0]==0' check.",
+      "human_story": "Modern C says memset(mp, 0, sizeof(*mp)). 1979 says for(p1=mp->file; p1<&mp->file[NAMSIZ*2];) *p1++=0;. Four lines of pointer arithmetic. The library function was waiting in the future; the loop is timeless. Either way, the entry's identity dissolves into 64 zero bytes."
+    },
+    "appraiser_note": "mtab エントリの削除は file[32] と spec[32] の合計 64 バイトを for ループで 1 バイトずつ 0 に塗る。memset() は ANSI C 1989 まで、bzero() は 4.2BSD (1983) まで存在しない。1979 年は素朴に `for (p1 = mp->file; p1 < &mp->file[NAMSIZ*2];) *p1++ = 0;` の 4 行で済ます——標準ライブラリの不在が、コードに「型に縛られない直接性」を与える。"
+  },
+  {
+    "id": "umount-003-not-in-mtab-warning",
+    "text": "if (umount(argv[1]) < 0) {\n    perror(\"umount\");\n    return(1);\n}\n... /* basename 抽出 */\nfor (mp = mtab; mp < &mtab[NMOUNT]; mp++) {\n    /* マッチしたら return(0) */\n}\nprintf(\"%s not in mount table\\n\", argv[1]);\nreturn(1);",
+    "file_path": "usr/src/cmd/umount.c",
+    "line_number": 52,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "consistency",
+      "diagnostic"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "honesty",
+      "emotion_intensity": 4,
+      "emotions": {
+        "honesty": 4,
+        "diagnostic": 4
+      },
+      "technical_context": "By the time the 'not in mount table' message fires, umount(2) has already succeeded—kernel has detached the filesystem. The warning signals a state mismatch between kernel mount table and userspace /etc/mtab. Causes: parallel umount lost-update, prior mount-command crash, manual /etc/mtab edit. The kernel detach is irreversible by then; the message is purely diagnostic.",
+      "human_story": "Unlike mount.c's silent overflow, umount.c explicitly warns when /etc/mtab is out of sync. The 1979 author judged 'something is missing where it should be' as more dangerous than 'no room left'. Reading the source teaches: the same bug template (mtab inconsistency) can produce silence in one branch and a warning in the other, based on which direction matters more."
+    },
+    "appraiser_note": "umount(2) が成功した後、/etc/mtab に該当エントリが無ければ「not in mount table」と警告。これは「カーネルからは切り離したが、ユーザー空間 /etc/mtab には記録が残っている／既に消されていた」という二重管理の不整合の検出。前回鑑定した mount.c の「テーブル満杯はサイレント諦め」と対照的——「あるべきものがない」のほうが「入れる場所がない」より深刻という判断。"
   }
 ]
