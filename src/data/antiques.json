@@ -10955,5 +10955,86 @@
       "human_story": "Type `dd if=/dev/zero of=test bs=1M count=1024`. The 'M' here is from 1990s extensions, but the lowercase 'k=1024' you'd write as `bs=1k` is from 1979's dd. The pattern — number followed by unit suffix — spread to du -h, ls -lh, sleep '5m'. The seed: dd's number() with 5 cases. The `*`/`x` recursion enables nested multiplication: `2*3*4` = 24. K&R intentional fall-through routes the result through one range check. Compact, recursive, expressive — all in 35 lines."
     },
     "appraiser_note": "dd の number() 関数は **単位サフィックス付き整数**をパース——`k` で × 1024 (kilo)、 `w` で × sizeof(int) (word: PDP-11 で 2、 VAX で 4 のプラットフォーム依存値)、 `b` で × 512 (block: V7 BSIZE)、 `*`/`x` で次の数値と乗算 (再帰呼び出し)。 `2*1024`、 `100k`、 `4w`、 `2k*4` すべて動く。 case '*'/'x' は case '\\0' に **fall-through** して範囲チェックを通る——K&R 流の意図的フォールスルー。 後の du -h、 ls -lh、 sleep '5m' の数値+単位 UX の祖。 GNU coreutils が K/M/G/T (大文字 SI 接頭辞) を 1990 年代に追加したが、 POSIX dd は小文字 k=1024 を維持。"
+  },
+  {
+    "id": "cal-001-jan1-formula",
+    "text": "jan1(yr) {\n    register y, d;\n    y = yr;\n    d = 4+y+(y+3)/4;\n\n    if(y > 1800) {\n        d -= (y-1701)/100;\n        d += (y-1601)/400;\n    }\n    if(y > 1752)\n        d += 3;\n    return(d%7);\n}",
+    "file_path": "usr/src/cmd/cal.c",
+    "line_number": 173,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "calendar",
+      "mathematics"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "concreteness": 4
+      },
+      "technical_context": "jan1(yr) computes the day of week of January 1 of given year in 6 lines. Base formula: d = 4 + y + (y+3)/4 — offset 4 (year 0 alignment), +y (each year shifts day-of-week by 1 for 365-day non-leap years), +(y+3)/4 (Julian leap rule: every 4 years adds extra day, +3 offset for year 1 alignment). For y > 1800: subtract (y-1701)/100 (Gregorian 100-year non-leap correction starting 1801), add (y-1601)/400 (Gregorian 400-year leap correction starting 1601). For y > 1752: add 3 (compensate for British Calendar Act 1750 changeover). Final d%7: 0=Sun, 1=Mon, ..., 6=Sat. Verified: 2026 → d = 2538 % 7 = 4 (Thursday).",
+      "human_story": "Six lines of arithmetic compute any year's January 1 day-of-week, from year 1 to 9999. The trick: Julian calendar contributions are linear (year + leap), Gregorian corrections are conditional (post-1800, post-1752). The +3 at the 1752 boundary embeds British history into the formula. Zeller published a similar formula in 1887; this 1979 K&R version is more compact, hiding centuries of calendar reform inside `if (y > 1752) d += 3`."
+    },
+    "appraiser_note": "jan1(yr) は **6 行**で任意年の Jan 1 の曜日を計算。 基本式 `d = 4+y+(y+3)/4`——オフセット 4 (西暦元年起点)、 +y (各年で曜日 1 ずれ)、 +(y+3)/4 (ユリウス閏年規則)。 `y > 1800` のとき: `-= (y-1701)/100` (グレゴリオ 100 年非閏年補正、 1801 から)、 `+= (y-1601)/400` (グレゴリオ 400 年閏年補正、 1601 から)。 `y > 1752` のとき: `+= 3` (イギリス Calendar Act 1750 補正)。 最後に `% 7` で曜日 (0=日, 1=月, ..., 6=土)。 検証：2026 年 → d = 2538 % 7 = 4 (木曜) 正解。 Zeller の合同式 (1887) の親戚で、 より簡潔。 `if (y > 1752) d += 3` の 1 行に数世紀の暦改革史が埋め込まれている。"
+  },
+  {
+    "id": "cal-002-september-1752",
+    "text": "char mon[] = {\n    0,\n    31, 29, 31, 30,\n    31, 30, 31, 31,\n    30, 31, 30, 31,\n};\n\ncal(m, y, p, w) {\n    ...\n    switch((jan1(y+1)+7-d)%7) {\n    case 1: mon[2] = 28; break;     /* non-leap */\n    default: mon[9] = 19; break;    /* 1752 */\n    case 2: ;                       /* leap */\n    }\n    ...\n    for(i=1; i<=mon[m]; i++) {\n        if(i==3 && mon[m]==19) {\n            i += 11;\n            mon[m] += 11;\n        }\n        ...\n    }\n}",
+    "file_path": "usr/src/cmd/cal.c",
+    "line_number": 113,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "calendar",
+      "history"
+    ],
+    "interesting_score": 24,
+    "ai_analysis": {
+      "primary_emotion": "antiquity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "antiquity": 5,
+        "playfulness": 4
+      },
+      "technical_context": "When cal sees year 1752, mon[9] becomes 19 instead of 30. The for-loop iterating from i=1 to mon[m] detects `i==3 && mon[m]==19` and jumps: i += 11 (next iteration is i=14), mon[m] += 11 (restore mon[9] to 30 so loop continues correctly). Output: `1 2 14 15 16 ...` — 11 days missing. This implements the British Calendar (New Style) Act 1750: September 2, 1752 (Wed, Julian) was followed by September 14, 1752 (Thu, Gregorian). 11 days dropped to align with the sun. Run `cal 9 1752` on any modern Linux/BSD/macOS — same gap, 50 years of Unix faithfully recording British calendar reform.",
+      "human_story": "Type `cal 9 1752` today on Linux, you see September 1752 with 11 days missing — 1, 2, then 14, 15, 16. Why? Britain adopted the Gregorian calendar in 1752. The 11-day drop aligned the British calendar with the sun (and with Continental Europe, which had switched in 1582). Workers reportedly rioted demanding their 11 days' wages back (some historians dispute this). 1979's cal.c carved this historical moment into 5 lines of C. Every Unix descendant carries it forward. The riot may be myth; the calendar is real, and so is the gap."
+    },
+    "appraiser_note": "1752 年 9 月のとき mon[9] = 19 にし、 for ループが `i==3 && mon[m]==19` を検出すると `i += 11` (次のイテレーションで i=14)、 `mon[m] += 11` (30 に戻す) で 11 日を飛ばす。 表示は `1 2 14 15 16 ...`——11 日消失。 イギリス Calendar (New Style) Act 1750 の実装：1752 年 9 月 2 日 (水、 ユリウス) の翌日が 9 月 14 日 (木、 グレゴリオ)。 11 日を削って太陽年に合わせた。 大陸ヨーロッパは 1582 年に切替済み (10 日)、 イギリス系は 1752 年 (11 日)、 ロシアは 1918 年 (13 日)。 50 年後の Linux/BSD/macOS で `cal 9 1752` を打てば同じ 11 日が今も消えたまま——イギリスの暦改革が Unix 系の DNA に刻まれた瞬間。 労働者の暴動 (11 日分の賃金を返せ) は俗説と歴史家は言うが、 暦は本物、 空白も本物。"
+  },
+  {
+    "id": "cal-003-leap-detection-by-weekday-diff",
+    "text": "switch((jan1(y+1)+7-d)%7) {\ncase 1: mon[2] = 28; break;     /* non-leap: 365 days */\ndefault: mon[9] = 19; break;    /* 1752: 354 days */\ncase 2: ;                       /* leap: 366 days */\n}",
+    "file_path": "usr/src/cmd/cal.c",
+    "line_number": 124,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "algorithm",
+      "elegance"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "abstraction": 4
+      },
+      "technical_context": "Instead of writing the conventional leap-year predicate `y%4==0 && (y%100!=0 || y%400==0)`, cal.c detects year-length via day-of-week shift: (jan1(y+1) + 7 - d) % 7 where d = jan1(y). Non-leap year (365 days = 52 weeks + 1 day) → shift = 1. Leap year (366 days = 52 weeks + 2 days) → shift = 2. Year 1752 (354 days = 365 - 11) → shift = 4 (default case). The +7 prevents negative subtraction when jan1(y+1) < d (e.g. Mon → Sun wraps). One switch handles all three cases (regular, leap, 1752) using a single jan1() function that already encodes the Gregorian/Julian transition.",
+      "human_story": "Most code asks 'is this a leap year?' with explicit divisibility. cal.c asks 'how many days in this year?' via day-of-week diff. The clever answer: 1, 2, or 4. The same switch handles regular, leap, and the once-in-history 1752 short year. By centralizing calendar logic in jan1() (the Julian/Gregorian transitions live there), the leap detection inherits those corrections for free. Three case branches replace what would otherwise be 10+ lines of date-arithmetic special-casing."
+    },
+    "appraiser_note": "通常の閏年判定 `y%4==0 && (y%100!=0 || y%400==0)` ではなく、 **曜日差**で 1 年の日数を逆算する独創的アプローチ：`(jan1(y+1) + 7 - d) % 7`。 平年 365 日 = 52 週 + 1 日 → shift = 1、 閏年 366 日 = 52 週 + 2 日 → shift = 2、 1752 年 354 日 = 365 - 11 → shift = 4 (default)。 `+7` は `jan1(y+1) < d` のとき (月→日のラップ) の負値防止。 1 つの switch で 3 ケース (平年/閏年/1752) を統一処理。 jan1() がユリウス→グレゴリオ切替を内包しているので、 閏年判定もその恩恵を受けて補正不要。 3 ブランチで通常の 10+ 行の特殊ケース処理を置き換える、 K&R 流の数学的センス。"
   }
 ]
