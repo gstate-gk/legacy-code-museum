@@ -9363,5 +9363,86 @@
     "source": "Bell-32V Unix (1979)",
     "appraisalNumber": 140,
     "appraiser_note": "for(;; itime+=60, slp())の毎分ティックでドリフト補正、EXACT/ANY/LIST/RANGE/EOSでcrontabをバイナリ符号化、double-forkでジョブを切り離し、stat() mtimeでlive reload——cron daemonのコア252行。"
+  },
+  {
+    "id": "rm-001-fork-execl-rmdir",
+    "text": "while((i=fork()) == -1)\n    sleep(3);\nif(i) {\n    wait(&status);\n    return(status);\n}\nexecl(\"/bin/rmdir\", \"rmdir\", f, 0);\nexecl(\"/usr/bin/rmdir\", \"rmdir\", f, 0);\nprintf(\"rm: can't find rmdir\\n\");\nexit(1);",
+    "file_path": "usr/src/cmd/rm.c",
+    "line_number": 142,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "system-call-absence",
+      "fork-exec"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "humility": 3
+      },
+      "technical_context": "Bell-32V (1979) does not yet expose rmdir(2) as a system call. To delete an empty directory during 'rm -r', the rm program forks and execs /bin/rmdir as an external SUID command. The rmdir syscall arrives in 4.2BSD (1983).",
+      "human_story": "For four years between V7 (1979) and 4.2BSD (1983), the rm command in Unix could not delete a directory by itself. It had to spawn a separate program. The Unix philosophy of small composable tools was not a choice here; it was the only way to fill the gap a missing syscall left behind."
+    },
+    "appraiser_note": "1979年の Unix にはまだ rmdir(2) システムコールが無く、空ディレクトリを消すには /bin/rmdir という SUID プログラムを fork+execl で呼ぶしかなかった。1983年の 4.2BSD で rmdir(2) が入るまで、4年間 rm.c はこの『他コマンド呼び出し』を続けた。Unix の哲学がシステムコールの不在を補う美しい妥協。"
+  },
+  {
+    "id": "rm-002-dotdot-guard",
+    "text": "while(--argc > 0) {\n    if(!strcmp(*++argv, \"..\")) {\n        fprintf(stderr, \"rm: cannot remove `..'\\n\");\n        continue;\n    }\n    rm(*argv, fflg, rflg, iflg, 0);\n}",
+    "file_path": "usr/src/cmd/rm.c",
+    "line_number": 40,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "safety",
+      "filesystem"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "caution",
+      "emotion_intensity": 4,
+      "emotions": {
+        "caution": 4,
+        "foresight": 4
+      },
+      "technical_context": "The argument loop refuses any argv equal to \"..\" outright, with no override. Even rm -rf will not delete .. because the check fires before the recursive call. Note: . is not blocked; rm -rf . will recurse into the current directory.",
+      "human_story": "Bell engineers knew someone would try. They added four lines of guard at the very top of the loop. '..' would always be refused; '/' was not. --preserve-root would not arrive in GNU coreutils until 2003, twenty-four years later."
+    },
+    "appraiser_note": "rm.c の引数ループは `..` だけを最初から名指しで拒否する。-rf でも -f でも通らない。「上位ディレクトリへの参照を消したらファイルシステム整合性が崩壊する」という事故を1979年から防いでいた一方、`rm -rf /` は素通りした——ルート保護 (--preserve-root) は2003年の GNU coreutils まで存在しなかった。"
+  },
+  {
+    "id": "rm-003-isatty-fflg",
+    "text": "fflg = 0;\nif (isatty(0) == 0)\n    fflg++;",
+    "file_path": "usr/src/cmd/rm.c",
+    "line_number": 16,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "tty",
+      "convention"
+    ],
+    "interesting_score": 17,
+    "ai_analysis": {
+      "primary_emotion": "thoughtfulness",
+      "emotion_intensity": 4,
+      "emotions": {
+        "thoughtfulness": 4,
+        "pragmatism": 4
+      },
+      "technical_context": "isatty(0) returns 0 when stdin is not a terminal (e.g. piped from find). When stdin is non-tty, fflg is set automatically: the rm becomes silent and stops asking for confirmation, even without -f. The default flips based on context.",
+      "human_story": "rm has two personalities. From a shell prompt it is cautious and asks; from inside a pipeline it is silent and obedient. The whole behavior switch is two lines of isatty. Forty-six years later, GNU rm and BusyBox rm still default to the same heuristic."
+    },
+    "appraiser_note": "標準入力が端末でなければ fflg を自動セット——`find ... | rm` のようなパイプ経由なら確認を出さず黙々と削除、対話シェルからなら丁寧に書込み権限の無いファイルを聞き返す。3行で「対話的 rm」と「パイプ用 rm」の二つの人格を切り替える、Unix の便宜の真骨頂。"
   }
 ]
