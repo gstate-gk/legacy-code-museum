@@ -9525,5 +9525,86 @@
       "human_story": "GNU coreutils cp uses st_blksize, fadvise() and 64 KB buffers. The 1979 cp.c knows nothing of that—and did not need to. Disks were measured in megabytes; the kernel paged 512 bytes at a time anyway. The simplest loop is sufficient when the hardware sets the rhythm."
     },
     "appraiser_note": "BSIZE = 512 は PDP-11 / VAX のディスクブロックサイズと完全に一致——cp は1回の read で物理ブロック1つを引っ張る。ホールファイル検出なし、メタデータ保存なし、進捗表示なし。素朴な while(n = read(...)) ループ7行で『ファイルを別の場所に複製する』が完結する 1979 年の最小定義。"
+  },
+  {
+    "id": "mv-001-link-unlink",
+    "text": "if (link(source, target) < 0) {\n    i = fork();\n    if (i == 0) {\n        execl(\"/bin/cp\", \"cp\", source, target, 0);\n        exit(1);\n    }\n    while ((c = wait(&status)) != i && c != -1);\n    if (status != 0) return(1);\n    utime(target, &s1.st_atime);\n}\nif (unlink(source) < 0) { ... }",
+    "file_path": "usr/src/cmd/mv.c",
+    "line_number": 95,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "system-call-absence",
+      "fork-exec"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "diligence": 4
+      },
+      "technical_context": "Bell-32V (1979) has no rename(2). mv implements 'move' as link + unlink. If link returns EXDEV (cross-device), mv falls back to fork+execl(\"/bin/cp\"), waits, restores atime/mtime via utime, then unlinks the source. rename(2) lands in 4.2BSD (1983).",
+      "human_story": "What is one syscall in 1983 was five carefully-ordered syscalls in 1979. Move was not a primitive; it was a recipe: link, fork, exec, wait, utime, unlink. Four years later, rename(2) collapses the whole dance into a single atomic call."
+    },
+    "appraiser_note": "1979年の Unix にはまだ rename(2) がなく、mv は link + unlink で実装。cross-device の場合は fork+execl(\"/bin/cp\") で子プロセスにコピーさせ、utime() で atime を復元してから unlink(source)。rename(2) が 4.2BSD (1983) で入るまでの 4 年間、ファイル名の付け替えは 5 つのシステムコールを正しい順序で呼ぶ儀式だった。"
+  },
+  {
+    "id": "mv-002-mvdir-dotdot",
+    "text": "for (i = 1; i <= NSIG; i++)\n    signal(i, SIG_IGN);\nif (link(source, target) < 0) { ... }\nif (unlink(source) < 0) { unlink(target); return(1); }\nstrcat(dst, target);\nstrcat(dst, \"/\");\nstrcat(dst, DOTDOT);\nif (unlink(dst) < 0) { ... }\nif (link(pname(target), dst) < 0) { ... }",
+    "file_path": "usr/src/cmd/mv.c",
+    "line_number": 190,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "directory",
+      "atomicity"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "discipline",
+      "emotion_intensity": 5,
+      "emotions": {
+        "discipline": 5,
+        "fragility": 3
+      },
+      "technical_context": "Moving a directory requires 4 steps: link new entry, unlink old, unlink new/.., link parent-of-new as new/... All signals are SIG_IGN'd during the critical section so that an interrupt cannot leave a directory with a dangling parent pointer. Each failure tries to roll back via reverse link/unlink calls.",
+      "human_story": "Today rename(2) on a directory updates .. for free. In 1979, mv had to fix .. by hand. Wrap the critical section in signal masking, hope no power failure intrudes, and pray your rollback path is correct. The shape of the manual dance is the shape of what kernels later automated."
+    },
+    "appraiser_note": "ディレクトリ移動は link + unlink + unlink(new/..) + link(parent, new/..) の 4 ステップ。シグナルを全部 SIG_IGN にしてから始め、失敗時は逆順 link/unlink でロールバック。`..` はディレクトリエントリの一部で自動更新されないため、手で書き換える必要があった。rename(2) が後に自動でやってくれる処理を、1979 年は祈りながら手で書いていた。"
+  },
+  {
+    "id": "mv-003-check-loop",
+    "text": "check(spth, dinode)\nchar *spth;\nino_t dinode;\n{\n    char nspth[MAXN];\n    struct stat sbuf;\n\n    sbuf.st_ino = 0;\n    strcpy(nspth, spth);\n    while (sbuf.st_ino != ROOTINO) {\n        stat(nspth, &sbuf);\n        if (sbuf.st_ino == dinode) {\n            fprintf(stderr, \"mv: cannot move a directory into itself\\n\");\n            return(1);\n        }\n        strcat(nspth, SDELIM);\n        strcat(nspth, DOTDOT);\n    }\n    return(0);\n}",
+    "file_path": "usr/src/cmd/mv.c",
+    "line_number": 262,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "filesystem",
+      "loop-detection"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "foresight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "foresight": 4,
+        "caution": 4
+      },
+      "technical_context": "Before moving a directory, mv walks up the target's parent chain via '/..' concatenation until inode ROOTINO (2) is reached. If the source inode appears anywhere along the way, the move would create a cycle in the filesystem graph; mv refuses with 'cannot move a directory into itself'. Modern rename(2) detects this in-kernel and returns EINVAL.",
+      "human_story": "mv /a/b/c /a/b/c/d would put c inside itself, making find loop forever. The check() function walks the parent chain to ROOTINO and refuses if it sees c on the way. The same logic now lives in the kernel; in 1979 it lived in 25 lines of mv.c."
+    },
+    "appraiser_note": "ディレクトリを自分の中に移そうとすると、ファイルシステムグラフに循環が生まれ find などが無限ループに陥る。check() は target の親方向を /../ 連結で ROOTINO (inode 2) まで遡り、途中で source の inode が出てきたら拒否。現代では rename(2) がカーネル内で同じ判定をする (EINVAL) が、1979 年は mv.c の中の 25 行で手作業だった。"
   }
 ]
