@@ -9686,5 +9686,86 @@
       "human_story": "Naming conventions are time capsules. The 1979 ln.c declares 'char *rindex();' with no include and reaches for the function as if it were a verb. Decades later, POSIX renamed it strrchr—same operation, different worldview about how to namespace string functions."
     },
     "appraiser_note": "rindex() は strrchr() の旧 BSD 名——「r」=reverse（逆方向）、「index」=文字位置を返す。POSIX が後に strrchr を標準化、現代のコードは strrchr を使うが、libc には今も rindex が <strings.h> で生きている。1979 年は `<strings.h>` のインクルードすらなく `char *rindex();` の前方宣言だけで呼んでいた——古い C の流儀。"
+  },
+  {
+    "id": "chmod-001-4-function-parser",
+    "text": "newmode(nm)\nunsigned nm;\n{\n    register o, m, b;\n\n    m = abs();\n    if (!*ms) return(m);\n    do {\n        m = who();\n        while (o = what()) {\n            b = where(nm);\n            switch (o) {\n            case '+': nm |= b & m;           break;\n            case '-': nm &= ~(b & m);        break;\n            case '=': nm &= ~m; nm |= b & m; break;\n            }\n        }\n    } while (*ms++ == ',');\n    ...\n}",
+    "file_path": "usr/src/cmd/chmod.c",
+    "line_number": 58,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "parser",
+      "permission"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "ingenuity": 4
+      },
+      "technical_context": "Hand-written recursive-descent parser with four functions: abs() reads octal digits, who() collects u/g/o/a into a mask, what() returns one of +/-/=, where() collects r/w/x/s/t into a bit pattern (or copies u/g/o bits via shifts). The combination of who()-result and where()-result via 'b & m' produces the affected bits.",
+      "human_story": "1979 needed no yacc/lex for chmod. The grammar of 'u=rwx,g+w,o-x' is simple enough to write four mutually-recursive functions; their interplay through 'b & m' (mask AND pattern) is the whole semantics. Half a century later, GNU chmod has grown to 700 lines but its symbolic-mode core still echoes this four-function design."
+    },
+    "appraiser_note": "abs() / who() / what() / where() の 4 関数による手書き再帰下降パーサ。`chmod u=rwx,g+w,o-x file` の文法を yacc も lex も使わず 177 行で表現する。who() が「誰が」のマスクを返し、where() が「権限」のビットパターンを返し、`b & m` の AND が両者の交差を取る——直交化された美しい設計。GNU coreutils chmod も今でも同じ 4 段階構造を継承。"
+  },
+  {
+    "id": "chmod-002-bit-shift-copy",
+    "text": "where(om)\nregister om;\n{\n    register m;\n\n    m = 0;\n    switch (*ms) {\n    case 'u': m = (om & USER) >> 6; goto dup;\n    case 'g': m = (om & GROUP) >> 3; goto dup;\n    case 'o': m = (om & OTHER);\n    dup:\n        m &= (READ|WRITE|EXEC);\n        m |= (m << 3) | (m << 6);\n        ++ms;\n        return m;\n    }\n    ...\n}",
+    "file_path": "usr/src/cmd/chmod.c",
+    "line_number": 138,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "bitwise",
+      "shortcut-syntax"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "discovery": 4
+      },
+      "technical_context": "chmod g=u (copy u's bits to g) works by shifting. Extract user bits with (om & 0700) >> 6, mask to (READ|WRITE|EXEC), then re-spread via m | (m<<3) | (m<<6). The result is the rwx pattern broadcast to all three positions; caller's '=' operator picks out just the destination via who()-mask.",
+      "human_story": "Most Unix users never knew chmod g=u existed. Those who did rarely thought about the implementation. Fourteen lines of bit shifts make it happen: extract one 3-bit pattern, replicate it three times, let the caller intersect. The trick is half a century old and still in current chmod source."
+    },
+    "appraiser_note": "`chmod g=u file` — group のビットを user と同じにする隠れた記法。実装はビットシフト 14 行: (om & 0700) >> 6 で user パターンを抽出、(READ|WRITE|EXEC) でマスク、m | (m<<3) | (m<<6) で 3 つの位置に複製。後で呼び出し元の `=` 演算で必要な部分だけ取り出される。`b & m` の AND で直交化された設計の真骨頂。"
+  },
+  {
+    "id": "chmod-003-octal-handparser",
+    "text": "abs()\n{\n    register c, i;\n\n    i = 0;\n    while ((c = *ms++) >= '0' && c <= '7')\n        i = (i << 3) + (c - '0');\n    ms--;\n    return(i);\n}",
+    "file_path": "usr/src/cmd/chmod.c",
+    "line_number": 89,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "c-stdlib",
+      "octal",
+      "minimal"
+    ],
+    "interesting_score": 16,
+    "ai_analysis": {
+      "primary_emotion": "self-reliance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "self-reliance": 4,
+        "concreteness": 4
+      },
+      "technical_context": "abs() reads octal digits via (i << 3) + (c - '0'). 1979 C had atoi() but no strtol() (the latter arrives with ANSI C 1989), so the standard library could not parse base-8. chmod rolled its own 8-line parser. If the string starts with a non-digit (i.e., symbolic mode), the loop never enters; i=0 is returned and the caller falls through to who()/what()/where().",
+      "human_story": "Same six lines of code lived in dozens of Bell-32V commands. printf could format octal but had nothing to read it. The chmod author shrugged and wrote (i << 3) + (c - '0'); the next person writing a permission-aware command would copy-paste it. ANSI C 1989 finally standardized strtol(), and these hand-parsers slowly migrated out of code."
+    },
+    "appraiser_note": "8 行の自前 8 進数パーサ——(i << 3) + (c - '0') で 1 桁ずつシフト。1979 年の C 標準ライブラリには strtol() がなく（ANSI C 1989 まで）、atoi() は 10 進数限定なので手書き。空文字列なら i=0 を返して symbolic mode 解釈にフォールスルー——「ヘッダー文字を見ずに、空チェックで分岐」が美しい。同じパターンが Bell-32V の他コマンドにも散在。"
   }
 ]
