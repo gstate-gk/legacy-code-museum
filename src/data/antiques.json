@@ -10793,5 +10793,86 @@
       "human_story": "When m4 needs to do math, it doesn't try to parse arithmetic in C — it generates a yacc parser and calls yyparse(). 94 lines of yacc grammar gives a full expression evaluator: precedence, associativity, all operators including exponentiation. ifelse(eval(i<10), 1, 0) becomes possible because eval is a real expression evaluator, not a hack. The same pattern shows up in awk (yacc grammar, C actions). Specialized tool composition is the Unix philosophy made tangible."
     },
     "appraiser_note": "m4 は算術式評価を **94 行の yacc 文法 (m4y.y)** に委譲する。 `doeval()` がグローバル `pe` ポインタに式を渡し、 `yyparse()` を呼ぶ——成功すれば `evalval` に値が入る。 文法は論理演算 (|, &, !)、 比較 (>, >=, <, <=, ==, !=)、 加減乗除剰余、 冪乗 (**)、 単項マイナス、 括弧、 整数を完全サポート。 `POWER` は `for ($$=1; $3-->0; $$ *= $1)` の inline ループで実装、 libm 呼び出しなし。 yylex() は pe ポインタを進めながらトークン化、 peek() で 2 文字演算子を判別。 m4 (テキスト) + yacc (算術) の分離は awk と同じパターン——「特化したツールを組み合わせる」 Unix 哲学の具現化。 ifelse(eval(i<10), ...) のような構造的繰り返しを可能にする。"
+  },
+  {
+    "id": "who-001-utmp-struct",
+    "text": "#include <utmp.h>\nstruct utmp utmp;\n...\ns = \"/etc/utmp\";\n...\nfi = fopen(s, \"r\");\nwhile (fread((char *)&utmp, sizeof(utmp), 1, fi) == 1) {\n    if(utmp.ut_name[0] == '\\0' && argc==1)\n        continue;\n    putline();\n}",
+    "file_path": "usr/src/cmd/who.c",
+    "line_number": 39,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "utmp",
+      "convention"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "antiquity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "antiquity": 5,
+        "minimalism": 4
+      },
+      "technical_context": "/etc/utmp is the binary file holding 'who is logged in right now'. struct utmp has 3 fields (V7): ut_line[8] (tty), ut_name[8] (login name), ut_time (time). 20 bytes per record. login(1) writes a record on login, init(1M) NULs ut_name on logout (ut_time persists). who.c checks ut_name[0] == '\\0' to skip logged-out slots. /usr/adm/wtmp is the append-only history version that last(1) reads. Linux/BSD still maintain /var/run/utmp and /var/log/wtmp with the same struct utmp (extended to utmpx in POSIX, ut_user[32] instead of ut_name[8]). 50 years, same data model.",
+      "human_story": "Today's `who` on a Linux server reads /var/run/utmp. The 1979 who.c read /etc/utmp. Same file, same record structure, same purpose. The only changes: longer name fields, more fields (PID, hostname for remote logins), but the core 'tty + user + time' triple stays. 50 years of Unix tradition starts here. ssh into any modern server, type `who`, you're touching a data model designed in 1979."
+    },
+    "appraiser_note": "/etc/utmp は「今ログイン中のユーザー」 を保持するバイナリファイル。 V7 の struct utmp は 3 フィールド (`ut_line[8]` tty、 `ut_name[8]` ログイン名、 `ut_time`)、 20 バイト/レコード。 login(1) がログイン時に書き、 init(1M) がログアウト時に `ut_name` を NUL でクリア (ut_time は残る)。 who.c は `ut_name[0] == '\\0'` でログアウト済みスロットをスキップ。 /usr/adm/wtmp は同じ構造の追記式ログ、 last(1) が読む。 50 年後の Linux/BSD も /var/run/utmp と /var/log/wtmp を維持、 POSIX utmpx で ut_user[32] へ拡張されたが基本構造 (tty + user + time) は不変。 fread() で 1 レコードずつ読む素朴な実装で 50 年継承。"
+  },
+  {
+    "id": "who-002-argc3-whoami",
+    "text": "if (argc==3) {\n    tp = ttyname(0);\n    if (tp)\n        tp = rindex(tp, '/') + 1;\n    else {\n        /* no tty - use best guess from passwd file */\n        pw = getpwuid(getuid());\n        strcpy(utmp.ut_name, pw?pw->pw_name: \"?\");\n        strcpy(utmp.ut_line, \"tty??\");\n        time(&utmp.ut_time);\n        putline();\n        exit(0);\n    }\n}",
+    "file_path": "usr/src/cmd/who.c",
+    "line_number": 22,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "cli",
+      "design"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "playfulness",
+      "emotion_intensity": 4,
+      "emotions": {
+        "playfulness": 4,
+        "minimalism": 4
+      },
+      "technical_context": "`who am i` detected purely by argc == 3 — argv[1] ('am') and argv[2] ('i') are never inspected. Any 3-arg invocation triggers self-display mode: `who x y` works identically. Self-identification via ttyname(0): stdin's tty name (e.g. /dev/tty03), then rindex(/) + 1 to extract 'tty03'. Match against utmp.ut_line. Fallback when ttyname(0) returns NULL (stdin redirected, cron): consult /etc/passwd via getpwuid(getuid()), synthesize a fake utmp record with passwd name + 'tty??' + current time. The 'natural language' CLI style (`who am i`) predates getopt and option-flag conventions.",
+      "human_story": "Type `who am i`. Three words, but the program reads only the count. argv[1] and argv[2] go unexamined — they could be 'who eats lunch' and still work. Unix CLI before getopt: natural-language invocations where word count carried meaning. Modern descendants: `make all`, `git status`, `kubectl get pods`. The pattern starts here. And the fallback — if you have no tty, the passwd file still knows your name — is philosophically pure: 'who are you' has an answer even when 'where are you' doesn't."
+    },
+    "appraiser_note": "`who am i` は **argc == 3** で検出する——argv[1]='am' と argv[2]='i' の中身は読まない、 個数だけが信号。 `who x y` でも同じ動作。 自己識別は `ttyname(0)` で stdin の tty 名 (`/dev/tty03`) を取り、 `rindex(tp, '/') + 1` で `/` 以降を切り出し `tty03` を得て、 utmp ループで `strcmp(ut_line, tp)` マッチ。 フォールバックが上手——ttyname(0) が NULL のとき (stdin リダイレクト、 cron) は getpwuid(getuid()) で /etc/passwd から名前を取り、 ut_line=\"tty??\" の架空 utmp を合成して表示。 「**utmp に居なくても passwd に居れば名乗れる**」 という存在論的設計。 getopt 以前の自然言語風 CLI、 `make all`/`git status`/`kubectl get pods` の祖先。"
+  },
+  {
+    "id": "who-003-ifdef-vax-portability",
+    "text": "while (fread((char *)&utmp, sizeof(utmp), 1, fi) == 1) {\n    if(argc==3) {\n        if (strcmp(utmp.ut_line, tp))\n            continue;\n#ifdef vax\n        printf(\"(Vax) \");\n#endif\n        putline();\n        exit(0);\n    }\n    ...\n}",
+    "file_path": "usr/src/cmd/who.c",
+    "line_number": 43,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "portability",
+      "vax"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "antiquity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "antiquity": 4,
+        "concreteness": 3
+      },
+      "technical_context": "Bell-32V is the VAX port of V7 Unix. who.c marks `who am i` output with `(Vax)` prefix on VAX builds, no prefix on PDP-11 builds. The intent: admins running both PDP-11 and VAX machines via terminal could tell which machine they were on without checking hostname. No hostname() syscall existed in 1979 — Unix machines were single, anonymous. `#ifdef vax` is the conditional compilation that lets one source tree build for two architectures. Later: #ifdef sun, #ifdef sparc, #ifdef linux, #ifdef _WIN32. The 'one source, many architectures' design starts in 1979.",
+      "human_story": "1979 had two Unix architectures: PDP-11 and VAX. To know which you'd reached over a serial line, who.c slipped (Vax) into the output on VAX builds. Cheap, effective, three lines of #ifdef. By 1985 hostname() existed and the trick became obsolete. But the pattern — one source tree, conditional compilation per architecture — is Unix's core portability technique. macOS, FreeBSD, Linux, AIX, and Windows-Cygwin all build C code from sources peppered with #ifdef. The who.c (Vax) line is the gene of cross-platform Unix."
+    },
+    "appraiser_note": "Bell-32V は V7 Unix の VAX-11/780 移植版。 who.c は `who am i` 出力に **`#ifdef vax` で `(Vax) ` プレフィックス**を付ける——VAX ビルドだけ「(Vax)」 が出る。 意図：PDP-11 と VAX の両方を持つ管理者がリモートログイン中に「今どっちのマシンに居るか」 を判別したい。 1979 年は hostname(2) 未実装、 Unix マシンは匿名だった。 `#ifdef vax` 3 行が「**1 ソース、 2 アーキテクチャ**」 という Unix の根本設計——後の `#ifdef sun`/`#ifdef sparc`/`#ifdef linux`/`#ifdef _WIN32` の系譜。 macOS/FreeBSD/Linux/AIX/Cygwin が同じ C ソースから build できるのは、 こうした条件コンパイル文化の積み重ね。 62 行の who.c に Unix のクロスプラットフォーム DNA が埋め込まれている。"
   }
 ]
