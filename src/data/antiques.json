@@ -10334,5 +10334,86 @@
       "human_story": "Stable APIs are precious. touch -c worked the same in 1979, 1989, 1999, 2009, 2019, 2025. The implementation grew in complexity (timestamp granularity, symlink handling) but the surface stayed identical. The 7 lines of -c logic in the 1979 source are still the spec of touch -c."
     },
     "appraiser_note": "-c フラグでファイル作成を抑制。strcmp() + static int force の 7 行で実装、半世紀後の POSIX touch -c と同じ動作を 1979 年から提供。引数を左から右に順次解釈する素朴さ (touch a -c b で b だけに効く) は GNU coreutils touch で先処理に変更されたが、基本動作は不変。安定 API の結晶。"
+  },
+  {
+    "id": "tail-001-no-follow-flag",
+    "text": "errcom:\n    write(2,\"usage: tail +_n[lbc] [file]\\n\",29);\n    exit(1);",
+    "file_path": "usr/src/cmd/tail.c",
+    "line_number": 159,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "history",
+      "missing-feature"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "antiquity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "antiquity": 5,
+        "purity": 4
+      },
+      "technical_context": "Usage string lists only +_n[lbc] [file]. No -f, no -F, no --follow. tail -f arrives in 4.3BSD (1986). Before that, tail was strictly 'show last N lines then exit'. Log-monitoring use case had not yet driven the design of follow mode. inotify-like efficient APIs were also absent—follow would have to be implemented via polling sleep+lseek+read.",
+      "human_story": "Today, 'tail -f /var/log/messages' is a sysadmin reflex. In 1979 it did not exist. The 163-line tail.c is a snapshot of pre-monitoring computing—you ran tail, saw the result, moved on. Seven years later, BSD added -f and the meaning of 'watching a log' was born. Reading the source teaches: the absence of one flag marks a whole era."
+    },
+    "appraiser_note": "1979 年の tail.c には -f フラグが無い。usage は「tail +_n[lbc] [file]」だけ。-f (follow) は 4.3BSD (1986) で追加され、ログ監視という新しい用途を生んだ。inotify 以前は polling (sleep + lseek + read) でしか実現できず、そもそも「ログを継続監視する」発想自体が 1980 年代の発明。163 行の tail.c は「N 行表示して終わる」純粋な姿——1 つのフラグの不在が、1 つの時代を物語る。"
+  },
+  {
+    "id": "tail-002-lseek-end-or-readall",
+    "text": "lseek(0,(long)0,1);\npiped = errno==ESPIPE;\n...\nkeep:\n    if(!piped) {\n        fstat(0,&statb);\n        di = !bylines&&n<LBIN?n:LBIN-1;\n        if(statb.st_size > di)\n            lseek(0,-di,2);\n    }\n    partial = 1;\n    for(;;) {\n        ...\n        do {\n            j = read(0,&bin[i],LBIN-i);\n            ...\n        } while(i<LBIN);\n        partial = 0;\n    }",
+    "file_path": "usr/src/cmd/tail.c",
+    "line_number": 100,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "lseek",
+      "piped"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "concreteness": 4
+      },
+      "technical_context": "tail detects pipes via lseek(0, 0, SEEK_CUR) + ESPIPE. For regular files: fstat to get size, lseek(0, -di, SEEK_END) to jump backwards to the last LBIN-1 bytes. For pipes: read forward LBIN bytes at a time, overwriting the buffer until EOF—the final iteration leaves the last 4096 bytes in memory. Memory cost is fixed (LBIN=4097) regardless of input size.",
+      "human_story": "Two paths, same destination: 'keep the last 4096 bytes'. The author thought through both cases—regular file (fast: seek once) and pipe (slow: read all, but bounded memory). The trick of using lseek with SEEK_CUR as a 'probe' to detect piped input, without disturbing the file position, is decades-old Unix wisdom still in use today."
+    },
+    "appraiser_note": "tail は piped 検出に `lseek(0, 0, SEEK_CUR)` + ESPIPE を使う——副作用のないシークでファイルポインタを動かさず、エラーで「パイプか否か」を判定する。通常ファイルなら `lseek(0, -di, SEEK_END)` で末尾から逆向きシーク (高速)、パイプならバッファ LBIN=4097 を read で塗り直す (固定メモリ)。「末尾 4 KB を維持する」が 2 通りのパスで実現される、賢い設計。"
+  },
+  {
+    "id": "tail-003-plus-minus-symmetry",
+    "text": "fromend = *arg=='-';\narg++;\n...\nif(!fromend&&n>0)\n    n--;\n...\nif(fromend)\n    goto keep;\n\n            /*seek from beginning */\nif(bylines) { ... }",
+    "file_path": "usr/src/cmd/tail.c",
+    "line_number": 35,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "cli",
+      "design"
+    ],
+    "interesting_score": 17,
+    "ai_analysis": {
+      "primary_emotion": "symmetry",
+      "emotion_intensity": 4,
+      "emotions": {
+        "symmetry": 4,
+        "minimalism": 4
+      },
+      "technical_context": "tail -n: show last n lines/bytes/blocks. tail +n: skip first n-1 lines and show the rest. Same numeric argument, opposite meaning. The fromend flag drives the branch; +n uses 'seek from beginning' code (lseek + read forward), -n uses 'seek from end' (lseek SEEK_END + reverse scan). Default is '-10l'.",
+      "human_story": "Two complementary operations sharing one CLI surface. tail +n is essentially 'head -inverse'—skip the beginning, show the rest. tail -n is 'show the tail'. The 1979 design unified them under one command via the + / - prefix. POSIX preserved this; modern tail still accepts both. The symmetry hints at a deeper truth: file traversal is one operation, just with direction."
+    },
+    "appraiser_note": "tail +n と tail -n は同じ数値で逆方向の意味——「先頭から n 行目以降を全部」 vs 「末尾から n 行」。fromend フラグで分岐し、+ は seek-from-beginning、- は seek-from-end のコードパスへ。1979 年から半世紀、POSIX も維持する CLI 表面。デフォルトは `-10l` で「末尾 10 行」。+ と - の対称性が「ファイル走査は方向違いの 1 操作」という設計思想を表す。"
   }
 ]
