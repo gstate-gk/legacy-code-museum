@@ -10253,5 +10253,86 @@
       "human_story": "Unlike mount.c's silent overflow, umount.c explicitly warns when /etc/mtab is out of sync. The 1979 author judged 'something is missing where it should be' as more dangerous than 'no room left'. Reading the source teaches: the same bug template (mtab inconsistency) can produce silence in one branch and a warning in the other, based on which direction matters more."
     },
     "appraiser_note": "umount(2) が成功した後、/etc/mtab に該当エントリが無ければ「not in mount table」と警告。これは「カーネルからは切り離したが、ユーザー空間 /etc/mtab には記録が残っている／既に消されていた」という二重管理の不整合の検出。前回鑑定した mount.c の「テーブル満杯はサイレント諦め」と対照的——「あるべきものがない」のほうが「入れる場所がない」より深刻という判断。"
+  },
+  {
+    "id": "touch-001-read-write-trick",
+    "text": "if( (fd = open(name, 2)) < 0)\n    goto bad;\n\nif( read(fd, junk, 1) < 1) {\n    close(fd);\n    goto bad;\n}\nlseek(fd, 0L, 0);\nif( write(fd, junk, 1) < 1 ) {\n    close(fd);\n    goto bad;\n}\nclose(fd);",
+    "file_path": "usr/src/cmd/touch.c",
+    "line_number": 45,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "trick",
+      "filesystem"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "cleverness",
+      "emotion_intensity": 5,
+      "emotions": {
+        "cleverness": 5,
+        "minimalism": 4
+      },
+      "technical_context": "Instead of using utime(2), Bell-32V touch reads one byte, seeks back to offset 0, and writes the same byte. The file content is unchanged, but the write(2) call updates st_mtime and st_ctime. Why not utime(2)? Because utime's permission model was inconsistent—NULL argument required write access, but specific time required ownership. The read+write trick guarantees a simple rule: 'if you can write to the file, you can touch it.'",
+      "human_story": "Modern touch calls utimensat() in one line. The 1979 author chose a four-step dance—open, read, lseek, write—to dodge utime's permission quirks. The 'change nothing while changing everything' trick is what programmers do when the API does not quite fit. Reading the source teaches: the elegance is in what is not used."
+    },
+    "appraiser_note": "1979 年の touch は utime(2) を使わない——1 バイト read して lseek(fd, 0L, 0) で先頭に戻し、同じ 1 バイトを write することで mtime を更新する妙技。内容は 1 バイトも変わらないが file system は「書き込みが起きた」と認識する。utime(2) の権限モデルが不一致 (NULL なら書込権限、特定時刻なら所有者) なため、「書き込めるなら touch できる」を保証する read+write のトリックを選んだ。utimensat() 1 行で済む現代から見ると、4 ステップの「変えずに変える」舞踊が美しい。"
+  },
+  {
+    "id": "touch-002-empty-file-creat",
+    "text": "if(stbuff.st_size == 0)\n    goto create;\n...\ncreate:\n    if( (fd = creat(name, 0666)) < 0)\n        goto bad;\n    close(fd);",
+    "file_path": "usr/src/cmd/touch.c",
+    "line_number": 41,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "edge-case",
+      "filesystem"
+    ],
+    "interesting_score": 17,
+    "ai_analysis": {
+      "primary_emotion": "thoroughness",
+      "emotion_intensity": 4,
+      "emotions": {
+        "thoroughness": 4,
+        "pragmatism": 4
+      },
+      "technical_context": "The 1-byte read trick fails on empty files (nothing to read). touch handles this by routing st_size==0 files through the same 'create' path that handles missing files. creat(0666) truncates if needed (no harm—file was already empty) and updates mtime. Two distinct entry points (missing file, empty file) converge on one creat() call.",
+      "human_story": "Edge cases reveal the structure of a solution. The read+write trick covers files with data; the creat path covers files without. The 1979 author saw both branches and chose to merge them via 'goto create'. The result is robust without being complicated—two paths in, one path out."
+    },
+    "appraiser_note": "1 バイト read のトリックは空ファイル (st_size == 0) では失敗するため、空ファイルは creat() 経路に自動分岐する。「ファイルが存在しない」と「ファイルが空」の 2 つのケースが creat(name, 0666) という同じ出口に集約される設計。 0666 は umask で 0644 になる。 既存空ファイルを truncate しても結果は同じ (空のまま) で mtime が更新される。 2 つの入口を 1 つの処理で受ける、エッジケース統合の美しさ。"
+  },
+  {
+    "id": "touch-003-c-flag-noforce",
+    "text": "static int force = 1;\n\nfor(i = 1 ; i < argc ; ++i)\n    if( strcmp(argv[i], \"-c\") )\n        touch(force, argv[i]);\n    else\n        force = 0;\n\n... in touch():\nif( stat(name,&stbuff) < 0)\n    if(force)\n        goto create;\n    else\n        fprintf(stderr, \"touch: file %s does not exist.\\n\", name);",
+    "file_path": "usr/src/cmd/touch.c",
+    "line_number": 9,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "cli",
+      "posix"
+    ],
+    "interesting_score": 16,
+    "ai_analysis": {
+      "primary_emotion": "stability",
+      "emotion_intensity": 4,
+      "emotions": {
+        "stability": 4,
+        "minimalism": 3
+      },
+      "technical_context": "The -c flag suppresses file creation: when the target does not exist, touch -c silently does nothing instead of creating an empty file. The implementation is a single static int and a strcmp in the loop. Behavior matches POSIX touch -c half a century later. The 1979 implementation processes -c left-to-right (touch a -c b applies -c only to b), differing from modern getopt that pre-collects options.",
+      "human_story": "Stable APIs are precious. touch -c worked the same in 1979, 1989, 1999, 2009, 2019, 2025. The implementation grew in complexity (timestamp granularity, symlink handling) but the surface stayed identical. The 7 lines of -c logic in the 1979 source are still the spec of touch -c."
+    },
+    "appraiser_note": "-c フラグでファイル作成を抑制。strcmp() + static int force の 7 行で実装、半世紀後の POSIX touch -c と同じ動作を 1979 年から提供。引数を左から右に順次解釈する素朴さ (touch a -c b で b だけに効く) は GNU coreutils touch で先処理に変更されたが、基本動作は不変。安定 API の結晶。"
   }
 ]
