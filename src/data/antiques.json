@@ -9848,5 +9848,86 @@
       "human_story": "C standard library lacked 'is this string entirely numeric' predicate in 1979. Every command that took uid/gid/pid as flexible input rolled its own isnumber(). It is 7 lines. Half a century later, atoi/strtol exist but isnumber-style checks still appear in shell scripts and CLI tools, because the predicate is small enough to not need a library."
     },
     "appraiser_note": "isnumber() 7 行で uid 数値と username 文字列を判別。全文字 isdigit() なら atoi() で uid に、そうでなければ getpwnam() で /etc/passwd を引く。1979 年は C 標準ライブラリに「全数字判定」が無く、毎回手書き。「42」という名前のユーザーは数値解釈されて引けない——後の GNU coreutils が +42 で「数字として強制」する拡張を追加。"
+  },
+  {
+    "id": "stty-001-terminal-presets",
+    "text": "\"33\",      CR1,              ALLDELAY,\n\"tty33\",   CR1,              ALLDELAY,\n\"37\",      FF1+CR2+TAB1+NL1, ALLDELAY,\n\"tty37\",   FF1+CR2+TAB1+NL1, ALLDELAY,\n\"05\",      NL2,              ALLDELAY,\n\"vt05\",    NL2,              ALLDELAY,\n\"tn\",      CR1,              ALLDELAY,\n\"tn300\",   CR1,              ALLDELAY,\n\"ti\",      CR2,              ALLDELAY,\n\"ti700\",   CR2,              ALLDELAY,\n\"tek\",     FF1,              ALLDELAY,",
+    "file_path": "usr/src/cmd/stty.c",
+    "line_number": 148,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "hardware",
+      "terminal"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "nostalgia",
+      "emotion_intensity": 5,
+      "emotions": {
+        "nostalgia": 5,
+        "concreteness": 4
+      },
+      "technical_context": "stty.c hardcodes optimal delay flags for ASR-33 (Teletype 33), Teletype Model 37, DEC VT05, GE TermiNet 300, TI Silent 700, and Tektronix terminals. Each had distinct mechanical or electrical characteristics demanding specific CR/NL/FF/TAB delay settings to avoid character loss.",
+      "human_story": "When stty.c was written, terminals were physical machines with mechanical inertia. Sending NL too fast made an ASR-33 drop characters because the platen could not roll fast enough. The presets here are tombstones for the machines themselves; by the late 1980s CRT terminals replaced them all, and modern stty.c lost these names. Reading the table is reading a small museum of hardware that vanished."
+    },
+    "appraiser_note": "stty.c に実在の端末機種名が直接書かれている: ASR-33 / Teletype 37 / DEC VT05 / GE TermiNet 300 / TI Silent 700 / Tektronix。それぞれが必要とした遅延フラグ (CR/NL/FF/TAB/BS) の組み合わせが鎮座する。テレタイプの機械的慣性、CRT の画面消去遅延、サーマルプリンタの印字時間——全てが「機械の物理時間をソフトウェアで補う」設計に表れている。現代の stty.c からはこれらの機種名は消えた。"
+  },
+  {
+    "id": "stty-002-134-5-baud",
+    "text": "\"0\",    B0,\n\"50\",   B50,\n\"75\",   B75,\n\"110\",  B110,\n\"134\",  B134,\n\"134.5\",B134,\n\"150\",  B150,\n\"200\",  B200,\n\"300\",  B300,\n\"600\",  B600,\n\"1200\", B1200,\n\"1800\", B1800,\n\"2400\", B2400,\n\"4800\", B4800,\n\"9600\", B9600,\n\"exta\", EXTA,\n\"extb\", EXTB,",
+    "file_path": "usr/src/cmd/stty.c",
+    "line_number": 14,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "baud-rate",
+      "history"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "specificity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "specificity": 4,
+        "curiosity": 4
+      },
+      "technical_context": "Baud rates from 0 (hang up) to 9600 are enumerated. Among them, 134.5 baud is unusual—an IBM 2741 terminal speed derived from Selectric typewriter mechanical timing. Both \"134\" and \"134.5\" map to B134, supporting historical input strings. EXTA/EXTB are reserved expansion slots; new speeds could not be added without kernel changes.",
+      "human_story": "The IBM 2741 Selectric ran at 134.5 baud, a non-integer baud rate that emerged from the typewriter's mechanical clock divisions. No other terminal needed half-baud precision, but Selectrics did. The 1979 stty.c quietly supported it via string-matching \"134.5\". Today's USB serial supports B921600+ via TIOCSSERIAL, leaving the Selectric speed as a numeric curiosity."
+    },
+    "appraiser_note": "ボーレート列挙は 0 (hang up) から 9600 まで——その中に「134.5」という小数の速度がある。IBM 2741 Selectric タイプライターの機械的クロックに由来する非整数 baud rate。`134` と `134.5` は同じ B134 定数にマップされ、文字列だけで両方を受け付けた。9600 baud が「最高速」だった時代の通信速度の地図。"
+  },
+  {
+    "id": "stty-003-ctrl-with-037",
+    "text": "if (eq(\"erase\")) {\n    if (**++argv == '^')\n        mode.sg_erase = (*argv)[1] & 037;\n    else\n        mode.sg_erase = **argv;\n    argc--;\n}",
+    "file_path": "usr/src/cmd/stty.c",
+    "line_number": 196,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "ascii",
+      "bitwise"
+    ],
+    "interesting_score": 17,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "concreteness": 4
+      },
+      "technical_context": "'^X' notation in stty becomes a control character via (c & 037). 037 = 0x1F clears the upper 3 ASCII bits, mapping printable @-_ to control characters 0x00-0x1F. This mirrors ASCII's design: the Ctrl key physically clears the same bits. 'H' & 037 = 0x08 = Ctrl-H = Backspace.",
+      "human_story": "ASCII was designed so that the Ctrl key physically zeros bits 5 and 6 of the keypress. The 1979 stty.c uses '& 037' to do the same trick in software. Five decades later, 'stty erase ^H' still works the same way, and 'X' & 037 still produces Ctrl-X. Some abstractions outlive the hardware that inspired them."
+    },
+    "appraiser_note": "`stty erase ^H` のような `^X` 記法を `(*argv)[1] & 037` で制御文字に変換する古典テクニック。037 = 0x1F = 上位 3 ビットマスク。ASCII の設計で「Ctrl キーは物理的に上位ビットをクリアする」というのを、ソフトウェアで再現している。'H' & 037 = 0x08 = Ctrl-H = Backspace。半世紀後の現代 stty でも同じ記法・同じ実装が動いている。"
   }
 ]
