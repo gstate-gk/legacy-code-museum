@@ -10658,5 +10658,140 @@
       "human_story": "PDP-11 retired in the 1990s but its alignment habit lives in every modern .a file. Hardware shape leaves fingerprints on data formats. The IODD/OODD mechanism doesn't make sense unless you understand 1979 hardware: 16-bit words, bus errors on misaligned access. Today's GNU ar still pads to even bytes — not because anyone needs it, but because compatibility outlives the hardware that motivated it. Binary formats are archaeology."
     },
     "appraiser_note": "PDP-11/VAX は 16 ビットワード単位でメモリアクセスし、 奇数アドレスから 2 バイト読むと bus error で例外発生。 そのため ar はメンバー間を **2 バイト境界**に揃える——`IODD` (input odd) で読み側、 `OODD` (output odd) で書き側の奇数長を 1 バイト切り上げ。 ヘッダ書換時 (HEAD flag) は入出力サイズが異なるので、 独立に制御できる設計。 パディングバイトの中身は不定、 アラインメントが優先。 `ar_size -= 512` (常に 512) でループ最後に負値で停止する K&R 流。 PDP-11 が引退して 30 年経っても、 現代の GNU ar / SVR4 ar 仕様は偶数アラインメントを継承——ハードウェアの形がバイナリ形式に痕跡を残す典型例。"
+  },
+  {
+    "id": "m4-001-hashtable-prime",
+    "text": "#define HSHSIZ  199    /* prime */\n\nstruct nlist {\n    char *name;\n    char *def;\n    struct nlist *next;\n};\nstruct nlist *hshtab[HSHSIZ];\n\nstruct nlist *lookup(str) {\n    s1 = str;\n    for (hshval = 0; *s1; )\n        hshval += *s1++;\n    hshval %= HSHSIZ;\n    for (np = hshtab[hshval]; np!=NULL; np = np->next) {\n        s1 = str;\n        s2 = np->name;\n        while (*s1++ == *s2)\n            if (*s2++ == EOS)\n                return(np);\n    }\n    return(&nodef);\n}",
+    "file_path": "usr/src/cmd/m4/m4.c",
+    "line_number": 29,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "hashtable",
+      "macro-processor"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "antiquity": 4
+      },
+      "technical_context": "m4 stores macro definitions in a 199-slot hash table with chaining. 199 is prime — the comment says so explicitly. Why prime? Hash function is character sum mod HSHSIZ, and a composite modulus would cause clustering on input patterns (e.g. all-even ASCII). Prime modulus spreads collisions uniformly. Hash function uses only addition — no XOR, no multiply, no shift. Collisions are handled by linked-list chaining (the next pointer in struct nlist). Inline string comparison (`while (*s1++ == *s2)`) avoids strcmp() call overhead. 199 slots × avg 1-2 entries ≈ 200-400 macros — matches typical sendmail.cf macro sets.",
+      "human_story": "1977 K&R wrote down what every modern hash table textbook teaches. 199 is prime. Chaining handles collisions. The hash function is simple because the modulus is prime. Python's dict, JavaScript's Map, Go's map, Rust's HashMap — all start from this skeleton. The 'prime' comment in 1977 source code is the first textbook page of computer science, written in code."
+    },
+    "appraiser_note": "m4 のマクロ辞書は **199 スロット素数ハッシュテーブル + chaining**。 コメントに 「prime」 と明記されており、 ハッシュ関数 `hshval += *s1++; hshval %= HSHSIZ` (文字コード単純和の mod 199) が偏りなく分散するための数学的選択。 合成数 modulus だと特定パターン (例: 全偶数 ASCII) で衝突が偏るが、 素数なら均等分散。 ハッシュは加算のみ——XOR/乗算/シフトなし、 K&R 流のシンプル志向。 衝突は linked list (struct nlist の next ポインタ) で吸収。 lookup の `while (*s1++ == *s2)` インライン比較は strcmp() の関数呼び出しコストを嫌う 1979 流。 sendmail.cf マクロセットの 200〜400 個に対応する設計。"
+  },
+  {
+    "id": "m4-002-builtin-pointer-dispatch",
+    "text": "defloc = install(\"define\", eoa);\nevaloc = install(\"eval\", eoa);\ninclloc = install(\"include\", eoa);\ndivloc = install(\"divert\", eoa);\n/* ... 23 builtins ... */\n\nexpand(a1, c) {\n    dp = a1[-1];\n    if (dp==defloc)\n        dodef(a1, c);\n    else if (dp==evaloc)\n        doeval(a1, c);\n    else if (dp==inclloc)\n        doincl(a1, c, 1);\n    /* ... 23 if-else chain ... */\n    else {\n        /* user-defined: $1-$9 substitution */\n        if (--dp>a1[-1] && dp[-1]=='$') {\n            n = *dp-'0';\n            if (n>=0 && n<=9) {\n                if (n <= c)\n                    pbstr(a1[n]);\n                dp--;\n            }\n        }\n    }\n}",
+    "file_path": "usr/src/cmd/m4/m4.c",
+    "line_number": 391,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "macro-processor",
+      "design"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "minimalism",
+      "emotion_intensity": 4,
+      "emotions": {
+        "minimalism": 4,
+        "elegance": 4
+      },
+      "technical_context": "23 builtins (define, undefine, ifdef, ifelse, eval, include, sinclude, syscmd, incr, len, substr, index, translit, divert, undivert, divnum, dnl, dumpdef, errprint, shift, changequote, maketemp, dodef) dispatched via raw pointer comparison: `dp == defloc`. defloc is the def-string pointer returned from install(), so 'is this the define builtin?' becomes 'is dp the same pointer as defloc?' — O(1) ID check, no strcmp. If user redefines define via `define(define, foo)`, the new def-string has a different pointer and falls through to user-defined branch. The else clause handles $1-$9 parameter substitution via pbstr (push-back to input).",
+      "human_story": "23 builtins, dispatched by raw pointer equality. No switch on strings, no hash lookup at expansion time — just (void*) == (void*). The trick: install() returns a pointer that IS the identity. Once you have it, comparison is one machine instruction. Modern OOP method dispatch arrives at the same place via vtables. K&R got there with 23 if-else lines."
+    },
+    "appraiser_note": "m4 は 23 ビルトイン (define/undefine/ifdef/ifelse/eval/include/sinclude/syscmd/incr/len/substr/index/translit/divert/undivert/divnum/dnl/dumpdef/errprint/shift/changequote/maketemp) を **関数ポインタアドレスの直接比較** (`dp == defloc`) で分岐する。 defloc は `install(\"define\", eoa)` の返り値——def 文字列のポインタが ID として機能する。 `switch(*dp)` の文字列比較ではなく、 ポインタの数値比較なので O(1)。 ユーザーが define を再定義すると新しい def 文字列ポインタになり、 else 節 (`$1-$9` パラメータ置換) に落ちる。 23 個の if-else でも実用上十分速い。 後の OOP の vtable と同じ抽象を、 1977 年のポインタ比較で実現。"
+  },
+  {
+    "id": "m4-003-9-stream-diversion",
+    "text": "tempname = mktemp(\"/tmp/m4aXXXXX\");\nclose(creat(tempname, 0));\n...\ndodiv(ap, c) {\n    f = ctoi(ap[1]);\n    if (f>=10 || f<0) {\n        curfile = NULL;\n        return;\n    }\n    tempname[7] = 'a' + f;\n    if (olist[f] || (olist[f]=fopen(tempname, WRITE))) {\n        curout = f;\n        curfile = olist[f];\n    }\n}\n\ndelexit() {\n    for (i=1; i<10; i++) {\n        if (olist[i]==NULL) continue;\n        fclose(olist[i]);\n        tempname[7] = 'a'+i;\n        if (okret) {\n            fp = fopen(tempname, READ);\n            while ((c = getc(fp)) > 0)\n                putchar(c);\n            fclose(fp);\n        }\n        unlink(tempname);\n    }\n}",
+    "file_path": "usr/src/cmd/m4/m4.c",
+    "line_number": 785,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "macro-processor",
+      "creativity"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "creativity": 5,
+        "elegance": 4
+      },
+      "technical_context": "m4's most original feature: 9 numbered output streams. divert(N) routes output to stream N (0-9), undivert merges them back into the main flow. Implementation hack: tempname = '/tmp/m4aXXXXX' (mktemp output), then mutate the 7th char to 'a'+N for stream N — one string buffer represents 10 file names. At exit (delexit), iterate i=1..9, read each diversion file, write to stdout, unlink. Enables spatial rearrangement of text — sendmail.mc declares headers/rules/macros/mailers in any order, but the generated sendmail.cf comes out in the right order because each section is diverted to its own stream and merged at the end.",
+      "human_story": "m4's diversion is the killer feature that made sendmail configurable. Without it, the order you wrote macros in .mc had to match the order they appear in .cf — unworkable for complex configs. With divert(N), you write 'put this in section 2', 'put this in section 5', and m4 stitches them back together. The implementation is a hack: mutate the 7th byte of a string to spawn 10 file names from one template. Cheap, brilliant, alive 50 years later."
+    },
+    "appraiser_note": "m4 の最も独創的な機能が **9 ストリーム diversion**——`divert(N)` で出力を 0〜9 の番号付きストリームに振り分け、 `undivert` で本流に結合。 実装は驚くべきハック：`/tmp/m4aXXXXX` という文字列の **7 文字目を `'a'+f` で上書き**して `/tmp/m4bXXXXX`, `/tmp/m4cXXXXX`, ... と 10 個のファイル名を派生させる。 1 つの文字列バッファで 10 個のファイル名を扱う省メモリ手法。 終了時に i=1〜9 順に読み出して stdout に結合、 unlink。 sendmail.mc の宣言順序とは無関係に sendmail.cf を正しい順で生成できる秘密はこの diversion。 「文章を空間的に並び替える」 機能、 GNU autoconf も継承。"
+  },
+  {
+    "id": "m4-004-pushback-rescan",
+    "text": "#define putbak(c)    *ip++ = c;\n#define getchr()     (ip>cur_ip?*--ip: getc(infile[infptr]))\n\nchar ibuf[SAVS+TOKS];  /* SAVS=4096 */\nchar *ip = ibuf;\nchar *cur_ip = ibuf;\n\npbstr(str)\nregister char *str;\n{\n    register char *p;\n    p = str;\n    while (*p++);\n    --p;\n    if (ip >= &ibuf[SAVS]) {\n        fprintf(stderr, \"m4: pushback overflow\\n\");\n        delexit();\n    }\n    while (p > str)\n        putbak(*--p);\n}",
+    "file_path": "usr/src/cmd/m4/m4.c",
+    "line_number": 34,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "macro-processor",
+      "rescan"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "abstraction": 4
+      },
+      "technical_context": "putbak/getchr macro pair: getchr() reads from pushback stack first (ip>cur_ip), falls back to file input. putbak() pushes a char to the stack. pbstr() pushes a whole string in reverse order, so subsequent getchr() calls retrieve it forward. SAVS=4096 byte pushback buffer. Why pushback? Macro expansion may produce text containing more macros — instead of writing to output and losing rescan ability, the expansion result is fed back into the input stream where m4 re-scans it. This is the core of macro processing: expansion results re-enter expansion. After-expansion text is indistinguishable from original input.",
+      "human_story": "The trick that makes macro processors actually work: pretend the expansion result was always there. `define(foo, bar(x))` — when you expand foo, you get bar(x), but bar is itself a macro. If you wrote bar(x) to output, you've lost. Instead, push bar(x) back to the input. The next getchr() sees b, a, r, (, x, ) just like reading from a file. The macro processor's pretend-rescan-is-real engine. Every modern macro system (Lisp macroexpand, C preprocessor, Rust macro_rules!) descends from this idea."
+    },
+    "appraiser_note": "m4 のマクロ展開の核は **「展開結果を入力に戻す**」 プッシュバック。 `getchr()` は ip > cur_ip ならスタックから 1 文字、 そうでなければファイルから読む。 `putbak(c)` は `*ip++ = c` で 1 文字積む。 `pbstr(str)` は文字列を **逆順に push** することで、 後の getchr() が正順で受け取る——LIFO スタックの典型活用。 SAVS=4096 byte の pushback バッファ。 マクロ展開結果が **さらにマクロを含む**場合 (`define(foo, bar(x))` の bar)、 出力に直接書くと再スキャンできない——入力に戻すことで「あたかも元から入力にあった」 ように再スキャンできる。 マクロ展開結果が展開対象に再入する、 マクロプロセッサの心臓。 Lisp macroexpand、 C プリプロセッサ、 Rust macro_rules! の祖。"
+  },
+  {
+    "id": "m4-005-yacc-eval-integration",
+    "text": "/* m4.c: */\nlong  evalval;\nchar *pe;\n\ndoeval(ap, c) {\n    if (c > 0) {\n        pe = ap[1];\n        if (yyparse() == 0)\n            putnum(evalval);\n        else\n            fprintf(stderr, \"m4: invalid expression in eval: %s\\n\", ap[1]);\n    }\n}\n\n/* m4y.y: */\ne   : e '|' e   ={ $$ = ($1!=0 || $3!=0) ? 1 : 0; }\n    | e '&' e   ={ $$ = ($1!=0 && $3!=0) ? 1 : 0; }\n    | '!' e     ={ $$ = $2 == 0; }\n    | e EQ e    ={ $$ = $1 == $3; }\n    ...\n    | e POWER e ={ for ($$=1; $3-->0; $$ *= $1); }\n    | DIGITS    ={ $$ = evalval; }\n    ;",
+    "file_path": "usr/src/cmd/m4/m4y.y",
+    "line_number": 21,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "Yacc",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "yacc",
+      "parser"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "abstraction": 4
+      },
+      "technical_context": "m4 delegates arithmetic evaluation to a 94-line yacc grammar (m4y.y). doeval() sets global `pe` to the expression string, calls yyparse(). Grammar handles logical ops (|, &, !), comparisons (>, >=, <, <=, ==, !=), arithmetic (+, -, *, /, %), exponentiation (**), unary minus, parentheses, integers. Power is implemented inline: `for ($$=1; $3-->0; $$ *= $1)` — multiplication loop, no libm. yylex() advances pe pointer; peek() handles 2-char operators (>=, <=, ==, etc.). This separation (m4 does text, yacc does arithmetic) is the same pattern awk uses.",
+      "human_story": "When m4 needs to do math, it doesn't try to parse arithmetic in C — it generates a yacc parser and calls yyparse(). 94 lines of yacc grammar gives a full expression evaluator: precedence, associativity, all operators including exponentiation. ifelse(eval(i<10), 1, 0) becomes possible because eval is a real expression evaluator, not a hack. The same pattern shows up in awk (yacc grammar, C actions). Specialized tool composition is the Unix philosophy made tangible."
+    },
+    "appraiser_note": "m4 は算術式評価を **94 行の yacc 文法 (m4y.y)** に委譲する。 `doeval()` がグローバル `pe` ポインタに式を渡し、 `yyparse()` を呼ぶ——成功すれば `evalval` に値が入る。 文法は論理演算 (|, &, !)、 比較 (>, >=, <, <=, ==, !=)、 加減乗除剰余、 冪乗 (**)、 単項マイナス、 括弧、 整数を完全サポート。 `POWER` は `for ($$=1; $3-->0; $$ *= $1)` の inline ループで実装、 libm 呼び出しなし。 yylex() は pe ポインタを進めながらトークン化、 peek() で 2 文字演算子を判別。 m4 (テキスト) + yacc (算術) の分離は awk と同じパターン——「特化したツールを組み合わせる」 Unix 哲学の具現化。 ifelse(eval(i<10), ...) のような構造的繰り返しを可能にする。"
   }
 ]
