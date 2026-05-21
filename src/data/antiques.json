@@ -9606,5 +9606,85 @@
       "human_story": "mv /a/b/c /a/b/c/d would put c inside itself, making find loop forever. The check() function walks the parent chain to ROOTINO and refuses if it sees c on the way. The same logic now lives in the kernel; in 1979 it lived in 25 lines of mv.c."
     },
     "appraiser_note": "ディレクトリを自分の中に移そうとすると、ファイルシステムグラフに循環が生まれ find などが無限ループに陥る。check() は target の親方向を /../ 連結で ROOTINO (inode 2) まで遡り、途中で source の inode が出てきたら拒否。現代では rename(2) がカーネル内で同じ判定をする (EINVAL) が、1979 年は mv.c の中の 25 行で手作業だった。"
+  },
+  {
+    "id": "ln-001-one-line-link",
+    "text": "if (link(argv[1], name)<0) {\n    perror(\"ln\");\n    exit(1);\n}\nexit(0);",
+    "file_path": "usr/src/cmd/ln.c",
+    "line_number": 51,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "syscall-wrapper",
+      "minimal"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "purity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "purity": 5,
+        "elegance": 4
+      },
+      "technical_context": "The entire body of ln is a single link(2) call wrapped in error handling. Hard links share an inode and increment its reference count. ln is the thinnest possible wrapper around a syscall.",
+      "human_story": "Symbolic links did not yet exist in 1979 (4.2BSD adds symlink in 1983). For four years, 'link' meant exactly one thing: another name for the same inode. The 56-line ln.c reflects that minimalism—one line of work, fifty-five lines of argument handling and defense."
+    },
+    "appraiser_note": "ln の本体はたった 1 行——`link(argv[1], name)`。残り 55 行は引数解析、stat 確認、basename 抽出、エラー報告。1979 年から 1983 年 (4.2BSD で symlink 登場) までの 4 年間、「リンク」は inode への参照そのもの 1 種類だけだった。Unix ファイルシステムの根幹がそのままコマンドに表れている薄さ。"
+  },
+  {
+    "id": "ln-002-superuser-dirlink",
+    "text": "if (argc >1 && strcmp(argv[1], \"-f\")==0) {\n    argc--;\n    argv++;\n    fflag++;\n}\n...\nif (fflag==0 && (statb.st_mode&S_IFMT) == S_IFDIR) {\n    printf(\"ln: %s is a directory\\n\", argv[1]);\n    exit(1);\n}",
+    "file_path": "usr/src/cmd/ln.c",
+    "line_number": 19,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "permission",
+      "filesystem"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "trust",
+      "emotion_intensity": 4,
+      "emotions": {
+        "trust": 4,
+        "danger": 3
+      },
+      "technical_context": "Without -f, ln refuses to create a hard link to a directory. With -f and superuser privileges, link(2) accepts the directory and creates a second name pointing at the same directory inode. This can introduce filesystem cycles (e.g. dir contains a hardlink to one of its ancestors), causing find/du to loop forever.",
+      "human_story": "Bell-32V trusted root. -f lets root create directory hardlinks at their own peril. 4.2BSD and beyond ban the operation entirely at the syscall level; mortals (and root) lost a foot-gun and gained symlinks instead."
+    },
+    "appraiser_note": "-f フラグを立てて superuser が ln を実行すると、ディレクトリへのハードリンクが作れた。普通は拒否される（ファイルシステムに循環が生まれ find/du が無限ループする）。1979 年は root の自由を信じていた——4.2BSD 以降、link(2) システムコール自体がディレクトリリンクを拒否するようになり、代わりに symlink が導入された。"
+  },
+  {
+    "id": "ln-003-rindex-old-name",
+    "text": "char\t*rindex();\n...\nnp = rindex(argv[1], '/');\nif (np==0)\n    np = argv[1];\nelse\n    np++;",
+    "file_path": "usr/src/cmd/ln.c",
+    "line_number": 8,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "c-history",
+      "naming-convention"
+    ],
+    "interesting_score": 16,
+    "ai_analysis": {
+      "primary_emotion": "antiquity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "antiquity": 4,
+        "curiosity": 3
+      },
+      "technical_context": "rindex() is the older BSD name for what POSIX later standardized as strrchr(). The 'r' marks 'reverse' (last occurrence), and 'index' returns a position within the string. Both names coexist in modern libc but new code uses strrchr; rindex/index live in <strings.h> as legacy.",
+      "human_story": "Naming conventions are time capsules. The 1979 ln.c declares 'char *rindex();' with no include and reaches for the function as if it were a verb. Decades later, POSIX renamed it strrchr—same operation, different worldview about how to namespace string functions."
+    },
+    "appraiser_note": "rindex() は strrchr() の旧 BSD 名——「r」=reverse（逆方向）、「index」=文字位置を返す。POSIX が後に strrchr を標準化、現代のコードは strrchr を使うが、libc には今も rindex が <strings.h> で生きている。1979 年は `<strings.h>` のインクルードすらなく `char *rindex();` の前方宣言だけで呼んでいた——古い C の流儀。"
   }
 ]
