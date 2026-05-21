@@ -9444,5 +9444,86 @@
       "human_story": "rm has two personalities. From a shell prompt it is cautious and asks; from inside a pipeline it is silent and obedient. The whole behavior switch is two lines of isatty. Forty-six years later, GNU rm and BusyBox rm still default to the same heuristic."
     },
     "appraiser_note": "標準入力が端末でなければ fflg を自動セット——`find ... | rm` のようなパイプ経由なら確認を出さず黙々と削除、対話シェルからなら丁寧に書込み権限の無いファイルを聞き返す。3行で「対話的 rm」と「パイプ用 rm」の二つの人格を切り替える、Unix の便宜の真骨頂。"
+  },
+  {
+    "id": "cp-001-basename-extract",
+    "text": "p1 = from;\np2 = to;\nbp = iobuf;\nwhile(*bp++ = *p2++)\n    ;\nbp[-1] = '/';\np2 = bp;\nwhile(*bp = *p1++)\n    if (*bp++ == '/')\n        bp = p2;",
+    "file_path": "usr/src/cmd/cp.c",
+    "line_number": 50,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "K&R",
+      "path-handling"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "ingenuity": 4
+      },
+      "technical_context": "When the target is a directory, cp appends source basename to the path. It uses four nested while loops in K&R style: 1) copy target to iobuf, 2) plant a '/' separator, 3) rewind bp to that position whenever a '/' appears in source. The final write retains only the basename. No strrchr, no strlen, one pass.",
+      "human_story": "K&R era C programmers did not have helpers; they had pointers and side effects. Reading this loop teaches you why classic C is both terse and beautiful. Modern code says path.split('/').pop(); the 1979 cp.c says: every time you see a '/', rewind."
+    },
+    "appraiser_note": "while(*bp = *p1++) if (*bp++ == '/') bp = p2; — ソースパスを1文字ずつ書き、'/'を見るたびに書き込み位置を巻き戻す。これだけで最後の '/' 以降だけが残り、basename が抽出される。strrchr も strlen も呼ばない、K&R 流の副作用ループの真骨頂。"
+  },
+  {
+    "id": "cp-002-same-file-detect",
+    "text": "if (stat(to, &stbuf2) >= 0) {\n    if (stbuf1.st_dev == stbuf2.st_dev &&\n       stbuf1.st_ino == stbuf2.st_ino) {\n        fprintf(stderr, \"cp: cannot copy file to itself.\\n\");\n        return(1);\n    }\n}",
+    "file_path": "usr/src/cmd/cp.c",
+    "line_number": 64,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "filesystem",
+      "safety"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "rigor",
+      "emotion_intensity": 4,
+      "emotions": {
+        "rigor": 4,
+        "pragmatism": 3
+      },
+      "technical_context": "Identity check uses both st_dev and st_ino because inode numbers are not unique across filesystems. Catches cp foo foo, cp foo ./foo, cp foo bar where bar is a hardlink of foo, and cross-path same-mount cases.",
+      "human_story": "Without this two-line check, cp foo foo would happily truncate foo to zero bytes and try to copy from the now-empty file. The 1979 engineers added st_dev to protect against the moment a future filesystem might reuse inode 42 across volumes."
+    },
+    "appraiser_note": "(st_dev, st_ino) のペアで「同じファイル」を判定——inode 番号はファイルシステムごとに独立なので、デバイス ID も必須。cp foo foo を防ぐと同時に、ハードリンク経由の自己コピーも検出する。2行のチェックが半世紀後の cp にも形を変えて生きている。"
+  },
+  {
+    "id": "cp-003-bsize-512",
+    "text": "#define\tBSIZE\t512\n...\nchar\tiobuf[BSIZE];\n...\nwhile(n = read(fold, iobuf, BSIZE)) {\n    if (n < 0) { ... return(1); }\n    else if (write(fnew, iobuf, n) != n) { ... return(1); }\n}",
+    "file_path": "usr/src/cmd/cp.c",
+    "line_number": 75,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "block-size",
+      "io"
+    ],
+    "interesting_score": 16,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 4,
+      "emotions": {
+        "concreteness": 4,
+        "pragmatism": 4
+      },
+      "technical_context": "BSIZE = 512 matches the PDP-11/VAX disk block size. Each read() pulls exactly one disk block. No sparse-file detection, no metadata preservation, no per-platform tuning. Just read 512 bytes, write whatever came back.",
+      "human_story": "GNU coreutils cp uses st_blksize, fadvise() and 64 KB buffers. The 1979 cp.c knows nothing of that—and did not need to. Disks were measured in megabytes; the kernel paged 512 bytes at a time anyway. The simplest loop is sufficient when the hardware sets the rhythm."
+    },
+    "appraiser_note": "BSIZE = 512 は PDP-11 / VAX のディスクブロックサイズと完全に一致——cp は1回の read で物理ブロック1つを引っ張る。ホールファイル検出なし、メタデータ保存なし、進捗表示なし。素朴な while(n = read(...)) ループ7行で『ファイルを別の場所に複製する』が完結する 1979 年の最小定義。"
   }
 ]
