@@ -10415,5 +10415,86 @@
       "human_story": "Two complementary operations sharing one CLI surface. tail +n is essentially 'head -inverse'—skip the beginning, show the rest. tail -n is 'show the tail'. The 1979 design unified them under one command via the + / - prefix. POSIX preserved this; modern tail still accepts both. The symmetry hints at a deeper truth: file traversal is one operation, just with direction."
     },
     "appraiser_note": "tail +n と tail -n は同じ数値で逆方向の意味——「先頭から n 行目以降を全部」 vs 「末尾から n 行」。fromend フラグで分岐し、+ は seek-from-beginning、- は seek-from-end のコードパスへ。1979 年から半世紀、POSIX も維持する CLI 表面。デフォルトは `-10l` で「末尾 10 行」。+ と - の対称性が「ファイル走査は方向違いの 1 操作」という設計思想を表す。"
+  },
+  {
+    "id": "size-001-aout-segments",
+    "text": "fread((char *)&buf, sizeof(buf), 1, f);\n...\nprintf(\"%u+%u+%u = \", buf.a_text,buf.a_data,buf.a_bss);\nsum = (long) buf.a_text + (long) buf.a_data + (long) buf.a_bss;\nprintf(\"%Db = 0x%Xb\\n\", sum, sum);",
+    "file_path": "usr/src/cmd/size.c",
+    "line_number": 28,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "aout",
+      "executable-format"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 5,
+      "emotions": {
+        "concreteness": 5,
+        "antiquity": 5
+      },
+      "technical_context": "size reads struct exec via fread, then prints text + data + BSS sizes — the three-tuple of an executable: machine code, initialized data, uninitialized data. BSS comes from IBM 7090 'Block Started by Symbol'. The same three sections appear in ELF (.text/.data/.bss), Mach-O (__TEXT/__DATA/__BSS), and PE (.text/.data/.bss) half a century later. The concept survives unchanged.",
+      "human_story": "Three numbers, one line. That was the executable file's self-introduction in 1979. ELF's .text section, Mach-O's __TEXT segment, PE's .text section — every modern executable format inherits the same trinity. The 46-line size.c is the ancestor pose: 'this is your code, this is your data, this is your zero-filled scratch space.'"
+    },
+    "appraiser_note": "size.c は struct exec を fread() で読み、 text + data + BSS の三つ組を表示する。「機械語コード + 初期化済みデータ + 未初期化データ」 という分類は IBM 7090 アセンブラの BSS (Block Started by Symbol) に遡り、 1979 年の a.out から ELF (.text/.data/.bss)、 Mach-O (__TEXT/__DATA/__BSS)、 PE (.text/.data/.bss) まで半世紀継承される。 BSS はディスク上に値を持たず実行時に 0 で埋められる——「未初期化」 という抽象が物理的に定着した瞬間。 46 行のコマンドが見せる「実行ファイルの自己紹介」。"
+  },
+  {
+    "id": "size-002-magic-numbers",
+    "text": "int a_magic[] = {A_MAGIC1,A_MAGIC2,A_MAGIC3,A_MAGIC4,0};\n...\nfor(i=0;a_magic[i];i++)\n    if(a_magic[i] == buf.a_magic) break;\nif(a_magic[i] == 0) {\n    printf(\"size: %s not an object file\\n\", *argv);\n    fclose(f);\n    continue;\n}",
+    "file_path": "usr/src/cmd/size.c",
+    "line_number": 15,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "magic-number",
+      "linker"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "antiquity": 4
+      },
+      "technical_context": "Four octal magic numbers identify a.out variants: 0407 (OMAGIC: no sharing, text+data contiguous), 0410 (NMAGIC: read-only text, page boundary), 0411 (ZMAGIC: demand-paged, fast startup), 0405 (overlay, PDP-11 era). Each represents a linker mode — ld default produces 0411, ld -N produces 0410, ld -n produces 0407. The numbers are PDP-11 instruction-shaped on purpose: the first 2 bytes could be safely executed as code in certain modes.",
+      "human_story": "0407, 0410, 0411 — three numbers that defined Unix executables for 20 years. They look like accidents but are deliberate: ld picked OMAGIC/NMAGIC/ZMAGIC based on whether you wanted text sharing, read-only protection, or demand paging. ELF arrived in 1995 and replaced them with 0x7F 'E' 'L' 'F' — clearer, but the design pattern (magic-number-identifies-format) was already 16 years old by then."
+    },
+    "appraiser_note": "size.c は 4 つのマジック数 (A_MAGIC1〜A_MAGIC4 = 0407/0410/0411/0405) を null-terminated 配列で許容する。 0407=OMAGIC (共有なし)、 0410=NMAGIC (read-only text)、 0411=ZMAGIC (demand-paged)、 0405=overlay (PDP-11 名残)——それぞれ ld の異なるリンクモードに対応する。 8 進数で書かれるのは PDP-11 のワード境界 (16 bit) と整合性が良いから——`0407` は 10 進 263、 ビット表記で `100 000 111`、 PDP-11 命令の上位 9 ビットに似た形。 ELF (1995, `0x7F 'E' 'L' 'F'`) に置き換わるまで 16 年、 Unix 実行ファイルの DNA だった。"
+  },
+  {
+    "id": "size-003-default-aout",
+    "text": "if (argc==1) {\n    *argv = \"a.out\";\n    argc++;\n    --argv;\n}",
+    "file_path": "usr/src/cmd/size.c",
+    "line_number": 9,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "cli",
+      "convention"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "tradition",
+      "emotion_intensity": 4,
+      "emotions": {
+        "tradition": 4,
+        "pragmatism": 4
+      },
+      "technical_context": "Run size with no arguments, it targets 'a.out'. The default reflects 1971 PDP-7 Unix where assembler 'as' produced 'a.out' (assembler output) directly. When ld was added, the default output name stayed. Modern cc/gcc still emits 'a.out' without -o, half a century later. The implementation overwrites argv[0] = \"a.out\", increments argc, decrements argv — as if 'size a.out' had been typed.",
+      "human_story": "'./a.out' is the first executable every C programmer runs. The name predates the language — it came from 1971 PDP-7 assembler output. When dmr added cc, when ld was rewritten, when ELF replaced a.out internally — the default output name survived. Reading size.c's three-line default-argument trick teaches: traditions stick because they are cheap to keep and expensive to break."
+    },
+    "appraiser_note": "size を引数なしで実行するとデフォルトで `a.out` を対象にする——3 行のトリック (`*argv = \"a.out\"; argc++; --argv;`) で 「size a.out と打ったかのように」 ループ条件を整える。 `a.out` の名は 1971 年 PDP-7 Unix のアセンブラ `as` の出力 (assembler output) に由来し、 `ld` が後から導入されてもデフォルト出力名は変わらず、 現代の `cc` / `gcc` も `-o` 指定なしなら `a.out` を出す——50 年以上変わらない慣習。 「`./a.out` を実行する」 ジェスチャーは C プログラマの第一言語、 その起源が 46 行のコマンドに刻まれている。"
   }
 ]
