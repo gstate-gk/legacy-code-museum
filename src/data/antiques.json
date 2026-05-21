@@ -10091,5 +10091,86 @@
       "human_story": "V7 had hard limits—NOFILE = 20 meant 20 simultaneously open files per process. A program that opened more crashed. du's defensive 'close at fd>10' is a microoptimization that turns 'crashable on 18-deep trees' into 'works on any depth at half speed'. The pragmatism is striking: fail gracefully by paying a constant-factor cost."
     },
     "appraiser_note": "V7 Unix の NOFILE = 20 制約への自己防衛——`if (dir > 10) close(dir);` で fd が枯渇しそうな時に一度閉じる。次のループで再 open し、保存していた offset へ lseek で復元する reopen-on-demand パターン。深さ 18 以上のディレクトリツリーでも fd が枯れずに巡回できる。コードを 2 倍呼ぶ代わりに、どんな深さでも動く実用性を取った 1979 年のプログラマの判断。"
+  },
+  {
+    "id": "mount-001-userspace-mtab",
+    "text": "struct mtab {\n    char file[NAMSIZ];\n    char spec[NAMSIZ];\n} mtab[NMOUNT];\n\nmf = open(\"/etc/mtab\", 0);\nread(mf, (char *)mtab, NMOUNT*2*NAMSIZ);",
+    "file_path": "usr/src/cmd/mount.c",
+    "line_number": 6,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "filesystem",
+      "userspace"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "duality",
+      "emotion_intensity": 5,
+      "emotions": {
+        "duality": 5,
+        "pragmatism": 4
+      },
+      "technical_context": "/etc/mtab is a fixed-size binary file holding struct mtab[16]. The kernel's actual mount table is separate; /etc/mtab is a userspace record maintained by the mount/umount commands. Consistency between kernel state and /etc/mtab depends entirely on the commands behaving correctly. read(2) loads the whole 1024 bytes in one call; no fopen, no parsing.",
+      "human_story": "1979 Unix split mount state into two: kernel mount table (truth) and /etc/mtab (record). The mount command writes both, hoping they agree. Linux later added /proc/mounts as a kernel-direct view, but /etc/mtab survived for decades as tradition. The 1024-byte binary file design reflects 'whatever read(2) returns is the parsed structure'—the shortest possible code path."
+    },
+    "appraiser_note": "/etc/mtab はテキストではなく struct mtab[16] のバイナリファイル——1 エントリ 64 バイト × 16 = 1,024 バイトを read(2) 1 回で読む。カーネルの mount table は別管理で、ユーザー空間の mount/umount コマンドが両方を更新する責任を持つ。整合性は「コマンドが正しく動くこと」に依存する二重管理。Linux 後年の /proc/mounts でカーネル直接ビューが入るまで、これが標準だった。"
+  },
+  {
+    "id": "mount-002-creat-not-atomic",
+    "text": "mp = &mtab[NMOUNT];\nwhile ((--mp)->file[0] == 0);\nmf = creat(\"/etc/mtab\", 0644);\nwrite(mf, (char *)mtab, (mp-mtab+1)*2*NAMSIZ);\nexit(0);",
+    "file_path": "usr/src/cmd/mount.c",
+    "line_number": 56,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "atomicity",
+      "race-condition"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "compromise",
+      "emotion_intensity": 5,
+      "emotions": {
+        "compromise": 5,
+        "concreteness": 4
+      },
+      "technical_context": "Updating /etc/mtab uses creat(2) (which truncates the file to length 0 before write). Between creat() and write() the file is empty; concurrent readers see partial data. Two parallel mount commands can lost-update each other. The fix—write tmp + rename—is unavailable because rename(2) does not exist in Bell-32V; rename arrives with 4.2BSD (1983).",
+      "human_story": "1979 mount.c knows the race exists and accepts it. System administrators ran mount sequentially from /etc/rc; parallel mount invocations were rare. The pragmatic mindset: ship code that works for the common case, document the limitation in tribal knowledge. Four years later rename(2) makes atomic update possible; mount.c slowly transitions."
+    },
+    "appraiser_note": "/etc/mtab 更新は creat(2) で全書き直し——atomic ではない。creat の瞬間にファイルは長さ 0 になり、write 完了まで他プロセスから不完全な状態が見える。2 つの mount を並行実行すれば lost update。`tmpfile + rename` で atomic にできるが、rename(2) は 4.2BSD (1983) まで存在しない。1979 年は「管理者がシーケンシャルに mount すれば問題ない」という規律で運用された。"
+  },
+  {
+    "id": "mount-003-silent-overflow",
+    "text": "for (mp = mtab; mp < &mtab[NMOUNT]; mp++) {\n    if (mp->file[0] == 0) {\n        /* 空き発見、新規エントリ書き込み + creat/write + exit(0) */\n    }\n}\nexit(0);  /* テーブル満杯——警告なし、errno なし */",
+    "file_path": "usr/src/cmd/mount.c",
+    "line_number": 47,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "limits",
+      "silent-failure"
+    ],
+    "interesting_score": 17,
+    "ai_analysis": {
+      "primary_emotion": "frugality",
+      "emotion_intensity": 4,
+      "emotions": {
+        "frugality": 4,
+        "pragmatism": 4
+      },
+      "technical_context": "If mtab[16] is full, the for-loop finishes without ever entering the 'found-empty' branch, falling through to the trailing exit(0). The mount(2) syscall succeeded—so the kernel has the new mount—but /etc/mtab does not record it. No warning, no error. The caller assumes success unless mount(2) itself failed.",
+      "human_story": "1979 VAX systems mounted 2-3 partitions, not 16. The author chose to skip the 'mtab full' error path entirely; it would never fire in practice. Linux Docker environments today mount 100+, and that limit is wholly unimaginable in 1979. The silence reflects the era's typical scale—if you hit 16 mounts you would already be doing something weird, and discover the silence yourself."
+    },
+    "appraiser_note": "mtab[16] が満杯なら for ループは何も処理せず exit(0) に到達する——警告なし、errno なし、ユーザーは成功と勘違いする。1979 年の VAX は 2-3 個マウントするだけだったので、16 個の上限は現実に起きない設計。mount(2) は成功するのでカーネルは新マウントを保持、/etc/mtab だけが古いまま——カーネルと /etc/mtab の不整合が静かに発生する稀ケース。"
   }
 ]
