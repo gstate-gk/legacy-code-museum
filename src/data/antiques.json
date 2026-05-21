@@ -10577,5 +10577,86 @@
       "human_story": "Two design fingerprints from 1979: (1) /tmp/sXXXXX — each Unix tool names its temp files with its initial. cc, as, strip, even tar. A naming convention that doubled as debugging info: see /tmp/c12345, you know cc is running. (2) 512-byte buffers everywhere — disk sectors were 512, FS blocks were 512, the number became invisible. Modern code uses BUFSIZ or block_size queries; 1979 code wrote 512 because everyone knew."
     },
     "appraiser_note": "`mktemp(\"/tmp/sXXXXX\")` は V7 の慣習——各 Unix ツールがイニシャルで temp file をプレフィックスする (cc → /tmp/cXXXXX、 as → /tmp/aXXXXX)。 X は PID で置換される。 現代の glibc は symbolic link race attack のため deprecated だが、 1979 年は symlink(2) すら存在しなかった (4.2BSD で 1983 年追加)——時代背景が API 安全性を決定する例。 コピーバッファは **512 バイト固定**——V7 ファイルシステムの `BSIZE = 512`、 ディスクセクタ 512 バイトと完全一致。 「512 は神聖な数」 として `#define` なく裸で書く 1979 流。"
+  },
+  {
+    "id": "ar-001-comfun-dispatch",
+    "text": "char *man = { \"mrxtdpq\" };\nint (*comfun)();\n\nswitch(*cp) {\ncase 'r': setcom(rcmd); continue;\ncase 'd': setcom(dcmd); continue;\ncase 'x': setcom(xcmd); continue;\ncase 't': setcom(tcmd); continue;\ncase 'p': setcom(pcmd); continue;\ncase 'm': setcom(mcmd); continue;\ncase 'q': setcom(qcmd); continue;\n...\n}\n(*comfun)();",
+    "file_path": "usr/src/cmd/ar.c",
+    "line_number": 14,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "function-pointer",
+      "design"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "abstraction": 4
+      },
+      "technical_context": "ar packs 7 distinct commands (m, r, x, t, d, p, q) into one binary via function pointer dispatch. main() parses first arg char-by-char, calls setcom(fun) which stores fn pointer in global comfun, detects double-set via the same global, then invokes (*comfun)() after arg parsing completes. setcom enforces mutual exclusion: 'only one of [mrxtdpq] allowed'. The man = \"mrxtdpq\" string doubles as the error message list — adding a command auto-updates the help text.",
+      "human_story": "1979 had no OOP, but function pointers gave the same 'pluggable behavior' abstraction. ar's main() became a dispatcher, each command became an isolated function — the structure that powers qsort()'s comparator, signal()'s handler, and eventually C++ virtual methods. Reading ar.c teaches: K&R C wasn't object-oriented, but it was already function-oriented."
+    },
+    "appraiser_note": "ar は 7 つの動詞 (`m` move、 `r` replace、 `x` extract、 `t` table、 `d` delete、 `p` print、 `q` quick append) を 1 バイナリで提供する。 関数ポインタ `int (*comfun)();` をグローバルに置き、 引数解析時に `setcom(rcmd)` などで設定、 引数処理後に `(*comfun)()` で発火。 `setcom` は二重設定を検出して排他制御する——OOP なき 1979 年でも、 関数ポインタは「動作を変数として渡す」 抽象を提供していた。 `man = \"mrxtdpq\"` 文字列がエラーメッセージにも使われる DRY の先取り。 後の qsort 比較関数、 signal ハンドラ、 C++ virtual method dispatch、 std::function まで続く系譜の初期例。"
+  },
+  {
+    "id": "ar-002-ar_hdr-14char",
+    "text": "/* struct ar_hdr in <ar.h>: */\n/* char ar_name[14]; long ar_date; char ar_uid;\n   char ar_gid; int ar_mode; long ar_size; */\n\nmovefil(f) {\n    cp = trim(file);\n    for(i=0; i<14; i++)\n        if(arbuf.ar_name[i] = *cp)\n            cp++;\n    arbuf.ar_size = stbuf.st_size;\n    arbuf.ar_date = stbuf.st_mtime;\n    arbuf.ar_uid = stbuf.st_uid;\n    arbuf.ar_gid = stbuf.st_gid;\n    arbuf.ar_mode = stbuf.st_mode;\n    copyfil(f, tf, OODD+HEAD);\n    close(f);\n}",
+    "file_path": "usr/src/cmd/ar.c",
+    "line_number": 479,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "archive-format",
+      "filesystem"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "antiquity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "antiquity": 5,
+        "minimalism": 4
+      },
+      "technical_context": "Each archive member starts with struct ar_hdr (26 bytes): ar_name[14] + ar_date + ar_uid + ar_gid + ar_mode + ar_size. The 14-char name matches V7's DIRSIZ — filesystem directory entries also held 14-char filenames. The copy loop `if(arbuf.ar_name[i] = *cp) cp++` is K&R C idiom — assignment-in-condition copies until NUL, pads short names with NUL after. 4.2BSD (1983) introduced 255-char filenames; GNU ar later added '#1/' prefix for long names. The basic ar layout (name+date+uid+gid+mode+size) has survived unchanged for half a century.",
+      "human_story": "Type `gcc -lm` today and libm.a gets linked. That .a file is an archive in the exact format defined by ar.c in 1979. struct ar_hdr's 14-char ar_name reflects a deeper constraint — V7 filesystem only allowed 14-char filenames. So if you had a 14-char file, ar could store it; longer files were impossible to put in archives. When 4.2BSD lifted the filesystem limit, ar had to invent workarounds. The 14-char constant is the fossil of an extinct filesystem."
+    },
+    "appraiser_note": "ar アーカイブの各メンバーは `struct ar_hdr` (26 バイト) + データ本体。 `ar_name[14]` は V7 ファイルシステムの `DIRSIZ = 14` (ディレクトリエントリの最大ファイル名長) と一致——「ファイル名は 14 文字以内」 という V7 の物理制約をそのまま反映している。 4.2BSD (1983) のロングファイル名 (255 文字) 登場でようやく制約が緩み、 GNU ar は `#1/` 接頭辞で 14 文字超対応。 コピーループの `if(arbuf.ar_name[i] = *cp) cp++` は代入式を if 条件として使う K&R C 流——NUL で停止し、 残り領域は NUL で埋まる。 1 行で「コピー、 NUL 終端、 長さ制限」 を同時実装。"
+  },
+  {
+    "id": "ar-003-iodd-oodd-alignment",
+    "text": "#define IODD   2\n#define OODD   4\n\ncopyfil(fi, fo, flag) {\n    register i, o;\n    ...\n    while(arbuf.ar_size > 0) {\n        i = o = 512;\n        if(arbuf.ar_size < i) {\n            i = o = arbuf.ar_size;\n            if(i&1) {\n                if(flag & IODD) i++;\n                if(flag & OODD) o++;\n            }\n        }\n        if(read(fi, buf, i) != i) pe++;\n        if((flag & SKIP) == 0)\n            if (write(fo, buf, o) != o) wrerr();\n        arbuf.ar_size -= 512;\n    }\n}",
+    "file_path": "usr/src/cmd/ar.c",
+    "line_number": 515,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "pdp11",
+      "alignment",
+      "binary-format"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 5,
+      "emotions": {
+        "concreteness": 5,
+        "antiquity": 4
+      },
+      "technical_context": "PDP-11 and VAX read memory in 16-bit words and trap on misaligned word access (bus error). ar archive members aligned to 2-byte boundaries via IODD/OODD: if member size is odd, pad with one extra byte so the next member starts on word boundary. IODD adjusts read size, OODD adjusts write size — when copying with header rewrites (HEAD flag), input and output sizes can differ. The padding byte content is undefined; alignment is what matters. The ar_size decrement is always 512 (not i) — at loop end, ar_size goes negative, the > 0 condition stops the loop. Modern ar format (SVR4, BSD) still requires even alignment despite PDP-11 being gone for 30+ years.",
+      "human_story": "PDP-11 retired in the 1990s but its alignment habit lives in every modern .a file. Hardware shape leaves fingerprints on data formats. The IODD/OODD mechanism doesn't make sense unless you understand 1979 hardware: 16-bit words, bus errors on misaligned access. Today's GNU ar still pads to even bytes — not because anyone needs it, but because compatibility outlives the hardware that motivated it. Binary formats are archaeology."
+    },
+    "appraiser_note": "PDP-11/VAX は 16 ビットワード単位でメモリアクセスし、 奇数アドレスから 2 バイト読むと bus error で例外発生。 そのため ar はメンバー間を **2 バイト境界**に揃える——`IODD` (input odd) で読み側、 `OODD` (output odd) で書き側の奇数長を 1 バイト切り上げ。 ヘッダ書換時 (HEAD flag) は入出力サイズが異なるので、 独立に制御できる設計。 パディングバイトの中身は不定、 アラインメントが優先。 `ar_size -= 512` (常に 512) でループ最後に負値で停止する K&R 流。 PDP-11 が引退して 30 年経っても、 現代の GNU ar / SVR4 ar 仕様は偶数アラインメントを継承——ハードウェアの形がバイナリ形式に痕跡を残す典型例。"
   }
 ]
