@@ -9929,5 +9929,86 @@
       "human_story": "ASCII was designed so that the Ctrl key physically zeros bits 5 and 6 of the keypress. The 1979 stty.c uses '& 037' to do the same trick in software. Five decades later, 'stty erase ^H' still works the same way, and 'X' & 037 still produces Ctrl-X. Some abstractions outlive the hardware that inspired them."
     },
     "appraiser_note": "`stty erase ^H` のような `^X` 記法を `(*argv)[1] & 037` で制御文字に変換する古典テクニック。037 = 0x1F = 上位 3 ビットマスク。ASCII の設計で「Ctrl キーは物理的に上位ビットをクリアする」というのを、ソフトウェアで再現している。'H' & 037 = 0x08 = Ctrl-H = Backspace。半世紀後の現代 stty でも同じ記法・同じ実装が動いている。"
+  },
+  {
+    "id": "df-001-hardcoded-devices",
+    "text": "char *dargv[] = {\n    0,\n    \"/dev/rp0a\",\n    \"/dev/rp1g\",\n    0\n};\n...\nif(argc <= 1) {\n    for(argc = 1; dargv[argc]; argc++);\n    argv = dargv;\n}",
+    "file_path": "usr/src/cmd/df.c",
+    "line_number": 7,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "hardcoded",
+      "vax"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "specificity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "specificity": 5,
+        "antiquity": 4
+      },
+      "technical_context": "df without arguments defaulted to /dev/rp0a (DEC RP-04/05/06 disk 0, partition a = root) and /dev/rp1g (disk 1, partition g = /usr). The 'rp' device prefix is hardcoded for VAX 11/780. No mount table, no /etc/mtab, no getmntent(). The convention was: ship the source, edit dargv[] to match your hardware.",
+      "human_story": "Bell-32V was Unix for the VAX 11/780. Anyone running Unix on a PDP-11 used /dev/rk* (RK-05) or /dev/rl* (RL-01/02) and had to recompile df with their device names baked in. The first five lines of df.c were 'hardware configuration' before /etc/mtab was invented."
+    },
+    "appraiser_note": "df は mount table を使わず、デフォルトファイル名 /dev/rp0a, /dev/rp1g をハードコード——VAX 11/780 の DEC RP-04/05/06 ディスク (0 番 a パーティション = root, 1 番 g パーティション = /usr) の前提。別ハードウェアなら dargv[] を編集して再コンパイル。/etc/mtab 以前の「ハードウェアごとに df.c の最初の 5 行を書き換える文化」の証拠。"
+  },
+  {
+    "id": "df-002-while-alloc-count",
+    "text": "i = 0;\nwhile(alloc())\n    i++;\nprintf(\"%s %D\\n\", file, i);",
+    "file_path": "usr/src/cmd/df.c",
+    "line_number": 52,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "filesystem",
+      "algorithm"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "naive-thoroughness",
+      "emotion_intensity": 5,
+      "emotions": {
+        "naive-thoroughness": 5,
+        "transparency": 4
+      },
+      "technical_context": "df counts free blocks one at a time by walking the V7 free list. alloc() returns one block number per call. A million free blocks means a million calls. Each NICFREE (~50) blocks requires one extra disk read to fetch the next chain segment. Modern df reads a cached counter in statfs(2); 1979 df actually traverses the list.",
+      "human_story": "Reading the source is reading the algorithm: 'while(alloc()) i++;'. No cleverness, no optimization, just count. On a heavily-used RP-04 with hundreds of thousands of free blocks, df could take a minute. 4.2BSD's FFS cached the free-block count in the super block, collapsing O(n) into O(1). The while loop survives in the historical record as a relic of when computers were small and disks slow but the algorithm was honest."
+    },
+    "appraiser_note": "df の空きブロックカウントは `while(alloc()) i++;` の 3 行——free list を 1 個ずつ巡回する O(空きブロック数) アルゴリズム。100 万ブロックの空きなら 100 万回呼ぶ。50 個 (NICFREE) 取るごとにディスクを 1 回 read してチェーン補充。4.2BSD FFS が super block に累計値をキャッシュするまで、df は実際に free list を巡って数えるプログラムだった。"
+  },
+  {
+    "id": "df-003-free-block-chain",
+    "text": "daddr_t\nalloc()\n{\n    ...\n    i = --sblock.s_nfree;\n    b = sblock.s_free[i];\n    if(b == 0) return(0);\n    if(b<sblock.s_isize || b>=sblock.s_fsize) {\n        printf(\"bad free block (%D)\\n\", b);\n        return(0);\n    }\n    if(sblock.s_nfree <= 0) {\n        bread(b, (char *)&buf, sizeof(buf));\n        blkno = b;\n        sblock.s_nfree = buf.df_nfree;\n        for(i=0; i<NICFREE; i++)\n            sblock.s_free[i] = buf.df_free[i];\n    }\n    return(b);\n}",
+    "file_path": "usr/src/cmd/df.c",
+    "line_number": 60,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "filesystem",
+      "data-structure"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "frugality": 4
+      },
+      "technical_context": "V7 file system's free list is a chain stored INSIDE the free blocks themselves. The super block holds the first ~50 free block numbers (NICFREE). When that array empties, the last block taken is itself read as a struct fblk containing the next 50 numbers. No bitmap, no separate free-list area—free blocks store their own metadata.",
+      "human_story": "Disk space was precious in 1979. Allocating a separate bitmap for free blocks would have wasted megabytes on a 100 MB disk. V7 file system stored the free-block chain inside the free blocks themselves—zero overhead for a free block. The cleverness comes at a cost: random allocation patterns fragment the chain badly, hurting sequential read performance. 4.2BSD FFS adopted cylinder groups + bitmaps because disks grew and the trade-off flipped."
+    },
+    "appraiser_note": "V7 file system の free list は「フリーブロック自身が次のフリーリストを格納する」再帰的設計。super block の s_free[NICFREE=50] が起点で、尽きたら最後に取ったブロックを `struct fblk` として read、その中の df_free[50] を super block に補充——分離した bitmap や free-list 領域を持たず、フリーブロックがその空き空間を自分のメタデータに使う。ディスク容量が貴重だった時代の節約設計。"
   }
 ]
