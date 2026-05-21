@@ -10874,5 +10874,86 @@
       "human_story": "1979 had two Unix architectures: PDP-11 and VAX. To know which you'd reached over a serial line, who.c slipped (Vax) into the output on VAX builds. Cheap, effective, three lines of #ifdef. By 1985 hostname() existed and the trick became obsolete. But the pattern — one source tree, conditional compilation per architecture — is Unix's core portability technique. macOS, FreeBSD, Linux, AIX, and Windows-Cygwin all build C code from sources peppered with #ifdef. The who.c (Vax) line is the gene of cross-platform Unix."
     },
     "appraiser_note": "Bell-32V は V7 Unix の VAX-11/780 移植版。 who.c は `who am i` 出力に **`#ifdef vax` で `(Vax) ` プレフィックス**を付ける——VAX ビルドだけ「(Vax)」 が出る。 意図：PDP-11 と VAX の両方を持つ管理者がリモートログイン中に「今どっちのマシンに居るか」 を判別したい。 1979 年は hostname(2) 未実装、 Unix マシンは匿名だった。 `#ifdef vax` 3 行が「**1 ソース、 2 アーキテクチャ**」 という Unix の根本設計——後の `#ifdef sun`/`#ifdef sparc`/`#ifdef linux`/`#ifdef _WIN32` の系譜。 macOS/FreeBSD/Linux/AIX/Cygwin が同じ C ソースから build できるのは、 こうした条件コンパイル文化の積み重ね。 62 行の who.c に Unix のクロスプラットフォーム DNA が埋め込まれている。"
+  },
+  {
+    "id": "dd-001-jcl-syntax",
+    "text": "for(c=1; c<argc; c++) {\n    string = argv[c];\n    if(match(\"ibs=\")) { ibs = number(BIG); continue; }\n    if(match(\"obs=\")) { obs = number(BIG); continue; }\n    if(match(\"bs=\"))  { bs  = number(BIG); continue; }\n    if(match(\"if=\"))  { ifile = string; continue; }\n    if(match(\"of=\"))  { ofile = string; continue; }\n    ...\n}\n\nmatch(s) {\n    cs = string;\n    while(*cs++ == *s)\n        if(*s++ == '\\0')\n            goto true;\n    if(*s != '\\0')\n        return(0);\ntrue:\n    cs--;\n    string = cs;\n    return(1);\n}",
+    "file_path": "usr/src/cmd/dd.c",
+    "line_number": 154,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "ibm",
+      "syntax"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "antiquity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "antiquity": 5,
+        "concreteness": 4
+      },
+      "technical_context": "dd uses key=value arguments (if=, of=, bs=, count=, conv=) — Unix's only mainstream tool with this syntax. Origin: IBM OS/360 JCL's DD (Data Definition) statement: `//SYSUT1 DD DSN=USER.INPUT,DCB=(RECFM=FB,LRECL=80)`. The dd author was likely an IBM mainframe alumni. POSIX 1003.2 specifically exempts dd from its argument syntax guidelines — 'dd shall be dd'. match() does prefix-then-advance: checks if string starts with 's', and if so moves the global `string` pointer past the matched prefix so number() can parse the value. The prefix-consuming pattern reappears in URL parsers and config-file parsers decades later.",
+      "human_story": "Every Unix tool uses -flags. dd uses key=value. Why? Because dd was the Unix bridge to IBM mainframes — tape conversion, EBCDIC translation, fixed-width record handling. The dd author kept IBM's JCL-style syntax to make migration easier. 50 years later, that decision stuck. POSIX formally exempted dd from Unix conventions. `dd if=/dev/sda of=/dev/sdb bs=4M` is the same syntax shape as `//STEP01 EXEC PGM=IEBGENER`. The mainframe ghost lives in modern Linux."
+    },
+    "appraiser_note": "dd は `if=`/`of=`/`bs=`/`count=`/`conv=` の **key=value 引数構文**——Unix で唯一のスタイル。 起源は IBM OS/360 JCL の DD (Data Definition) ステートメント (`//SYSUT1 DD DSN=...,DCB=(RECFM=FB,LRECL=80)`)。 dd の作者は IBM メインフレーム出身だった可能性が高い。 POSIX 1003.2 は dd を引数構文ガイドラインから **明示的に除外**——「dd is dd」 という宣言。 match() は prefix-then-advance パターン：先頭が `s` で始まれば、 グローバルな string ポインタを `=` の直後まで進めて返す。 後続の number() が値部分から読み始められる。 後の URL パーサ、 設定ファイルパーサに継承される手法。"
+  },
+  {
+    "id": "dd-002-ebcdic-tables",
+    "text": "char etoa[] = {\n    0000,0001,0002,0003,0234,0011,0206,0177,\n    0227,0215,0216,0013,0014,0015,0016,0017,\n    /* ... 256 bytes EBCDIC → ASCII ... */\n};\nchar atoe[] = {\n    /* ... 256 bytes ASCII → EBCDIC ... */\n};\nchar atoibm[] = {\n    /* ... 256 bytes ASCII → IBM EBCDIC ... */\n};",
+    "file_path": "usr/src/cmd/dd.c",
+    "line_number": 38,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "ebcdic",
+      "character-encoding"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 5,
+      "emotions": {
+        "concreteness": 5,
+        "antiquity": 5
+      },
+      "technical_context": "Three 256-byte hand-coded translation tables in dd.c: etoa (EBCDIC→ASCII), atoe (ASCII→EBCDIC), atoibm (ASCII→IBM EBCDIC variant). Tables in octal — period-correct for 1979 PDP-11/VAX programmers. ~100 lines of source (18% of dd.c) is just these data tables. Why octal? PDP-11 dumps were octal, C character constants were often written in octal. Modern iconv(3) supports hundreds of encodings, but in 1979 the world's encoding problem was binary: ASCII (Unix) ↔ EBCDIC (IBM). Three tables covered the migration scenarios. `etoa[ch]` lookup is O(1) — no parsing, no library, just array indexing.",
+      "human_story": "1979's encoding problem wasn't UTF-8 vs UTF-16 — it was 'can we read this IBM tape on the PDP-11?'. dd answered yes, with three hardcoded translation tables. Each byte position carefully chosen, all in octal because that's what PDP programmers spoke. 18% of dd.c is data, not code. The world spent decades fighting EBCDIC; dd was the white flag, the diplomat. Modern systems forget EBCDIC, but z/OS Unix still translates between EBCDIC and ASCII daily — dd's descendants run there."
+    },
+    "appraiser_note": "dd.c には **3 つの 256 バイト変換表**が手書きで埋め込まれている——etoa (EBCDIC→ASCII)、 atoe (ASCII→EBCDIC)、 atoibm (ASCII→IBM EBCDIC 方言)。 表はすべて **8 進**で記述、 1979 年の PDP-11/VAX プログラマには自然な表記。 ソース 541 行のうち約 100 行 (18%) がこのデータ表に占められる。 1979 年の符号化問題は UTF-8 vs UTF-16 ではなく「IBM テープを PDP-11 で読めるか」——dd は yes と答えた、 3 つのハードコード変換表で。 `etoa[ch]` lookup は O(1)——パース不要、 ライブラリ不要、 配列アクセスのみ。 現代の iconv(3) は数百のエンコーディングを扱うが、 1979 年の dd は 3 方向で十分だった。 z/OS Unix では今も EBCDIC↔ASCII 変換が日常的に走る。"
+  },
+  {
+    "id": "dd-003-number-suffix",
+    "text": "number(big) {\n    cs = string;\n    n = 0;\n    while(*cs >= '0' && *cs <= '9')\n        n = n*10 + *cs++ - '0';\n    for(;;)\n    switch(*cs++) {\n    case 'k':\n        n *= 1024;\n        continue;\n    case 'w':\n        n *= sizeof(int);\n        continue;\n    case 'b':\n        n *= 512;\n        continue;\n    case '*':\n    case 'x':\n        string = cs;\n        n *= number(BIG);\n    case '\\0':\n        if (n>=big || n<0) {\n            fprintf(stderr, \"dd: argument %D out of range\\n\", n);\n            exit(1);\n        }\n        return(n);\n    }\n}",
+    "file_path": "usr/src/cmd/dd.c",
+    "line_number": 380,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "parsing",
+      "ux"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "playfulness": 3
+      },
+      "technical_context": "dd's number() parses suffix-augmented integers: 'k' multiplies by 1024 (kilo for memory), 'w' multiplies by sizeof(int) (word: 2 on PDP-11, 4 on VAX — platform-dependent value baked in), 'b' multiplies by 512 (block: V7 BSIZE), '*' and 'x' multiply by the next parsed number (recursive call). So `2*1024` works, `100k` works, `4w` works, `2k*4` works. The case '*'/'x' falls through to case '\\0' for range check — K&R fall-through used intentionally. Modern GNU coreutils extended with K/M/G/T (SI prefixes, uppercase, capitalized in the 1990s); POSIX dd still requires lowercase k=1024.",
+      "human_story": "Type `dd if=/dev/zero of=test bs=1M count=1024`. The 'M' here is from 1990s extensions, but the lowercase 'k=1024' you'd write as `bs=1k` is from 1979's dd. The pattern — number followed by unit suffix — spread to du -h, ls -lh, sleep '5m'. The seed: dd's number() with 5 cases. The `*`/`x` recursion enables nested multiplication: `2*3*4` = 24. K&R intentional fall-through routes the result through one range check. Compact, recursive, expressive — all in 35 lines."
+    },
+    "appraiser_note": "dd の number() 関数は **単位サフィックス付き整数**をパース——`k` で × 1024 (kilo)、 `w` で × sizeof(int) (word: PDP-11 で 2、 VAX で 4 のプラットフォーム依存値)、 `b` で × 512 (block: V7 BSIZE)、 `*`/`x` で次の数値と乗算 (再帰呼び出し)。 `2*1024`、 `100k`、 `4w`、 `2k*4` すべて動く。 case '*'/'x' は case '\\0' に **fall-through** して範囲チェックを通る——K&R 流の意図的フォールスルー。 後の du -h、 ls -lh、 sleep '5m' の数値+単位 UX の祖。 GNU coreutils が K/M/G/T (大文字 SI 接頭辞) を 1990 年代に追加したが、 POSIX dd は小文字 k=1024 を維持。"
   }
 ]
