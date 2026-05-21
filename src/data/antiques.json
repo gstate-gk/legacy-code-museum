@@ -10496,5 +10496,86 @@
       "human_story": "'./a.out' is the first executable every C programmer runs. The name predates the language — it came from 1971 PDP-7 assembler output. When dmr added cc, when ld was rewritten, when ELF replaced a.out internally — the default output name survived. Reading size.c's three-line default-argument trick teaches: traditions stick because they are cheap to keep and expensive to break."
     },
     "appraiser_note": "size を引数なしで実行するとデフォルトで `a.out` を対象にする——3 行のトリック (`*argv = \"a.out\"; argc++; --argv;`) で 「size a.out と打ったかのように」 ループ条件を整える。 `a.out` の名は 1971 年 PDP-7 Unix のアセンブラ `as` の出力 (assembler output) に由来し、 `ld` が後から導入されてもデフォルト出力名は変わらず、 現代の `cc` / `gcc` も `-o` 指定なしなら `a.out` を出す——50 年以上変わらない慣習。 「`./a.out` を実行する」 ジェスチャーは C プログラマの第一言語、 その起源が 46 行のコマンドに刻まれている。"
+  },
+  {
+    "id": "strip-001-zero-symbol-fields",
+    "text": "if ((head.a_syms == 0) && (head.a_trsize == 0) && (head.a_drsize ==0)) {\n    printf(\"%s already stripped\\n\", name);\n    goto out;\n}\nsize = (long)head.a_text + head.a_data;\nhead.a_syms = head.a_trsize = head.a_drsize = 0;",
+    "file_path": "usr/src/cmd/strip.c",
+    "line_number": 57,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "aout",
+      "linker"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "minimalism",
+      "emotion_intensity": 5,
+      "emotions": {
+        "minimalism": 5,
+        "elegance": 4
+      },
+      "technical_context": "strip's essence: zero out three fields in struct exec — a_syms (symbol table size), a_trsize (text relocation size), a_drsize (data relocation size). The remaining a_text + a_data is the minimum runnable executable. Idempotent: running strip twice prints 'already stripped' instead of failing. The 'release binary has no symbols' Unix culture starts here.",
+      "human_story": "Strip a binary, file size drops by half. The trick? Three numbers go to zero. Symbol tables and relocation info are debugging luxuries — once you ship, you don't need them. The 1979 strip is the cultural origin: 'shipped binaries are slimmed binaries.' Modern strip uses objcopy and debug-link tricks, but the 3-zero principle survives unchanged."
+    },
+    "appraiser_note": "strip の本質は struct exec の 3 フィールド (`a_syms` シンボルテーブル、 `a_trsize` text relocation、 `a_drsize` data relocation) を 0 にすること——実行に必要な `a_text + a_data` だけが残る。 `a_syms = a_trsize = a_drsize = 0` という 1 行が、 「リリース用バイナリは symbol を削る」 という Unix 文化の起源。 3 フィールド全 0 で 「既に strip 済み」 を検出し idempotent に振る舞うのも気が利く——同じファイルを 2 回 strip しても問題なし。 (long) キャストで `a_text + a_data` を計算するのは 16 ビット越え対策、 size.c でも同じパターン。"
+  },
+  {
+    "id": "strip-002-signal-ignore-trio",
+    "text": "signal(SIGHUP, SIG_IGN);\nsignal(SIGINT, SIG_IGN);\nsignal(SIGQUIT, SIG_IGN);\ntname = mktemp(\"/tmp/sXXXXX\");\nclose(creat(tname, 0600));\ntf = open(tname, 2);",
+    "file_path": "usr/src/cmd/strip.c",
+    "line_number": 16,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "signal",
+      "safety"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "carefulness",
+      "emotion_intensity": 4,
+      "emotions": {
+        "carefulness": 4,
+        "pragmatism": 4
+      },
+      "technical_context": "Three signals ignored before touching files: SIGHUP (terminal disconnect, important for dial-up), SIGINT (Ctrl-C), SIGQUIT (Ctrl-\\). Why? strip rewrites the original binary via creat() — interruption between truncate and write would leave a zero-byte file. SIGKILL (9) can't be caught, kernel panic isn't survivable, but the three user-triggered signals can be ignored. rename(2) for atomic replace arrives in 4.2BSD (1983) — until then, signal masking was the best available 'atomic' approximation.",
+      "human_story": "1979 was dial-up era. You'd phone into the timeshare, type strip /usr/bin/mything, and if the line dropped mid-rewrite, the binary would die. SIGHUP ignore says: 'I know you might lose the connection — let me finish first.' Small ceremonies of safety. Modern strip uses rename for atomic replace, but the spirit (block interruption during dangerous regions) is the same."
+    },
+    "appraiser_note": "strip は元ファイルを creat() で truncate + 書き戻しする——その区間で中断されるとバイナリが空になる。 そのため SIGHUP (端末切断、 dial-up 時代の必須)、 SIGINT (Ctrl-C)、 SIGQUIT (Ctrl-\\) の 3 シグナルを SIG_IGN で無視する。 SIGKILL や kernel panic には無防備だが、 「ユーザー操作による中断」 だけは確実にブロック。 rename(2) による atomic 置換は 4.2BSD (1983) で初登場——それまでは signal mask が「**atomic 風**」 を実現する最良の手段だった。 dial-up 時代の防衛コード、 小さな儀式の集合。"
+  },
+  {
+    "id": "strip-003-mktemp-512-buffer",
+    "text": "tname = mktemp(\"/tmp/sXXXXX\");\n...\ncopy(name, fr, to, size) {\n    char buf[512];\n    while(size != 0) {\n        s = 512;\n        if(size < 512)\n            s = size;\n        n = read(fr, buf, s);\n        ...",
+    "file_path": "usr/src/cmd/strip.c",
+    "line_number": 91,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "filesystem",
+      "convention"
+    ],
+    "interesting_score": 17,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 4,
+      "emotions": {
+        "concreteness": 4,
+        "minimalism": 4
+      },
+      "technical_context": "mktemp('/tmp/sXXXXX') replaces 5 X's with PID-based unique chars — V7 convention where each tool used its initial as prefix (cc → /tmp/cXXXXX, as → /tmp/aXXXXX, strip → /tmp/sXXXXX). Copy buffer is 512 bytes — exactly V7's BSIZE (filesystem block size = disk sector size = magic number all aligned). Modern glibc deprecates mktemp() due to symlink race attacks, but in 1979 symlinks didn't exist (4.2BSD adds symlink(2) in 1983).",
+      "human_story": "Two design fingerprints from 1979: (1) /tmp/sXXXXX — each Unix tool names its temp files with its initial. cc, as, strip, even tar. A naming convention that doubled as debugging info: see /tmp/c12345, you know cc is running. (2) 512-byte buffers everywhere — disk sectors were 512, FS blocks were 512, the number became invisible. Modern code uses BUFSIZ or block_size queries; 1979 code wrote 512 because everyone knew."
+    },
+    "appraiser_note": "`mktemp(\"/tmp/sXXXXX\")` は V7 の慣習——各 Unix ツールがイニシャルで temp file をプレフィックスする (cc → /tmp/cXXXXX、 as → /tmp/aXXXXX)。 X は PID で置換される。 現代の glibc は symbolic link race attack のため deprecated だが、 1979 年は symlink(2) すら存在しなかった (4.2BSD で 1983 年追加)——時代背景が API 安全性を決定する例。 コピーバッファは **512 バイト固定**——V7 ファイルシステムの `BSIZE = 512`、 ディスクセクタ 512 バイトと完全一致。 「512 は神聖な数」 として `#define` なく裸で書く 1979 流。"
   }
 ]
