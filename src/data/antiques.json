@@ -11468,5 +11468,113 @@
       "human_story": "Dialup phone lines flip bits. Noise on the analog signal can turn a 1 into 0 or vice versa. 1979's solution: even parity. Set bit 7 so the total count of 1s in the byte is always even. Receiver checks — if it sees odd count, error. 100% detection of single-bit flips. getty's partab[] is the lookup table: 128 bytes, one per ASCII code, with bit 7 = parity. Sending char becomes: lookup, OR, write — 3 instructions. Modern x86 has popcnt and __builtin_parity intrinsics; PDP-11 didn't, hence the table. Fast error detection over noisy phone lines, in 128 bytes."
     },
     "appraiser_note": "partab[] は **ASCII 各文字 (0〜127) の偶数パリティビット (bit 7) を事前計算**した 128 バイトテーブル。 送信時 `c |= partab[c & 0177] & 0200` で下位 7 ビットを取り、 パリティビットを OR。 なぜ？ ダイヤルアップ電話線は **ビット反転ノイズ**が起きる——偶数パリティ (bit 7 で全 1 数を偶数に) で受信側が **1 ビットエラーを 100% 検出**できる。 テーブル方式 vs ランタイム計算: 128 バイトメモリで O(1) パリティ、 ランタイムなら XOR ベースで 5〜10 命令。 PDP-11 では table lookup が 2 命令、 XOR ベースが 10 命令——速度差が決定的。 8 進記述 (0201 = 0x81、 bit 7 + bit 0) は V7 流。 現代 x86 の popcnt や __builtin_parity intrinsic の祖、 ノイジーな電話線を 128 バイトで守った。"
+  },
+  {
+    "id": "login-001-crypt-password",
+    "text": "if (*pwd->pw_passwd != '\\0') {\n    namep = crypt(getpass(\"Password:\"), pwd->pw_passwd);\n    if (strcmp(namep, pwd->pw_passwd)) {\n        printf(\"Login incorrect\\n\");\n        goto loop;\n    }\n}",
+    "file_path": "usr/src/cmd/login.c",
+    "line_number": 77,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "authentication",
+      "security"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "carefulness",
+      "emotion_intensity": 5,
+      "emotions": {
+        "carefulness": 5,
+        "concreteness": 4
+      },
+      "technical_context": "Unix authentication core in 5 lines. getpass('Password:') reads input with echo off (tty raw mode toggle inside the function). crypt(input, salt) uses modified-DES 25-round one-way hash with 12-bit salt (2 chars). Trick: pass pwd->pw_passwd as 2nd arg — crypt extracts the first 2 chars as salt, so we don't need to track salt separately. Compare via strcmp. /etc/passwd never stores plaintext; even file disclosure doesn't directly reveal passwords. The salt thwarts rainbow tables (4096x cost increase). 8-char password limit baked into crypt's design. *pw_passwd == '\\0' empty-password check allows passwordless guest accounts.",
+      "human_story": "Five lines that define Unix authentication for 50 years. getpass turns off terminal echo, reads what you type without showing it, restores echo, returns the string. crypt slow-hashes the password with a 12-bit salt. /etc/passwd holds only hashes — file leak doesn't directly betray passwords. Salt frustrates rainbow tables by 4096x. 25 DES rounds was 'slow enough' in 1979; today it's trivially brute-forced. Modern systems use bcrypt/scrypt/argon2 in /etc/shadow. But the pattern — getpass + slow-hash + compare — survived. Every login prompt in SSH, su, sudo descends from these 5 lines."
+    },
+    "appraiser_note": "Unix 認証の核心、 わずか 5 行。 `getpass(\"Password:\")` がエコー無しで入力を読み (関数内で tty raw モード切替)、 `crypt(input, salt)` が改造 DES 25 ラウンドの一方向ハッシュ + 12 bit salt (2 文字)。 工夫: 第 2 引数に `pwd->pw_passwd` を渡す——crypt は先頭 2 文字を salt として抽出するので、 別途 salt を管理する必要がない。 strcmp で比較。 /etc/passwd には **ハッシュのみ**保存、 ファイル漏洩でも直接パスワードは漏れない。 salt は rainbow table 攻撃を 4096 倍コストに。 8 文字パスワード制限は crypt 設計上のもの。 `*pw_passwd == '\\0'` 空パスワードチェックでゲストアカウントを許す。 SSH、 su、 sudo の認証プロンプトすべての祖。"
+  },
+  {
+    "id": "login-002-nouser-timing-defense",
+    "text": "struct passwd nouser = {\"\", \"nope\"};\n...\nsetpwent();\nif ((pwd = getpwnam(utmp.ut_name)) == NULL)\n    pwd = &nouser;\nendpwent();\nif (*pwd->pw_passwd != '\\0') {\n    namep = crypt(getpass(\"Password:\"), pwd->pw_passwd);\n    if (strcmp(namep, pwd->pw_passwd)) {\n        printf(\"Login incorrect\\n\");\n        goto loop;\n    }\n}",
+    "file_path": "usr/src/cmd/login.c",
+    "line_number": 15,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "security",
+      "timing-attack"
+    ],
+    "interesting_score": 24,
+    "ai_analysis": {
+      "primary_emotion": "carefulness",
+      "emotion_intensity": 5,
+      "emotions": {
+        "carefulness": 5,
+        "abstraction": 4
+      },
+      "technical_context": "Defense against username enumeration: if getpwnam() returns NULL (user doesn't exist), substitute a fake struct passwd with pw_passwd='nope' so the password prompt still appears, crypt() still runs, and the comparison still fails. Same timing, same UI, same error message ('Login incorrect') for both 'wrong password' and 'user doesn't exist'. Attacker can't probe usernames by observing whether the password prompt appears or how long it takes. The 'nope' string isn't a valid crypt output (not 13 chars), so strcmp always fails. This is one of the earliest documented timing-attack defenses in Unix — 1979 programmers already understood that login responses leak information.",
+      "human_story": "What if you mistype your username? login could say 'No such user' immediately. Or it could pretend the user exists, ask for a password, and reject. The 1979 login chose the second — defense against username enumeration. Type any name, login asks for password, login rejects. Attacker can't tell which usernames exist. The trick: a struct passwd called `nouser` with pw_passwd='nope' substituted when getpwnam returns NULL. crypt runs on user input, strcmp fails. Same code path, same time taken, same error message. Modern PAM and shadow do this exactly the same way. The username enumeration concept is 1990s+; the defense is 1979."
+    },
+    "appraiser_note": "ユーザー名列挙攻撃への防衛: getpwnam() が NULL を返す (ユーザー不存在) 時、 偽の struct passwd `nouser = {\"\", \"nope\"}` を代入。 これでパスワードプロンプトが出る、 crypt() が実行される、 比較が失敗する——本物のユーザーで間違ったパスワードを入れた時と **同じタイミング、 同じ UI、 同じエラーメッセージ「Login incorrect」**。 攻撃者はパスワードプロンプトの有無や応答時間からユーザー名を割り出せない。 `\"nope\"` は有効な crypt 出力ではない (13 文字ではない) ので strcmp は必ず失敗。 Unix で**最も早期に文書化されたタイミング攻撃対策**の 1 つ——1979 年のプログラマがログイン応答が情報を漏らすと既に理解していた。 「ユーザー名列挙」 概念は 1990 年代だが、 防御は 1979 年。"
+  },
+  {
+    "id": "login-003-setuid-privilege-drop",
+    "text": "chown(ttyn, pwd->pw_uid, pwd->pw_gid);\nsetgid(pwd->pw_gid);\nsetuid(pwd->pw_uid);\nif (*pwd->pw_shell == '\\0')\n    pwd->pw_shell = \"/bin/sh\";\nenviron = envinit;\nstrncat(homedir, pwd->pw_dir, sizeof(homedir)-6);",
+    "file_path": "usr/src/cmd/login.c",
+    "line_number": 101,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "security",
+      "setuid"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "carefulness",
+      "emotion_intensity": 5,
+      "emotions": {
+        "carefulness": 5,
+        "abstraction": 4
+      },
+      "technical_context": "Privilege descent in 3 syscalls. login was forked from init with uid=0 (root). After authentication: chown(ttyn, uid, gid) transfers tty ownership to the new user (must run as root). setgid(pwd->pw_gid) changes group first — must precede setuid because once you drop root, you lose the privilege to change gids. setuid(pwd->pw_uid) drops root irreversibly. Order is absolute: chown → setgid → setuid. Environment also sanitized: `environ = envinit` replaces inherited env with safe {HOME, PATH} only — prevents env-var-based attacks (LD_PRELOAD, malicious PATH). The empty pw_shell defaults to /bin/sh. This 6-line sequence is the principle-of-least-privilege made executable.",
+      "human_story": "How does Unix make sure you can't be root after logging in as yourself? Three syscalls in order: chown the terminal so the new user owns it, setgid to change group (while still root), setuid to become the user (and lose root forever — no syscall to climb back up). Environment also wiped to {HOME, PATH} only — no inherited LD_PRELOAD tricks, no malicious PATH. Six lines is all it takes to transition from 'most powerful process on the system' to 'an ordinary user'. The 1979 sequence is identical to what login does today on Linux. setuid → no going back, by design."
+    },
+    "appraiser_note": "3 つのシステムコールで権限降下。 init から fork されて uid=0 (root) で起動した login が、 認証成功後: `chown(ttyn, uid, gid)` で tty を新ユーザー所有に (root 権限必要)、 `setgid(gid)` で group 先 (uid を捨てると gid 変更権限も失うので)、 `setuid(uid)` で **root を不可逆に失う**。 順序は絶対: chown → setgid → setuid。 環境も浄化: `environ = envinit` で継承環境を捨て、 {HOME, PATH} のみの安全な配列に置換——LD_PRELOAD 攻撃や悪意ある PATH 攻撃を防止。 空 pw_shell は `/bin/sh` デフォルト。 6 行で「最強プロセス」 から「一般ユーザー」 への遷移、 **最小権限の原則**を実行可能な形で表現。 50 年後の Linux login も同じシーケンス、 setuid に「戻る道」 は設計上存在しない。"
+  },
+  {
+    "id": "login-004-execlp-minus-shellname",
+    "text": "char minusnam[16] = \"-\";\n...\nif ((namep = rindex(pwd->pw_shell, '/')) == NULL)\n    namep = pwd->pw_shell;\nelse\n    namep++;\nstrcat(minusnam, namep);\n...\nexeclp(pwd->pw_shell, minusnam, 0);\nprintf(\"No shell\\n\");\nexit(0);",
+    "file_path": "usr/src/cmd/login.c",
+    "line_number": 108,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "shell",
+      "convention"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "playfulness": 3
+      },
+      "technical_context": "login signals 'this is a login shell' to /bin/sh by setting argv[0] = '-sh' instead of 'sh'. Construction: minusnam[16] = '-' literal; rindex(/bin/sh, '/') finds last slash, namep++ skips past it to 'sh'; strcat(minusnam, 'sh') gives '-sh'. Then execlp(pwd->pw_shell, minusnam, 0) — pwd->pw_shell is the real executable path ('/bin/sh'), but argv[0] is '-sh'. The shell at startup checks argv[0][0] == '-' to identify itself as a login shell, then reads /etc/profile and ~/.profile. All major shells (sh/bash/csh/zsh/ksh/tcsh) implement this convention. `bash -l` is the modern explicit alternative. exec failure falls through to 'No shell' + exit.",
+      "human_story": "Why does `echo $0` in your terminal sometimes show `-bash` instead of `bash`? Because login.c started bash with argv[0] = '-bash' as a signal: 'this is a LOGIN shell, please source /etc/profile and ~/.bash_profile'. The 1979 trick: stick '-' in front of the basename of the shell, pass it as argv[0]. Every modern shell honors this. bash -l is explicit; -bash is implicit. The minusnam[16] = '-' literal is a tiny piece of code with 50 years of consequences. Inheritance protocols don't need to be elegant to last; they just need to work."
+    },
+    "appraiser_note": "login は **`argv[0] = \"-sh\"` で /bin/sh に「これはログインシェル」 と伝える**。 構築: `minusnam[16] = \"-\"` リテラル、 `rindex(/bin/sh, '/')` で最後の `/` を見つけ、 `namep++` で `sh` の先頭へ、 `strcat(minusnam, \"sh\")` で `\"-sh\"` 完成。 `execlp(pwd->pw_shell, minusnam, 0)` で実体は /bin/sh だが argv[0] は -sh。 shell 起動時に `argv[0][0] == '-'` で自身を **login shell** と判定、 /etc/profile と ~/.profile を読む。 全シェル (sh/bash/csh/zsh/ksh/tcsh) がこの慣習を実装。 `bash -l` は現代の明示版。 exec 失敗時は \"No shell\" + exit。 `echo $0` で `-bash` と出るのは login.c がこの規約を 1979 年に確立したから——50 年の継承を持つ tiny piece of code。"
   }
 ]
