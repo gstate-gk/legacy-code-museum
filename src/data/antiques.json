@@ -11144,5 +11144,113 @@
       "human_story": "Six function calls, one C expression. Light enters Enigma at the keyboard, traverses the input wheel, passes through three rotors, hits the reflector, returns through the three rotors backward, exits through the output wheel. Bell-32V compresses this to: t2[t3[t1[i+n1]+n2]-n2]-n1. The reflector (t3) is the magic — applying the whole expression twice with the same key returns the original input. Encryption is self-inverse. This is why Enigma operators could decrypt with the same machine setting they used to encrypt. The 1979 C line preserves that fundamental property in 60 characters."
     },
     "appraiser_note": "暗号機の心臓：1 行で Enigma の信号経路を再構築。 内側から外側へ: `(i+n1)` ローター 1 位置でシフト、 `t1[]` で順方向ローター 1 通過、 `+n2` ローター 2 位置シフト、 `t3[]` で反射板 (対合)、 `-n2` ローター 2 戻し、 `t2[]` でローター 1 逆方向、 `-n1` でローター 1 戻し。 すべて `& MASK` で mod 256 ラップ。 n1++ (右ローター、 1 文字ごと進行)、 n1 ラップ時 n2++ (中央ローター)。 t3 が対合なので暗号化と復号が **同じ操作**——`crypt < a > b; crypt < b > c` で c == a。 本物 Enigma の stepping mechanism (不規則ノッチ位置) と異なり、 この進行は鍵から完全予測可能で、 これが暗号解析的弱さの一因。 6 つの関数呼び出しを 60 文字の C 式に圧縮、 Bletchley Park 縮図。"
+  },
+  {
+    "id": "dc-001-struct-blk-base100",
+    "text": "struct blk {\n    char *rd;     /* read pointer */\n    char *wt;     /* write pointer */\n    char *beg;    /* beginning of buffer */\n    char *last;   /* end of buffer */\n};\n\n#define length(p)    ((p)->wt-(p)->beg)\n#define rewind(p)    (p)->rd=(p)->beg\n#define sfeof(p)     (((p)->rd==(p)->wt)?1:0)\n#define sgetc(p)     (((p)->rd==(p)->wt)?EOF:*(p)->rd++)\n#define sputc(p,c)   {if((p)->wt==(p)->last)more(p); *(p)->wt++ = c;}",
+    "file_path": "usr/src/cmd/dc/dc.h",
+    "line_number": 46,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "calculator",
+      "arbitrary-precision"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "concreteness": 4
+      },
+      "technical_context": "dc represents arbitrary-precision numbers as byte arrays where each byte holds a base-100 digit (0-99). struct blk has 4 pointers: beg (buffer start), last (buffer end / capacity), rd (read cursor), wt (write cursor). Operations modeled as stdio-style: sgetc/sputc/sfeof/sfbeg/rewind — number manipulation feels like file I/O. Base-100 chosen for the sweet spot: maximum decimal digits per byte (2) while keeping addition's `a + b + carry` within unsigned char range (< 256). 1234567890 stored as [12, 34, 56, 78, 90] in 5 bytes. Addition is exactly grade-school carry arithmetic, just in base 100.",
+      "human_story": "Pick your base wisely. Base 10 wastes a byte per digit. Base 256 (binary) is fast but hard to print decimally. Base 100 hits the middle: 2 decimal digits per byte, addition still fits in unsigned char, output to decimal is two %02d printfs. 1979's dc chose this carefully — read each byte, print 2 digits. The struct blk type with rd/wt/beg/last mimics FILE*, making C programmers feel at home with arbitrary-precision arithmetic. Python's int, JavaScript BigInt, Java BigInteger — all eventually do similar tricks. dc was here first."
+    },
+    "appraiser_note": "dc は任意精度数を **百進法バイト配列**で表現——各バイトが 0〜99 の「百進法 1 桁」、 `struct blk` が beg/last (バッファ境界) + rd/wt (現在のカーソル) の 4 ポインタ。 操作は stdio 風: `sgetc`/`sputc`/`sfeof`/`sfbeg`/`rewind`——数値操作がファイル I/O のように扱える。 百進法選定の理由：1 バイトあたり最大の十進情報量 (2 桁) + 加算 `a + b + carry` が unsigned char 範囲内 (< 256) で済む。 1234567890 → [12, 34, 56, 78, 90] の 5 バイト。 加算は人間の筆算と完全同じ手順、 ただし基底 100。 Python int、 JavaScript BigInt、 Java BigInteger の祖、 dc が最初。"
+  },
+  {
+    "id": "dc-002-rpn-dispatcher",
+    "text": "commnds(){\n    while(1){\n        if(((c = readc())>='0' && c <= '9')|| ...){\n            unreadc(c);\n            p = readin();\n            pushp(p);\n            continue;\n        }\n        switch(c){\n        case '+': binop('+'); continue;\n        case '-': subt(); continue;\n        case '*': /* multiply */\n        case '/': /* divide */\n        case '^': /* exponent */\n        case 'v': /* sqrt */\n        case 'p': /* print top */\n        case 'd': /* duplicate */\n        case 'c': /* clear */\n        case 'S': /* save to register */\n        case 'L': /* load from register */\n        case 'x': /* execute macro */\n        case '[': /* string literal */\n        case '<': case '>': case '=': /* conditional execute */\n        ...\n        }\n    }\n}",
+    "file_path": "usr/src/cmd/dc/dc.c",
+    "line_number": 11,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "rpn",
+      "design"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "minimalism",
+      "emotion_intensity": 4,
+      "emotions": {
+        "minimalism": 4,
+        "elegance": 4
+      },
+      "technical_context": "commnds() is the heart of dc: a typical REPL with `while(1) { c = readc(); switch(c) { ... } }`. 60+ case branches, one character = one operation. RPN (Reverse Polish Notation): digits push to stack, operators pop and compute. Case-letter conventions: lowercase/uppercase pairs indicate variations (s vs S = without-pop vs with-pop on register save, p vs P = with/without newline, q vs Q = single quit vs multi-level quit). Symbols carry semantic baggage: ? = read line (HP calculator), ! = shell escape (vi/ed/mail tradition), ^ = exponent (math notation), v = sqrt (single-letter mnemonic). The single-character commands echo HP-35 (1972) calculator's button layout.",
+      "human_story": "RPN was popularized by Hewlett-Packard's HP-35 calculator in 1972 — engineers loved it. By 1979, dc brought RPN to Unix command line. One character per operation: type `2 3 +` for addition. The switch statement has 60+ cases because dc covers more than arithmetic — print, duplicate, register save/load, macro execute, conditional execute. The uppercase/lowercase pairs are clever ergonomics: `s` saves without popping (peek-style), `S` saves and pops (consuming). Same letter, two ergonomic variations. RPN survived as Forth, PostScript, calculator keyboards — but dc was its early Unix home."
+    },
+    "appraiser_note": "commnds() は dc の心臓——典型的 REPL: `while(1) { c = readc(); switch(c) { ... } }`、 60+ ケース、 1 文字 = 1 動作。 RPN (逆ポーランド記法): 数字はスタックに push、 演算子は pop + 計算 + push。 大文字/小文字対の規約: `s` (save without pop) vs `S` (save with pop)、 `p` (with newline) vs `P` (no newline)、 `q` (quit) vs `Q` (multi-quit)。 記号の意味論: `?` = readline (HP 電卓由来)、 `!` = shell escape (vi/ed/mail 慣習)、 `^` = exponent (数学記法)、 `v` = sqrt (頭文字)。 HP-35 電卓 (1972) のボタン配置の系譜——RPN 文化を Unix command line へ持ち込んだ。 Forth、 PostScript、 電卓キーボードの祖だが、 dc が早期 Unix の本拠地。"
+  },
+  {
+    "id": "dc-003-macros-and-registers",
+    "text": "case '[':\n    n = 0;\n    p = salloc(0);\n    while(1){\n        if((c = readc()) == ']'){\n            if(n == 0)break;\n            n--;\n        }\n        sputc(p,c);\n        if(c == '[')n++;\n    }\n    pushp(p);\n    continue;\n\ncase 'x':\n    p = pop();\n    readptr++;\n    *readptr = p;\n    fsfile(p);\n    rewind(p);\n    continue;\n\ncase 'S':\n    c = readc() & 0377;\n    sptr = stable[c];\n    sp = stable[c] = sfree;\n    sfree = sfree->next;\n    ...\n    sp->val = p;",
+    "file_path": "usr/src/cmd/dc/dc.c",
+    "line_number": 277,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "calculator",
+      "turing-complete"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "creativity": 5,
+        "abstraction": 5
+      },
+      "technical_context": "Macro feature: `[` reads characters until matching `]`, builds a string, pushes to stack. Nesting handled by counter n. `x` pops the string and pushes it onto readstk (input source stack) — subsequent reads come from the macro body. Returns when readstk pops. Combined with 256 registers (stable[TBLSZ]) accessed via S/L (save/load), and `<`/`>`/`=` conditional execute (compare top two, execute named register if true), dc becomes Turing complete. Example factorial: `[d 1 - d 1 <e * lFx] sF` defines F(n) = if n>1 then n*F(n-1). Stack-based control flow predates Forth (1968) by no clear margin; dc's macros (V1, 1971) may be earlier. Register stable[] is per-register linked list (S/L is push/pop, s/l is set/peek) — registers are themselves stacks.",
+      "human_story": "dc isn't just a calculator. With `[...]` string literals, register save/load via S/L, conditional execute via <a, dc becomes a Turing-complete language. Write a factorial macro, push 5, execute — get 120. Write a prime tester macro, push numbers, get truth values. The combination of: (1) stack for arithmetic, (2) registers for variables, (3) macros for functions, (4) conditional execute for control flow gives you a programming language in 1979. It's Forth before Forth was famous. PostScript later took this same stack-based model and made it the language of laser printers."
+    },
+    "appraiser_note": "マクロ機能: `[` で文字列読み始め、 対応する `]` までを 1 つの文字列としてスタック push (nesting カウンタ n で `[[nested]]` も正しく処理)。 `x` で pop した文字列を readstk (入力ソーススタック) に push——以降の readc() はマクロ本体から読み出す、 終了時に readstk を pop して元に戻る。 256 レジスタ (stable[TBLSZ]) に `S`/`L` (save/load) でアクセス、 `<`/`>`/`=` で「top と次の値を比較、 真なら指定レジスタを execute」 という条件分岐。 これで dc は **Turing 完備**。 階乗マクロ: `[d 1 - d 1 <e * lFx] sF` で F(n) = if n>1 then n*F(n-1)。 (1) 算術用スタック、 (2) 変数用レジスタ、 (3) 関数用マクロ、 (4) 条件実行——プログラム言語の完全な構成要素を 1979 年に提供。 Forth 文化、 PostScript の祖。"
+  },
+  {
+    "id": "dc-004-interdata-portability",
+    "text": "#ifdef interdata\n#define NEGBYTE 0200\n#define MASK (-1 & ~0377)\n#define sgetc(p)  ( ((p)->rd==(p)->wt) ? EOF :( ((*(p)->rd & NEGBYTE) != 0) ? ( *(p)->rd++ | MASK): *(p)->rd++ ))\n#define slookc(p) ( ((p)->rd==(p)->wt) ? EOF :( ((*(p)->rd & NEGBYTE) != 0) ? (*(p)->rd | MASK) : *(p)->rd ))\n#define sbackc(p) ( ((p)->rd==(p)->beg) ? EOF :( ((*(--(p)->rd) & NEGBYTE) != 0) ? (*(p)->rd | MASK): *(p)->rd ))\n#endif\n#ifndef interdata\n#define sgetc(p)  (((p)->rd==(p)->wt)?EOF:*(p)->rd++)\n#define slookc(p) (((p)->rd==(p)->wt)?EOF:*(p)->rd)\n#define sbackc(p) (((p)->rd==(p)->beg)?EOF:*(--(p)->rd))\n#endif",
+    "file_path": "usr/src/cmd/dc/dc.h",
+    "line_number": 22,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "portability",
+      "interdata"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "antiquity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "antiquity": 4,
+        "concreteness": 4
+      },
+      "technical_context": "Interdata 8/32 (Perkin-Elmer mini, 1970s) — the platform of the first non-Bell Unix port (Wollongong University, Australia, 1977). Its C compiler zero-extended `char` to `int` instead of sign-extending (PDP-11/VAX behavior). dc.h's #ifdef interdata defines sgetc/slookc/sbackc to manually sign-extend when the high bit is set: check `*(p)->rd & NEGBYTE` (0x80), if true OR with MASK (-1 & ~0377 = upper bits all 1) to fill in the sign bits. The else branch (PDP-11/VAX) just does `*(p)->rd++` because automatic sign-extension takes care of it. 4 lines of macros encapsulate a major architectural difference. The 'one Unix source, many architectures' DNA in action.",
+      "human_story": "Interdata 8/32 was Unix's first journey outside Bell Labs and Berkeley — Wollongong University, Australia, 1977. Their C compiler treated `char` as unsigned (zero-extension to int), unlike PDP-11/VAX (signed, sign-extension). One macro choice could break arithmetic on negative numbers. dc.h's solution: hand-write the sign extension via NEGBYTE check + OR with MASK. Four #ifdef macros encode the architectural divergence so the rest of dc.c can use sgetc() ignoring the difference. This style — encapsulate platform quirks in macros, write the algorithm once — is the seed of every cross-platform C codebase: Linux, macOS, AIX, Windows-Cygwin, all running the same source files with #ifdef gates."
+    },
+    "appraiser_note": "Interdata 8/32 (Perkin-Elmer 製 mini、 1970 年代) は Bell/Berkeley 以外の最初の Unix 移植先 (Wollongong 大学オーストラリア、 1977)。 その C コンパイラは `char` → `int` の昇格を **ゼロ拡張**で行った——PDP-11/VAX は符号拡張。 dc.h は `#ifdef interdata` で **手動符号拡張**を sgetc/slookc/sbackc に組み込む: `*(p)->rd & NEGBYTE` (0x80) で最上位ビット検査、 立っていれば `| MASK` (-1 & ~0377 = 上位ビット全 1) で符号拡張を補う。 else 節 (PDP-11/VAX) は自動符号拡張に任せて素朴な `*(p)->rd++`。 4 行のマクロでアーキテクチャの差を吸収し、 dc.c 本体は `sgetc()` を意識せず使える。 「**プラットフォーム差をマクロに閉じ込めて、 アルゴリズムは 1 度書く**」——Linux/macOS/AIX/Cygwin が同じソースから build できる DNA の起源。"
   }
 ]
