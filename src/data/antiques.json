@@ -11360,5 +11360,113 @@
       "human_story": "How do you reload a daemon's config without restarting? In 1979, init.c invented the pattern: SIGHUP triggers a handler that longjmps back to the start of main. The setjmp/longjmp idiom is C's only built-in non-local exit — no exceptions, no goto across functions, just this register-saving primitive. Every major daemon adopted SIGHUP-reloads: sendmail rereads sendmail.cf, nginx rereads nginx.conf, syslogd reopens log files (logrotate's friend), cron rereads crontabs. Type `kill -HUP <pid>` today and you're invoking a convention started by 5 lines in 1979's init.c. The reset() function is 1 line: longjmp(sjbuf, 1). The entire 'reload config' design pattern in 1 line."
     },
     "appraiser_note": "init は setjmp/longjmp を **シグナル駆動リロードの例外処理**として使う。 main の冒頭で `setjmp(sjbuf)` がスタック/PC 状態を保存、 `signal(SIGHUP, reset)` で SIGHUP ハンドラに reset() を設定。 管理者が `kill -HUP 1` 実行 → kernel が reset() を呼ぶ → reset() が `longjmp(sjbuf, 1)` で main の setjmp 地点へ **非ローカルジャンプ** (呼び出し深さ無関係)。 setjmp が 1 を返し (初回 0)、 main が for(EVER) を再進入、 全 getty を kill して /etc/ttys 再読込。 これが **「**SIGHUP = 設定リロード**」 慣習**の起源——sendmail/nginx/inetd/cron/syslogd/dnsmasq すべてが SIGHUP でリロード。 setjmp/longjmp は C の唯一の組み込み非ローカル脱出——例外なし、 関数跨ぎ goto なし。 reset() は 1 行 (`longjmp(sjbuf, 1)`)——「設定リロード」 設計パターン全体がこの 1 行に。"
+  },
+  {
+    "id": "getty-001-baud-cycling",
+    "text": "struct tab itab[] = {\n    /* table '0'-1-2-3 300,1200,150,110 */\n    '0', 1,\n    ANYP+RAW+NL1+CR1, ANYP+ECHO+CR1,\n    B300, B300,\n    \"\\n\\r\\033;\\007login: \",\n\n    1, 2,\n    B1200, B1200,\n    \"\\n\\r\\033;login: \",\n\n    2, 3,\n    B150, B150,\n    ...\n};\n\nmain() {\n    tname = '0';\n    for (;;) {\n        for(tabp = itab; tabp < &itab[NITAB]; tabp++)\n            if(tabp->tname == tname) break;\n        stty(0, &tmode);\n        puts(tabp->message);\n        if(getname()) {\n            execl(\"/bin/login\", \"login\", name, 0);\n        }\n        tname = tabp->nname;  /* next baud rate */\n    }\n}",
+    "file_path": "usr/src/cmd/getty.c",
+    "line_number": 21,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "tty",
+      "dialup"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "antiquity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "antiquity": 5,
+        "concreteness": 4
+      },
+      "technical_context": "getty cycles through baud rates via table chain. itab[] entries have `tname` (current) and `nname` (next-if-failed). When dialup-line is opened, getty tries the named entry (e.g. '0' = B300), prints login prompt, calls getname(). If user sends BREAK (NUL byte), getname returns 0, getty moves to nname (e.g. 1 = B1200), retries. Cycle: '0' → 1 → 2 → 3 → '0' covering 300, 1200, 150, 110 baud. Fixed-speed entries have nname == tname (no cycling for hardwired consoles). Login messages differ per speed: B300 has VT escape + bell, B110 is plain. Auto-baud detection without explicit speed handshake — the user's BREAK key communicates 'try slower'.",
+      "human_story": "1979 dialup: you call the computer, modem answers, getty starts. But what speed is your terminal? 110? 300? 1200? Modems didn't auto-negotiate yet. getty's clever answer: try one speed, print `login:`, see what comes back. If user hits BREAK (their terminal's escape from the wrong speed), getty rotates to next speed and re-prints `login:`. Eventually one works. The login messages embed VT escape sequences and bell characters to help the user know something's there. Pre-Hayes-modem world: getty was the auto-baud detector itself."
+    },
+    "appraiser_note": "getty は baud rate をテーブルチェインで巡回試行。 itab[] の各エントリに `tname` (現在のテーブル名) と `nname` (失敗時の次) があり、 BREAK (NUL バイト) を受け取ったら nname へ遷移。 巡回: `'0' → 1 → 2 → 3 → '0'` で 300/1200/150/110 baud を覆う。 固定 speed エントリは `nname == tname` (コンソール等ハードウェア固定用)。 login メッセージは speed ごとに微妙に違う——B300 は VT escape + ベル (\\007)、 B110 は素朴。 モデムが Auto-Negotiate しない時代 (Hayes 以前) の auto-baud 検出——ユーザーの BREAK キーが「もっと遅い速度を試せ」 という信号として機能した。 1979 年のダイヤルアップ環境の縮図。"
+  },
+  {
+    "id": "getty-002-sgttyb-vs-termios",
+    "text": "#include <sgtty.h>\nstruct sgttyb tmode;\n\nmain() {\n    tmode.sg_ispeed = tabp->ispeed;\n    tmode.sg_ospeed = tabp->ospeed;\n    tmode.sg_flags = tabp->iflags;\n    stty(0, &tmode);\n    ...\n    if(getname()) {\n        tmode.sg_erase = ERASE;  /* '#' */\n        tmode.sg_kill = KILL;     /* '@' */\n        tmode.sg_flags = tabp->fflags;\n        if(crmod) tmode.sg_flags |= CRMOD;\n        if(upper) tmode.sg_flags |= LCASE;\n        if(lower) tmode.sg_flags &= ~LCASE;\n        stty(0, &tmode);\n        execl(\"/bin/login\", \"login\", name, 0);\n    }\n}",
+    "file_path": "usr/src/cmd/getty.c",
+    "line_number": 152,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "tty",
+      "api"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "antiquity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "antiquity": 4,
+        "concreteness": 4
+      },
+      "technical_context": "V6/V7 Unix terminal control uses struct sgttyb: sg_ispeed, sg_ospeed, sg_erase, sg_kill, sg_flags. stty(0, &tmode) syscall sets terminal mode on fd 0. Flag bits: RAW, ANYP/EVENP/ODDP (parity), ECHO, CRMOD (CR → CR/LF), LCASE (upper → lower), XTABS (TAB → spaces), NL1/CR1/CR2/FF1/TAB1 (character output delays — relics of mechanical teletypes needing physical time for carriage return). 4.2BSD (1983) introduced struct tcsetattr/tcgetattr and richer struct termios with c_iflag/c_oflag/c_cflag/c_lflag (4 flag words instead of 1). getty illustrates 2-stage configuration: iflags during getname() (RAW, no echo), then fflags after name confirmed (cooked, echo on).",
+      "human_story": "Before termios (1983), there was sgttyb. Five fields: input speed, output speed, erase char, kill char, flags. The flags packed RAW, ECHO, parity, case conversion, and even physical-delay-after-character into one int. The delay bits (NL1, CR1, CR2) were for mechanical teletypes — Carriage Return took real time, so after CR you needed to wait 1 or 2 character times before sending the next byte, or it would print mid-stroke. getty's two-stage config (iflags for prompt, fflags for after login) is the same pattern modern tty drivers use, just with finer-grained flags. The mechanical past lives in V7's terminal ioctl bits."
+    },
+    "appraiser_note": "V6/V7 Unix の **ターミナル制御 API**: `struct sgttyb` (sg_ispeed/sg_ospeed/sg_erase/sg_kill/sg_flags の 5 フィールド) と `stty(0, &tmode)` syscall。 フラグビット: RAW、 ANYP/EVENP/ODDP (パリティ)、 ECHO、 CRMOD、 LCASE、 XTABS、 そして NL1/CR1/CR2/FF1/TAB1 (各文字後の遅延)。 遅延フラグは **機械式テレタイプ**の名残——キャリッジリターンに物理時間がかかるので、 CR 後 1〜2 文字分待たないと印字が行の途中で始まる。 4.2BSD (1983) で `struct termios` (4 つのフラグワード c_iflag/c_oflag/c_cflag/c_lflag) と tcsetattr/tcgetattr に置き換え。 getty の **2 段階設定** (iflags で getname() 中の RAW モード、 fflags でログイン後の cooked モード) は現代の tty driver でも同じパターン。 機械式時代の遺産が V7 ioctl ビットに刻印されている。"
+  },
+  {
+    "id": "getty-003-erase-kill-uppercase",
+    "text": "#define ERASE '#'\n#define KILL  '@'\n\ngetname() {\n    np = name;\n    for (;;) {\n        if (read(0, &cs, 1) <= 0) exit(0);\n        if ((c = cs&0177) == 0) return(0);  /* BREAK */\n        if (c==EOT) exit(1);\n        if (c=='\\r' || c=='\\n' || np >= &name[16]) break;\n        putchr(cs);\n        if (c>='a' && c<='z')\n            lower++;\n        else if (c>='A' && c<='Z') {\n            upper++;\n            c += 'a'-'A';\n        } else if (c==ERASE) {\n            if (np > name) np--;\n            continue;\n        } else if (c==KILL) {\n            putchr('\\r');\n            putchr('\\n');\n            np = name;\n            continue;\n        } else if(c == ' ')\n            c = '_';\n        *np++ = c;\n    }\n}",
+    "file_path": "usr/src/cmd/getty.c",
+    "line_number": 178,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "tty",
+      "teletype"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "antiquity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "antiquity": 5,
+        "playfulness": 3
+      },
+      "technical_context": "RAW mode means kernel doesn't do line editing — getty does it manually. ERASE = '#' deletes previous char (substitute for BS), KILL = '@' clears entire line (substitute for line-clear). Why these? ASR-33 Teletype had no BS key; '#' and '@' are printable-but-rarely-needed characters chosen as in-band edit codes. Username characters classified: a-z increments lower counter, A-Z increments upper counter (and lowered into name buffer), space becomes underscore (since /etc/passwd uses ':' as field separator and spaces in names break parsing). After loop, if upper>0 && lower==0, terminal is all-caps (Teletype ASR-33 style) and LCASE flag gets set so subsequent kernel output translates lowercase → uppercase. Username detection ALSO detects terminal capability — clever multi-purpose code.",
+      "human_story": "Modern terminals have a Backspace key. ASR-33 Teletype (1963) didn't — it had no way to erase. So Unix conventions: `#` deletes one char, `@` kills the whole line. These are visible characters, sent like any other, but interpreted by getty as edit commands. The all-caps username detection is even cleverer: if you type `BOB`, getty deduces 'this is a Teletype, output should be uppercase too' and tells the kernel via LCASE flag. One function reads the name AND fingerprints the terminal. Modern bash still inherits the # convention as the comment character partly because of this history."
+    },
+    "appraiser_note": "RAW モードでは kernel が行編集をしないので、 getty が手動実装。 **ERASE = '#'** が直前 1 文字消去 (BS の代替)、 **KILL = '@'** が行全体クリア。 なぜこれら？ ASR-33 テレタイプ (1963) には BS キーが無く、 印字可能だが滅多に使わない文字を「**行内編集コード**」 として選んだ。 ユーザー名文字の分類: a-z で lower カウンタ、 A-Z で upper カウンタを増やしつつ name バッファには小文字化して格納、 スペースは _ に置換 (/etc/passwd の : 区切り対策)。 ループ後 upper>0 && lower==0 ならテレタイプ ASR-33 風端末と判定、 LCASE フラグを設定して以降の kernel 出力で小文字→大文字変換。 **ユーザー名読みと端末能力検出を同時に行う**——1 関数で多目的、 1979 流の経済設計。 現代 bash の # コメント文字慣習にもこの歴史が残る。"
+  },
+  {
+    "id": "getty-004-parity-table",
+    "text": "char partab[] = {\n    0001,0201,0201,0001,0201,0001,0001,0201,\n    0202,0004,0003,0205,0005,0206,0201,0001,\n    0201,0001,0001,0201,0001,0201,0201,0001,\n    0001,0201,0201,0001,0201,0001,0001,0201,\n    /* ... 128 entries total ... */\n};\n\nputchr(cc)\n{\n    char c;\n    c = cc;\n    c |= partab[c&0177] & 0200;\n    write(1, &c, 1);\n}",
+    "file_path": "usr/src/cmd/getty.c",
+    "line_number": 114,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "serial",
+      "error-detection"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 4,
+      "emotions": {
+        "concreteness": 4,
+        "antiquity": 4
+      },
+      "technical_context": "partab[] precomputes even parity bit (bit 7) for each 7-bit ASCII character. To send char c: c |= partab[c & 0177] & 0200 — strip to 7 bits, lookup parity bit, OR it in. Why? Serial dialup lines flip bits due to phone-line noise; even parity (bit 7 set so total 1s count is even) catches all single-bit errors at receiver. Table lookup vs runtime calculation: 128 bytes of memory for O(1) parity instead of ~5-10 instructions of XOR-based bit counting. On PDP-11, the table approach was 2 instructions vs 10. The data table embedded in source (128 bytes octal) is V7-era style; modern compilers use intrinsics or hardware __builtin_parity().",
+      "human_story": "Dialup phone lines flip bits. Noise on the analog signal can turn a 1 into 0 or vice versa. 1979's solution: even parity. Set bit 7 so the total count of 1s in the byte is always even. Receiver checks — if it sees odd count, error. 100% detection of single-bit flips. getty's partab[] is the lookup table: 128 bytes, one per ASCII code, with bit 7 = parity. Sending char becomes: lookup, OR, write — 3 instructions. Modern x86 has popcnt and __builtin_parity intrinsics; PDP-11 didn't, hence the table. Fast error detection over noisy phone lines, in 128 bytes."
+    },
+    "appraiser_note": "partab[] は **ASCII 各文字 (0〜127) の偶数パリティビット (bit 7) を事前計算**した 128 バイトテーブル。 送信時 `c |= partab[c & 0177] & 0200` で下位 7 ビットを取り、 パリティビットを OR。 なぜ？ ダイヤルアップ電話線は **ビット反転ノイズ**が起きる——偶数パリティ (bit 7 で全 1 数を偶数に) で受信側が **1 ビットエラーを 100% 検出**できる。 テーブル方式 vs ランタイム計算: 128 バイトメモリで O(1) パリティ、 ランタイムなら XOR ベースで 5〜10 命令。 PDP-11 では table lookup が 2 命令、 XOR ベースが 10 命令——速度差が決定的。 8 進記述 (0201 = 0x81、 bit 7 + bit 0) は V7 流。 現代 x86 の popcnt や __builtin_parity intrinsic の祖、 ノイジーな電話線を 128 バイトで守った。"
   }
 ]
