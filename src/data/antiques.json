@@ -11036,5 +11036,113 @@
       "human_story": "Most code asks 'is this a leap year?' with explicit divisibility. cal.c asks 'how many days in this year?' via day-of-week diff. The clever answer: 1, 2, or 4. The same switch handles regular, leap, and the once-in-history 1752 short year. By centralizing calendar logic in jan1() (the Julian/Gregorian transitions live there), the leap detection inherits those corrections for free. Three case branches replace what would otherwise be 10+ lines of date-arithmetic special-casing."
     },
     "appraiser_note": "通常の閏年判定 `y%4==0 && (y%100!=0 || y%400==0)` ではなく、 **曜日差**で 1 年の日数を逆算する独創的アプローチ：`(jan1(y+1) + 7 - d) % 7`。 平年 365 日 = 52 週 + 1 日 → shift = 1、 閏年 366 日 = 52 週 + 2 日 → shift = 2、 1752 年 354 日 = 365 - 11 → shift = 4 (default)。 `+7` は `jan1(y+1) < d` のとき (月→日のラップ) の負値防止。 1 つの switch で 3 ケース (平年/閏年/1752) を統一処理。 jan1() がユリウス→グレゴリオ切替を内包しているので、 閏年判定もその恩恵を受けて補正不要。 3 ブランチで通常の 10+ 行の特殊ケース処理を置き換える、 K&R 流の数学的センス。"
+  },
+  {
+    "id": "crypt-001-enigma-trivialized",
+    "text": "/*\n *  A one-rotor machine designed along the lines of Enigma\n *  but considerably trivialized.\n */\n\n#define ROTORSZ 256\nchar t1[ROTORSZ];\nchar t2[ROTORSZ];\nchar t3[ROTORSZ];",
+    "file_path": "usr/src/cmd/crypt.c",
+    "line_number": 1,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "cryptography",
+      "enigma"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "antiquity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "antiquity": 5,
+        "playfulness": 4
+      },
+      "technical_context": "crypt.c's opening comment declares its lineage: 'A one-rotor machine designed along the lines of Enigma but considerably trivialized.' Original Enigma I (German WWII) had 3 rotors + plugboard + reflector, ~10^20 key space. Bell-32V's version: 1 rotor (t1) + reflector (t3, involution) + inverse rotor (t2 = inverse of t1), 256 elements per table (bytes, not 26 letters). The comment is unusually honest for cryptographic software: 'don't trust this with real secrets'. Both Morris & Thompson published cryptanalysis papers showing crypt is breakable in minutes with known-plaintext attack.",
+      "human_story": "1918: Scherbius patents Enigma. 1939: Wehrmacht adopts it. 1940-43: Bletchley Park breaks it (Turing et al.). 1979: K&R-era Unix programmers reimplement a toy version in 91 lines of C as `crypt(1)`. 1980: Morris and Thompson publish the cryptanalysis. The opening comment 'considerably trivialized' is honest from the start — this was never meant to be strong. It's Enigma as teaching tool, Enigma as nostalgia, Enigma reduced to its essence: rotor + reflector + state machine. The 91-line homage to Bletchley Park."
+    },
+    "appraiser_note": "crypt.c の冒頭コメント「**A one-rotor machine designed along the lines of Enigma but considerably trivialized**」 が、 この暗号機の血統を明示する。 オリジナル Enigma I (ナチス・ドイツ WWII) は 3 ローター + プラグボード + 反射板、 鍵空間約 10^20。 Bell-32V 版は 1 ローター (t1) + 反射板 (t3、 対合) + 逆ローター (t2 = t1 の逆)、 256 要素テーブル (バイト単位、 26 文字ではない)。 暗号ソフトウェアとしては異例の正直さ——「これで本物の機密を守るな」 と最初から宣言。 Morris と Thompson が論文で「既知平文攻撃で数分で破れる」 と示した暗号。 91 行の Bletchley Park へのオマージュ、 教育目的の Enigma 縮小版。"
+  },
+  {
+    "id": "crypt-002-three-tables-involution",
+    "text": "for(i=0;i<ROTORSZ;i++) {\n    seed = 5*seed + buf[i%13];\n    random = seed % 65521;\n    k = ROTORSZ-1 - i;\n    ic = (random&MASK)%(k+1);\n    random >>= 8;\n    temp = t1[k];\n    t1[k] = t1[ic];\n    t1[ic] = temp;\n    if(t3[k]!=0) continue;\n    ic = (random&MASK) % k;\n    while(t3[ic]!=0) ic = (ic+1) % k;\n    t3[k] = ic;\n    t3[ic] = k;\n}\nfor(i=0;i<ROTORSZ;i++)\n    t2[t1[i]&MASK] = i;",
+    "file_path": "usr/src/cmd/crypt.c",
+    "line_number": 47,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "cryptography",
+      "permutation"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "abstraction": 4
+      },
+      "technical_context": "Three permutation tables built in one loop: t1 (rotor, random permutation via Fisher-Yates shuffle), t3 (reflector, involution: t3[t3[i]] = i), and afterward t2 (inverse of t1). t1 generation: standard Fisher-Yates — swap t1[k] with t1[ic] where ic ∈ [0..k]. t3 generation: walk through unassigned positions, pair them up — `t3[k] = ic; t3[ic] = k;` creates a swap pair, ensuring t3 is its own inverse. PRNG: linear congruential `seed = 5*seed + buf[i%13]`, modulus 65521 (largest prime < 2^16). t2 derivation: `t2[t1[i]] = i` — exactly the inverse permutation. The mathematical structure (permutation + involution + inverse) recreates Enigma's reciprocal property: encryption == decryption with same key.",
+      "human_story": "Three tables, three mathematical objects. t1 is just a shuffle. t3 is special — it's an involution, meaning applying it twice returns the input. That's what makes Enigma's reflector work: light enters, bounces back through the rotors in reverse, and the operator can read the result. t2 = t1⁻¹ closes the loop. The Fisher-Yates shuffle is Knuth's textbook algorithm, but the pairing-up for t3 is bespoke: find an unassigned position, find another unassigned position, marry them. 17 lines of code build the entire mathematical machinery of a rotor cipher."
+    },
+    "appraiser_note": "3 つの順列テーブルを 1 ループで構築。 **t1** (ローター、 Fisher-Yates シャッフルで完全ランダム順列)、 **t3** (反射板、 対合 = `t3[t3[i]] = i`)、 そして後で **t2** (t1 の逆順列)。 t1: 標準 Fisher-Yates——`t1[k]` と `t1[ic]` (ic ∈ [0..k]) を swap。 t3: 未割り当て位置を順に走査して **ペア化**——`t3[k] = ic; t3[ic] = k;` で k と ic を相互に対応させ、 自己逆元を構築。 PRNG は線形合同法 `seed = 5*seed + buf[i%13]`、 modulus 65521 (2^16 未満の最大素数)。 t2 = t1 の逆: `t2[t1[i]] = i`。 この数学的構造 (順列 + 対合 + 逆順列) が Enigma の **暗号化 == 復号** という互換性を実現する。 17 行でローター暗号機の全機構を構築。"
+  },
+  {
+    "id": "crypt-003-fork-pipe-makekey",
+    "text": "strncpy(buf, pw, 8);\nwhile (*pw)\n    *pw++ = '\\0';\nbuf[8] = buf[0];\nbuf[9] = buf[1];\npipe(pf);\nif (fork()==0) {\n    close(0);\n    close(1);\n    dup(pf[0]);\n    dup(pf[1]);\n    execl(\"/usr/lib/makekey\", \"-\", 0);\n    execl(\"/lib/makekey\", \"-\", 0);\n    exit(1);\n}\nwrite(pf[1], buf, 10);\nwait((int *)NULL);\nif (read(pf[0], buf, 13) != 13) {\n    fprintf(stderr, \"crypt: cannot generate key\\n\");\n    exit(1);\n}",
+    "file_path": "usr/src/cmd/crypt.c",
+    "line_number": 23,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "ipc",
+      "security"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "carefulness",
+      "emotion_intensity": 5,
+      "emotions": {
+        "carefulness": 5,
+        "elegance": 4
+      },
+      "technical_context": "Textbook fork-pipe-exec pattern: pipe() creates parent-child channel, fork() spawns child, child closes stdin/stdout and dup()s the pipe ends to fd 0/1, then execl()s /usr/lib/makekey (with /lib/makekey as fallback for V7 vs Bell-32V layout). Parent writes 10 bytes (8 password + 2 wrap chars), waits for child, reads 13 bytes back as the actual key. The line `while (*pw) *pw++ = '\\0';` zeros the password in argv[1] in-memory — so `ps` no longer shows it, core dumps won't leak it. The same idea is now `explicit_bzero(3)` in modern systems. Two execl() calls in a row: first one succeeds → returns control means fail → try second. exec doesn't return on success.",
+      "human_story": "Two textbook patterns in 18 lines. First, fork-pipe-execl: every Unix programming book teaches this. Bell-32V's crypt is one of the early examples. Second, password scrubbing: `while (*pw) *pw++ = '\\0';` overwrites the password byte in process memory so it can't leak via ps, core dumps, swap. 1979's programmers were already thinking about memory hygiene — what modern hardening calls 'sensitive data clearing'. The 3-character idiom became `explicit_bzero(3)` in OpenBSD, `SecureZeroMemory` in Windows, `OPENSSL_cleanse` in OpenSSL. The instinct is older than the helper functions."
+    },
+    "appraiser_note": "教科書的な fork-pipe-exec パターン：`pipe()` で親子間チャネル、 `fork()` で子分岐、 子側で stdin/stdout を close + dup でパイプ端に置換、 `execl(\"/usr/lib/makekey\", \"-\", 0)` で makekey 起動 (`/lib/makekey` フォールバック付き、 V7 と Bell-32V のレイアウト差吸収)。 親は 10 バイト (8 パスワード + 2 ラップ文字) 書き、 wait、 13 バイトの鍵を読み戻す。 `while (*pw) *pw++ = '\\0';` の 1 行が argv[1] のパスワードを **メモリゼロクリア**——`ps -ef` でパスワードが見えなくなり、 core dump にも残らない。 現代の `explicit_bzero(3)` (OpenBSD)、 `SecureZeroMemory` (Windows)、 `OPENSSL_cleanse` の祖。 2 つの `execl` が並ぶのは「最初が成功なら戻ってこない、 失敗時のみ次へ」 という Unix の作法。 18 行に Unix 教科書の主要パターン 2 つが凝縮。"
+  },
+  {
+    "id": "crypt-004-central-cipher-formula",
+    "text": "while((i=getchar()) >=0) {\n    i = t2[(t3[(t1[(i+n1)&MASK]+n2)&MASK]-n2)&MASK]-n1;\n    putchar(i);\n    n1++;\n    if(n1==ROTORSZ) {\n        n1 = 0;\n        n2++;\n        if(n2==ROTORSZ) n2 = 0;\n    }\n}",
+    "file_path": "usr/src/cmd/crypt.c",
+    "line_number": 81,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "cryptography",
+      "enigma"
+    ],
+    "interesting_score": 24,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "concreteness": 4
+      },
+      "technical_context": "The cipher's heart: one line that recreates Enigma's signal path. Read inside-out: (i+n1) shifts by rotor1 position, t1[] passes through rotor1 forward, +n2 shifts by rotor2 position, t3[] hits the reflector (involution), -n2 unshifts rotor2, t2[] passes through rotor1 inverse, -n1 unshifts rotor1. All & MASK to wrap mod 256. Then n1++ (right rotor advances per char), and when n1 wraps n2++ (middle rotor advances). The involution property of t3 makes encryption and decryption identical operations with the same key — `crypt < a > b; crypt < b > c` yields c == a. Unlike real Enigma's stepping mechanism (which had irregular notch positions), this stepping is fully predictable from key, contributing to its cryptanalytic weakness.",
+      "human_story": "Six function calls, one C expression. Light enters Enigma at the keyboard, traverses the input wheel, passes through three rotors, hits the reflector, returns through the three rotors backward, exits through the output wheel. Bell-32V compresses this to: t2[t3[t1[i+n1]+n2]-n2]-n1. The reflector (t3) is the magic — applying the whole expression twice with the same key returns the original input. Encryption is self-inverse. This is why Enigma operators could decrypt with the same machine setting they used to encrypt. The 1979 C line preserves that fundamental property in 60 characters."
+    },
+    "appraiser_note": "暗号機の心臓：1 行で Enigma の信号経路を再構築。 内側から外側へ: `(i+n1)` ローター 1 位置でシフト、 `t1[]` で順方向ローター 1 通過、 `+n2` ローター 2 位置シフト、 `t3[]` で反射板 (対合)、 `-n2` ローター 2 戻し、 `t2[]` でローター 1 逆方向、 `-n1` でローター 1 戻し。 すべて `& MASK` で mod 256 ラップ。 n1++ (右ローター、 1 文字ごと進行)、 n1 ラップ時 n2++ (中央ローター)。 t3 が対合なので暗号化と復号が **同じ操作**——`crypt < a > b; crypt < b > c` で c == a。 本物 Enigma の stepping mechanism (不規則ノッチ位置) と異なり、 この進行は鍵から完全予測可能で、 これが暗号解析的弱さの一因。 6 つの関数呼び出しを 60 文字の C 式に圧縮、 Bletchley Park 縮図。"
   }
 ]
