@@ -11252,5 +11252,113 @@
       "human_story": "Interdata 8/32 was Unix's first journey outside Bell Labs and Berkeley — Wollongong University, Australia, 1977. Their C compiler treated `char` as unsigned (zero-extension to int), unlike PDP-11/VAX (signed, sign-extension). One macro choice could break arithmetic on negative numbers. dc.h's solution: hand-write the sign extension via NEGBYTE check + OR with MASK. Four #ifdef macros encode the architectural divergence so the rest of dc.c can use sgetc() ignoring the difference. This style — encapsulate platform quirks in macros, write the algorithm once — is the seed of every cross-platform C codebase: Linux, macOS, AIX, Windows-Cygwin, all running the same source files with #ifdef gates."
     },
     "appraiser_note": "Interdata 8/32 (Perkin-Elmer 製 mini、 1970 年代) は Bell/Berkeley 以外の最初の Unix 移植先 (Wollongong 大学オーストラリア、 1977)。 その C コンパイラは `char` → `int` の昇格を **ゼロ拡張**で行った——PDP-11/VAX は符号拡張。 dc.h は `#ifdef interdata` で **手動符号拡張**を sgetc/slookc/sbackc に組み込む: `*(p)->rd & NEGBYTE` (0x80) で最上位ビット検査、 立っていれば `| MASK` (-1 & ~0377 = 上位ビット全 1) で符号拡張を補う。 else 節 (PDP-11/VAX) は自動符号拡張に任せて素朴な `*(p)->rd++`。 4 行のマクロでアーキテクチャの差を吸収し、 dc.c 本体は `sgetc()` を意識せず使える。 「**プラットフォーム差をマクロに閉じ込めて、 アルゴリズムは 1 度書く**」——Linux/macOS/AIX/Cygwin が同じソースから build できる DNA の起源。"
+  },
+  {
+    "id": "init-001-for-ever-loop",
+    "text": "#define EVER ;;\n\nmain()\n{\n    int reset();\n\n    setjmp(sjbuf);\n    signal(SIGHUP, reset);\n    for(EVER) {\n        shutdown();\n        single();\n        runcom();\n        merge();\n        multiple();\n    }\n}",
+    "file_path": "usr/src/cmd/init.c",
+    "line_number": 38,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "pid1",
+      "init"
+    ],
+    "interesting_score": 24,
+    "ai_analysis": {
+      "primary_emotion": "antiquity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "antiquity": 5,
+        "minimalism": 4
+      },
+      "technical_context": "init's main is 10 lines but defines Unix boot sequence. #define EVER ;; lets `for(EVER)` read 'forever' — K&R aesthetic. Five-stage cycle: shutdown() kills all processes, single() forks /bin/sh for single-user maintenance, runcom() executes /etc/rc startup script, merge() reads /etc/ttys and spawns getty per tty, multiple() loops on wait() to respawn dead gettys. Normally multiple() never returns (always children to wait on). The for(EVER) reloop happens only via SIGHUP → reset() → longjmp(sjbuf, 1) → setjmp returns and main re-enters. PID 1 cannot exit: kernel panic if init dies. Modern Linux: 'Kernel panic - not syncing: Attempted to kill init!'. 50 years of OS architecture flow from this 10-line main.",
+      "human_story": "Ten lines for the most important process in Unix. PID 1. Parent of all. Cannot die. The for(EVER) macro is K&R cuteness — `for(;;)` written as 'forever'. The 5-stage cycle is the Unix boot story: kill, single-user, run startup script, spawn login terminals, watch them. Every modern init system — System V init, BSD init, systemd, launchd, OpenRC, runit, s6 — implements these same 5 phases, just with vastly more configuration. The 1979 init.c is a kernel-blessed user-space miracle: alone in the address space, eternal, parent to everyone."
+    },
+    "appraiser_note": "init の main は **わずか 10 行**で Unix の起動シーケンス全体を定義。 `#define EVER ;;` で `for(EVER)` を「forever」 と読ませる K&R 美学。 5 ステージサイクル: `shutdown()` 全プロセス kill、 `single()` で /bin/sh fork (シングルユーザー)、 `runcom()` で /etc/rc 実行 (起動スクリプト)、 `merge()` で /etc/ttys 読み + 各 tty に getty fork、 `multiple()` で wait() ループ (respawn)。 通常 multiple() は戻らない (常に wait 対象あり)——for(EVER) ループは SIGHUP → reset() → longjmp(sjbuf, 1) → setjmp 戻り → main 再進入で回る。 PID 1 は exit できない: kernel が panic する (現代 Linux: 「Kernel panic - not syncing: Attempted to kill init!」)。 50 年の OS アーキテクチャがこの 10 行から流れ出る——SysV init/BSD init/systemd/launchd/OpenRC/runit/s6 すべての祖。"
+  },
+  {
+    "id": "init-002-respawn-multiple",
+    "text": "multiple()\n{\n    register struct tab *p;\n    register pid;\n\n    for(EVER) {\n        pid = wait((int *)0);\n        if(pid == -1)\n            return;\n        for(ALL)\n            if(p->pid == pid || p->pid == -1) {\n                rmut(p);\n                dfork(p);\n            }\n    }\n}",
+    "file_path": "usr/src/cmd/init.c",
+    "line_number": 111,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "respawn",
+      "init"
+    ],
+    "interesting_score": 24,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "creativity": 5,
+        "minimalism": 4
+      },
+      "technical_context": "multiple() invents 'respawn' — the automatic restart of dead processes. Loop: wait() blocks for any child to die, gets that PID, scans itab[] for matching entry, calls rmut() to log the logout in utmp/wtmp, then dfork() to spawn a fresh getty on that tty. A getty that times out, crashes, or completes login flow gets immediately replaced by a new one. wait() == -1 (ECHILD, no children) returns from multiple(), letting main proceed (this happens after SIGHUP reset kills everything). The respawn keyword later became declarative in /etc/inittab (System V): `1:23:respawn:/sbin/getty 9600 tty1`. systemd's Restart=always, supervisord's autorestart=true, Kubernetes restartPolicy=Always — all descendants of this 14-line function.",
+      "human_story": "Why does your terminal always show `login:` after you log out? Because of these 14 lines from 1979. getty dies → init's wait() returns → rmut() records the logout → dfork() spawns a new getty → `login:` reappears. The pattern — wait, identify, restart — is the seed of every supervisor system in Unix: System V's respawn, BSD's getty respawn, monit, supervisord, runit's chpst, daemontools, systemd unit files, Kubernetes pod restart policies. 'Self-healing' as a software pattern was invented here, in 14 lines."
+    },
+    "appraiser_note": "multiple() は **respawn** (死んだプロセスの自動再起動) を発明した 14 行。 ループ: wait() で任意の子プロセスの死を待つ → 死んだ PID を取得 → itab[] を走査して一致するエントリを発見 → rmut() でログアウトを utmp/wtmp に記録 → dfork() で新しい getty を起動。 getty がタイムアウト、 クラッシュ、 login 完了で消えても、 即座に新しい getty に置き換わる。 wait() == -1 (ECHILD、 子なし) で multiple() return、 main へ戻る (SIGHUP reset で全プロセス消えた後)。 後に SysV init で宣言的に: `1:23:respawn:/sbin/getty 9600 tty1`。 systemd `Restart=always`、 supervisord `autorestart=true`、 Kubernetes `restartPolicy=Always`——全部この 14 行の子孫。 「self-healing」 ソフトウェアパターンの起源。"
+  },
+  {
+    "id": "init-003-getty-fork-chmod-tty",
+    "text": "dfork(p)\nstruct tab *p;\n{\n    register pid;\n\n    pid = fork();\n    if(pid == 0) {\n        signal(SIGHUP, SIG_DFL);\n        signal(SIGINT, SIG_DFL);\n        maktty(p->line);\n        chown(tty, 0, 0);\n        chmod(tty, 0622);\n        open(tty, 2);\n        dup(0);\n        dup(0);\n        tty[0] = p->comn;\n        tty[1] = 0;\n        execl(getty, minus, tty, (char *)0);\n        exit(0);\n    }\n    p->pid = pid;\n}",
+    "file_path": "usr/src/cmd/init.c",
+    "line_number": 243,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "tty",
+      "permissions"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "carefulness",
+      "emotion_intensity": 4,
+      "emotions": {
+        "carefulness": 4,
+        "concreteness": 4
+      },
+      "technical_context": "dfork: fork + tty setup + exec getty. Child resets signal handlers (parent ignored SIGHUP/SIGINT for safety), constructs /dev/ttyXX path via maktty(), then carefully resets terminal ownership: chown(tty, 0, 0) = root:root, chmod(tty, 0622) = rw--w--w- (owner read/write, others write only). The 0622 permission is brilliant: lets `write` and `wall` send messages to this terminal (write needed) but prevents eavesdropping (no read for others). open(tty, 2) opens fd 0, dup(0); dup(0); duplicates to fd 1 and fd 2 — establishes stdin/stdout/stderr convention. Then execl(getty, '-', 'tty00', 0): '-' marks login shell, second arg is the tty name passed to getty.",
+      "human_story": "Every tty resets to fresh state when init spawns a new getty: ownership becomes root, permissions become 0622 (rw--w--w-). The 0622 magic enables `write user@host` and `wall hello` to broadcast messages while preventing unauthorized snooping. Then fd 0/1/2 all point at the tty — the stdin/stdout/stderr convention is BORN here. Before exec, signal handlers are reset because the parent (init) had them ignored. The 18-line dfork is the canonical 'how to spawn a setuid-aware terminal-attached child' pattern that every Unix shell, ssh-server, container runtime quietly imitates."
+    },
+    "appraiser_note": "dfork は fork + tty 初期化 + getty 起動。 子側: parent (init) が ignore していた SIGHUP/SIGINT をデフォルトに戻す、 maktty() で /dev/ttyXX パス構築、 **`chown(tty, 0, 0)`** で root:root、 **`chmod(tty, 0622)` で `rw--w--w-`** (所有者 rw、 他者 w のみ)。 0622 が秀逸——`write` や `wall` で他人へメッセージ送信可能 (write 許可)、 でも盗み読みは不可 (read 不許可)。 `open(tty, 2)` で fd 0、 `dup(0); dup(0);` で fd 1 と fd 2 にも複製——**stdin/stdout/stderr 慣習の起源**。 `execl(getty, \"-\", \"tty00\", 0)` で getty 起動、 \"-\" は login shell マーク。 「setuid 対応 + terminal 接続子プロセス起動」 の正準パターン、 shell/ssh-server/container runtime のすべてが内部で模倣する 18 行。"
+  },
+  {
+    "id": "init-004-sighup-setjmp-reload",
+    "text": "#include <setjmp.h>\n\njmp_buf sjbuf;\n\nmain()\n{\n    int reset();\n\n    setjmp(sjbuf);\n    signal(SIGHUP, reset);\n    for(EVER) {\n        shutdown();\n        ...\n    }\n}\n\nreset()\n{\n    longjmp(sjbuf, 1);\n}",
+    "file_path": "usr/src/cmd/init.c",
+    "line_number": 36,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "signal",
+      "convention"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "elegance": 4
+      },
+      "technical_context": "init uses setjmp/longjmp as exception handling for signal-driven reload. setjmp(sjbuf) at main's start saves the stack/PC state. signal(SIGHUP, reset) installs reset() as SIGHUP handler. When admin runs `kill -HUP 1`, kernel invokes reset() which does longjmp(sjbuf, 1) — non-local jump back to setjmp regardless of call depth. setjmp returns 1 (vs 0 first time), main re-enters the for(EVER) cycle, killing all gettys and re-reading /etc/ttys. This launched the 'SIGHUP = reload config' convention: sendmail, nginx, inetd, cron, syslogd, dnsmasq all use SIGHUP for config reload. setjmp/longjmp itself became the C-level exception primitive — used in libpng error recovery, OCaml runtime, Common Lisp catch/throw analogs.",
+      "human_story": "How do you reload a daemon's config without restarting? In 1979, init.c invented the pattern: SIGHUP triggers a handler that longjmps back to the start of main. The setjmp/longjmp idiom is C's only built-in non-local exit — no exceptions, no goto across functions, just this register-saving primitive. Every major daemon adopted SIGHUP-reloads: sendmail rereads sendmail.cf, nginx rereads nginx.conf, syslogd reopens log files (logrotate's friend), cron rereads crontabs. Type `kill -HUP <pid>` today and you're invoking a convention started by 5 lines in 1979's init.c. The reset() function is 1 line: longjmp(sjbuf, 1). The entire 'reload config' design pattern in 1 line."
+    },
+    "appraiser_note": "init は setjmp/longjmp を **シグナル駆動リロードの例外処理**として使う。 main の冒頭で `setjmp(sjbuf)` がスタック/PC 状態を保存、 `signal(SIGHUP, reset)` で SIGHUP ハンドラに reset() を設定。 管理者が `kill -HUP 1` 実行 → kernel が reset() を呼ぶ → reset() が `longjmp(sjbuf, 1)` で main の setjmp 地点へ **非ローカルジャンプ** (呼び出し深さ無関係)。 setjmp が 1 を返し (初回 0)、 main が for(EVER) を再進入、 全 getty を kill して /etc/ttys 再読込。 これが **「**SIGHUP = 設定リロード**」 慣習**の起源——sendmail/nginx/inetd/cron/syslogd/dnsmasq すべてが SIGHUP でリロード。 setjmp/longjmp は C の唯一の組み込み非ローカル脱出——例外なし、 関数跨ぎ goto なし。 reset() は 1 行 (`longjmp(sjbuf, 1)`)——「設定リロード」 設計パターン全体がこの 1 行に。"
   }
 ]
