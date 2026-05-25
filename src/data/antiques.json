@@ -13007,5 +13007,140 @@
       "human_story": "How does bc tell `if` (keyword) from `i` (variable)? Lookahead. Read char, peek next char. If both are a-z, it's a reserved word — match against 15 known prefixes. Otherwise it's a single-letter variable. 30 lines of hand-written lexer, no lex needed. 2 chars of lookahead is exactly enough — all 15 keywords (if, while, for, sqrt, return, break, define, scale, base, ibase, obase, dibits, auto, length, quit) have unique 2-letter starts. Beautifully economical. Modern lexers use lex/flex or PEG, but bc's 1979 hand-roll proves you can do tokenization with one peekc buffer and a switch on 2 chars."
     },
     "appraiser_note": "bc の lexer は **手書き**、 lex 生成ではない。 文字を読み、 空白 skip、 バックスラッシュ改行継続を処理。 [a-z][a-z] パターンには 2 文字 prefix を約 15 個の予約語と照合: if/while/for/sqrt/return/break/define/scale/base/ibase/obase/dibits/auto/length/quit。 **2 文字 lookahead で十分**——全予約語が unique な 2 文字 prefix を持つ。 単一 [a-z] は変数名 (LETTER トークン)。 peekc が lookahead バッファ。 手書きアプローチはシンプル、 速い、 lex 依存を避ける。 1979 年 Bell-32V には lex があるが、 bc は 15 キーワードのため手書きを選択。 yacc トークンの `_` 接頭辞 (`_IF`、 `_WHILE`) は C キーワードとの衝突回避。 `quit` 関数は getout() で bc 終了。 1 つの peekc バッファ + 2 文字 switch で完全なトークン化、 1979 年の手書き経済性。"
+  },
+  {
+    "id": "expr-001-yacc-grammar-50-lines",
+    "text": "%token OR AND ADD SUBT MULT DIV REM EQ GT GEQ LT LEQ NEQ\n%token A_STRING SUBSTR LENGTH INDEX NOARG MATCH\n\n%left OR\n%left AND\n%left EQ LT GT GEQ LEQ NEQ\n%left ADD SUBT\n%left MULT DIV REM\n%left MCH\n%left MATCH\n%left SUBSTR\n%left LENGTH INDEX\n%%\n\nexpression: expr NOARG = {\n        printf(\"%s\\n\", $1);\n        exit((!strcmp($1,\"0\")||!strcmp($1,\"\\0\")) ? 1 : 0);\n    }\n;\n\nexpr: '(' expr ')'         = { $$ = $2; }\n    | expr OR expr          = { $$ = conj(OR, $1, $3); }\n    | expr AND expr         = { $$ = conj(AND, $1, $3); }\n    | expr EQ expr          = { $$ = rel(EQ, $1, $3); }\n    | expr ADD expr         = { $$ = arith(ADD, $1, $3); }\n    | expr MCH expr         = { $$ = match($1, $3); }\n    | SUBSTR expr expr expr = { $$ = substr($2, $3, $4); }\n    | LENGTH expr           = { $$ = length($2); }\n    | INDEX expr expr       = { $$ = index($2, $3); }\n    | A_STRING\n    ;",
+    "file_path": "usr/src/cmd/expr.y",
+    "line_number": 1,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "Yacc",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "expr",
+      "yacc"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "minimalism",
+      "emotion_intensity": 4,
+      "emotions": {
+        "minimalism": 4,
+        "elegance": 4
+      },
+      "technical_context": "expr defines its entire expression language in 50 lines of yacc. Tokens: OR/AND/comparisons/arithmetic/MATCH/SUBSTR/LENGTH/INDEX. Precedence ladder from %left declarations: OR (lowest) < AND < comparisons < +/- < */% < MCH (:) < MATCH < SUBSTR < LENGTH/INDEX (highest). Each grammar rule calls a C helper: conj/rel/arith/match/substr/length/index. The final reduction (expr NOARG) prints result and exits with 0/1 based on truthy/falsy. NOARG is the sentinel for end-of-argv. A_STRING is the catch-all token for non-operator arguments. yacc handles precedence and associativity correctly via %left declarations — write `1 + 2 * 3` and it parses as `1 + (2*3)`. The whole language: 9 token classes, 8 precedence levels, 16 grammar productions.",
+      "human_story": "Want a calculator that handles 1+2, string comparison, regex match, and substring extraction — all in one tool? Write 50 lines of yacc. expr.y defines tokens, precedence, and productions; each production reduces to a helper function call. yacc generates the parser; expr's main calls yyparse(). The brevity is breathtaking: a complete expression evaluator with operator precedence, in 50 lines. Modern equivalents (Python AST, JavaScript estree, ANTLR grammars) are larger because they support more, but the core idea — 'declare grammar, generate parser, call C helpers' — is from 1979 expr."
+    },
+    "appraiser_note": "expr は式言語全体を **yacc 50 行**で定義。 トークン: OR/AND/比較/算術/MATCH/SUBSTR/LENGTH/INDEX。 %left 宣言で優先順位ラダー: OR (最低) < AND < 比較 < +/- < */% < MCH (:) < MATCH < SUBSTR < LENGTH/INDEX (最高)。 各文法規則が C ヘルパー (conj/rel/arith/match/substr/length/index) を呼ぶ。 最終 reduction (expr NOARG) で結果を print + truthy/falsy で exit 0/1。 NOARG は argv 終端 sentinel、 A_STRING は非オペレータ引数の catch-all。 yacc が **優先順位と結合性を %left で正しく扱う**——`1 + 2 * 3` は `1 + (2*3)` と parse。 言語全体: 9 トークンクラス、 8 優先順位レベル、 16 文法生成。 簡潔さが息を呑む——完全な式評価器を演算子優先順位込みで 50 行。 現代の同等物 (Python AST、 JavaScript estree、 ANTLR) はより大きいが、 「文法宣言 + パーサ生成 + C ヘルパー呼び出し」 のコア発想は 1979 年 expr から。"
+  },
+  {
+    "id": "expr-002-argv-as-tokens",
+    "text": "char **Av;\nint Ac;\nint Argi;\n\nmain(argc, argv) char **argv; {\n    Ac = argc;\n    Argi = 1;\n    Av = argv;\n    yyparse();\n}\n\nchar *operators[] = {\n    \"|\", \"&\", \"+\", \"-\", \"*\", \"/\", \"%\", \":\",\n    \"=\", \"==\", \"<\", \"<=\", \">\", \">=\", \"!=\",\n    \"match\", \"substr\", \"length\", \"index\", \"\\0\"\n};\nint op[] = {\n    OR, AND, ADD, SUBT, MULT, DIV, REM, MCH,\n    EQ, EQ, LT, LEQ, GT, GEQ, NEQ,\n    MATCH, SUBSTR, LENGTH, INDEX\n};\n\nyylex() {\n    register char *p;\n    register i;\n\n    if (Argi >= Ac) return NOARG;\n    p = Av[Argi++];\n\n    if (*p == '(' || *p == ')')\n        return (int)*p;\n    for (i = 0; *operators[i]; ++i)\n        if (EQL(operators[i], p))\n            return op[i];\n    yylval = p;\n    return A_STRING;\n}",
+    "file_path": "usr/src/cmd/expr.y",
+    "line_number": 76,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "expr",
+      "lexer"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "minimalism",
+      "emotion_intensity": 5,
+      "emotions": {
+        "minimalism": 5,
+        "creativity": 4
+      },
+      "technical_context": "expr's lexer is a 15-line yylex(). Each call returns one token = one argv element. No tokenization needed (shell did that), just operator-table lookup. Argi is the argv index, advances per call. (/) are special-cased as ASCII tokens (yacc convention: 1-char tokens use literal ASCII). String matches in operators[] map to op[] yacc tokens; misses become A_STRING (variable/value). NOARG signals end of args, triggering yyparse to finish. This 'argv-as-tokens' pattern is from find (#171), reused in expr, test/[. Compare to bc's handwritten lexer that processes character-by-character; expr is one level higher — shell pre-tokenized the input, so expr's lex is just argv walking. Beautiful exploitation of shell's pre-processing.",
+      "human_story": "Why does expr have such a tiny lexer? Because shell did the work. When you type `expr 1 + 2`, shell splits on whitespace and passes [\"expr\", \"1\", \"+\", \"2\"] to expr. expr's yylex just walks argv, mapping each element to a yacc token (or A_STRING for non-operators). 15 lines. find did this first, expr copied the idea, test/[ followed. The insight: in shell-invoked tools, tokenization is already done. Just need argv-to-token mapping. Modern tools that take quoted args (`cmd 'complex arg'`) often regret needing more sophisticated parsing, but for simple cases, argv-as-tokens is unbeatable."
+    },
+    "appraiser_note": "expr の lexer は **15 行の yylex()**。 各呼び出しが 1 トークン = 1 argv 要素を返す。 トークン化不要 (shell が済ませた)、 オペレータテーブル lookup のみ。 Argi は argv インデックス、 呼び出しごとに進む。 (/) は ASCII トークンとして特別扱い (yacc 慣習: 1 文字トークンはリテラル ASCII を使う)。 operators[] で文字列マッチして op[] の yacc トークンへ; マッチしなければ A_STRING (変数/値)。 NOARG が引数終端 signal、 yyparse 終了をトリガー。 **「argv-as-tokens」 パターンは find (#171) 由来**、 expr で再利用、 test/[ も追随。 bc の文字単位手書き lexer と比べて、 expr は 1 段階上——shell が事前トークン化しているので、 expr の lex は argv 走査だけ。 shell の前処理を美しく利用。"
+  },
+  {
+    "id": "expr-003-string-number-auto",
+    "text": "char *rel(op, r1, r2) register char *r1, *r2; {\n    register i;\n\n    if (ematch(r1, \"-*[0-9]*$\") && ematch(r2, \"[0-9]*$\"))\n        i = atol(r1) - atol(r2);    /* numeric */\n    else\n        i = strcmp(r1, r2);          /* string */\n\n    switch(op) {\n    case EQ:  i = i==0; break;\n    case GT:  i = i>0; break;\n    case GEQ: i = i>=0; break;\n    case LT:  i = i<0; break;\n    case LEQ: i = i>=0; break;    /* BUG: should be <=0 */\n    case NEQ: i = i!=0; break;\n    }\n    return i ? \"1\" : \"0\";\n}\n\nchar *arith(op, r1, r2) char *r1, *r2; {\n    long i1, i2;\n    if (!(ematch(r1, \"[0-9]*$\") && ematch(r2, \"[0-9]*$\")))\n        yyerror(\"non-numeric argument\");\n    i1 = atol(r1);\n    i2 = atol(r2);\n    switch(op) {\n    case ADD: i1 = i1 + i2; break;\n    case SUBT: i1 = i1 - i2; break;\n    case MULT: i1 = i1 * i2; break;\n    case DIV: i1 = i1 / i2; break;\n    case REM: i1 = i1 % i2; break;\n    }\n    rv = malloc(16);\n    sprintf(rv, \"%D\", i1);\n    return rv;\n}",
+    "file_path": "usr/src/cmd/expr.y",
+    "line_number": 94,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "expr",
+      "dynamic-typing"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "carefulness",
+      "emotion_intensity": 4,
+      "emotions": {
+        "carefulness": 4,
+        "concreteness": 4
+      },
+      "technical_context": "expr internally stores all values as strings, but dynamically detects numbers for comparison/arithmetic. ematch(string, regex) checks if string matches a regex; if both rel() args match [0-9]*$, do numeric comparison via atol(); otherwise string comparison via strcmp(). arith() requires numeric (errors otherwise). The expr regex grammar is ed/grep BRE: . * [a-z] ^ $ etc. Note BUG in LEQ case: should be `i <= 0` but coded as `i >= 0` — has been there since 1979. Probably typo, masked by tests that didn't cover edge cases. Modern coreutils expr fixed it. The auto-string/number duality predates JavaScript's `==` coercion by decades and was Unix's way of letting shell scripts work with both types transparently.",
+      "human_story": "expr handles both `expr 10 > 9` (numeric: true) and `expr 'abc' > 'abd'` (string: false). How? Sniff the args with a regex: if both match [0-9]*$, treat as numbers; else treat as strings. Auto-typing. JavaScript's == coercion is the most famous version of this; expr did it in 1979. The arith case is stricter — must be numeric or error. This duality lets shell scripts work naturally with both types. Side note: there's a real bug in case LEQ (`i = i>=0` should be `i<=0`) — present in Bell-32V source for 50 years. Modern coreutils fixed it. The history of bugs in core utilities is the history of software engineering."
+    },
+    "appraiser_note": "expr は内部的に全値を文字列で持つが、 比較/算術のため数値を**動的検出**。 ematch(string, regex) が文字列の regex マッチをチェック; rel() で両引数が [0-9]*$ にマッチすれば atol() で数値比較、 そうでなければ strcmp() で文字列比較。 arith() は数値必須 (そうでなければエラー)。 expr の regex 文法は ed/grep BRE。 **注: LEQ case にバグ**——`i <= 0` であるべきが `i >= 0` とコーディングされている、 1979 年から残存。 おそらくタイポ、 テストでカバーされなかった edge case。 現代 coreutils expr では修正済み。 **自動 string/number 二重性**は JavaScript の == 強制変換の数十年前、 shell スクリプトが両型を透過的に扱えるようにする Unix の流儀。 1979 年に始まり、 PHP/Perl/JavaScript の動的型に継承。"
+  },
+  {
+    "id": "expr-004-regex-match-operator",
+    "text": "/* yacc rule: */\n| expr MCH expr   = { $$ = match($1, $3); }\n| MATCH expr expr = { $$ = match($2, $3); }\n\n/* C implementation: */\nextern int nbra;\nchar Mstring[1][128];\n\nchar *match(s, p) char *s, *p; {\n    char *rv;\n    if (ematch(s, p)) {\n        if (nbra) {\n            /* return captured \\(...\\) group */\n            rv = malloc(strlen(Mstring[0]) + 1);\n            strcpy(rv, Mstring[0]);\n            return rv;\n        }\n        /* return match length */\n        sprintf(rv = malloc(8), \"%d\", strlen(s) - braslist[0]);\n        return rv;\n    }\n    return \"0\";\n}\n\n/* Usage examples:\n   expr \"hello world\" : \"hello\"     => 5 (match length)\n   expr \"file.txt\" : \".*\\.\\(.*\\)$\" => txt (captured group)\n   expr \"abc\" : \"xyz\"                => 0 (no match)\n*/",
+    "file_path": "usr/src/cmd/expr.y",
+    "line_number": 41,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "expr",
+      "regex"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "creativity": 5,
+        "abstraction": 4
+      },
+      "technical_context": "expr ':' (MCH) operator does regex match. Left side is string, right side is regex (BRE — same as ed/grep). On match: if regex has \\(...\\) group, return captured string; else return match length. On no match, return '0'. Uses ed's compile/execute engine via ematch wrapper. nbra (number of brackets, i.e., \\(...\\) groups) and Mstring[1][128] (first captured group buffer) are globals shared with ed's regex code. Only supports 1 captured group (Mstring[1] = 1 element). Modern expr supports more groups. The ':' syntax was Bell-32V's invention — later POSIX standardized it. This is the proto-`=~` operator that bash/Perl/Ruby copied. The 'return match length' semantics is quirky and rarely used; 'return capture' is the common use case.",
+      "human_story": "Type `expr 'file.txt' : '.*\\.\\(.*\\)$'` and get 'txt'. expr's : operator does regex match and returns the captured group from \\(...\\). The 1979 invention of 'regex as language operator' is the proto-`=~`: bash's [[ =~ ]], Perl's $1, Ruby's =~. Without explicit grouping, : returns match length (rarely used). The ed-shared regex engine (compile/execute) does the heavy lifting. Single-group limitation (Mstring[1]) was eventually lifted. The : operator is one of those quirky Unix features — newcomers don't recognize it as regex, veterans use it for quick string extraction in shell scripts."
+    },
+    "appraiser_note": "expr の `:` (MCH) 演算子が **regex マッチ**を行う。 左辺が文字列、 右辺が regex (BRE——ed/grep と同じ)。 マッチ時: `\\(...\\)` グループがあれば**キャプチャ文字列**を返す、 なければ**マッチ長さ**を返す。 ノーマッチ時は `\"0\"` を返す。 ed の compile/execute エンジンを ematch ラッパー経由で使用。 nbra (\\(...\\) グループ数) と Mstring[1][128] (最初のキャプチャグループバッファ) は ed の regex コードと共有するグローバル。 **1 グループのみサポート**——Mstring[1] = 1 要素、 現代 expr は更に対応。 `:` 構文は Bell-32V の発明、 後の POSIX で標準化。 これが **bash `[[ =~ ]]` / Perl `$1` / Ruby `=~` の祖**——「regex を言語演算子に」 の早期実装。 「マッチ長さ返却」 セマンティクスは奇妙であまり使わない、 「キャプチャ返却」 が一般的用途。"
+  },
+  {
+    "id": "expr-005-exit-code-truthiness",
+    "text": "expression: expr NOARG = {\n    printf(\"%s\\n\", $1);\n    exit((!strcmp($1, \"0\") || !strcmp($1, \"\\0\")) ? 1 : 0);\n}\n\n/* Result | exit code | meaning\n   \"0\"    | 1         | falsy\n   \"\"     | 1         | falsy\n   other  | 0         | truthy\n   error  | 2         | error\n\n   Shell usage:\n     if expr \"$x\" '>' 10; then\n        echo \"x > 10\"\n     fi\n\n     if expr \"$file\" : \".*\\.c$\"; then\n        echo \"C file\"\n     fi\n*/",
+    "file_path": "usr/src/cmd/expr.y",
+    "line_number": 20,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "expr",
+      "shell"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 4,
+      "emotions": {
+        "abstraction": 4,
+        "elegance": 4
+      },
+      "technical_context": "expr communicates results two ways: stdout (the value) and exit code (truthiness). Print result to stdout, then exit 0 if truthy or 1 if falsy. Falsy = string '0' or empty string. Truthy = anything else. Errors return 2. This dual-output allows shell to use expr both as value source (`x=$(expr 1 + 2)`) and condition (`if expr ...; then`). The truthiness convention (0/'' = false, other = true) influenced JavaScript, Perl, Ruby, Python truthiness semantics. POSIX expr formalized this. The exit-code-as-boolean Unix convention (0 = success = true) is rationalized differently than language truthiness — expr blends both. Modern shells with $((...)) and [[ =~ ]] reduce expr's need, but POSIX scripts still use it.",
+      "human_story": "expr returns two things: the value (stdout) and truthiness (exit code). `expr 1 + 2` prints '3' and exits 0 (truthy). `expr 0` prints '0' and exits 1 (falsy). This dual output is genius for shell scripts: `if expr ...` checks truthiness, `x=$(expr ...)` captures value. The truthiness rule (0/'' = false, else = true) is the ancestor of JavaScript's truthiness, Perl's, Ruby's, Python's. The 0=success/non-0=failure Unix exit code convention is preserved AND extended: 0=success+truthy, 1=success+falsy, 2=error. Three exit codes encoding two semantics. POSIX standardized this. The pattern is so useful that all modern shell-invocable tools follow it."
+    },
+    "appraiser_note": "expr は **2 通りで結果を伝える**: stdout (値) と exit code (真偽性)。 結果を stdout に print、 truthy なら exit 0、 falsy なら exit 1。 falsy = 文字列 \"0\" または空文字列。 truthy = それ以外。 エラーは exit 2。 この **dual output** で shell は expr を value source (`x=$(expr 1+2)`) と condition (`if expr ...; then`) の両方で使える。 真偽性慣習 (0/'' = false、 他 = true) が **JavaScript/Perl/Ruby/Python truthiness の祖**。 Unix の exit-code-as-boolean 慣習 (0 = success = true) と言語の truthiness を expr が融合。 3 つの exit code が 2 つのセマンティクスをエンコード: 0=success+truthy、 1=success+falsy、 2=error。 POSIX で標準化、 すべての shell-invocable ツールがこのパターンに従う。 現代 shell の $((...)) と [[ =~ ]] で expr の必要性は減ったが、 POSIX スクリプトでは今も使用。"
   }
 ]
