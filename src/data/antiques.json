@@ -13817,5 +13817,140 @@
       "human_story": "Same source tree, same year, two archive formats. tar said 'I'll handle everything — walking, archiving, restoring'. cpio said 'I'll handle archiving; let find do the walking'. tar won the end-user war (one command vs two), but cpio won specific niches (Linux initramfs, RPM packages, busybox systems). The split is Unix philosophy in action: should a tool do everything (tar) or compose (cpio)? Both worked. Both survive. tar's simplicity won users; cpio's composability won system designers. 50 years later, you tar.gz your source release but boot from cpio.gz."
     },
     "appraiser_note": "tar vs cpio: 同じ Bell Labs ソースツリーから 2 つのアーカイブ形式、 哲学で分岐。 **tar はモノリシック** (ディレクトリ走査 + archive 書込 + 復元、 全て 1 コマンド)、 **cpio はモジュラー** (stdin からファイル名受取 + archive 書込——走査は find とペア)。 **AT&T System V は cpio 標準化**、 **BSD は tar 標準化**。 Linux 両対応、 tar が end-user 向けで支配、 cpio がシステム内部で支配 (initramfs、 RPM)。 cpio 哲学は **Unix パイプ理想** (「one program, one job」) に沿う、 2 コマンドの冗長性が代償。 tar のモノ設計が end-user 勝利。 現代の派生: rsync が cpio -p を sync で超克、 pax が POSIX 統一、 tar.gz/.xz/.zst が配布支配、 cpio が initramfs と RPM を所有。 「**ソースリリースは tar.gz、 ブートは cpio.gz**」 ——50 年後も両方生きる。"
+  },
+  {
+    "id": "diff-001-hunt-mcilroy-stone",
+    "text": "/*    diff - differential file comparison\n*\n*    Uses an algorithm due to Harold Stone, which finds\n*    a pair of longest identical subsequences in the two files.\n*    The major goal is to generate the match vector J.\n*    J[i] is the index of the line in file1 corresponding\n*    to line i file0. J[i] = 0 if there is no such line.\n*/\n\nstone(a, n, b, c) {\n    int *a, *b, *c;\n    int k = 0;\n    c[0] = newcand(0, 0, 0);\n    for (i=1; i<=n; i++) {        /* each line in file0 */\n        j = a[i];                  /* equivalence class */\n        if (j == 0) continue;\n        y = -b[j];                 /* first member */\n        oldl = 0; oldc = c[0];\n        do {\n            if (y <= clist[oldc].y) continue;\n            l = search(c, k, y);    /* binary search */\n            if (l <= k) {\n                if (clist[c[l]].y <= y) continue;\n                tc = c[l];\n                c[l] = newcand(i, y, oldc);\n                oldc = tc; oldl = l;\n            } else {\n                c[l] = newcand(i, y, oldc);\n                k++; break;\n            }\n        } while ((y = b[++j]) > 0);\n    }\n    return(k);\n}",
+    "file_path": "usr/src/cmd/diff.c",
+    "line_number": 358,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "diff",
+      "lcs"
+    ],
+    "interesting_score": 25,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "elegance": 5
+      },
+      "technical_context": "diff's stone() computes Longest Common Subsequence (LCS) between two files using Hunt-McIlroy variant of Harold Stone's algorithm. Each step walks file0 line by line, finds equivalence class in file1, runs binary search through current k-candidates (best-match-per-length list), updates or extends. Output: vector J[] where J[i] = matching line in file1 (0 if no match). Complexity: O((R+N) log N) where R = matching pairs, N = file size. Improves on naive DP O(NM) significantly when files are similar (R is small). Doug McIlroy implemented it; algorithm from James Hunt & Tom Szymanski (CACM 1977). Foundational for all later diff tools — git, mercurial, svn use evolved variants (Myers diff 1986, patience diff, histogram diff) but the core 'find LCS, show non-LCS as changes' paradigm is from this 1976 work.",
+      "human_story": "How does diff know what changed between two files? It finds the longest sequence of lines they have in common (LCS), then everything not in that LCS is a change. The naive way is O(NM) — too slow for big files in 1976's 256KB RAM. Hunt and McIlroy found a way: group lines into equivalence classes via hash, walk file0, maintain a list of 'k-candidates' (best match for each subsequence length), binary search to update. Result: O((R+N) log N). McIlroy's diff (1976) was the first practical implementation. git diff today uses Myers' improved algorithm (1986), but the concept — LCS = common, rest = diff — is from this 60-line stone() function. Every code review, every pull request, every merge depends on this idea."
+    },
+    "appraiser_note": "diff の stone() が 2 ファイル間の **LCS (Longest Common Subsequence)** を Hunt-McIlroy 変種 (Harold Stone アルゴリズム) で計算。 file0 を行ごとに走査、 file1 内の等価類を見つけ、 現在の k-candidate (各長さの最良マッチリスト) に binary search で更新/拡張。 出力: ベクトル J[] で J[i] = file1 のマッチ行 (0 なら不一致)。 計算量 O((R+N) log N)、 R = マッチペア数、 N = ファイル長。 素朴な DP O(NM) より大幅に高速 (file が似ていれば R は小さい)。 Doug McIlroy が実装、 アルゴリズムは James Hunt & Tom Szymanski (CACM 1977) から。 **後の全 diff ツール (git/hg/svn) の基盤**——Myers diff (1986)、 patience、 histogram は進化形だが、 「LCS = 共通、 残り = 差分」 の概念は 1976 年から不変。 256KB RAM の PDP-11 で大ファイル diff を可能にした歴史的アルゴリズム。"
+  },
+  {
+    "id": "diff-002-hash-equivalence",
+    "text": "struct line {\n    int serial;       /* original line number */\n    int value;        /* hash value */\n} *file[2], line;\n\nreadhash(f) FILE *f; {\n    int h;\n    register int i, c;\n    h = 0;\n    while ((c = getc(f)) != '\\n') {\n        ...\n        h = h*0177432 + c;       /* polynomial hash */\n    }\n    file[fno][i].value = h;\n    file[fno][i].serial = ++i;\n}\n\nsort(a, n) struct line *a; {\n    /* shellsort by hash value - groups equivalence classes */\n}\n\n/* check() verifies J[] matches against actual lines, handles hash collisions */\ncheck(argv) {\n    if (J[i] != 0 && strings_differ(file0[i], file1[J[i]])) {\n        J[i] = 0;\n        jackpot++;        /* hash collision noted */\n    }\n}",
+    "file_path": "usr/src/cmd/diff.c",
+    "line_number": 83,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "diff",
+      "hashing"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "concreteness": 4
+      },
+      "technical_context": "diff's memory efficiency comes from hashing: each line becomes a 16-bit hash via polynomial h = h*0177432 + c (0177432 = 65082 = ~2^16 multiplier). Lines compared by hash, not by content — much faster + more compact. Hashed lines sorted by value to group equivalence classes (same hash = candidate match). After LCS algorithm produces J[] match vector, check() re-reads files and verifies actual line content matches, breaking spurious matches (hash collisions) — recorded as 'jackpot' but harmless to correctness. Memory budget per comment: 6n words for n-line file. Compare to naive O(N*M) DP table requiring 4 bytes per cell — 1000-line files would need 4MB, impossible on 256KB PDP-11.",
+      "human_story": "Comparing two 1000-line files with naive LCS needs a 1000×1000 table = 4MB. PDP-11 had 256KB. Hunt-McIlroy's trick: hash each line to a 16-bit value, compare hashes (4 bytes per line, not the whole line). Sort by hash to group equivalent lines. Hash collisions possible — handled afterward by check() which reads files again to verify, marking false matches. The polynomial hash h = h*0177432 + c is the simple rolling hash of the era. Modern git uses SHA-1 of blobs for object identity; diff uses 16-bit hash for LCS speedup. Different purposes, same idea: 'compare hashes when possible, verify with content when needed'."
+    },
+    "appraiser_note": "diff のメモリ効率は**ハッシュ**から: 各行を 16 ビットハッシュに、 多項式 `h = h*0177432 + c` (0177432 = 65082 = ~2^16 乗数)。 行はハッシュで比較 (内容ではなく)、 高速 + コンパクト。 ハッシュ済み行をソートして**等価類**作成 (同ハッシュ = マッチ候補)。 LCS アルゴリズムが J[] マッチベクトルを生成した後、 check() が実際の行内容を再確認、 偽マッチ (ハッシュ衝突) を破棄——'jackpot' として記録、 正しさへの影響なし。 メモリ予算 (コメント): n 行ファイルで 6n words。 素朴 DP テーブル O(N*M) なら 1000 行 × 4 バイト = 4MB——256KB PDP-11 で不可能。 git は SHA-1 をオブジェクト ID に使うが、 diff は 16-bit ハッシュを LCS 高速化に使う——目的違うが同じ発想: 「ハッシュで比較、 必要なら内容で検証」。"
+  },
+  {
+    "id": "diff-003-cand-pred-chain",
+    "text": "struct cand {\n    int x;        /* line in file0 */\n    int y;        /* line in file1 */\n    int pred;     /* index of predecessor in clist */\n} cand;\n\nstruct cand *clist;\nint clen = 0;\n\nnewcand(x, y, pred) {\n    clist = (struct cand *)ralloc((char *)clist, ++clen * sizeof(cand));\n    q = clist + clen - 1;\n    q->x = x; q->y = y; q->pred = pred;\n    return(clen - 1);   /* return INDEX, not pointer */\n}\n\nunravel(p) {\n    for (i=0; i<=len[0]; i++)\n        J[i] = i<=pref ? i :\n               i>len[0]-suff ? i+len[1]-len[0] :\n               0;\n    for (q = clist + p; q->y != 0; q = clist + q->pred)\n        J[q->x + pref] = q->y + pref;\n}",
+    "file_path": "usr/src/cmd/diff.c",
+    "line_number": 78,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "diff",
+      "data-structure"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 4,
+      "emotions": {
+        "abstraction": 4,
+        "elegance": 4
+      },
+      "technical_context": "k-candidate data structure: (x=file0 line, y=file1 line, pred=predecessor index). Each candidate links backward via pred index (not pointer — survives realloc). After stone() produces best k-candidate for each subsequence length, unravel() walks pred chain backward from the longest candidate, recovering the actual LCS as match positions in J[]. Index-based linking (vs pointer) is crucial because newcand uses ralloc which may relocate clist. Modern equivalent: same algorithm written with vectors of indices for stability. The pref/suff offsets account for prune()'s removal of common prefix/suffix before running LCS.",
+      "human_story": "After finding the longest common subsequence, how do you recover the actual matching pairs? Walk the predecessor chain. Each k-candidate (x, y, pred) points back to the k-1 candidate it extends. Start from the longest, follow pred to k-1, then k-2, ..., back to 0. Each step gives one (x, y) pair to record in J[]. The pred field is an index, not a pointer — important because realloc moves the array. unravel() reconstructs LCS in O(K) where K = LCS length. This 'build chain forward, walk backward to recover' pattern is the standard DP/algorithmic reconstruction. Modern competitive programming still uses it for LCS, shortest path, etc."
+    },
+    "appraiser_note": "k-candidate データ構造: (x=file0 行、 y=file1 行、 pred=前任者の index)。 各 candidate は pred index で後方リンク (ポインタではない——realloc 後も生存)。 stone() が各 subsequence 長さの最良 k-candidate を生成した後、 unravel() が最長 candidate から pred chain を後方 walk、 実際の LCS を J[] のマッチ位置として復元。 **index-based linking** (vs ポインタ) が重要——newcand は ralloc を使うので clist が再配置される可能性。 現代の等価実装: 同じアルゴリズムを index ベクトルで安定化。 pref/suff オフセットは LCS 実行前の prune() による共通プレフィックス/サフィックス削除を考慮。 「**チェインを前方構築、 後方 walk で復元**」 パターンは標準 DP/アルゴリズム再構築——現代の競技プログラミングでも LCS、 最短経路等で使用。"
+  },
+  {
+    "id": "diff-004-memory-overlay",
+    "text": "/* From source comments: */\nint *class;     /* will be overlaid on file[0] */\nint *member;    /* will be overlaid on file[1] */\nint *klist;     /* will be overlaid on file[0] after class */\nint *J;         /* will be overlaid on class */\nlong *ixold;    /* will be overlaid on klist */\nlong *ixnew;    /* will be overlaid on file[1] */\n\nchar *ralloc(p, n) char *p; {\n    register char *q;\n    free(p);\n    free(dummy);\n    dummy = malloc(1);     /* defragmentation trick */\n    q = realloc(p, (unsigned)n);\n    if (q == NULL) noroom();\n    return(q);\n}\n\n/* Comment from header:\n*  Much of the complexity of the program comes simply\n*  from trying to minimize core utilization and\n*  maximize the range of doable problems by dynamically\n*  allocating what is needed and reusing what is not.\n*  The core requirements for problems larger than somewhat\n*  are (in words) 2*length(file0) + length(file1) +\n*  3*(number of k-candidates installed),  typically about\n*  6n words for files of length n.\n*/",
+    "file_path": "usr/src/cmd/diff.c",
+    "line_number": 91,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "diff",
+      "memory-optimization"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "carefulness",
+      "emotion_intensity": 5,
+      "emotions": {
+        "carefulness": 5,
+        "concreteness": 4
+      },
+      "technical_context": "diff aggressively reuses buffers: file[0] storage becomes class, then klist, then J across phases. file[1] becomes member, then ixnew. ralloc() is a hand-rolled realloc that frees first then re-allocates — combined with dummy = malloc(1) trick, possibly defragmenting V7 malloc's freelist. The memory budget of '6n words for n-line file' is achievable only via these overlays — naive allocation would need 12-15n words. Trade-off: code complexity (must track buffer's current meaning at each phase) for memory efficiency. PDP-11 with 256KB RAM forced these tricks. Modern systems with GB of RAM make this unnecessary, but the discipline shows in libraries like SQLite which still carefully manage memory pools.",
+      "human_story": "1979's PDP-11 had 256KB RAM. Diffing two 5000-line files naively would exceed it. McIlroy's solution: reuse the same memory for different purposes across algorithm phases. file[0] memory becomes class (equivalence classes), then klist (k-candidate list), then J (final match vector). Each phase the buffer means something different — code must remember which. ralloc() is a custom realloc + free + malloc dance, probably working around V7 malloc's freelist quirks. The 6n words budget per the comment is achievable only this way. Modern programming has gigabytes; these tricks are obsolete. But the discipline lives on in SQLite, embedded systems, and other memory-constrained code."
+    },
+    "appraiser_note": "diff は **バッファを徹底再利用**: file[0] storage が phase ごとに class、 klist、 J になる。 file[1] が member、 ixnew に。 ralloc() は手作り realloc で先に free してから再確保、 dummy = malloc(1) トリックと組み合わせて V7 malloc の freelist 断片化対策の可能性。 「6n words for n-line file」 のメモリ予算はこのオーバーレイで初めて実現可能——素朴な確保なら 12-15n words 必要。 トレードオフ: コード複雑性 (各 phase でバッファの現在の意味を追跡必要) vs メモリ効率。 PDP-11 の 256KB RAM がこのトリックを強制。 現代の GB RAM ではこの工夫は不要だが、 SQLite や組み込みコードに同じ規律が生きる。 1979 年のメモリ制約下でのアルゴリズム実装の典型例。"
+  },
+  {
+    "id": "diff-005-ed-script-output",
+    "text": "/* opt == -1 means -e flag: output as ed script */\noutput(argv) {\n    if (opt == -1) {\n        /* ed script format */\n        if (a > b)\n            printf(\"%d,%da\\n\", b-1, ...);    /* append */\n        else if (c > d)\n            printf(\"%dd\\n\", b);                /* delete */\n        else\n            printf(\"%d,%dc\\n\", b, e);          /* change */\n\n        /* output new lines */\n        fetch(input[1], c, d, lb, \"\");\n\n        if (not delete)\n            printf(\".\\n\");      /* ed insertion terminator */\n    } else {\n        /* normal format: '3,4c5,6' style */\n        change(a, b, c, d);\n        fetch(input[0], a, b, \"<\");\n        printf(\"---\\n\");\n        fetch(input[1], c, d, \">\");\n    }\n}\n\n/* Usage:\n   diff -e old new > patch.ed\n   ed old < patch.ed         # apply patch via ed\n*/",
+    "file_path": "usr/src/cmd/diff.c",
+    "line_number": 519,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "diff",
+      "patch"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "creativity": 5,
+        "abstraction": 4
+      },
+      "technical_context": "diff -e outputs the difference as ed editor commands: `3,4c` (change lines 3-4) followed by new lines and `.` terminator, or `7a` (append at 7), or `10d` (delete line 10). Feeding this to ed transforms old file into new file: `ed old < patch.ed`. This is the prototype of patch(1) — Larry Wall's 1985 patch tool that became central to open-source development. Before patch(1) became standard, projects shared `diff -e` outputs as 'patches' applied via ed. Modern unified-diff format (introduced in GNU diff 1990s) is more readable but conceptually the same: encode changes as a script that can be machine-applied. git diff, code review tools, all descend from this 1979 concept of 'difference as machine-readable transformation'.",
+      "human_story": "diff -e outputs the difference as an ed script: `3,4c` followed by replacement lines then `.`. Feed it to ed and the old file becomes the new file. This was the prototype of patch(1) — Larry Wall in 1985 built patch as a more robust applier of diff output, but the core idea ('encode changes as machine-applicable transformation') is from 1979 diff -e. Before patch, programmers shared `diff -e` output via mailing lists: 'apply this to your file 3.2 source'. Modern unified diff (1990s) and git patches inherit the concept. Code review, pull requests, kernel patches — all built on 'difference as data, applicable mechanically'. The 1979 diff -e flag started a revolution in collaborative software development."
+    },
+    "appraiser_note": "**diff -e** は差分を **ed エディタコマンド**として出力: `3,4c` (3-4 行 change) + 新しい行 + `.` 終端子、 または `7a` (7 行目に append)、 `10d` (10 行目 delete)。 これを ed に喰わせれば古いファイルが新しいファイルに: `ed old < patch.ed`。 これは **patch(1) (Larry Wall, 1985) の祖型**——patch がより強力な diff 出力適用ツールとして登場、 オープンソース開発の中心ツールに。 patch(1) 普及前は、 プロジェクトが **`diff -e` 出力をメーリングリストで共有**: 「これを 3.2 source に当ててください」。 現代の unified diff (GNU diff 1990s) や git patch も概念継承——「**機械適用可能な変換として差分をエンコード**」。 コードレビュー、 プルリクエスト、 カーネルパッチ——全部 1979 年の diff -e の発想の上に。 協力ソフトウェア開発の革命の始点。"
   }
 ]
