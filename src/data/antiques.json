@@ -13412,5 +13412,140 @@
       "human_story": "How does cpp evaluate `#if (VERSION >= 200) && defined(LINUX)`? 31 lines of yacc. Standard arithmetic, comparison, logical operators in yacc productions. defined() is handled by cpp before parsing (replaced with 1 or 0). The yacc grammar evaluates the resulting integer expression. Same precedence and semantics as C itself. Compile-time only — no variables, no function calls. The minimalism is beautiful: full integer expression evaluation in 31 yacc lines. Compare to writing a recursive-descent parser by hand (hundreds of lines). yacc lets you express the grammar declaratively and get the parser for free."
     },
     "appraiser_note": "#if 式評価器は **31 行の yacc 文法** (cpy.y)。 完全な C 整数式をサポート: 算術 (+-*/%)、 ビット (&|^~<<>>)、 比較 (==!=<><=>=)、 論理 (&&||!)、 単項 (-+!~)、 括弧。 演算子優先順位カスケードは C と完全一致。 defined(MACRO) はプリプロセッサ展開で 1/0 に置換してから文法に到達。 変数/関数なし——コンパイル時整数定数式のみ。 31 行の文法が **yacc の表現力**を示す: C 整数セマンティクスを単純なコードで。 cpp の main が yyparse() を呼んで #if 条件を評価。 このパターン (算術-like サブ言語の yacc 評価) は m4y.y、 expr.y、 awk.g.y で再現——**Unix の yacc 駆動ミニ言語愛**。 手書き再帰下降パーサと比べて (数百行)、 yacc は文法を宣言的に表現してパーサを無料で得られる。"
+  },
+  {
+    "id": "od-001-multi-format-display",
+    "text": "int conv;\nint base = 010;\n\nmain(argc, argv) {\n    if (*p == '-') {\n        while (*p != '\\0') {\n            switch (*p++) {\n            case 'o': conv |= 001; f = 6; break;    /* octal short */\n            case 'd': conv |= 002; f = 5; break;    /* decimal short */\n            case 'x': case 'h': conv |= 010; f = 4; break;  /* hex */\n            case 'c': conv |= 020; f = 7; break;    /* character */\n            case 'b': conv |= 040; f = 7; break;    /* byte octal */\n            }\n        }\n    }\n}\n\nline(a, w, n) {\n    f = 1;\n    for (c=1; c; c<<=1) {\n        if ((c & conv) == 0) continue;\n        if (f) { putn(a, base, 7); putchar(' '); f = 0; }\n        else putchar('\\t');\n        for (i=0; i<n; i++) {\n            putx(w[i], c);\n            putchar(i==n-1 ? '\\n' : ' ');\n        }\n    }\n}",
+    "file_path": "usr/src/cmd/od.c",
+    "line_number": 14,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "od",
+      "binary-dump"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "minimalism": 4
+      },
+      "technical_context": "od combines display formats via bitflag (conv): -o=001 (oct word), -d=002 (dec word), -x/-h=010 (hex word), -c=020 (char), -b=040 (byte oct). Multiple flags combine: -ox shows both octal AND hex. The line() function iterates bit positions (c<<=1), printing each enabled format on its own line, indented after the first. First format gets the offset prefix; subsequent ones get tab-aligned. max tracks widest format for column alignment via pre() padding. The bitflag-per-format pattern enables N-way display: -oxc shows 3 formats per data block, all aligned. Modern hexdump/xxd lost this flexibility (or required custom format strings) in favor of single-style output.",
+      "human_story": "od's killer feature: see your binary in multiple representations side-by-side. -ox prints octal AND hex of the same bytes. -xc shows hex on top, ASCII characters below. The bit-flag conv variable enables N formats simultaneously, iterated via shift. First format gets the offset; subsequent ones tab-indent for visual alignment. This let you cross-reference binary structures: 'this hex value is the ASCII character X, which in decimal is N'. Modern hexdump -C combined hex+ascii into one line, but od's 1979 multi-format-per-block display is still uniquely useful for tricky binary forensics."
+    },
+    "appraiser_note": "od は **ビットフラグ (conv) で表示フォーマット組み合わせ**: -o=001 (oct word)、 -d=002 (dec word)、 -x/-h=010 (hex word)、 -c=020 (char)、 -b=040 (byte oct)。 複数フラグ結合: **-ox で 8 進 AND 16 進を同時表示**。 line() 関数がビット位置を iterate (c<<=1)、 各有効フォーマットを 1 行ずつ印字、 最初以降はインデント。 最初のフォーマットがオフセット接頭辞を取得、 後続は tab で位置揃え。 max が最広フォーマット追跡、 pre() でカラム揃え。 ビットフラグごとパターンで N-way 表示: -oxc で同じデータブロックの 3 フォーマット表示、 全部揃う。 現代 hexdump/xxd はこの柔軟性を失い、 単一形式 (またはカスタム format string 要)。 1979 年の **multi-format-per-block 表示**はバイナリフォレンジックで今も唯一無二。"
+  },
+  {
+    "id": "od-002-offset-base-auto",
+    "text": "offset(s) register char *s; {\n    if (*s == '+') s++;\n    if (*s == 'x') { s++; base = 16; }\n    else if (*s == '0' && s[1] == 'x') { s += 2; base = 16; }\n    else if (*s == '0') base = 8;\n    p = s;\n    while (*p) {\n        if (*p++ == '.') base = 10;     /* trailing dot */\n    }\n    for (a=0; *s; s++) {\n        d = *s;\n        if (d >= '0' && d <= '9')\n            a = a*base + d - '0';\n        else if (d >= 'a' && d <= 'f' && base == 16)\n            a = a*base + d + 10 - 'a';\n        else break;\n    }\n    if (*s == '.') s++;\n    if (*s == 'b' || *s == 'B') a *= 512;    /* block units */\n    fseek(stdin, a, 0);\n    addr = a;\n}\n\n/* Examples:\n   +100   = octal 100 = 64 decimal\n   +100.  = decimal 100\n   +0x100 = hex 100 = 256 decimal\n   +10b   = 10 blocks = 5120 bytes\n*/",
+    "file_path": "usr/src/cmd/od.c",
+    "line_number": 213,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "od",
+      "ux"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "creativity": 4,
+        "minimalism": 4
+      },
+      "technical_context": "od +offset seeks before output. Base auto-detection: 'x' or '0x' prefix = hex, leading '0' = octal (default), trailing '.' = decimal, 'b' suffix = multiply by 512 (block size). Matches C numeric literal conventions plus Unix-specific extensions (. for explicit decimal, b for blocks). fseek(stdin, a, 0) works when stdin is redirected from file. addr=a sets the displayed offset starting point. The 'four ways to specify a number' UX is from 1979 Unix philosophy: let user write naturally, infer base from form. Modern utilities (dd, od) preserve this; new tools usually require explicit base flags. The 512-byte block unit reflects V7 BSIZE — disk sector size of the era.",
+      "human_story": "How do you say 'skip to byte 256 of this file' in od? Four ways: +0x100 (hex), +400 (octal — leading 0 implied), +256. (decimal with dot), +1/2b (half-block? — well, +1b = 512). Same number, four forms. Plus base auto-detected from form. 1979 Unix preferred letting users write numbers in whatever base felt natural (octal was common, hex was emerging, decimal had to be explicit). The 'b' for blocks reminds us — V7 filesystem block was 512 bytes, dd used it, find -size used it. Block-aware numeric arguments were Unix DNA."
+    },
+    "appraiser_note": "od は **+offset でシーク**、 出力前にファイル位置移動。 **基数自動判定**: `x` や `0x` 接頭辞 = 16 進、 先頭 `0` = 8 進 (デフォルト)、 末尾 `.` = 10 進、 `b` 接尾辞 = 512 倍 (block size)。 C 数値リテラル規約 + Unix 固有拡張 (明示 10 進の `.`、 ブロック単位の `b`)。 fseek(stdin, a, 0) はリダイレクトされた stdin で動作。 addr=a で表示オフセット開始点設定。 「**1 つの数値を 4 通りで指定**」 UX は 1979 Unix 哲学から——ユーザーが自然に書き、 形から基数を推測。 現代 (dd、 od) でも継承、 新しいツールは通常明示基数フラグを要求。 512 バイトブロック単位は V7 BSIZE 反映——時代のディスクセクタサイズ。 dd の bs=、 find -size でも同じ b suffix。"
+  },
+  {
+    "id": "od-003-asterisk-dedup",
+    "text": "unsigned short word[8];\nunsigned short lastword[8];\nint same;\n\nmain(...) {\n    same = -1;\n    for ( ; (n = fread((char *)word, 1, sizeof(word), stdin)) > 0; addr += n) {\n        if (same >= 0) {\n            for (f=0; f<8; f++)\n                if (lastword[f] != word[f])\n                    goto notsame;\n            if (same == 0) {\n                printf(\"*\\n\");\n                same = 1;\n            }\n            continue;            /* skip duplicate */\n        }\n    notsame:\n        line(addr, word, ...);\n        same = 0;\n        for (f=0; f<8; f++)\n            lastword[f] = word[f];\n    }\n}\n\n/* Output:\n   0000000 000000 000000 000000 000000 000000 000000 000000 000000\n   *\n   0010000 000001 000002 ...\n*/",
+    "file_path": "usr/src/cmd/od.c",
+    "line_number": 73,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "od",
+      "ux"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "creativity": 4
+      },
+      "technical_context": "od collapses consecutive identical lines to a single '*' marker. State machine with 3 states via 'same' variable: -1=initial, 0=just printed line, 1=in dedup mode. Compares 8-word buffer (16 bytes) with lastword[]; if identical, suppress output (after first '*'); if different, restart normal printing. Critical for binary files with large zero-filled regions (BSS sections, sparse files, /dev/zero). Without dedup, dumping a 10MB sparse file would scroll forever. The '*' marker is unambiguous (* is not a valid hex/oct character at line start) and visually obvious. Modern hexdump/xxd inherit this behavior (xxd outputs '*' too).",
+      "human_story": "Dump /dev/zero and you'd expect infinite scroll of '000000 ...'. Instead od shows one line, then '*', then nothing more (until pattern changes). 1979 designers anticipated long runs of identical data — BSS sections, sparse files, zero-padded structures. State machine: track 'same as previous' via lastword[] comparison. When same, print '*' once and stop printing duplicates. When different, resume normal output. Saves the user from infinite scrolling. xxd and hexdump still do this exactly. The '*' is so universally understood in binary dumps that it's almost invisible to experienced users."
+    },
+    "appraiser_note": "od は **連続同一行を `*` 1 つに省略**。 `same` 変数で 3 状態ステートマシン: -1=初期、 0=直前 line 印字、 1=dedup 中。 8 word バッファ (16 バイト) を lastword[] と比較; 同一なら出力抑制 (最初の `*` 後)、 異なれば通常印字再開。 **BSS セクション、 sparse file、 /dev/zero のような巨大ゼロ領域**を持つバイナリで決定的に重要。 dedup なしだと 10MB sparse file のダンプが無限スクロール。 `*` マーカーは曖昧性なし (行頭の `*` は有効な hex/oct 文字でない)、 視覚的に明白。 現代 hexdump/xxd はこの挙動を継承 (xxd も `*` 出力)。 1979 年の設計者が長い同一データの run (BSS、 sparse、 zero-padded 構造体) を予期して、 state machine で「**同じ**」 を追跡。 経験豊富なユーザーには `*` は当たり前すぎて意識しない。"
+  },
+  {
+    "id": "od-004-recursive-putn",
+    "text": "putn(n, b, c)\nlong n;\n{\n    register d;\n\n    if (!c) return;\n    putn(n/b, b, c-1);       /* recursive: higher digits first */\n    d = n % b;\n    if (d > 9)\n        putchar(d-10 + 'a');\n    else\n        putchar(d + '0');\n}\n\n/* Examples:\n   putn(255, 16, 4) -> \"00ff\"\n   putn(100, 10, 5) -> \"00100\"\n   putn(64, 8, 6)   -> \"000100\"\n   putn(0, 16, 4)   -> \"0000\"\n*/",
+    "file_path": "usr/src/cmd/od.c",
+    "line_number": 190,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "od",
+      "recursion"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "minimalism": 4
+      },
+      "technical_context": "putn prints n in base b with exactly c digits (zero-padded). Recursive: prints higher digits first by recursing on n/b, c-1. Base case: c==0 returns. Digit conversion: 0-9 -> '0'-'9', 10-35 -> 'a'-'z' (covers bases up to 36). Recursion depth = c (max digit count). The 8-line function handles all of od's number output: offsets, octal, decimal, hex. Compare to iterative version that needs a buffer and reversal — recursive elegance wins for fixed digit count. Stack usage minimal (16 levels for 16-digit hex). The same recursive printing pattern appears in many K&R-era programs; modern code often uses sprintf with format strings, losing the educational clarity.",
+      "human_story": "Print 255 in 4-digit hex: '00ff'. How? 8 lines of recursion. putn(n/b, b, c-1) recursively prints higher digits first; then we print the current digit. Recursion bottom: c=0 returns without printing. The 0-9 vs a-z conversion is one if-else. Same function prints octal, decimal, hex — base is a parameter. Iterative version needs a buffer (collect digits backward, reverse at end); recursive uses the call stack as implicit buffer. K&R-era programs frequently used this idiom; today's sprintf-with-format-strings is more flexible but less educational. The 8-line putn is a masterclass in recursive elegance."
+    },
+    "appraiser_note": "putn は n を基数 b で正確に c 桁 (zero-padded) 印字。 **再帰**: putn(n/b, b, c-1) で上位桁から先に再帰、 そして現在桁を印字。 基底ケース: c==0 で return。 桁変換: 0-9 → '0'-'9'、 10-35 → 'a'-'z' (基数 36 までカバー)。 8 行関数が od の全数値出力を処理: オフセット、 8 進、 10 進、 16 進。 反復版はバッファ + 逆順必要——再帰の優雅さが固定桁数では勝つ。 スタック使用は最小 (16 桁 16 進で 16 階層)。 同じ再帰印字パターンは K&R 時代のプログラムで頻繁、 現代は format string 付き sprintf で柔軟だが教育的明快さを失う。 8 行の putn は **再帰の優雅さの教科書例**。"
+  },
+  {
+    "id": "od-005-16-bytes-per-line",
+    "text": "unsigned short word[8];      /* 8 words per line */\n\nmain(...) {\n    for ( ; (n = fread((char *)word, 1, sizeof(word), stdin)) > 0; addr += n) {\n        ...\n        line(addr, word, (n+sizeof(word[0])-1)/sizeof(word[0]));\n    }\n    putn(addr, base, 7);     /* final offset = total file size */\n    putchar('\\n');\n}\n\n/* Output layout:\n   0000000 000150 000145 000154 000154 000157 020040 000167 000157\n           h   e   l   l   o       w   o\n   0000020 000162 000154 000144 005412 000000 000000 000000 000000\n           r   l   d  \\n  \\0  \\0  \\0  \\0  \\0  \\0  \\0  \\0  \\0  \\0\n   0000040\n*/",
+    "file_path": "usr/src/cmd/od.c",
+    "line_number": 7,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "od",
+      "convention"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 4,
+      "emotions": {
+        "concreteness": 4,
+        "antiquity": 4
+      },
+      "technical_context": "od reads 8 unsigned shorts = 16 bytes per iteration. Standard line layout: 7-digit octal offset + 8 6-digit octal words = 79-column line (fits 80-col terminal). 16-byte width chosen for: (1) VAX cache line of era, (2) 80-col terminal fitting, (3) power-of-2 binary friendliness, (4) human visual chunk size. Final line: printout total file size as last offset. This 16-byte convention propagated to hexdump, xxd, GNU od, and basically every binary dump tool since. Even GUI hex editors (HxD, Bless, Hex Fiend) default to 16 bytes per row. The choice from 1979 became universal because it works at every level — display, machine, human.",
+      "human_story": "Why are binary dumps always 16 bytes wide? Because od said so in 1979. 16 bytes = 8 shorts = fits in 80-column terminal + offset = comfortable visual chunk size. Modern hexdump, xxd, every GUI hex editor (HxD, Bless, Hex Fiend) defaults to 16-byte rows. A choice driven by 1979 terminal width + cache-line ergonomics that became universal. The final line shows the file's total size as the closing offset — a free byte-count for the user. 50 years later, every binary dump has the same shape because of this one decision."
+    },
+    "appraiser_note": "od は反復ごとに **8 unsigned short = 16 バイト**読む。 標準行レイアウト: 7 桁 8 進オフセット + 8 × 6 桁 8 進ワード = 79 桁 (80 桁端末に収まる)。 16 バイト幅の選択理由: (1) 時代の VAX キャッシュライン、 (2) 80 桁端末収容、 (3) 2 の累乗で binary friendly、 (4) 人間の視覚的 chunk サイズ。 最終行: ファイル総サイズを最終オフセットとして印字——ユーザーへの無料の byte カウント。 この **16 バイト規約**が hexdump、 xxd、 GNU od、 以降の全バイナリダンプツールに伝播。 GUI hex editor (HxD、 Bless、 Hex Fiend) でも 1 行 16 バイトがデフォルト。 1979 年の選択が普遍化したのは、 **表示・マシン・人間の全レベルで機能する**から。 50 年後の全バイナリダンプが同じ形状なのは、 この 1 つの決定のおかげ。"
   }
 ]
