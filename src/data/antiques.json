@@ -11981,5 +11981,140 @@
       "human_story": "Did you know sed is Turing-complete? With `b label` (jump), `t label` (jump-if-substitution-succeeded), labels (`:foo`), regex matching, and the 5 buffer commands, you can compute anything. Someone implemented Conway's Life in sed. Someone wrote a sed prime sieve. Lee McMahon in 1975 didn't intend sed to be a general programming language — but adding labels and branches made it one. Most people use sed for `sed 's/old/new/'` one-liners, never touching `b`/`t`. But the capability is there. The lesson: small composable primitives (matching + state buffers + jumps) can produce universal computation. sed is the smallest accidentally-Turing-complete Unix tool."
     },
     "appraiser_note": "sed には **goto** がある: `b label` (無条件分岐) と `t label` (テスト分岐——`s///` 成功時のみジャンプ)。 `:label` でターゲット定義。 ltab[50] がラベルテーブル (8 文字名)。 reptr2 の lb1 フィールドが解決済みジャンプターゲットを保持 (fcomp 末尾の dechain() で解決)。 実行時 command() が分岐で jflag=1 をセット、 execute() が jflag を見て `ipc = ipc->lb1`。 ラベル無しの b はスクリプト末尾へジャンプ (この行の残りコマンドをスキップ)。 ラベル + 分岐 + regex マッチ + 5 つのバッファコマンド (h/H/g/G/x) で sed は **Turing 完備**——加算 (1 進法)、 素数チェック、 コンウェイのライフゲームまで実装可能。 多くのユーザーは 1 行 sed しか書かないが、 言語としては完全。 Lee McMahon は 1975 年に sed を汎用言語にする気は無かったが、 ラベル + 分岐の追加で意図せず Turing 完備になった。 「**小さな合成可能プリミティブ (マッチ + 状態バッファ + ジャンプ)** で普遍計算が可能」 という教訓。"
+  },
+  {
+    "id": "awk-001-yacc-full-language",
+    "text": "/* awk.g.y */\n%token  LT LE GT GE EQ NE\n%token  MATCH NOTMATCH\n%token  ADD MINUS MULT DIVIDE MOD UMINUS\n%token  ASSIGN ADDEQ SUBEQ MULTEQ DIVEQ MODEQ\n%token  XBEGIN XEND\n%token  PRINT PRINTF SPRINTF SPLIT\n%token  IF ELSE WHILE FOR IN NEXT EXIT BREAK CONTINUE\n\n%right  ASGNOP\n%left   BOR    AND   NOT\n%nonassoc RELOP MATCHOP\n%left   '+' '-'\n%left   '*' '/' '%'\n%left   POSTINCR PREINCR POSTDECR PREDECR\n\nprogram:\n      begin pa_stats end\n    ;\nbegin:\n      XBEGIN '{' stat_list '}'\n    ;\nend:\n      XEND '{' stat_list '}'\n    ;\nlex_expr:\n      expr MATCHOP regular_expr   { $$ = op2($2, $1, makedfa($3)); }\n    ;\nvar:\n      VAR '[' expr ']'    { $$ = op2(ARRAY, $1, $3); }\n    ;",
+    "file_path": "usr/src/cmd/awk/awk.g.y",
+    "line_number": 1,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "Yacc",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "awk",
+      "language"
+    ],
+    "interesting_score": 25,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "elegance": 5
+      },
+      "technical_context": "awk.g.y defines a complete programming language in 269 lines of yacc grammar. Tokens cover comparison operators (LT/LE/GT/GE/EQ/NE), match operators (MATCH/NOTMATCH = ~ !~), arithmetic (ADD/MINUS/MULT/DIVIDE/MOD), assignment (ASSIGN/ADDEQ/SUBEQ/MULTEQ/DIVEQ/MODEQ), control flow (IF/ELSE/WHILE/FOR/IN/NEXT/EXIT/BREAK/CONTINUE), I/O (PRINT/PRINTF/SPRINTF), built-in functions (SPLIT/SUBSTR/INDEX/MATCH), pre/post inc-dec (POSTINCR/PREINCR/POSTDECR/PREDECR). Operator precedence cascade from low (ASGNOP) to high (FIELD INDIRECT). Uses lex tokenizer (awk.lx.l) — yacc + lex applied seriously, unlike ed/grep/sed's hand-written parsers. Aho was co-author of the Dragon Book (Compilers: Principles, Techniques, Tools) — awk is his reference implementation of compiler theory.",
+      "human_story": "ed, grep, sed all hand-rolled their parsers. awk did it with yacc + lex — using compiler theory seriously. Why? Because awk needed to be a real programming language with proper operator precedence, not a one-letter command interpreter. Alfred Aho, one of awk's three authors, co-wrote the Dragon Book — the standard compiler textbook. awk is, in a sense, Aho's compiler-theory in action. 269 lines of yacc express what would take 1000+ lines of recursive-descent parser. Lex tokenizes, yacc parses, run.c interprets — a clean compiler pipeline that became the model for Perl, PHP, Python, Ruby all building proper grammar."
+    },
+    "appraiser_note": "awk.g.y は **269 行の yacc 文法**で完全プログラミング言語を定義。 トークン: 比較演算子 (LT/LE/GT/GE/EQ/NE)、 マッチ演算子 (MATCH/NOTMATCH = ~ !~)、 算術 (ADD/MINUS/MULT/DIVIDE/MOD)、 代入 (ASSIGN/ADDEQ/SUBEQ/MULTEQ/DIVEQ/MODEQ)、 制御フロー (IF/ELSE/WHILE/FOR/IN/NEXT/EXIT/BREAK/CONTINUE)、 I/O (PRINT/PRINTF/SPRINTF)、 組み込み関数 (SPLIT/SUBSTR/INDEX/MATCH)、 前/後置 inc-dec。 演算子優先順位カスケード: 最低 ASGNOP → 最高 FIELD INDIRECT。 lex トークナイザ (awk.lx.l) と組み合わせ——ed/grep/sed の手書きパーサと違い、 **yacc + lex を本気で適用**。 Aho は Dragon Book (Compilers: Principles, Techniques, Tools) の共著者——awk は **彼のコンパイラ理論の参考実装**。 269 行の yacc が再帰下降パーサ 1000+ 行に相当。 後の Perl/PHP/Python/Ruby が proper grammar で書く流派の祖。"
+  },
+  {
+    "id": "awk-002-pattern-action-paradigm",
+    "text": "/* awk.g.y */\nbegin:\n      XBEGIN '{' stat_list '}'    { $$ = $3; }    /* BEGIN block */\n    ;\nend:\n      XEND '{' stat_list '}'      { $$ = $3; }    /* END block */\n    ;\npa_stat:                          /* pattern-action statement */\n      pattern '{' stat_list '}'    { $$ = stat2(PASTAT, $1, $3); }\n    | '{' stat_list '}'             { $$ = stat2(PASTAT, nullstat, $2); }\n    | pattern                       { $$ = stat2(PASTAT, $1, ...); }\n    ;\n\n/* Example program: */\nBEGIN { FS = \":\" }\n$3 > 100 { print $1 }\nEND { print \"Total:\", NR }",
+    "file_path": "usr/src/cmd/awk/awk.g.y",
+    "line_number": 40,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "Yacc",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "awk",
+      "paradigm"
+    ],
+    "interesting_score": 25,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "creativity": 5,
+        "elegance": 4
+      },
+      "technical_context": "awk's pattern-action paradigm: program = BEGIN block + pattern-action statements + END block. Each pa_stat = pattern + action block. Runtime: BEGIN runs once before input, then for each input line iterate all pa_stats (if pattern matches, run action), END runs once after input. Patterns can be /regex/, expressions ($3 > 100), ranges (/start/,/end/), or compound (pat1 && pat2). Actions are statement blocks with full language features (if/while/for/print/arrays). PASTAT AST node holds (pattern, action) pair. This extends sed's /regex/ command model into structured-language scope. Data-driven programming: declare what to do per line type, not how to iterate. Modern descendants: SQL SELECT WHERE, pandas .apply, MapReduce mappers, Spark DataFrame operations.",
+      "human_story": "Why does `awk '{print $1}'` feel different from `sed s/foo/bar/`? Because awk is declarative: 'for each line, do this'. sed is closer to a command stream. awk's pattern-action model says 'declare what to do when X matches'. BEGIN initializes, patterns trigger actions, END summarizes. This is the data-driven programming pattern: structure code around 'what input shapes deserve what response'. SQL's SELECT...WHERE..., pandas's df.apply(), MapReduce's mappers, Spark's filter+map — all express the same idea: declarative per-record processing. awk pioneered it in 1977 for text streams."
+    },
+    "appraiser_note": "awk の **pattern-action パラダイム**: プログラム = BEGIN ブロック + pattern-action 文の列 + END ブロック。 各 pa_stat = pattern + action ブロック。 ランタイム: BEGIN を 1 回実行 → 各入力行で全 pa_stats を順次評価 (pattern 一致なら action) → END を 1 回実行。 パターンは /regex/、 式 ($3 > 100)、 範囲 (/start/,/end/)、 複合 (pat1 && pat2)。 アクションは複文 (if/while/for/print/array)。 PASTAT AST ノードが (pattern, action) ペアを保持。 sed の /regex/ command を **構造化言語のスコープ**に拡張。 **データ駆動型プログラミング**: 「どう繰り返すか」 ではなく 「どの入力に何をするか」 を宣言。 後の SQL SELECT WHERE、 pandas .apply、 MapReduce mapper、 Spark DataFrame operations すべて同じ思想——awk が 1977 年にテキストストリームで先駆。"
+  },
+  {
+    "id": "awk-003-dynamic-typing-fields",
+    "text": "/* tran.c (concept): */\ntypedef struct Cell {\n    char *sval;  /* string value */\n    double fval; /* numeric value */\n    int tval;    /* STR or NUM or both */\n} Cell;\n\ndouble getfval(Cell *c) {\n    if (c->tval & NUM) return c->fval;\n    return atof(c->sval);  /* auto-convert */\n}\n\nchar *getsval(Cell *c) {\n    if (c->tval & STR) return c->sval;\n    sprintf(buf, \"%g\", c->fval);  /* auto-convert */\n    return strdup(buf);\n}\n\n/* lib.c (concept) — field splitting: */\nreadrec() {\n    fgets(record, MAXRECLEN, fp);\n    setsval($0, record);\n    nf = 0;\n    p = record;\n    while (*p) {\n        skip(FS);\n        start = p;\n        scan_until(FS);\n        setsval($(++nf), start);\n    }\n    setfval(NF, nf);\n    NR++;\n}",
+    "file_path": "usr/src/cmd/awk/tran.c",
+    "line_number": 1,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "awk",
+      "dynamic-typing"
+    ],
+    "interesting_score": 24,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "creativity": 5,
+        "abstraction": 4
+      },
+      "technical_context": "awk's Cell struct holds both string (sval) and numeric (fval) values with a type flag (tval) indicating which is current. getfval auto-converts string to double via atof; getsval auto-converts double to string via sprintf %g. `\"42\" + 1` works because + forces numeric context, triggering getfval. `42 \" lines\"` (juxtaposition = concat in awk) forces string context. Field splitting: readrec reads a line, sets $0, then walks FS-separated fields setting $1, $2, ..., updating NF and NR. Field separator FS defaults to whitespace, customizable (e.g. FS=\":\"). $NF, $(NF-1) work because field references are evaluated. This dynamic typing + automatic field splitting is awk's killer ergonomics: type as little as possible to process structured text.",
+      "human_story": "Type `awk '{print $1+$2}'` on a file of two numbers per line — it works. The fields $1 and $2 are strings (from text input) but + makes awk convert them to numbers. Type `awk '{print $1\".txt\"}'` — concatenation, $1 stays a string. The 1977 awk made dynamic typing transparent: declare nothing, awk figures out from context. Combined with automatic field splitting (`$0`, `$1`, `$NF`), awk reads /etc/passwd more naturally than C: `awk -F: '{print $1, $5}'`. Perl, PHP, Python, JavaScript all inherit awk's principle: 'string vs number, just do the right thing'. The Cell struct holding both representations is 1977's gift to modern scripting."
+    },
+    "appraiser_note": "awk の Cell 構造体は **文字列 (sval) と数値 (fval) の両方**を保持し、 型フラグ (tval) で現在の形式を示す。 `getfval()` は atof で文字列→double 自動変換、 `getsval()` は sprintf %g で double→文字列。 `\"42\" + 1` が動くのは + が数値コンテキストを強制し getfval をトリガーするから、 `42 \" lines\"` (awk の juxtaposition = 連結) は文字列コンテキストを強制。 **フィールド分割**: readrec が 1 行読んで $0 設定、 FS 区切りで $1, $2, ... を設定、 NF と NR 更新。 FS デフォルトは空白、 カスタマイズ可 (`FS=\":\"`)。 $NF, $(NF-1) も評価可能。 動的型 + 自動フィールド分割 = awk のキラーエルゴノミクス: **「構造化テキスト処理に最小限のタイピング**」。 Perl/PHP/Python/JavaScript すべて awk の「文字列 vs 数値、 文脈で判断」 原則を継承。 Cell 構造体は 1977 年の現代スクリプトへの贈り物。"
+  },
+  {
+    "id": "awk-004-associative-arrays",
+    "text": "/* awk.g.y: */\nvar:\n      VAR '[' expr ']'    { $$ = op2(ARRAY, $1, $3); }\n    ;\n\n/* Examples: */\ncounts[\"error\"]++\ncounts[\"warning\"]++\n\nfor (key in counts) {\n    print key, counts[key]\n}\n\n/* Multi-dim via SUBSEP: */\nvisits[user, page]++   /* internally: visits[user SUBSEP page] */\n\n/* run.c (concept): */\nCell *array(Node *a, int n) {\n    Cell *x, *y;\n    char *s;\n    x = execute(a->nnext);   /* eval index expr */\n    s = getsval(x);          /* stringify */\n    y = setsymtab(s, \"\", 0.0, STR|NUM, (Array *)a->nnext->nval);\n    return y;\n}",
+    "file_path": "usr/src/cmd/awk/awk.g.y",
+    "line_number": 100,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "Yacc",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "awk",
+      "hash-table"
+    ],
+    "interesting_score": 25,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "creativity": 5,
+        "abstraction": 4
+      },
+      "technical_context": "awk associative arrays: a[\"key\"] = value where key is any string. Internally implemented as hash table (symtab[]) with dynamic sizing and chaining for collisions (tran.c). Index expression is evaluated, stringified, looked up or created in the array's symtab. `for (key in array)` iterates all keys. Multi-dimensional via SUBSEP separator: `a[i, j]` becomes `a[i SUBSEP j]` (default SUBSEP = \\034 = ASCII FS). APL/SNOBOL/Lisp had associative data structures, but they were for 'programmer' languages. awk brought hash tables to 'Unix user' tool — natural syntax, no setup, just `a[key] = value`. Influence: Perl %hash, PHP $array, Python dict, JavaScript object, Ruby Hash — all descend from awk's syntax and semantics.",
+      "human_story": "Before awk, hash tables were a 'programmer' data structure — you used them in Lisp or wrote your own. After awk (1977), `a[\"key\"] = value` was a one-liner for shell users. Want to count word occurrences? `awk '{for(i=1;i<=NF;i++)c[$i]++} END{for(w in c)print w,c[w]}'`. Want to group log lines by date? Same pattern. The hash table — that staple of every modern language — was popularized for everyday text processing by awk. Multi-dim `a[i,j]` via SUBSEP separator anticipated Python tuple keys `d[(i,j)]`. The 1977 design pattern of 'arrays-with-string-keys' is the foundation of dict in every scripting language since."
+    },
+    "appraiser_note": "awk の連想配列: `a[\"key\"] = value`、 キーは任意の文字列。 内部実装は **hash table (symtab[])**、 動的サイズ + chaining (tran.c)。 インデックス式を評価 → 文字列化 → 配列の symtab で lookup or create。 `for (key in array)` で全キー走査。 多次元は **SUBSEP** で連結: `a[i, j]` は `a[i SUBSEP j]` (デフォルト SUBSEP = \\034 = ASCII FS)。 APL/SNOBOL/Lisp も連想構造を持つが「プログラマ言語」 だった。 awk が **Unix ユーザーツール**として hash table を持ち込み——自然な構文、 セットアップ不要、 `a[key] = value` のみ。 影響: Perl %hash、 PHP $array、 Python dict、 JavaScript object、 Ruby Hash——すべて awk の構文と意味論を継承。 1977 年の「文字列キー配列」 デザインパターンが、 全スクリプト言語の dict の基盤。"
+  },
+  {
+    "id": "awk-005-matchop-firstclass-regex",
+    "text": "/* awk.g.y: */\n%nonassoc RELOP MATCHOP\n...\nlex_expr:\n      expr MATCHOP regular_expr    { $$ = op2($2, $1, makedfa($3)); }\n    | '(' lex_expr ')'              { $$ = $2; }\n    ;\n\n/* Examples: */\n$1 ~ /^[A-Z]/ { print \"capital\" }\n$2 !~ /error|fail/ { print \"OK\" }\n\n/* Regex as value: */\npattern = \"ABC\"\n$0 ~ pattern { print }\n\n/* Dynamic pattern table: */\nBEGIN {\n    patterns[\"error\"] = \"ERROR|FAIL\"\n    patterns[\"warning\"] = \"WARN\"\n}\n{ for (level in patterns) {\n    if ($0 ~ patterns[level]) counts[level]++\n  }\n}\n\n/* b.c: DFA regex engine (not NFA backtracking like grep) */\nmakedfa(pattern) {\n    /* Thompson's DFA construction — linear time guaranteed */\n}",
+    "file_path": "usr/src/cmd/awk/b.c",
+    "line_number": 1,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "awk",
+      "regex"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "elegance": 4
+      },
+      "technical_context": "MATCHOP (~ !~) is a binary operator: lhs is string expression, rhs is regex. `$1 ~ /^abc/` evaluates $1 then matches against /^abc/. Crucially, the regex side can be a variable: `$0 ~ pattern` where pattern is a string. This makes regex first-class values, not just literal patterns. makedfa() compiles regex to DFA (decision-free automaton) — implemented in b.c, separate from ed/grep/sed's NFA backtracking engine. DFA gives linear-time O(n) matching with no backtracking, no exponential blow-up — at the cost of not supporting backreferences. awk chose DFA because data processing requires worst-case guarantees. Later GNU grep, RE2 (Google), Rust regex all chose DFA for the same reason. Programmable regex via variables enables data-driven matching: pattern tables, runtime-constructed patterns, regex-as-config.",
+      "human_story": "awk made regex a first-class value. `$1 ~ /pattern/` is a boolean expression you can use anywhere — in if conditions, in compound patterns, in variable assignments. The regex can come from a variable: `pattern = read_config(); if ($0 ~ pattern) ...`. ed/grep/sed treat regex as static syntax; awk treats it as data. The b.c regex engine uses DFA (not NFA backtracking) for linear-time guaranteed performance — essential when processing GBs of log data. Modern DFA engines (RE2, Rust regex, GNU grep -F) descend from this 1977 choice. The MATCHOP operator's syntax (`~` and `!~`) survives in Perl, Ruby, and many other languages."
+    },
+    "appraiser_note": "**MATCHOP (~ !~)** は二項演算子: lhs は文字列式、 rhs は regex。 `$1 ~ /^abc/` は $1 を評価して /^abc/ とマッチ。 **regex 側を変数にできる**: `$0 ~ pattern` (pattern は文字列)。 これで **regex が第一級の値**になる、 単なるリテラルパターンではない。 makedfa() が regex を **DFA (決定性有限オートマトン)** にコンパイル——b.c で実装、 ed/grep/sed の NFA backtracking とは別。 DFA は **線形時間 O(n) 保証**、 backtrack/exponential blow-up なし——バックリファレンス不可の代わりに。 awk が DFA を選んだのは **データ処理に worst-case 保証が必要**だから。 後の GNU grep、 RE2 (Google)、 Rust regex も同じ理由で DFA 採用。 変数経由のプログラマブル regex で **データ駆動マッチング**が可能: パターン表、 実行時構築、 regex-as-config。 MATCHOP 構文 (`~`/`!~`) は Perl/Ruby/他言語にも継承。"
   }
 ]
