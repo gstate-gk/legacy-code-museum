@@ -13142,5 +13142,140 @@
       "human_story": "expr returns two things: the value (stdout) and truthiness (exit code). `expr 1 + 2` prints '3' and exits 0 (truthy). `expr 0` prints '0' and exits 1 (falsy). This dual output is genius for shell scripts: `if expr ...` checks truthiness, `x=$(expr ...)` captures value. The truthiness rule (0/'' = false, else = true) is the ancestor of JavaScript's truthiness, Perl's, Ruby's, Python's. The 0=success/non-0=failure Unix exit code convention is preserved AND extended: 0=success+truthy, 1=success+falsy, 2=error. Three exit codes encoding two semantics. POSIX standardized this. The pattern is so useful that all modern shell-invocable tools follow it."
     },
     "appraiser_note": "expr は **2 通りで結果を伝える**: stdout (値) と exit code (真偽性)。 結果を stdout に print、 truthy なら exit 0、 falsy なら exit 1。 falsy = 文字列 \"0\" または空文字列。 truthy = それ以外。 エラーは exit 2。 この **dual output** で shell は expr を value source (`x=$(expr 1+2)`) と condition (`if expr ...; then`) の両方で使える。 真偽性慣習 (0/'' = false、 他 = true) が **JavaScript/Perl/Ruby/Python truthiness の祖**。 Unix の exit-code-as-boolean 慣習 (0 = success = true) と言語の truthiness を expr が融合。 3 つの exit code が 2 つのセマンティクスをエンコード: 0=success+truthy、 1=success+falsy、 2=error。 POSIX で標準化、 すべての shell-invocable ツールがこのパターンに従う。 現代 shell の $((...)) と [[ =~ ]] で expr の必要性は減ったが、 POSIX スクリプトでは今も使用。"
+  },
+  {
+    "id": "mail-001-mbox-format",
+    "text": "char from[] = \"From \";\n\nisfrom(lp) register char *lp; {\n    register char *p;\n    for (p = from; *p; )\n        if (*lp++ != *p++)\n            return(0);\n    return(1);\n}\n\ncopymt(f1, f2) FILE *f1, *f2; {\n    long nextadr;\n    nlet = nextadr = 0;\n    let[0].adr = 0;\n    while (fgets(line, LSIZE, f1) != NULL) {\n        if (isfrom(line))\n            let[nlet++].adr = nextadr;     /* new message boundary */\n        nextadr += strlen(line);\n        fputs(line, f2);\n    }\n    let[nlet].adr = nextadr;\n}\n\nsendmail(...) {\n    time(&iop);\n    fprintf(tmpf, \"%s%s %s\", from, my_name, ctime(&iop));\n    while (fgets(line, LSIZE, stdin) != NULL) {\n        if (line[0] == '.' && line[1] == '\\n') break;\n        if (isfrom(line))\n            fputs(\">\", tmpf);    /* escape body \"From \" lines */\n        fputs(line, tmpf);\n    }\n}",
+    "file_path": "usr/src/cmd/mail.c",
+    "line_number": 346,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "mail",
+      "mbox"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "antiquity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "antiquity": 5,
+        "concreteness": 4
+      },
+      "technical_context": "mbox format: multiple messages concatenated in one file, each starting with 'From sender datetime'. isfrom() checks line starts with literal 'From '. copymt() walks file, recording offsets of each From line in let[] array (indexed message-by-message). MAXLET=300 messages limit. Sendmail prepends 'From $USER $(ctime())' to outgoing message and escapes any body line starting with 'From ' as '>From ' to prevent boundary confusion. Modern systems still use mbox via this exact format — /var/spool/mail/$USER on Linux, mutt's local folders, alpine's INBOX. Maildir (qmail, 1995) avoids the format's ambiguities by using one file per message, but mbox persists because shell tools (grep, awk) process it easily.",
+      "human_story": "Why does your Linux /var/mail/alice file have lines like 'From bob Mon Mar 17...'? Because of mbox format from 1979 mail. Each message starts with 'From ' (literal, no colon — that's 'From:' the header). Multiple messages stacked in one file. When you write 'From the bank, ...' in body, mail escapes it to '>From the bank, ...' so the next message boundary isn't mistakenly detected. The escape is one-way — receivers see '>From' permanently. 50-year-old format that survives because it's so simple shell tools can parse it. Maildir (qmail) avoids the issues but mbox lingers."
+    },
+    "appraiser_note": "mbox 形式: 1 ファイルに複数メッセージを連結、 各メッセージが `From sender datetime` で始まる。 isfrom() で行が \"From \" リテラルで始まるかチェック。 copymt() でファイルを walk、 各 From 行の offset を let[] 配列に記録 (メッセージ毎にインデックス)。 MAXLET=300 メッセージ制限。 Sendmail は送信メッセージに 'From $USER $(ctime())' を prepend、 本文中で 'From ' で始まる行を '>From ' にエスケープして境界混乱を防ぐ。 現代システムも /var/spool/mail/$USER (Linux)、 mutt のローカルフォルダ、 alpine の INBOX で同形式を使用。 Maildir (qmail 1995) はメッセージ毎 1 ファイルで曖昧さを回避するが、 mbox は shell ツール (grep、 awk) で処理しやすいので残存。 1979 年から 50 年継承される形式。"
+  },
+  {
+    "id": "mail-002-spool-lock",
+    "text": "char maildir[] = \"/usr/spool/mail/\";\nchar mailfile[] = \"/usr/spool/mail/xxxxxxxxxxxxxxxxxxxxxxx\";\nchar *curlock;\nint lockerror;\n\nprintmail(argc, argv) {\n    setuid(getuid());                            /* drop privileges */\n    cat(mailfile, maildir, my_name);             /* /usr/spool/mail/$USER */\n    malf = fopen(mailfile, \"r\");\n    if (malf == NULL) { fprintf(stdout, \"No mail.\\n\"); return; }\n    lock(mailfile);                              /* exclusive lock */\n    copymt(malf, tmpf);                          /* mbox -> /tmp/maXXXXX */\n    fclose(malf);\n    fclose(tmpf);\n    unlock();\n}\n\nsend(n, name) {\n    cat(file, maildir, name);                    /* /usr/spool/mail/<recipient> */\n    mask = umask(MAILMODE);\n    malf = fopen(file, \"a\");                     /* append mode */\n    umask(mask);\n    lock(file);\n    chown(file, pw->pw_uid, pw->pw_gid);         /* set owner to recipient */\n    copylet(n, malf, ORDINARY);\n    fclose(malf);\n    unlock();\n}",
+    "file_path": "usr/src/cmd/mail.c",
+    "line_number": 98,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "mail",
+      "filesystem"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 4,
+      "emotions": {
+        "concreteness": 4,
+        "carefulness": 4
+      },
+      "technical_context": "/usr/spool/mail/$USER is the per-user mailbox file (later /var/spool/mail/ or /var/mail/). Send = append to recipient's file (mbox append-only growth). Receive = lock + copy-to-temp + unlock, then iterate over temp, write back on changes. lock()/unlock() prevent concurrent send racing with read+delete (would lose mail). chown() sets recipient as owner so they can manage their own mailbox. setuid(getuid()) drops any setuid privileges before mailbox access — security best practice. umask(MAILMODE) = umask(~0644) creates 0644 mailboxes (rw-r--r--) — readable only by owner. Pattern: spool dir + per-user file + locking + ownership = the foundation MTA inherited (sendmail, postfix all do this).",
+      "human_story": "How does Unix store your mail? One file per user in /var/spool/mail/. Sending = append to that file. Reading = lock, copy to temp, unlock, work on temp. The lock prevents the classic race: you delete message 5 while sender appends a new one — without locking, the new one disappears. chown ensures the recipient owns their mailbox (sender writes, then transfers ownership). 1979 setuid(getuid()) drops privileges right away — already practicing least-privilege. Modern Linux /var/mail/$USER still uses this exact layout. sendmail, postfix, qmail's mbox driver all follow the lock-temp-write pattern from Bell-32V mail."
+    },
+    "appraiser_note": "/usr/spool/mail/$USER がユーザー毎メールボックスファイル (後の /var/spool/mail/ or /var/mail/)。 送信 = 受信者ファイルに append (mbox 追記専用増加)。 受信 = lock + temp にコピー + unlock、 temp を iterate、 変更あれば書き戻し。 lock()/unlock() が **並行 send と read+delete の race を防ぐ** (lock なしだと新メールが消える)。 chown() で **所有者を受信者に**——自分のメールボックスを管理できる。 setuid(getuid()) で **setuid 権限を即降下**——mailbox アクセス前にセキュリティベストプラクティス。 umask(MAILMODE) = umask(~0644) で 0644 メールボックス作成 (rw-r--r--、 所有者のみ read)。 パターン: spool dir + per-user file + locking + ownership = MTA (sendmail、 postfix、 qmail) が継承する基盤。 現代 Linux /var/mail/$USER も同レイアウト。"
+  },
+  {
+    "id": "mail-003-uucp-bang-path",
+    "text": "char *rmtmsg = \" remote from vax135\\n\";       /*LOCAL*/\nchar *thissys = \"vax135\";\n\nsend(n, name) {\n    for(p=name; *p!='!' && *p!='\\0'; p++) ;\n    if (*p == '!')\n        return(sendrmt(n, name));               /* remote forward */\n    /* ... local delivery ... */\n}\n\nsendrmt(n, name) char *name; {\n    char rsys[64], cmd[64];\n    for(p=rsys; *name != '!'; *p++ = *name++)\n        if (*name == '\\0') { local++; break; }\n    *p = '\\0';\n\n    if ((pid = fork()) == -1) { ... return(0); }\n    if (pid) { /* parent waits */ ... }\n\n    setuid(getuid());\n    if (local)\n        sprintf(cmd, \"mail %s\", rsys);\n    else {\n        if (index(name+1, '!'))\n            sprintf(cmd, \"uux - %s!rmail \\\\(%s\\\\)\", rsys, name+1);\n        else\n            sprintf(cmd, \"uux - %s!rmail %s\", rsys, name+1);\n    }\n    rmf = popen(cmd, \"w\");\n    copylet(n, rmf, local? FORWARD: REMOTE);\n    pclose(rmf);\n    exit(0);\n}\n\n/* Address examples:\n   alice                 -> local user\n   ucbvax!alice          -> 1 hop: ucbvax then alice\n   vax135!ucbvax!alice   -> 2 hops\n*/",
+    "file_path": "usr/src/cmd/mail.c",
+    "line_number": 403,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "mail",
+      "uucp"
+    ],
+    "interesting_score": 24,
+    "ai_analysis": {
+      "primary_emotion": "antiquity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "antiquity": 5,
+        "creativity": 4
+      },
+      "technical_context": "UUCP (Unix to Unix Copy Protocol) bang paths: name with '!' separators routes through multiple hosts. mail parses left of first '!' as next hop (rsys), spawns uux command to deliver to that host's rmail. If more '!' in remainder, recursive routing continues on next host. Pre-Internet era networking: store-and-forward via dial-up modems. vax135!ucbvax!alice = forward to vax135, then ucbvax, then deliver to alice. Each hop runs uux to fire off rmail on next system. Local thissys=\"vax135\" hardcoded — compile-time configuration per machine. By 1985-90, replaced by Internet SMTP (user@host.domain with DNS). Bang paths inverted right-to-left at some sites — caused the famous 'UUCP address chaos' of the era.",
+      "human_story": "Email addresses used to look like vax135!ucbvax!alice — three machines, exclamation marks. Each machine was a hop in the store-and-forward chain. mail parses the first ! to find next hop (vax135), fires uux to deliver to that machine's rmail. That machine repeats. Phone modems carried bytes between systems. By 1990, SMTP + DNS replaced bang paths with alice@ucbvax.edu — way cleaner. But bang paths defined a generation of Unix email. The 'vax135' hardcoded in source had to be edited and recompiled per machine. Imagine recompiling /usr/bin/mail when you renamed your VAX."
+    },
+    "appraiser_note": "**UUCP (Unix to Unix Copy Protocol) bang path**: `!` 区切りで複数ホスト経由ルーティング。 mail が最初の `!` までを次のホップ (rsys) としてパース、 uux コマンドを spawn してそのホストの rmail に配信。 残り部分にさらに `!` があれば、 次のホストで再帰ルーティング。 **インターネット以前の networking**: 電話モデムで store-and-forward。 vax135!ucbvax!alice = vax135 経由、 ucbvax 経由、 alice 配信。 各ホップで uux で次のシステムの rmail を起動。 ローカル thissys=\"vax135\" はハードコード——コンパイル時設定、 マシン毎にコンパイル必要。 1985-90 年で SMTP (user@host.domain + DNS) に置換。 一部サイトで bang path を右から左に解釈、 「**UUCP address chaos**」 という時代の混乱。 メールアドレスをコンパイル時に決める時代の遺物。"
+  },
+  {
+    "id": "mail-004-interactive-commands",
+    "text": "printmail(argc, argv) {\n    for (i = 0; i < nlet; ) {\n        j = forward ? i : nlet - i - 1;\n        if (print) copylet(j, stdout, ORDINARY);\n        fprintf(stdout, \"? \");\n        fgets(resp, LSIZE, stdin);\n        switch (resp[0]) {\n        case '?': /* help */\n            fprintf(stderr, \"q\\tquit\\n\");\n            fprintf(stderr, \"x\\texit without changing mail\\n\");\n            fprintf(stderr, \"p\\tprint\\n\");\n            fprintf(stderr, \"s[file]\\tsave (default mbox)\\n\");\n            fprintf(stderr, \"w[file]\\tsame without header\\n\");\n            fprintf(stderr, \"-\\tprint previous\\n\");\n            fprintf(stderr, \"d\\tdelete\\n\");\n            fprintf(stderr, \"+\\tnext (no delete)\\n\");\n            fprintf(stderr, \"m user\\tmail to user\\n\");\n            fprintf(stderr, \"! cmd\\texecute cmd\\n\");\n            break;\n        case '+': case 'n': case '\\n':           /* next */\n        case 'x':                                  /* exit no save */\n        case 'q':                                  /* quit */\n        case 'p':                                  /* print again */\n        case '^': case '-':                        /* previous */\n        case 'y': case 'w': case 's':              /* save */\n        case 'd':                                  /* delete */\n        case 'm':                                  /* mail forward */\n        case '!':                                  /* shell escape */\n            sys(&resp[1]);\n            break;\n        }\n    }\n}",
+    "file_path": "usr/src/cmd/mail.c",
+    "line_number": 160,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "mail",
+      "ui"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "antiquity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "antiquity": 4,
+        "minimalism": 4
+      },
+      "technical_context": "mail's interactive UI: 13 single-character commands at the '?' prompt. ? (help), n/+/Enter (next), -/^ (previous), p (reprint), d (delete - mark only), s/w/y (save), m (mail forward), q (quit, save changes), x (exit, discard changes), ! (shell escape). 2-stage delete: 'd' marks, 'q' commits to mailbox. Forward flag changes traversal order (-r flag). The '!' shell-escape is universal Unix MUA convention — vi, ed, ftp, dc, adb all support it. The 13-command vocabulary is the proto-MUA: mailx, elm, pine, mutt, alpine all inherited this command set. Modern GUI mail clients have buttons for the same operations (Reply, Forward, Delete, Save) but the underlying semantics are from 1979.",
+      "human_story": "Press '?' at mail's prompt — 10 commands listed. d (delete), s (save), q (quit), x (exit-without-save), p (print again), - (previous), n (next), m (mail forward), ! (shell escape). 13 single-letter operations cover all mail management. 2-stage delete: 'd' marks, 'q' commits. mailx, elm, pine, mutt, alpine all inherited these commands. Modern Outlook/Gmail buttons are GUI versions of the same operations. The '!ls' shell escape inside mail let you check what's around without quitting — convenience that 1979 multitasking OS could have provided differently (Ctrl-Z), but the in-program shell escape was the established UX pattern."
+    },
+    "appraiser_note": "mail の対話 UI: `?` プロンプトで **13 個の 1 文字コマンド**。 ? (help)、 n/+/Enter (next)、 -/^ (previous)、 p (再表示)、 d (削除——マークのみ)、 s/w/y (保存)、 m (転送)、 q (quit + 変更保存)、 x (exit + 変更破棄)、 ! (shell escape)。 **2 段階削除**: 'd' でマーク、 'q' で mailbox にコミット。 forward フラグで走査順切替 (-r フラグ)。 `!` shell escape は普遍的 Unix MUA 慣習——vi、 ed、 ftp、 dc、 adb すべてサポート。 13 コマンド語彙が **MUA の祖**: mailx、 elm、 pine、 mutt、 alpine すべて継承。 現代 GUI メールクライアントの Reply/Forward/Delete/Save ボタンも同じ操作の GUI 版。 1979 年の multitasking OS なら Ctrl-Z でも済むが、 プログラム内 shell escape が確立された UX パターン。"
+  },
+  {
+    "id": "mail-005-dead-letter",
+    "text": "char dead[] = \"dead.letter\";\n\nsendmail(argc, argv) {\n    while (--argc > 0)\n        if (!send(0, *++argv))      /* couldn't send to him */\n            error++;\n\n    if (error) {\n        setuid(getuid());\n        malf = fopen(dead, \"w\");\n        if (malf == NULL) {\n            fprintf(stdout, \"mail: cannot open %s\\n\", dead);\n            fclose(tmpf);\n            return;\n        }\n        copylet(0, malf, ZAP);            /* save without From line */\n        fclose(malf);\n        fprintf(stdout, \"Mail saved in %s\\n\", dead);\n    }\n}",
+    "file_path": "usr/src/cmd/mail.c",
+    "line_number": 388,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "mail",
+      "queue"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "carefulness",
+      "emotion_intensity": 4,
+      "emotions": {
+        "carefulness": 4,
+        "abstraction": 3
+      },
+      "technical_context": "On send failure (recipient doesn't exist, mailbox locked too long, etc.), mail saves the message to ./dead.letter in current directory. ZAP flag strips the 'From ' line so it can be re-sent. User can later `mail -f dead.letter recipient` to retry. setuid(getuid()) before opening — drop privileges to user. Print 'Mail saved in dead.letter' to inform. The cwd-based save (not $HOME) is a quirk — common in cron jobs and scripts that cd before running mail. Modern MTAs (sendmail, postfix) have /var/spool/mqueue for retry queuing, but Bell-32V mail is 1-stage rescue: save and notify. The 'dead letter office' analogy from postal service became Unix folklore.",
+      "human_story": "Your mail to alice@nonexistent failed. mail saves it to ./dead.letter — not lost forever, you can fix the address and retry with `mail -f dead.letter alice@correct`. The cwd-based save means cron jobs running from /tmp get /tmp/dead.letter (sometimes lost). Modern MTAs do better: /var/spool/mqueue + automatic retry. But the 'dead.letter' filename became Unix folklore — the postal-service term for undeliverable mail, applied to Unix's electronic equivalent. The message 'Mail saved in dead.letter' has been pacifying Unix users for 50 years."
+    },
+    "appraiser_note": "送信失敗時 (受信者不在、 mailbox lock timeout 等)、 mail がメッセージを cwd の **./dead.letter** に保存。 ZAP フラグで 'From ' 行を削除して、 後で `mail -f dead.letter recipient` で再送可能に。 setuid(getuid()) で open 前に **権限降下**。 「Mail saved in dead.letter」 で通知。 **cwd ベース**保存 ($HOME ではなく) は癖——cd してから mail 実行する cron スクリプトで重要。 現代 MTA (sendmail、 postfix) は /var/spool/mqueue で再送 queuing するが、 Bell-32V mail は 1 段階救済: 保存 + 通知。 **「dead letter office」** (米国郵政の配達不能郵便用語) の analogy が Unix folklore に。 「Mail saved in dead.letter」 メッセージが 50 年 Unix ユーザーを慰めている。"
   }
 ]
