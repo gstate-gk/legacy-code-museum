@@ -12197,5 +12197,140 @@
       "human_story": "Why doesn't echo use printf? Three reasons: speed (no format parsing), size (no format module in libc), safety (no format-string injection). In 1979, the third reason wasn't even articulated as a security concept — format-string vulnerabilities became famous in the late 1990s. But Bell-32V's echo accidentally got it right by using fputs, which has no concept of format directives. Modern critical-path logging often follows the same pattern: log handlers prefer raw writes over printf for performance and safety. The 23-line echo applied 'use the right tool' wisdom decades before security researchers formalized it."
     },
     "appraiser_note": "echo は意図的に printf ではなく **fputs/putchar** を使う。 理由: (1) **性能**: printf はランタイムで format 文字列をスキャン、 fputs/putchar はそのコストなし。 (2) **コードサイズ**: libc の format 解析部分をリンクせず、 バイナリを小さく (~1KB)。 (3) **安全性**: ユーザー制御の format 文字列を持つ printf は **format-string vulnerability** の古典 (CVE の定番)——fputs には format 概念がないので、 ユーザー入力がデータ役割から逃げられない。 (4) **明確性**: 「この文字列を出力」 は `fputs(s, fd)` の方が `printf(\"%s\", s)` より直接的。 現代の GNU echo は coreutils で printf と code を共有する副次効果はあるが、 1979 年の設計は分離していた。 同じ「fputs-over-printf」 原則は現代の critical-path logging、 embedded、 kernel printk variant でも適用。 1979 年の echo が、 セキュリティ研究者が format-string 脆弱性を形式化する数十年前に偶然 「正しい道具を使う」 智慧を実践していた。"
+  },
+  {
+    "id": "find-001-operator-precedence-parser",
+    "text": "/* Priority: exp() < e1() < e2() < e3() */\n\nstruct anode *exp() {   /* -o (OR) */\n    p1 = e1();\n    if(EQ(nxtarg(), \"-o\"))\n        return(mk(or, p1, exp()));\n    ...\n}\nstruct anode *e1() {  /* -a (AND, implicit) */\n    p1 = e2();\n    a = nxtarg();\n    if(EQ(a, \"-a\")) goto And;\n    if(EQ(a, \"(\") || EQ(a, \"!\") || (*a=='-' && !EQ(a, \"-o\"))) {\n        --Ai;\n        goto And;       /* implicit AND */\n    }\n    ...\n}\nstruct anode *e2() {  /* ! (NOT) */\n    if(EQ(nxtarg(), \"!\"))\n        return(mk(not, e3(), 0));\n    return(e3());\n}\nstruct anode *e3() {  /* parens and predicates */\n    if(EQ(a, \"(\")) { p1 = exp(); ... return(p1); }\n    if(EQ(a, \"-name\"))  return(mk(glob, ...));\n    if(EQ(a, \"-mtime\")) return(mk(mtime, ...));\n    /* ... 11 predicates ... */\n}",
+    "file_path": "usr/src/cmd/find.c",
+    "line_number": 100,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "find",
+      "parser"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "abstraction": 4
+      },
+      "technical_context": "find uses 4-function recursive-descent parser (not yacc) for the predicate expression language. Functions handle precedence levels: exp() = -o, e1() = -a (explicit or implicit), e2() = !, e3() = parens + predicates. Implicit -a inserted when consecutive predicates lack operator. nxtarg() advances Ai index through argv, the input source — no separate lexer needed since argv pre-tokenized by shell. Randlast tracks 'last token was operand' to catch 'operand follows operand' errors. The hand-written parser is small (~80 lines) for a language with 3 operators + parens + ~11 predicates. Predates yacc availability or just deemed unnecessary for this size of grammar. Pattern: argv-as-input + recursive-descent parser appears in many small Unix tools (test, expr).",
+      "human_story": "yacc existed but find didn't use it — for a small predicate language, hand-written recursive descent is shorter and clearer. Four functions exp/e1/e2/e3 stack like nested boxes, each handling one precedence level. Implicit AND: write `find -name foo -mtime 7` and find auto-inserts AND between them — the parser detects 'two predicates in a row' and treats it as `-a`. This 'consecutive predicates AND together' is what makes find readable: you list conditions, not boolean operators. Half the find queries you'll ever write rely on implicit AND. 80 lines of hand parser give a domain-specific language with shell-script ergonomics."
+    },
+    "appraiser_note": "find は **yacc を使わず**、 4 関数の **再帰下降パーサ**で述語式言語を解析。 関数が優先順位レベルを担当: exp() = -o、 e1() = -a (明示/暗黙)、 e2() = !、 e3() = 括弧 + 述語。 連続述語に演算子無ければ **暗黙の -a** を挿入。 nxtarg() は Ai インデックスを argv に進める——shell が事前トークン化済みなので別 lexer 不要。 Randlast で「直前が operand か」 を追跡し、 「operand follows operand」 エラーをキャッチ。 手書きパーサは約 80 行——3 演算子 + 括弧 + 11 述語の文法には十分。 yacc 利用可能だったが小規模文法には不要と判断。 argv-as-input + 再帰下降パーサのパターンは多くの小さな Unix ツール (test、 expr) で再利用。 連続述語の暗黙 AND が find を読みやすくする——条件を列挙するだけで演算子を書かない。"
+  },
+  {
+    "id": "find-002-descend-recursion",
+    "text": "descend(name, fname, exlist) {\n    if(stat(fname, &Statb)<0) {\n        fprintf(stderr, \"find: bad status\\n\");\n        return(0);\n    }\n    (*exlist->F)(exlist);          /* evaluate predicates */\n    if((Statb.st_mode&S_IFMT)!=S_IFDIR)\n        return(1);                  /* not a dir */\n\n    if(chdir(fname) == -1) return(0);\n\n    for(offset=0 ; offset < dirsize ; offset += 512) {\n        /* read 512-byte directory block */\n        read(dir, (char *)dentry, dsize);\n        for(dp=dentry, entries=dsize>>4; entries; --entries, ++dp) {\n            if(dp->d_ino==0\n            || (dp->d_name[0]=='.' && dp->d_name[1]=='\\0')\n            || (dp->d_name[0]=='.' && dp->d_name[1]=='.' && dp->d_name[2]=='\\0'))\n                continue;            /* skip . and .. */\n            /* build path, recurse */\n            descend(name, dp->d_name, exlist);\n        }\n    }\n}",
+    "file_path": "usr/src/cmd/find.c",
+    "line_number": 499,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "find",
+      "recursion"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 4,
+      "emotions": {
+        "concreteness": 4,
+        "antiquity": 4
+      },
+      "technical_context": "descend() does depth-first recursive directory traversal. For each entry: stat to get metadata, evaluate predicate AST against current file (via *exlist->F(exlist)), if directory then chdir into it and recurse. Skip . and .. to avoid infinite recursion. V7 struct direct is 16 bytes (2-byte ino_t + 14-byte name); 512-byte block holds 32 entries (dsize >> 4). chdir-based traversal makes stat calls faster (shorter paths to inode lookup) at the cost of needing to remember Home to restore for -exec. Modern find uses fchdir(2) for thread/concurrency safety. Recursion depth = directory depth; deep trees can stack-overflow (no iterative alternative in 1979). The algorithm is preorder DFS: evaluate predicate before descending.",
+      "human_story": "Walking a directory tree: stat the entry, run predicates, if directory then descend. Skip . and .. (would loop forever). Read directory entries in 512-byte chunks (V7 directory format = array of 16-byte entries). 1979's chdir-based design: change to current directory, do work, recurse. Faster for stat (shorter paths) but loses absolute-position context — find remembers Home from popen('pwd') at startup. Modern find uses fchdir(2) for safety. The preorder DFS pattern — visit yourself, then visit children — is the canonical 'walk a tree' algorithm, applied here to filesystems."
+    },
+    "appraiser_note": "descend() は **深さ優先再帰**でディレクトリツリーを走査。 各エントリで: stat でメタデータ取得、 述語 AST を評価 (`(*exlist->F)(exlist)`)、 ディレクトリなら chdir で入って再帰。 **. と .. をスキップ**して無限再帰回避。 V7 struct direct は 16 バイト (2 バイト ino_t + 14 バイト名)、 512 バイトブロックで 32 エントリ (dsize >> 4)。 chdir ベース走査で stat が高速 (パスが短く inode lookup が短い) が、 絶対位置情報を失うので -exec のため Home を popen('pwd') で起動時記憶。 現代 find は fchdir(2) でスレッド/並行安全。 再帰深さ = ディレクトリ深さ、 深いツリーでスタックオーバーフローの可能性 (1979 年に iterative 代替なし)。 **preorder DFS** (自分を訪問してから子へ) の標準アルゴリズムをファイルシステムに適用。"
+  },
+  {
+    "id": "find-003-exec-substitution",
+    "text": "doex(com) {\n    static char *nargv[50];\n    static ccode;\n\n    ccode = np = 0;\n    while (na=Argv[com++]) {\n        if(strcmp(na, \";\")==0) break;\n        if(strcmp(na, \"{}\")==0) nargv[np++] = Pathname;\n        else nargv[np++] = na;\n    }\n    nargv[np] = 0;\n    if(fork()) /*parent*/ wait(&ccode);\n    else { /*child*/\n        chdir(Home);\n        execvp(nargv[0], nargv, np);\n        exit(1);\n    }\n    return(ccode ? 0:1);\n}\n\nok(p) {              /* interactive -ok */\n    fprintf(stderr, \"< %s ... %s > ?   \", Argv[p->com], Pathname);\n    if((c=getchar())=='y') yes = 1;\n    while(c!='\\n') c = getchar();\n    if(yes) return(doex(p->com));\n    return(0);\n}",
+    "file_path": "usr/src/cmd/find.c",
+    "line_number": 443,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "find",
+      "exec"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "creativity": 5,
+        "concreteness": 4
+      },
+      "technical_context": "-exec command {} \\; is the most powerful find predicate. doex() builds nargv[] by walking from the saved arg position: copy each arg literally except substitute {} → Pathname. Stop at ; sentinel. Fork: parent waits for child exit code; child chdir to original Home (so command runs with sensible cwd) and execvp. The \\; is shell-escaped — bare ; would be a shell statement separator. -ok is interactive variant: print prompt, getchar() y/n, run only if 'y'. Both use static char *nargv[50] (max 50 args) reused across calls. Modern GNU find adds + variant: `-exec rm {} +` batches multiple files into one command (xargs-like). 1979 design is one-fork-per-file, simple and unambiguous.",
+      "human_story": "How do you delete every .tmp file in /tmp? `find /tmp -name '*.tmp' -exec rm {} \\;`. The {} is substitution: each matching file gets pasted into the command. The \\; is the end marker, escaped from shell. Internally: fork, child changes back to original directory, execvp runs the command, parent waits. Repeat per matching file. -ok is the safe sibling: ask 'y/n?' before each execution. The 1979 design lets any Unix command be plugged into the find pipeline — perfect composability. Modern GNU find -exec ... + batches calls for efficiency. The \\; vs + distinction is part of every find tutorial today."
+    },
+    "appraiser_note": "**-exec command {} \\;** が find の最強述語。 doex() が nargv[] を構築: 保存された arg 位置から各引数をコピー、 {} は Pathname で置換、 ; センチネルで停止。 fork: 親は子の exit code を wait、 子は元の Home に chdir してから execvp (コマンドが妥当な cwd で実行されるように)。 \\; は shell から守るためエスケープ——裸の ; は shell の文区切り。 **-ok は対話版**: プロンプト出力、 getchar() で y/n、 'y' なら実行。 両方とも static char *nargv[50] (最大 50 引数) を呼び出し間で再利用。 現代 GNU find は **+** バリアント (`-exec rm {} +`) で複数ファイルを 1 コマンドにバッチ化 (xargs ライク)。 1979 設計は 1 ファイル 1 fork——単純で曖昧さなし。 `\\;` vs `+` の区別は現代 find チュートリアルの定番。"
+  },
+  {
+    "id": "find-004-function-pointer-ast",
+    "text": "struct anode {\n    int (*F)();              /* predicate function */\n    struct anode *L, *R;     /* left/right children */\n} Node[100];\nint Nn;\n\nstruct anode *mk(f, l, r) int (*f)(); ... {\n    Node[Nn].F = f;\n    Node[Nn].L = l;\n    Node[Nn].R = r;\n    return(&(Node[Nn++]));\n}\n\n/* AST evaluation: */\n(*exlist->F)(exlist);   /* call root predicate */\n\n/* and/or/not recurse into children: */\nand(p) struct anode *p; {\n    return(((*p->L->F)(p->L)) && ((*p->R->F)(p->R)) ? 1 : 0);\n}\nor(p) struct anode *p; {\n    return(((*p->L->F)(p->L)) || ((*p->R->F)(p->R)) ? 1 : 0);\n}\nnot(p) struct anode *p; {\n    return(!((*p->L->F)(p->L)));\n}",
+    "file_path": "usr/src/cmd/find.c",
+    "line_number": 12,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "find",
+      "function-pointer"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "elegance": 4
+      },
+      "technical_context": "find's AST nodes are struct anode with 3 fields: F (function pointer to predicate), L/R (left/right children). Node[100] static array, mk() allocates, Nn counter. Evaluation: call (*node->F)(node) — predicate functions are passed the node itself, can access L/R for binary ops, can cast for predicate-specific data layout. The cast is implicit in K&R C: mtime() declares its arg as `struct { int f, t, s; } *p` — reinterprets anode storage as predicate-specific layout. Modern C compilers warn about this; K&R C accepted it. The pattern is interpreter pattern (Gang of Four design pattern, published 1994) implemented in 1979. Same architecture: predicates = leaf nodes, and/or/not = internal nodes, evaluation = tree walk.",
+      "human_story": "find's predicates are first-class values: each is a function pointer. The AST is built from anode structs (function + L + R). Evaluating = calling the function with the node as argument; and/or/not call their children's functions, others do the actual work. Predicates reinterpret the anode storage to access their own arg layout — a trick that works because K&R C didn't type-check function pointers. The pattern (Interpreter Pattern in Gang of Four 1994 terminology) implemented in 1979's C. Same architecture as every modern tree-walking interpreter: leaf = primitive, internal = combinator. find is its early Unix example."
+    },
+    "appraiser_note": "find の AST ノードは struct anode、 3 フィールド: F (述語関数ポインタ)、 L/R (左右の子)。 Node[100] 静的配列、 mk() で割当、 Nn カウンタ。 評価: `(*node->F)(node)` ——述語関数にノード自身を渡し、 二項演算では L/R にアクセス、 述語固有データレイアウトで cast 可能。 K&R C ではキャストが暗黙: mtime() は引数を `struct { int f, t, s; } *p` と宣言——anode の storage を述語固有レイアウトとして再解釈。 現代 C コンパイラは warning するが K&R C は通す。 これは **Interpreter Pattern** (Gang of Four 1994 のデザインパターン) を 1979 年の C で実装。 同じアーキテクチャ: 述語 = leaf、 and/or/not = internal、 評価 = tree walk。 すべての現代 tree-walking interpreter (Lisp eval、 Python AST 評価、 SQL executor) の早期 Unix 例。"
+  },
+  {
+    "id": "find-005-stat-based-predicates",
+    "text": "/* 11 stat-based predicates: */\nmtime(p)  /* -mtime N: modify time (days) */\natime(p)  /* -atime N: access time (days) */\nuser(p)   /* -user U: owner uid */\ngroup(p)  /* -group G: group gid */\nsize(p)   /* -size N: file size (512-byte blocks) */\nperm(p)   /* -perm M: permission bits */\nlinks(p)  /* -links N: link count */\ntype(p)   /* -type t: f/d/b/c (file/dir/block/char) */\nino(p)    /* -inum N: inode number */\nnewer()   /* -newer file: newer than reference */\nglob(p)   /* -name pattern: shell glob match */\n\n/* 3-way comparison shared by numeric predicates: */\nscomp(a, b, s) {\n    if(s == '+') return(a > b);\n    if(s == '-') return(a < b);\n    return(a == b);\n}\n\n/* Example implementations: */\nsize(p) {\n    return(scomp((int)((Statb.st_size+511)>>9), p->sz, p->s));\n}\nperm(p) {\n    i = (p->s=='-') ? p->per : 07777;\n    return((Statb.st_mode & i & 07777) == p->per);\n}",
+    "file_path": "usr/src/cmd/find.c",
+    "line_number": 290,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "find",
+      "filesystem"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 4,
+      "emotions": {
+        "concreteness": 4,
+        "abstraction": 4
+      },
+      "technical_context": "find exposes struct stat fields as predicates: mtime/atime/ctime (timestamps in days via /A_DAY=86400), user/group (uid/gid lookup via getunum from /etc/passwd or /etc/group), size (in 512-byte blocks via (size+511)>>9 = ceiling division), perm (mode & 07777, with '-' meaning at-least-these-bits), links (st_nlink), type (st_mode & S_IFMT). Shared scomp() handles +N (greater), -N (less), N (equal) for all numeric predicates. Modern GNU find adds size suffixes (c=bytes, k=KB, M=MB, G=GB), -size with /N for exact, more time predicates (mtime/atime/ctime + -min variants), -regex (vs -name's glob), -printf for formatted output. The 1979 set is the foundation: 11 predicates covering all key stat fields.",
+      "human_story": "Want files modified in the last week? `-mtime -7`. Owned by alice? `-user alice`. Larger than 100KB? `-size +200` (200 blocks = 100KB). Permissions 0755? `-perm 755`. find's 11 predicates expose struct stat as a query language. scomp() unifies '+N greater', '-N less', 'N equal' across all numeric predicates — write the comparison once. -perm with '-' prefix means 'at least these bits' (set bits required, others may be set too) — a common gotcha. 1979's set covers all the basics; modern GNU find layers convenience features on top, but the foundation is here."
+    },
+    "appraiser_note": "find は **struct stat フィールドを述語として公開**: mtime/atime/ctime (タイムスタンプ、 /A_DAY=86400 で日単位)、 user/group (uid/gid lookup via getunum で /etc/passwd や /etc/group 検索)、 size (512 バイトブロック、 (size+511)>>9 = ceiling 除算)、 perm (mode & 07777、 '-' は at-least-these-bits)、 links (st_nlink)、 type (st_mode & S_IFMT)。 **共通 scomp()** が +N (より大きい)、 -N (より小さい)、 N (等しい) を全数値述語で扱う——比較ロジックを 1 箇所で記述。 現代 GNU find はサイズサフィックス (c=バイト、 k=KB、 M=MB、 G=GB)、 -size に /N で完全一致、 より多くの時刻述語 (-min バリアント)、 -regex (vs -name の glob)、 -printf 出力フォーマットを追加。 1979 年のセットは基盤——11 述語で主要 stat フィールドを全部カバー。 SQL の WHERE owner='alice' AND modified_at > NOW() - INTERVAL '7 days' と概念的に同じ DSL を 1979 年に。"
   }
 ]
