@@ -11846,5 +11846,140 @@
       "human_story": "Type `s/foo/bar/` in ed — line becomes bar where foo was. Type `s/\\(foo\\)\\(bar\\)/\\2\\1/` — foobar becomes barfoo. Type `s/abc/&!/g` — every 'abc' becomes 'abc!'. These three operations — substitute, backref, '&' for match — are sed's entire raison d'être, vim's :s command, perl's s/// operator. All extracted from ed's 70-line substitute() + dosub() pair. The '&' meaning 'whole match' and \\1-\\9 meaning 'capture groups' are 1971 conventions still binding in 2026. Five decades of regex-replace UI compressed into one Thompson algorithm."
     },
     "appraiser_note": "substitute() は **s/old/new/[flags]** を実装。 行ごと: regex execute、 マッチしたら dosub()、 g フラグなら更にマッチしなくなるまでループ。 dosub() は genbuf を構築: マッチ前 + 展開された置換文字列 + マッチ後。 置換文字列は特殊文字を解釈: **`&` = マッチ全体**、 **`\\1`〜`\\9` = `\\(...\\)` グループのバックリファレンス**。 これが **sed の本質**——`sed s/old/new/` は ed の substitute() を stdin の各行で実行するだけ。 POSIX BRE が `&` と `\\1`〜`\\9` を継承。 vim の :s/...//、 perl の s///、 全 regex 置換ツールが祖先。 compile/execute regex ペア + substitute() が **Unix テキスト変換エンジンの核心**——5 ペアの操作 (substitute、 backref、 &) が 50 年後の vim/sed/perl の置換 UI を支配。"
+  },
+  {
+    "id": "sed-001-compiled-instructions",
+    "text": "union reptr {\n    struct reptr1 {\n        char *ad1;     /* address 1 */\n        char *ad2;     /* address 2 (range) */\n        char *re1;     /* regex */\n        char *rhs;     /* replacement */\n        FILE *fcode;   /* w file */\n        char command;  /* opcode */\n        char gfl, pfl, inar, negfl;\n    };\n    struct reptr2 {\n        ...\n        union reptr *lb1;    /* b/t jump target */\n        ...\n    };\n} ptrspace[PTRSIZE], *rep;\n\n#define SCOM 07\n#define DCOM 03\n#define BCOM 020\n#define GCOM 027\n#define HCOM 031\n#define YCOM 026\n#define XCOM 033\n/* 25 opcodes total */",
+    "file_path": "usr/src/cmd/sed/sed.h",
+    "line_number": 105,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "sed",
+      "compiler"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "abstraction": 5
+      },
+      "technical_context": "sed compiles its script into a fixed array ptrspace[100] of union reptr instructions. Each reptr holds: ad1/ad2 (addresses), re1 (regex), rhs (replacement), fcode (write file), command (1-byte opcode), and 4 flag bits (gfl/pfl/inar/negfl). reptr1 variant for normal commands, reptr2 variant for b/t branches (uses lb1 jump target instead of re1). The union shares the first 5 fields so the compiler can iterate the array without checking variant — common-prefix idiom. 25 opcodes: SCOM (substitute), DCOM (delete), GCOM (get hold), HCOM (hold), XCOM (exchange), BCOM (branch), TCOM (test-branch), YCOM (transliterate), ACOM (append), etc. PTRSIZE=100 means max 100 instructions per sed script — realistic in 1975.",
+      "human_story": "sed differs from ed in one critical way: it compiles. ed reads a command, executes, reads another. sed reads the whole script up-front, builds an instruction array, then runs each instruction on every input line. The union reptr is the compiled-instruction representation: address(es), regex, replacement, command code, flags. The reptr1/reptr2 union split is the C idiom for 'instructions look slightly different but share metadata' — same pattern modern VMs use for op encoding. PTRSIZE=100 limits scripts; today's GNU sed lifts this, but Lee McMahon's 1975 design assumed concise sed programs."
+    },
+    "appraiser_note": "sed はスクリプトを **固定配列 ptrspace[100]** の **union reptr 命令**にコンパイルする。 各 reptr が ad1/ad2 (アドレス)、 re1 (regex)、 rhs (置換)、 fcode (w ファイル)、 command (1 バイト opcode)、 4 フラグビット (gfl/pfl/inar/negfl) を持つ。 reptr1 が通常命令、 reptr2 が b/t 分岐 (re1 の代わりに lb1 jump target)。 union が先頭 5 フィールドを共有してコンパイラが variant を意識せず配列を走査できる——「共通プレフィックス」 イディオム。 25 opcode: SCOM (substitute)、 DCOM (delete)、 GCOM (get hold)、 HCOM (hold)、 XCOM (exchange)、 BCOM (branch)、 TCOM (test-branch)、 YCOM (transliterate)、 ACOM (append) など。 PTRSIZE=100 で最大 100 命令——1975 年の現実的上限。 ed (インタラクティブ) との根本差は「コンパイル」 する点、 後の awk/perl/Python pandas DSL の祖。"
+  },
+  {
+    "id": "sed-002-compile-then-stream",
+    "text": "main() {\n    while (--eargc > 0 && (++eargv)[0][0] == '-')\n        switch (eargv[0][1]) {\n        case 'f': fcomp(); continue;      /* script from file */\n        case 'e': fcomp(); continue;      /* script inline */\n        }\n    if(rep == ptrspace) {              /* no script flag: argv[1] is script */\n        fcomp();\n    }\n    dechain();                           /* resolve labels */\n    if(eargc <= 0)\n        execute((char *)NULL);          /* stdin */\n    else while(--eargc >= 0) {\n        execute(*eargv++);              /* each input file */\n    }\n}\n\nexecute(file) {\n    if (file) f = open(file, 0);\n    else f = 0;\n    for(;;) {\n        if((execp = gline(linebuf)) == badp) return;\n        spend = execp;\n        for(ipc = ptrspace; ipc->command; ) {\n            /* evaluate addresses, execute command */\n            command(ipc);\n            if(jflag) ipc = ipc->lb1;\n            else ipc++;\n        }\n        if(!nflag && !delflag) {\n            /* auto-print pattern space */\n            for(p1 = linebuf; p1 < spend; p1++)\n                putc(*p1, stdout);\n            putc('\\n', stdout);\n        }\n    }\n}",
+    "file_path": "usr/src/cmd/sed/sed1.c",
+    "line_number": 4,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "sed",
+      "stream"
+    ],
+    "interesting_score": 25,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "creativity": 5,
+        "minimalism": 4
+      },
+      "technical_context": "Two-phase architecture: fcomp() in sed0.c reads sed script (from -f file, -e inline, or first arg) and compiles to ptrspace[]. execute() in sed1.c opens each input file and loops: read line via gline() into linebuf (pattern space), iterate all instructions checking addresses and running commands, auto-print pattern space unless -n. Memory stays constant: linebuf=4KB, holdsp=4KB, ptrspace=100×~50bytes=5KB, regex space=5KB. Total ~18KB regardless of input file size. The key insight: compile once, stream forever. Process 10GB file with fixed memory. This is the Unix pipeline DNA: each filter (grep/sed/awk/sort/uniq) does one job in constant memory, composed via |.",
+      "human_story": "Why can you `cat huge.log | sed 's/foo/bar/' | grep error | sort | uniq` and process terabytes of data on a laptop? Because each pipeline stage maintains constant memory. sed pioneered this design: compile the script once, then stream input lines through fixed-size buffers. 1975's Lee McMahon designed 'compile + stream' as the model for text filters. The whole Unix shell-fu culture — chained one-liners processing arbitrary data — depends on every filter behaving like sed: stateless across lines, memory-bounded, composable. Stream editing is fundamental to how Unix scales."
+    },
+    "appraiser_note": "**2 フェーズアーキテクチャ**: sed0.c の fcomp() が sed スクリプト (-f ファイル、 -e インライン、 または最初の引数) を読んで ptrspace[] にコンパイル、 sed1.c の execute() が各入力ファイルを開いて: gline() で 1 行を linebuf (pattern space) に読む、 全命令を順次評価 (アドレス → コマンド実行)、 -n フラグ無ければ pattern space を自動 print。 メモリ一定: linebuf=4KB、 holdsp=4KB、 ptrspace=100×~50バイト=5KB、 regex space=5KB、 合計 ~18KB——入力ファイルサイズに無関係。 **「コンパイル一度、 ストリーム永久」** の発想——10GB ファイルを固定メモリで処理。 Unix pipeline DNA: 各フィルタ (grep/sed/awk/sort/uniq) が一定メモリで一仕事、 | で結合。 `cat huge.log | sed | grep | sort | uniq` がノート PC で動くのは、 sed が 1975 年に確立した設計のおかげ。"
+  },
+  {
+    "id": "sed-003-regex-opcode-extensions",
+    "text": "/* sed.h: */\n#define CBRA   1   /* same as ed/grep */\n#define CCHR   2   /* same */\n#define CDOT   4   /* same */\n#define CCL    6   /* same */\n#define CNL    8   /* sed extension (ed has NCCL=8) */\n#define CDOL  10   /* same */\n#define CEOF  11   /* same */\n#define CKET  12   /* same */\n#define CNULL 13   /* sed extension */\n#define CLNUM 14   /* sed: line number address */\n#define CEND  16   /* sed: $ end-of-input */\n#define CDONT 17   /* sed extension */\n#define CBACK 18\n\n#define STAR  01\n\nlong tlno[NLINES];     /* 256 line-number table */\nint nlno;",
+    "file_path": "usr/src/cmd/sed/sed.h",
+    "line_number": 10,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "sed",
+      "regex"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "abstraction": 4
+      },
+      "technical_context": "sed shares regex opcodes with ed (#167) and grep (#166): CCHR=2, CDOT=4, CCL=6, CDOL=10, CEOF=11, CKET=12, CBRA=1, STAR=01. New additions: CLNUM (line-number address like `5d` for delete line 5), CEND ($ as end-of-input rather than end-of-pattern), CNL (newline anchor for multi-line patterns), CNULL/CDONT (internal optimization markers). tlno[256] stores actual line numbers referenced by CLNUM — execute() looks up `lnum != tlno[c]` to check if current line matches. Note: CNL=8 conflicts with ed's NCCL=8 (negated char class) — sed prefers stream-processing primitives over ed's edit-buffer ones. The shared base + sed-specific extensions show evolutionary regex design.",
+      "human_story": "Why do ed, grep, and sed all use regex constants CCHR=2, CDOT=4, CCL=6? Because they share lineage. ed (1971) wrote the regex engine; grep (1973) forked it; sed (1975) inherited the same numbers. But sed added stream-specific opcodes: CLNUM for 'line 5', CEND for 'last line of input'. The line-number table tlno[256] is sed-only — ed already knows line numbers via the editor buffer, grep doesn't care, but sed needs them because the user writes `1,$p` or `100d` in the script. The shared+extended design lets sed reuse 90% of Thompson's regex while adding the 10% that stream editing demands."
+    },
+    "appraiser_note": "sed は ed (#167) と grep (#166) と regex opcode を共有: CCHR=2, CDOT=4, CCL=6, CDOL=10, CEOF=11, CKET=12, CBRA=1, STAR=01。 sed 独自の拡張: **CLNUM** (行番号アドレス、 `5d` で 5 行目削除)、 **CEND** ($ をパターン末尾ではなく **入力末尾**として)、 **CNL** (改行アンカー、 複数行パターン用)、 CNULL/CDONT (内部最適化)。 **tlno[256]** が CLNUM 参照の実際の行番号を保存——execute() が `lnum != tlno[c]` でカレント行が該当するかチェック。 注意: CNL=8 は ed の NCCL=8 (否定 char class) と衝突——sed はストリーム処理プリミティブを ed の編集バッファ用 opcode より優先。 共有ベース + sed 固有拡張で、 Thompson regex の 90% を再利用しながら stream editing 固有の 10% を追加。"
+  },
+  {
+    "id": "sed-004-hold-pattern-space",
+    "text": "char linebuf[LBSIZE+1];   /* pattern space (LBSIZE=4000) */\nchar holdsp[LBSIZE+1];    /* hold space */\nchar *spend;              /* end of pattern space */\nchar *hspend;             /* end of hold space */\n\n/* commands: */\n/* h — hold = pattern (overwrite) */\n/* H — hold += pattern (append with \\n) */\n/* g — pattern = hold (overwrite) */\n/* G — pattern += hold (append with \\n) */\n/* x — swap pattern <-> hold */\n\n/* Example: reverse file lines (tac equivalent) */\n/* 1!G;h;$!d */\n\n/* Example: collapse consecutive blank lines */\n/* /./,/^$/{/^$/h;/./{x;/^$/d}} */",
+    "file_path": "usr/src/cmd/sed/sed.h",
+    "line_number": 59,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "sed",
+      "buffer"
+    ],
+    "interesting_score": 24,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "creativity": 5,
+        "abstraction": 4
+      },
+      "technical_context": "sed has TWO buffers, not one: pattern space (linebuf, holds current line being edited) and hold space (holdsp, scratch buffer). Commands move data between them: h (hold=pattern), H (hold+=pattern), g (pattern=hold), G (pattern+=hold), x (swap). This enables multi-line processing despite sed's per-line streaming model. Hold space lets sed remember context: previous line, accumulated data, intermediate results. Example: `1!G;h;$!d` reverses a file by accumulating reversed-order lines in hold space. Example: collapsing blank lines uses hold space to track 'was previous line blank?'. Both buffers are 4000 bytes — sufficient for any line up to 4KB, accumulating maybe dozens of lines. GNU sed extends to dynamic sizing; classic sed's 4000-byte cap is fixed.",
+      "human_story": "sed processes one line at a time — how does it handle multi-line operations? Answer: hold space. A second 4KB buffer alongside the pattern space. 5 commands move data between them (h H g G x). Want to remember the previous line? `h` saves it. Want to swap current and saved? `x`. Want to print every other line? Use hold space to track parity. Want to reverse the file? Accumulate lines in hold space with `H`, then print at the end. Hold space turns stateless line-processing into stateful sequential-processing, in 5 commands. The 1975 design is still teaching us 'state in a fixed-size scratch buffer' — the same pattern as register-based VMs, hardware accumulators, calculator displays."
+    },
+    "appraiser_note": "sed は **2 つのバッファ**を持つ: pattern space (linebuf、 現在編集中の行) + hold space (holdsp、 スクラッチバッファ)。 5 つのコマンドで両者間のデータ移動: **h** (hold=pattern)、 **H** (hold+=pattern)、 **g** (pattern=hold)、 **G** (pattern+=hold)、 **x** (swap)。 sed の per-line streaming モデルにもかかわらず **複数行処理**が可能。 hold space で文脈を記憶: 前の行、 累積データ、 中間結果。 例: `1!G;h;$!d` で逆順表示 (hold space に逆順蓄積)、 `/./,/^$/{/^$/h;/./{x;/^$/d}}` で連続空行を 1 行に。 両バッファとも 4000 バイト——4KB 以内の任意の行、 数十行分の累積に十分。 GNU sed は動的サイズだが古典 sed は 4000 バイト固定。 1975 年の設計が「**固定サイズスクラッチバッファに状態**」 という、 レジスタ VM/ハードウェアアキュムレータ/電卓表示と同じパターンを教える。"
+  },
+  {
+    "id": "sed-005-labels-branches-turing",
+    "text": "/* sed.h: */\n#define BCOM  020   /* b — unconditional branch */\n#define TCOM  021   /* t — test branch (after successful s///) */\n\nstruct label {\n    char asc[9];               /* label name (max 8 chars) */\n    union reptr *chain;        /* unresolved references */\n    union reptr *address;      /* resolved target */\n} ltab[LABSIZE];               /* LABSIZE=50 */\n\n/* sed1.c execute() loop: */\nif(jflag) {\n    jflag = 0;\n    if((ipc = ipc->lb1) == 0) {\n        ipc = ptrspace;\n        break;\n    }\n} else\n    ipc++;\n\n/* Example: sed addition in unary */\n/* :loop\n   s/1\\(1*+\\)/\\11/\n   t loop */",
+    "file_path": "usr/src/cmd/sed/sed.h",
+    "line_number": 135,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "sed",
+      "turing-complete"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "creativity": 4
+      },
+      "technical_context": "sed has goto: `b label` (unconditional branch) and `t label` (test branch — jumps only after successful substitution). `:label` defines a target. ltab[50] is the label table (8-char names). reptr2's lb1 field holds the resolved jump target (filled by dechain() at end of fcomp). At execute time, command() sets jflag=1 on branch, and execute() checks jflag to set `ipc = ipc->lb1`. The b without label jumps to script end (skip remaining commands for this line). With labels + branches + regex matching + 5 buffer commands (h/H/g/G/x), sed is Turing-complete: it can implement addition (in unary), prime checking, even Conway's Life. Most users only ever write 1-line sed scripts, but the language capability is full.",
+      "human_story": "Did you know sed is Turing-complete? With `b label` (jump), `t label` (jump-if-substitution-succeeded), labels (`:foo`), regex matching, and the 5 buffer commands, you can compute anything. Someone implemented Conway's Life in sed. Someone wrote a sed prime sieve. Lee McMahon in 1975 didn't intend sed to be a general programming language — but adding labels and branches made it one. Most people use sed for `sed 's/old/new/'` one-liners, never touching `b`/`t`. But the capability is there. The lesson: small composable primitives (matching + state buffers + jumps) can produce universal computation. sed is the smallest accidentally-Turing-complete Unix tool."
+    },
+    "appraiser_note": "sed には **goto** がある: `b label` (無条件分岐) と `t label` (テスト分岐——`s///` 成功時のみジャンプ)。 `:label` でターゲット定義。 ltab[50] がラベルテーブル (8 文字名)。 reptr2 の lb1 フィールドが解決済みジャンプターゲットを保持 (fcomp 末尾の dechain() で解決)。 実行時 command() が分岐で jflag=1 をセット、 execute() が jflag を見て `ipc = ipc->lb1`。 ラベル無しの b はスクリプト末尾へジャンプ (この行の残りコマンドをスキップ)。 ラベル + 分岐 + regex マッチ + 5 つのバッファコマンド (h/H/g/G/x) で sed は **Turing 完備**——加算 (1 進法)、 素数チェック、 コンウェイのライフゲームまで実装可能。 多くのユーザーは 1 行 sed しか書かないが、 言語としては完全。 Lee McMahon は 1975 年に sed を汎用言語にする気は無かったが、 ラベル + 分岐の追加で意図せず Turing 完備になった。 「**小さな合成可能プリミティブ (マッチ + 状態バッファ + ジャンプ)** で普遍計算が可能」 という教訓。"
   }
 ]
