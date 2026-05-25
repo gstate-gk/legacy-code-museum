@@ -14222,5 +14222,140 @@
       "human_story": "cmp is 121 lines. diff is 645 lines. Why so much smaller? Because cmp does less. cmp asks 'same or different?'. diff asks 'where exactly and how?'. By limiting scope, cmp achieves: fast startup, tiny binary (~2KB), no memory allocation, perfectly reliable. When a shell script needs 'did the file change?', cmp -s gives the answer in microseconds with definite truth. Modern GNU cmp adds polish (locale, more flags) but the core 2-function design from 1979 is unchanged. 121 lines doing one thing perfectly is a Unix philosophy success story. Bigger tools have niches; cmp owns the 'are these identical?' niche."
     },
     "appraiser_note": "cmp は **「Do one thing well」 の体現**: 121 行、 2 関数、 標準ライブラリ関数 5 つ、 ヘッダ 2 つ。 比較: diff (#183) 645 行、 diff3 (#184) 438 行。 cmp はそれらができないことを行う——「**バイト一致か?**」 の高速・決定論的回答。 LCS なし、 merge なし、 stream 比較以外のアルゴリズムなし。 1979 年 VAX で ~2KB バイナリ。 現代 GNU cmp は ~1500 行 (-b/-i/-n、 国際化、 追加出力形式) だがコア比較ループは同一。 ミニマリズムが実現するもの: 高速起動、 malloc なし、 シェルスクリプトで完璧合成可能 (`if cmp -s ...`)、 小さな attack surface。 **cmp の役割は信頼できるシンプルオプション**——diff の精緻さが不要な時の選択肢。 1979 年の 2 関数設計が現代まで不変、 シェルスクリプトで「ファイル変わった?」 にマイクロ秒で確定回答。"
+  },
+  {
+    "id": "comm-001-three-column-output",
+    "text": "char *ldr[3];\n\nmain(argc, argv) {\n    ldr[0] = \"\";        /* column 1: no indent */\n    ldr[1] = \"\\t\";       /* column 2: 1 tab */\n    ldr[2] = \"\\t\\t\";     /* column 3: 2 tabs */\n    ...\n}\n\nwr(str, n) char *str; {\n    switch (n) {\n    case 1: if (one)   return;\n    case 2: if (two)   return;\n    case 3: if (three) return;\n    }\n    printf(\"%s%s\\n\", ldr[n-1], str);\n}\n\n/* Output:\n   apple                    (column 1: file1 only)\n           banana            (column 2: file2 only)\n                   cherry    (column 3: both)\n*/",
+    "file_path": "usr/src/cmd/comm.c",
+    "line_number": 8,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "comm",
+      "output"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "minimalism": 4
+      },
+      "technical_context": "comm output uses tab-indented columns: column 1 (no indent) = file1 only, column 2 (1 tab) = file2 only, column 3 (2 tabs) = in both files. ldr[] array holds the leader strings. wr(str, n) prints leader + line. Suppression flags (one/two/three) skip a column entirely. When -1 suppresses column 1, ldr[1] becomes empty and ldr[2] shortens to 1 tab — keeps remaining columns visually aligned. The tab-based layout works with cut/awk for downstream processing. Modern GUI shows columns visually; comm produces text-pipeline-friendly output.",
+      "human_story": "comm's killer output: 3 columns separated by tabs. Run comm file1 file2 and see at a glance what's only in file1, only in file2, in both. Tab indentation makes it visually obvious. -1/-2/-3 flags suppress columns to get just the difference or intersection. The leader strings ldr[0]/ldr[1]/ldr[2] = ''/\\t/\\t\\t are adjusted when columns are suppressed to keep the remaining columns aligned. 1979 simplicity — three pre-computed strings. Modern tools render columns with terminal codes; comm prefers pipeline-friendly tabs."
+    },
+    "appraiser_note": "comm 出力は **タブインデント 3 列**: 列 1 (インデントなし) = file1 only、 列 2 (1 タブ) = file2 only、 列 3 (2 タブ) = 両方。 ldr[] 配列がリーダー文字列を保持、 wr(str, n) がリーダー + 行を印字。 抑制フラグ (one/two/three) で列を完全に skip。 -1 で列 1 抑制時、 ldr[1] が空、 ldr[2] が 1 タブに短縮——残り列の視覚的整列を保つ。 タブベースレイアウトは cut/awk で後段処理可能。 現代 GUI は列をビジュアル表示、 comm はパイプラインフレンドリーな出力を選択。 ldr[0]/ldr[1]/ldr[2] = ''/\\t/\\t\\t の事前計算文字列がシンプル。 list comprehension で 3 行を 1 行に出すよりも、 列の中で区別する設計が Unix 流。"
+  },
+  {
+    "id": "comm-002-linear-merge",
+    "text": "compare(a, b) char *a, *b; {\n    register char *ra, *rb;\n    ra = --a; rb = --b;\n    while (*++ra == *++rb)\n        if (*ra == '\\0') return(0);\n    if (*ra < *rb) return(1);\n    return(2);\n}\n\nwhile (1) {\n    switch (compare(lb1, lb2)) {\n    case 0:                    /* equal: both files */\n        wr(lb1, 3);\n        if (rd(ib1, lb1) < 0) {\n            if (rd(ib2, lb2) < 0) exit(0);\n            copy(ib2, lb2, 2);\n        }\n        if (rd(ib2, lb2) < 0) copy(ib1, lb1, 1);\n        continue;\n    case 1:                    /* lb1 < lb2: file1 only */\n        wr(lb1, 1);\n        if (rd(ib1, lb1) < 0) copy(ib2, lb2, 2);\n        continue;\n    case 2:                    /* lb1 > lb2: file2 only */\n        wr(lb2, 2);\n        if (rd(ib2, lb2) < 0) copy(ib1, lb1, 1);\n        continue;\n    }\n}",
+    "file_path": "usr/src/cmd/comm.c",
+    "line_number": 60,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "comm",
+      "merge"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "abstraction": 4
+      },
+      "technical_context": "comm's algorithm: linear merge of two sorted streams. compare() returns 3-valued result (0=equal, 1=less, 2=greater). Main loop dispatches: equal → emit both column 3 + advance both; less → emit file1 column 1 + advance file1; greater → emit file2 column 2 + advance file2. On EOF in one file, copy() dumps the rest of the other to its appropriate column. O(N+M) time, O(1) space (just 2 line buffers). Requires sorted input (assumes lexicographic order). The 3-way dispatch is the classic merge join algorithm, also used in merge sort's merge step, SQL merge join, Python heapq.merge(), Apache Spark sort-merge join.",
+      "human_story": "comm's algorithm in 30 lines: walk two sorted files in parallel, compare current line of each. If equal, both have it (column 3). If file1's line is less, only file1 has it here (column 1) — advance file1. If file2's is less, only file2 has it (column 2) — advance file2. Linear time. Constant memory. This is merge join, the workhorse of database query planners and merge sort. comm in 1979 used the same algorithm that powers modern data systems. Speed: bounded by I/O. Memory: just 2 lines. Beautiful."
+    },
+    "appraiser_note": "comm のアルゴリズム: **2 つの sorted stream の線形 merge**。 compare() が 3 値結果を返す (0=等しい、 1=小さい、 2=大きい)。 メインループで dispatch: 等しい → 両方を列 3 に出力 + 両方進める; 小さい → file1 行を列 1 + file1 進める; 大きい → file2 行を列 2 + file2 進める。 片方 EOF なら copy() で残りを該当列にダンプ。 **O(N+M) 時間、 O(1) 空間** (2 行バッファのみ)。 ソート済み入力必須 (辞書順前提)。 この 3-way dispatch は古典的 **merge join アルゴリズム**——merge sort の merge ステップ、 SQL merge join、 Python heapq.merge()、 Apache Spark sort-merge join で同じ。 1979 年の comm が現代データシステムを動かすアルゴリズムを使用、 線形時間 + 定数メモリ、 美しい。"
+  },
+  {
+    "id": "comm-003-set-operations",
+    "text": "int one, two, three;     /* suppression flags */\n\nwr(str, n) {\n    switch (n) {\n    case 1: if (one)   return;    /* -1: suppress col 1 */\n    case 2: if (two)   return;    /* -2: suppress col 2 */\n    case 3: if (three) return;    /* -3: suppress col 3 */\n    }\n    printf(\"%s%s\\n\", ldr[n-1], str);\n}\n\n/* Set operation table:\n   comm        = all 3 columns (full classification)\n   comm -12    = column 3 only        = INTERSECTION (∩)\n   comm -13    = column 2 only        = file2 - file1 (difference)\n   comm -23    = column 1 only        = file1 - file2 (difference)\n   comm -3     = columns 1 and 2      = symmetric difference (XOR)\n   comm -1     = columns 2 and 3      = file2 (not file1 only)\n   comm -2     = columns 1 and 3      = file1 (not file2 only)\n   comm -123   = nothing              = empty\n*/",
+    "file_path": "usr/src/cmd/comm.c",
+    "line_number": 22,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "comm",
+      "set-theory"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "creativity": 5,
+        "abstraction": 5
+      },
+      "technical_context": "comm's -1/-2/-3 flags suppress columns, enabling set operations via column combinations: -12 outputs only column 3 (intersection ∩), -23 outputs only column 1 (file1-file2 difference), -3 outputs columns 1+2 (symmetric difference). 8 combinations total cover all set operations. Equivalent SQL: comm -12 = INTERSECT, comm -23 = EXCEPT, comm -3 = symmetric XOR. Equivalent Python: set1 & set2, set1 - set2, set1 ^ set2. comm provides these without database or scripting language — just shell. Streaming O(N+M) makes it faster than hash-based set operations for huge inputs. Modern shell scripts use `comm -12 <(sort A) <(sort B)` idiom for set intersection on sorted streams.",
+      "human_story": "What's INTERSECT, EXCEPT, UNION in shell? comm with flags. comm -12 = INTERSECT (lines in both). comm -23 = EXCEPT (file1 minus file2). comm -3 = symmetric difference. comm provides all SQL set operations from 1979, before SQL standardized them, before Python's set existed. 8 flag combinations cover every set operation you'd want. Run `comm -12 <(sort yesterday.log) <(sort today.log)` to get common entries. Faster than hash-set for huge files (streaming O(N+M) vs hash table memory). 1979's clever realization: 'classify into 3 columns, suppress columns to get specific operations'."
+    },
+    "appraiser_note": "comm の -1/-2/-3 フラグで列抑制、 **集合演算を列の組み合わせで実現**: -12 で列 3 のみ (積集合 ∩)、 -23 で列 1 のみ (file1-file2 差集合)、 -3 で列 1+2 (対称差)。 8 通りの組み合わせで全集合演算をカバー。 SQL 等価: comm -12 = INTERSECT、 comm -23 = EXCEPT、 comm -3 = symmetric XOR。 Python 等価: set1 & set2、 set1 - set2、 set1 ^ set2。 comm はデータベースや scripting language なしで、 shell だけでこれらを提供。 ストリーミング O(N+M) でハッシュベース集合演算より巨大入力で高速。 現代シェルスクリプトのイディオム: `comm -12 <(sort A) <(sort B)` で sorted stream の集合積。 SQL 標準化前 (1979)、 Python set 登場前——「3 列分類 + 列抑制 = 集合演算」 という 1979 年の独創。"
+  },
+  {
+    "id": "comm-004-tab-streaming",
+    "text": "/* Default output (3 columns, tab indented): */\n/*\nfile1: apple\\ndate\\n              file2: banana\\ncherry\\n\nResult:\napple                      ← file1 only (col 1)\n        banana             ← file2 only (col 2)\n                cherry     ← both (col 3, but only in sorted-merge sense)\ndate                       ← file1 only\n*/\n\n/* Streaming: never buffers more than 2 lines */\n#define LB 256\nchar lb1[LB], lb2[LB];     /* total memory: 600 bytes */\n\nrd(file, buf) {\n    while ((c = getc(file)) != EOF) {\n        *buf = c;\n        if (c == '\\n' || i > LB-2) {\n            *buf = '\\0';\n            return(0);\n        }\n        i++; buf++;\n    }\n    return(-1);\n}",
+    "file_path": "usr/src/cmd/comm.c",
+    "line_number": 1,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "comm",
+      "streaming"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 4,
+      "emotions": {
+        "concreteness": 4,
+        "minimalism": 4
+      },
+      "technical_context": "comm processes inputs as streams — never holds more than 2 lines (one per file) in memory. Total RAM: ~600 bytes regardless of input size. LB=256 max line length. rd() reads one line into a 256-byte buffer, returning 0 on success, -1 on EOF. Output is written immediately on each iteration — no buffering. Contrast with Python set: must load entire file into memory before operating. comm scales to GB+ files trivially; Python hits memory limits. Bash idiom `comm -12 <(sort A) <(sort B)` chains sort (which may use external merge for huge files) and comm (constant memory) for unlimited-size set operations.",
+      "human_story": "comm's secret superpower: streaming. Never loads more than 2 lines (one per file). Total memory: 600 bytes, doesn't matter if files are 1KB or 100GB. Compare with Python: set(open('file1')) — slurps the whole file. comm streams. For huge files (database dumps, log archives), comm is the only way that fits in memory. `comm -12 <(sort big1) <(sort big2)` works on terabyte files; Python's set() would die. The 1979 streaming design from a 256KB machine still serves modern big-data needs."
+    },
+    "appraiser_note": "comm は **入力をストリーム処理**——メモリに 2 行 (ファイル毎 1 行) 以上保持しない。 総 RAM: ~600 バイト、 入力サイズに無関係。 LB=256 最大行長。 rd() が 1 行を 256 バイトバッファに読み、 success で 0、 EOF で -1 を返す。 出力は各イテレーションで即書き込み、 バッファなし。 Python set との対照: ファイル全体をメモリに load してから処理。 comm は GB+ ファイルに自明に対応、 Python はメモリ制限。 bash イディオム `comm -12 <(sort A) <(sort B)` で sort (巨大ファイルに external merge を使う) と comm (定数メモリ) をチェーン、 無制限サイズの集合演算。 256KB PDP-11 時代のストリーミング設計が、 現代の big-data ニーズにも対応——TB ファイルでも comm は動く、 Python set() は死ぬ。"
+  },
+  {
+    "id": "comm-005-compare-family-complete",
+    "text": "/* The Unix comparison family (Bell-32V 1979): */\n\n/* cmp (#185, 121 lines)\n   Byte-by-byte binary comparison\n   Use: \"are these byte-identical?\"\n   Output: \"X Y differ: char N, line M\" or exit code\n*/\n\n/* comm (#197, 166 lines)\n   Sorted line set comparison (3 columns)\n   Use: \"set operations on lines\"\n   Output: 3-column tab-aligned classification\n*/\n\n/* diff3 (#184, 438 lines)\n   3-way merge with conflict detection\n   Use: \"merge two branches with common ancestor\"\n   Output: ==== conflict markers + change blocks\n*/\n\n/* diff (#183, 645 lines)\n   LCS-based text difference\n   Use: \"what changed line-by-line?\"\n   Output: 3,5c4,6 ed-style change blocks\n*/\n\n/* All four tools share:\n   - Exit codes 0 (same/match), 1 (differ), 2 (error)\n   - Read files or stdin (- as filename)\n   - Composable via pipes\n   - POSIX standardized\n*/",
+    "file_path": "usr/src/cmd/comm.c",
+    "line_number": 1,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "comm",
+      "family"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "minimalism": 4
+      },
+      "technical_context": "Bell-32V 1979 ships 4 comparison tools covering distinct problems: cmp (binary byte compare, 121 lines) for 'are these identical?', comm (sorted set compare, 166 lines) for 'set operations', diff3 (3-way merge, 438 lines) for 'merge with conflicts', diff (LCS text compare, 645 lines) for 'what changed'. Each does one thing well; users compose them via shell. Combined LOC: 1370 lines for 4 specialized tools. Compare to single-monolithic-tool approach where 1 binary handles all cases — would be more code, less composable, harder to maintain. The 4-tool family demonstrates Unix philosophy at its peak: small, focused, composable, with shared conventions (exit codes, stdin support, POSIX flags).",
+      "human_story": "Bell-32V 1979 shipped 4 comparison tools instead of 1 big one. cmp = bytes. comm = sorted sets. diff3 = 3-way merge. diff = LCS. Each does ONE thing well; users compose via shell pipes. Total: 1370 lines for 4 tools. A monolithic tool with -mode-binary -mode-sets -mode-merge -mode-lcs would be 3000+ lines and harder to maintain. The Unix philosophy of small composable tools beat the 'do everything in one' approach. Modern git embeds these (git diff, git merge), but Unix shell still uses the 4 originals. 50 years of comparison work, all founded on 1979 Bell Labs design decisions."
+    },
+    "appraiser_note": "Bell-32V 1979 は **4 つの比較ツール**を出荷、 異なる問題をカバー: cmp (バイナリバイト比較、 121 行) で「同じか?」、 comm (ソート集合比較、 166 行) で「集合演算」、 diff3 (3-way merge、 438 行) で「conflict ある merge」、 diff (LCS テキスト比較、 645 行) で「何が変わった?」。 各が one thing well、 ユーザーが shell で合成。 合計 LOC: 4 ツールで 1370 行。 単一モノリシックツールアプローチ (1 バイナリで全部処理) と比較——コードは多く、 合成性は低く、 保守性も悪い。 **4 ツールファミリーが Unix 哲学の頂点を示す**: 小さく、 集中、 合成可能、 共通慣習 (exit code、 stdin サポート、 POSIX フラグ)。 現代 git は内部で同等機能 (git diff、 git merge) を持つが、 Unix shell では 1979 オリジナル 4 つを今も使う。 50 年の比較作業が 1979 ベル研の設計判断に基づく。"
   }
 ]
