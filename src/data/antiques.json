@@ -12602,5 +12602,140 @@
       "human_story": "How does the compiler write `call printf` when printf's address is unknown? It writes `call 0` and adds a relocation entry: 'at offset N in text, patch a 4-byte address with printf's final location'. ld processes these entries after all symbol addresses are known. PCREL: PC-relative branches need value = target - (instruction + size) for the offset. LEN: how many bytes to overwrite. REXT: lookup symbol vs segment-base + offset. Every modern linker does this; ELF has R_X86_64_PC32 etc. (dozens of types). a.out's PCREL/LEN1/2/4/REXT are the minimal set that started it all in 1979."
     },
     "appraiser_note": "リロケーション情報は .o ファイルから「**このアドレスを修正せよ**」 と指示: 位置、 対象シンボル or セグメント、 参照型 (PCREL、 LEN1/2/4、 RTEXT/RDATA/RBSS、 REXT、 ROFF)。 **PCREL** は PC-相対アドレッシング——VAX の branch で頻出。 **LEN** で幅エンコード (1/2/4 バイト)。 **REXT** ならシンボルテーブル経由解決、 無ければセグメント基底 + offset。 ld は Pass 2 でリロケーションエントリを walk、 最終値計算 (シンボルアドレスまたはセグメント基底 + offset)、 PCREL なら補正 (location + size を引く)、 リロケーション位置に値を書く。 リンクの最もアルゴリズム的に微妙な部分——各命令エンコーディングが異なるリロケーション要件を持つ。 VAX 命令は branch で主に PCREL 使用。 現代 x86-64 は数十のリロケーション型 (R_X86_64_PC32、 R_X86_64_GOT32 等)。 原理は不変: 各リロケーションが「この位置にあの計算値を patch」 と指示。"
+  },
+  {
+    "id": "make-001-doname-recursive-dfs",
+    "text": "/*\n * doname.c - basic procedure. RECURSIVE.\n *\n * p->done = 0   don't know what to do yet\n * p->done = 1   file in process of being updated\n * p->done = 2   file already exists in current state\n * p->done = 3   file make failed\n */\n\ndoname(p, reclevel, tval) {\n    if (p->done > 0) {            /* memoization */\n        *tval = p->modtime;\n        return(p->done == 3);\n    }\n    ptime = exists(p->namep);      /* target mtime */\n    p->done = 1;                    /* mark in-progress, detect loops */\n\n    for(lp = p->linep; lp; lp = lp->nxtlineblock) {\n        for(q = lp->depp; q; q = q->nxtdepblock) {\n            errstat += doname(q->depname, reclevel+1, &td1);  /* recurse */\n            if (ptime < td1)\n                qchain = appendq(qchain, q->depname->namep);\n            if (td1 > td) td = td1;\n        }\n    }\n    if (errstat==0 && (ptime < tdep || (ptime==0 && tdep==0))) {\n        setvar(\"@\", p->namep);\n        setvar(\"?\", mkqlist(qchain));\n        if (explcom) errstat += docom(explcom);\n        else if (implcom) errstat += docom(implcom);\n    }\n    p->done = (errstat ? 3 : 2);\n}",
+    "file_path": "usr/src/cmd/make/doname.c",
+    "line_number": 12,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "make",
+      "dependency"
+    ],
+    "interesting_score": 25,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "elegance": 5
+      },
+      "technical_context": "doname() is make's heart: recursive depth-first traversal of the dependency graph. Each target has a done flag with 4 states (0=untouched, 1=in-progress, 2=success, 3=failed). State 1 detects cycles (revisiting in-progress = circular dep). For each target: check if already done (memoization), recursively make all dependencies (DFS), compare mtimes, run commands if stale. The recursion + memoization pattern is the algorithm for incremental builds. Modern build systems (GNU make, bazel, cargo) all use the same: DFS traversal + memoization + staleness check. Differences are in staleness criteria (mtime vs hash) and execution model (sequential vs parallel) but the core algorithm is unchanged. Recursion depth = build graph depth, typically 5-50 levels.",
+      "human_story": "How does make know what to rebuild after you edit one file? Recursive DFS through the dependency graph. Visit each target, check its done state (avoid redoing work). Recurse to all deps. Compare mtimes. If anything's stale, run the command. Mark done. 1979's algorithm is the foundation of all incremental build systems. Bazel adds content hashing, cargo adds dependency resolution, npm adds package management — but the core DFS + memoization is from this code. Stuart Feldman wrote this in a week as a 22-year-old; it's been the bedrock of software builds for 50 years."
+    },
+    "appraiser_note": "doname() は make の心臓: 依存グラフの **再帰下降 DFS**。 各 target に **done フラグ** (4 状態: 0=未処理、 1=処理中、 2=成功、 3=失敗)。 状態 1 で循環依存検出 (処理中の再訪 = 循環)。 各 target で: 処理済みなら return (memoization)、 全依存を再帰 make (DFS)、 mtime 比較、 古ければコマンド実行。 **再帰 + memoization パターンが増分ビルドのアルゴリズム**。 現代ビルドシステム (GNU make、 bazel、 cargo) すべてが同じ: DFS 走査 + memoization + staleness チェック。 違いは判定基準 (mtime vs ハッシュ) と実行モデル (順次 vs 並列) だけ。 再帰深さ = ビルドグラフ深さ、 通常 5-50 階層。 22 歳の Stuart Feldman が 1 週間で書いたこのアルゴリズムが、 50 年のソフトウェアビルドの基礎。"
+  },
+  {
+    "id": "make-002-mtime-staleness",
+    "text": "TIMETYPE exists(name) char *name; {\n    if (stat(name, &statb) < 0)\n        return(0);                  /* doesn't exist */\n    return(statb.st_mtime);\n}\n\n/* doname() inner loop: */\nptime = exists(p->namep);          /* target mtime, 0 if absent */\n\nfor (q = lp->depp; q; q = q->nxtdepblock) {\n    doname(q->depname, reclevel+1, &td1);\n    if (ptime < td1)                /* dependency newer than target */\n        qchain = appendq(qchain, q->depname->namep);   /* $? list */\n    if (td1 > td) td = td1;\n}\n\nif (errstat==0 && (ptime < tdep || (ptime==0 && tdep==0))) {\n    /* rebuild! */\n}",
+    "file_path": "usr/src/cmd/make/doname.c",
+    "line_number": 54,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "make",
+      "incremental"
+    ],
+    "interesting_score": 24,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "creativity": 4
+      },
+      "technical_context": "Incremental build via mtime comparison: target's mtime (ptime) vs dependency's mtime (td1). If dep newer than target → rebuild. exists() returns st_mtime or 0 (file absent). Special case: ptime==0 && tdep==0 → rebuild (no target, no deps either, must be a phony task). qchain accumulates 'changed dependencies' which becomes $? automatic variable for the command. Modern build systems found this unreliable (filesystem touch can fool it, clock skew breaks it) and moved to content hashing (bazel, buck, sccache). But mtime-based remains the default for make, GNU make, BSD make — 50 years and counting. 1 line condition `if (ptime < td)` is the single insight that powers incremental compilation.",
+      "human_story": "Why does `make` rebuild only changed files? One line: `if (ptime < td)`. If the target is older than any dependency, rebuild. If equal or newer, skip. That's incremental builds in 1 line. The condition assumes filesystem mtimes are reliable — they usually are, but `touch -d` or clock skew can break it. Modern systems (bazel, buck, sccache) use content hashing for reliability. But the mtime approach from 1979 still works for 99% of cases, which is why GNU make, BSD make, and POSIX make all keep it. Stuart Feldman's 1976 insight: 'compare modification times, rebuild what's stale' — still fundamental."
+    },
+    "appraiser_note": "**mtime 比較で増分ビルド**: target の mtime (ptime) vs 依存の mtime (td1)。 dep が target より新しければ rebuild。 exists() は st_mtime または 0 (ファイル不在) を返す。 特殊ケース: ptime==0 && tdep==0 → rebuild (target も deps も存在しない = phony task)。 qchain が 「変更された依存」 を蓄積し、 コマンドの $? 自動変数になる。 現代ビルドシステムはこれを信頼できないと判断 (touch でだまされる、 時刻ズレで壊れる) して **内容ハッシュ**へ移行 (bazel、 buck、 sccache)。 だが mtime ベースは make、 GNU make、 BSD make のデフォルトとして 50 年継続。 **1 行の条件 `if (ptime < td)` が増分コンパイルを動かす単一の洞察**。 Stuart Feldman の 1976 年の発想: 「修正時刻を比較、 古いものを rebuild」——今も基本。"
+  },
+  {
+    "id": "make-003-suffix-rules",
+    "text": "/* doname.c implicit rule search: */\nfor (lp = sufflist; lp; lp = lp->nxtlineblock)\n    for (suffp = lp->depp; suffp; suffp = suffp->nxtdepblock) {\n        pnamep = suffp->depname->namep;\n        if (suffix(p->namep, pnamep, prefix)) {\n            /* target's suffix matches pnamep (e.g., .o for hello.o) */\n            for (lp1 = sufflist; lp1; lp1 = lp1->nxtlineblock)\n                for (suffp1 = lp1->depp; suffp1; suffp1 = suffp1->nxtdepblock) {\n                    p1namep = suffp1->depname->namep;\n                    /* look for suffp1 -> suffp rule (e.g., .c -> .o) */\n                    if ((p1 = srchname(concat(p1namep, pnamep, concsuff))) &&\n                        (p2 = srchname(concat(prefix, p1namep, sourcename)))) {\n                        /* p2 (.c source) found! recurse to make it */\n                        doname(p2, reclevel+1, &td);\n                        setvar(\"*\", prefix);            /* $* = stem */\n                        setvar(\"<\", copys(sourcename)); /* $< = source */\n                        implcom = lp2->shp;              /* use this command */\n                        goto endloop;\n                    }\n                }\n        }\n    }\n\n/* Typical Makefile: */\n# .SUFFIXES: .c .o\n# .c.o:\n#     cc -c $<",
+    "file_path": "usr/src/cmd/make/doname.c",
+    "line_number": 118,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "make",
+      "implicit-rules"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "creativity": 5,
+        "abstraction": 4
+      },
+      "technical_context": "Suffix rules: .c.o: defines how to convert .c → .o. When making hello.o with no explicit rule, make searches .SUFFIXES list for pairs: try .c.o (.c source for .o target), .s.o (.s source for .o target), etc. For each pair, check if the source file exists (e.g., hello.c). If yes, apply that rule. Sets $* (stem, 'hello'), $< (source, 'hello.c') as automatic variables. The double-loop walks all sufflist × sufflist combinations — quadratic in suffix count, but suffix count is small (~10). GNU make extended this to pattern rules: %.o: %.c uses the % wildcard for any name. Same concept, more flexible syntax. The 1979 suffix rule is the foundation of every modern build language: cargo's [build-dependencies], npm's scripts, webpack's loaders — all express 'how to convert X type to Y type'.",
+      "human_story": "Why is a typical Makefile only 3 lines? Because of suffix rules. Write hello: hello.o util.o, and make figures out that hello.o needs hello.c via the .c.o: rule. You don't need to spell out 'compile hello.c to hello.o' — make knows by suffix matching. GNU make extended this to pattern rules (%.o: %.c) — same idea, wildcards. cargo, npm, webpack, all modern build systems express 'how to convert one file type to another' — descendants of Bell-32V make's suffix rules from 1976. The 3-line Makefile is the achievement: most of what you'd write is implied by convention."
+    },
+    "appraiser_note": "**サフィックス規則**: `.c.o:` が `.c → .o` 変換を定義。 hello.o を明示ルール無しで make するとき、 make は .SUFFIXES リストから pair を探索: .c.o (.c ソースから .o target)、 .s.o などを試す。 各 pair でソースファイル (例: hello.c) が存在するかチェック、 あればその規則を適用。 $* (stem、 'hello')、 $< (source、 'hello.c') を自動変数として設定。 二重ループで sufflist × sufflist の全組み合わせを walk——拡張子数の 2 乗だが拡張子は ~10 個程度。 GNU make は **パターン規則**に拡張: `%.o: %.c` で % wildcard で任意名対応。 同じ概念、 より柔軟な構文。 1979 年のサフィックス規則が現代ビルド言語の基礎——cargo の [build-dependencies]、 npm の scripts、 webpack の loader、 すべて「X 型を Y 型に変換」 を表現する子孫。 3 行 Makefile の偉業: ほとんどが規約で暗黙。"
+  },
+  {
+    "id": "make-004-automatic-variables",
+    "text": "/* doname.c context switching: */\nsetvar(\"@\", p->namep);              /* $@ = current target */\nsetvar(\"?\", mkqlist(qchain));        /* $? = out-of-date deps */\nsetvar(\"*\", prefix);                  /* $* = stem (no extension) */\nsetvar(\"<\", copys(sourcename));       /* $< = source (implicit rule) */\n\n/* docom() command execution: */\ndocom(q) struct shblock *q; {\n    char string[OUTMAX];\n    for (; q; q = q->nxtshblock) {\n        subst(q->shbp, string);     /* macro expansion: $@, $<, $? -> values */\n        docom1(string, ign, nopr);   /* execute via shell */\n    }\n}\n\n/* Typical Makefile usage: */\n# hello: hello.o util.o\n#     cc -o $@ hello.o util.o      # $@ = hello\n# .c.o:\n#     cc $(CFLAGS) -c $<           # $< = source\n# libfoo.a: foo.o bar.o baz.o\n#     ar r $@ $?                    # $? = changed files",
+    "file_path": "usr/src/cmd/make/doname.c",
+    "line_number": 91,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "make",
+      "automatic-variables"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "abstraction": 4
+      },
+      "technical_context": "Automatic variables provide context-dependent values: $@ (current target name), $? (out-of-date dependency list, space-separated), $< (source file in implicit rules), $* (stem without extension). Implementation: setvar() updates global variable table per target; subst() expands $@, $<, etc. in command strings before shell execution. This enables DRY commands: `cc -o $@ hello.o util.o` instead of repeating target name. $? enables efficient archive updates: `ar r $@ $?` only adds changed files. GNU make adds $^ (all deps), $+ (all deps with duplicates), $|, $(@D), $(@F). But the original 4 ($@, $?, $<, $*) from 1976 cover most use cases and survive in every make implementation.",
+      "human_story": "Why write `cc -o $@ ...` instead of `cc -o hello ...`? Because $@ becomes the current target's name. DRY: target name appears once (in the rule definition), not twice. $< is the source file in implicit rules: `cc -c $<` works for any .c.o rule. $? is the killer feature: list of changed dependencies. `ar r libfoo.a $?` only adds files that were modified — incremental archive updates. The 4 variables ($@, $?, $<, $*) cover 90% of Makefile needs. GNU make adds more but the originals from 1979 are the workhorses."
+    },
+    "appraiser_note": "**自動変数**でコンテキスト依存値を提供: $@ (現在の target 名)、 $? (古い依存リスト、 スペース区切り)、 $< (暗黙ルールのソースファイル)、 $* (stem、 拡張子なし)。 実装: setvar() が target ごとにグローバル変数表を更新、 subst() がコマンド文字列内の $@、 $< 等を展開してから shell で実行。 DRY コマンドを可能に: `cc -o $@ hello.o util.o` で target 名を 2 度書かない。 $? で効率的 archive 更新: `ar r $@ $?` で変更ファイルだけ追加。 GNU make は追加: $^ (全 deps)、 $+ (重複含む全 deps)、 $|、 $(@D)、 $(@F)。 だが 1976 年の基本 4 つ ($@、 $?、 $<、 $*) が最も多用される、 全 make 実装で継承。"
+  },
+  {
+    "id": "make-005-special-targets",
+    "text": "/* main.c special target processing: */\nif (srchname(\".IGNORE\"))    ++ignerr;        /* ignore command errors */\nif (srchname(\".SILENT\"))    silflag = 1;      /* don't echo commands */\nif (p = srchname(\".SUFFIXES\")) sufflist = p->linep;   /* suffix list */\nif (!sufflist) fprintf(stderr, \"No suffix list.\\n\");\n\n/* doname.c .DEFAULT fallback: */\nelse if (p->septype == 0)\n    if (p1 = srchname(\".DEFAULT\")) {\n        setvar(\"<\", p->namep);\n        for (lp2 = p1->linep; lp2; lp2 = lp2->nxtlineblock)\n            if (implcom = lp2->shp) {\n                errstat += docom(implcom);\n                break;\n            }\n    }\n\n/* Makefile examples: */\n# .SUFFIXES: .c .o .s .h .y .l\n# .IGNORE:\n# .SILENT:\n# .DEFAULT:\n#     echo \"Don't know how to make $<\"",
+    "file_path": "usr/src/cmd/make/main.c",
+    "line_number": 155,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "make",
+      "metadata"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "minimalism",
+      "emotion_intensity": 4,
+      "emotions": {
+        "minimalism": 4,
+        "abstraction": 4
+      },
+      "technical_context": "Special targets (names starting with '.') are make directives, not file targets: .IGNORE (ignore all command errors, same as -i flag), .SILENT (don't echo commands, same as -s), .SUFFIXES (suffix list for implicit rule search), .DEFAULT (fallback rule for unknown targets). main.c checks for these via srchname() and sets corresponding flags. .SUFFIXES is order-sensitive: first-listed suffix wins. Empty .SUFFIXES clears all (disable implicit rules). GNU make adds .PHONY (target is not a file, always run), .PRECIOUS (don't delete intermediates), .SECONDARY, etc. Command-level prefixes (@, -) work like .SILENT, .IGNORE per-command. 1979's special targets pioneered the 'metadata target' idea — encoding build metadata as fake targets that the build tool recognizes specially.",
+      "human_story": "How do you tell make 'ignore all errors'? Add `.IGNORE:` to Makefile. 'Be silent'? `.SILENT:`. Define what suffixes are special? `.SUFFIXES: .c .o`. These special targets — names starting with '.' — encode build metadata as if they were file targets. Make recognizes them specially. GNU make extended this: `.PHONY: all clean install` marks targets that aren't files. Same idea, scaled up. The trick of 'encode metadata as a special-named target' is the 1979 design that lets makefile language be self-describing — no separate metadata syntax needed."
+    },
+    "appraiser_note": "**特殊ターゲット**は (`.` で始まる名前) は make ディレクティブで、 ファイル target ではない: .IGNORE (全コマンドエラー無視、 -i フラグ相当)、 .SILENT (コマンドエコーなし、 -s 相当)、 .SUFFIXES (暗黙ルール探索の拡張子リスト)、 .DEFAULT (未知 target のフォールバック規則)。 main.c が srchname() で存在チェックして対応フラグを設定。 .SUFFIXES は順序依存: 先に書いた拡張子が優先。 空 .SUFFIXES で全クリア (暗黙ルール無効化)。 GNU make は追加: .PHONY (ファイルではない target、 常に rebuild)、 .PRECIOUS (中間ファイル削除しない)、 .SECONDARY 等。 コマンドレベル prefix (@、 -) は .SILENT、 .IGNORE のコマンド単位版。 1979 年の特殊ターゲットが **「メタデータターゲット」 アイデアの先駆け**——別のメタデータ構文不要で makefile 言語を自己記述的に。"
   }
 ]
