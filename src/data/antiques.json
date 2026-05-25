@@ -13682,5 +13682,140 @@
       "human_story": "Why is the format called 'tar'? Tape ARchive. 1979's default target was /dev/mt1, a magnetic tape unit. 9-track reels held ~175 MB; tar wrote files sequentially. By 1990 mag tape was retreating, but .tar files stayed: pipe through compress (.tar.Z), then gzip (.tar.gz), then bzip2/xz/zstd. Today's Docker image layers are tar+gzip. The 'Tape' is gone (most users never touched mag tape), but 'ARchive' is universal. The magtape[7]='0' or '1' trick is from when /dev/mt0 and /dev/mt1 were the two main tape drives. The blocking factor (-b) optimized tape throughput by reducing inter-record gaps. All vestigial in modern tar, but the syntax persists for backward compatibility."
     },
     "appraiser_note": "tar のデフォルトターゲットは **/dev/mt1** (magnetic tape unit 1) ——名前の由来「Tape ARchive」。 1970 年代 Unix は **9-track 磁気テープ**にバックアップ: 2400 フィートリール、 1600 BPI で ~175 MB。 テープは sequential、 random access 不可。 magtape[7] mutation トリックで '1' を '0' に変えて /dev/mt0 へ。 -f フラグでファイル指定。 nblock (1-20) で blocking factor 設定: テープ効率良くするため N×512 バイト/IO (inter-record gap 削減)。 1990 年代にテープがディスクバックアップに置換、 でも tar 形式は残存: .tar.Z (1980s compress)、 .tar.gz (1990s gzip)、 .tar.bz2/.tar.xz/.tar.zst。 Docker image layer、 npm package、 Linux kernel ソース——全部圧縮ラッパー内で tar。 「Tape」 は痕跡的 (現代ユーザーは触れない)、 「ARchive」 は普遍。 magtape[7] のトリックは /dev/mt0 と /dev/mt1 が主要 2 テープドライブだった時代の名残。 後方互換性のため構文は残存。"
+  },
+  {
+    "id": "cpio-001-binary-header-magic",
+    "text": "#define MAGIC    070707\n#define HDRSIZE  ((sizeof Hdr) - 256)\n\nstruct header {\n    short h_magic,     /* 070707 - identifies cpio archive */\n          h_dev,\n          h_ino,\n          h_mode,\n          h_uid,\n          h_gid,\n          h_nlink,\n          h_rdev;\n    short h_mtime[2];   /* 2 shorts = long */\n    short h_namesize;\n    short h_filesize[2];\n    char  h_name[256];\n} Hdr;",
+    "file_path": "usr/src/cmd/cpio.c",
+    "line_number": 12,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "cpio",
+      "format"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "antiquity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "antiquity": 4,
+        "concreteness": 4
+      },
+      "technical_context": "cpio binary header: 26-byte fixed struct + variable filename. Magic 070707 octal (= 0x71C7) identifies the format. All fields are 16-bit shorts: dev, ino, mode, uid, gid, nlink, rdev; mtime and filesize as short[2] pairs (= 32-bit long). Filename up to 256 bytes, NUL-terminated. Contrast with tar's 512-byte ASCII-octal header — cpio's binary is compact (26 vs ~257 bytes header overhead) and faster to parse (direct memory access vs atoi conversions). But binary format is endian-dependent and not human-readable. Modern 'newc' cpio format (SVR4, 1990s) switched to 110-byte ASCII hex header with magic '070701' or '070702', solving both endian and readability issues while preserving the cpio model.",
+      "human_story": "070707 octal — the cpio magic number, instantly recognizable in hex dumps as 0x71C7. cpio chose binary headers (26 bytes, machine-fast) over tar's ASCII octal (257 bytes, human-readable). Trade-offs: cpio is compact and parse-cheap, but endian-sensitive and opaque to `od`. The 'newc' format (SVR4) fixed both by going ASCII hex. Linux initramfs uses cpio (`.cpio.gz`) — kernel parsers prefer binary's simplicity. RPM packages contain cpio archives internally. 1979 cpio binary is the format that hides in modern Unix infrastructure."
+    },
+    "appraiser_note": "cpio バイナリヘッダ: 26 バイト固定 struct + 可変長ファイル名。 **MAGIC 070707 8 進** (= 0x71C7) で形式識別。 全フィールド 16 ビット short: dev、 ino、 mode、 uid、 gid、 nlink、 rdev; mtime と filesize は short[2] ペア (= 32 ビット long)。 ファイル名は 256 バイトまで、 NUL 終端。 tar の 512 バイト ASCII 8 進ヘッダと対照: cpio バイナリはコンパクト (26 vs ~257 バイトオーバーヘッド)、 パース高速 (直接メモリアクセス vs atoi 変換)。 だがバイナリ形式は **エンディアン依存** + 人間非読。 現代の 'newc' cpio 形式 (SVR4、 1990s) は 110 バイト ASCII 16 進ヘッダ + magic '070701' '070702' に切替、 両問題を解決しつつ cpio モデルを保持。 Linux initramfs は cpio (`.cpio.gz`) ——カーネルパーサがバイナリの単純さを好む。 RPM 内部にも cpio。"
+  },
+  {
+    "id": "cpio-002-three-modes-stdin",
+    "text": "main(argc, argv) {\n    while (*++argv[1]) {\n        switch (*argv[1]) {\n        case 'o': Option = OUT;  break;\n        case 'i': Option = IN;   break;\n        case 'p': Option = PASS; break;\n        }\n    }\n    switch (Option) {\n    case OUT:\n        while (getname()) {            /* read filename from stdin */\n            bwrite(&Hdr, HDRSIZE + Hdr.h_namesize);\n            for (filesz=...; filesz>0; filesz-=512) {\n                read(Ifile, Buf, ct);\n                bwrite(Buf, ct);\n            }\n        }\n        break;\n    case IN:\n        while (gethdr()) { /* extract */ }\n        break;\n    case PASS:\n        while (getname()) { copy_to_dest(...); }\n        break;\n    }\n}\n\ngetname() {\n    while ((c = getchar()) != EOF) {\n        if (c == '\\n') { *p = '\\0'; return 1; }\n        *p++ = c;\n    }\n    return 0;\n}\n\n/* Usage:\n   find /usr -print | cpio -o > archive.cpio\n   cpio -id < archive.cpio\n   find . -depth | cpio -pdmu /dest\n*/",
+    "file_path": "usr/src/cmd/cpio.c",
+    "line_number": 119,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "cpio",
+      "pipe"
+    ],
+    "interesting_score": 24,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "creativity": 5,
+        "abstraction": 5
+      },
+      "technical_context": "cpio's three-mode design: -o (out, write archive), -i (in, extract archive), -p (pass-through, copy to directory). Filename source: stdin (one per line). This is Unix pipe philosophy embodied — cpio doesn't walk directories itself, it accepts a filename stream. find + cpio pipeline: find generates filenames, cpio archives them. Contrast tar which walks internally. Composability: filter filenames via grep/awk before cpio: `find /usr | grep '\\.c$' | cpio -o`. Default I/O is stdin/stdout, no /dev/mt1 hardcoding (though tape works via redirect). The mode-driven design (direction of data flow) vs tar's action-driven (verbs) reflects two schools of CLI design. AT&T System V adopted cpio; BSD adopted tar.",
+      "human_story": "Why are there two Unix archive formats? Different design philosophies. tar: 'walk dirs, write archive' — monolithic. cpio: 'read filenames from stdin, write headers and data' — composable. `find /usr | cpio -o` puts find in charge of selection, cpio in charge of format. Want only .c files? `find /usr -name '*.c' | cpio -o`. Want from a list? `cat manifest.txt | cpio -o`. The pipe philosophy made cpio more flexible at the cost of being two commands instead of one. AT&T System V loved it (cpio is canonical); BSD loved tar. Linux supports both. RPM uses cpio internally. Linux initramfs uses cpio. The 'one program, one job' Unix philosophy made cpio possible — but it required users to learn pipes."
+    },
+    "appraiser_note": "cpio の **3 モード設計**: -o (out、 アーカイブ書込)、 -i (in、 展開)、 -p (pass-through、 ディレクトリへコピー)。 ファイル名ソース: **stdin (1 行 1 ファイル名)**。 これが **Unix パイプ哲学の体現**——cpio はディレクトリを自分で walk せず、 ファイル名ストリームを受け取る。 find + cpio パイプライン: find がファイル名生成、 cpio が archive。 内部走査の tar と対照。 **合成性**: grep/awk でファイル名フィルタ可能: `find /usr | grep '\\.c$' | cpio -o`。 デフォルト I/O は stdin/stdout、 /dev/mt1 ハードコーディングなし (リダイレクトでテープも可)。 **モード駆動** (データフロー方向) vs tar の動詞駆動——2 つの CLI 設計流派。 AT&T System V が cpio 採用、 BSD が tar 採用。 Linux 両対応、 initramfs が cpio、 RPM 内部も cpio。"
+  },
+  {
+    "id": "cpio-003-pass-through",
+    "text": "case 'p':\n    if (access(lastarg, 2) == -1) goto accerr;\n    strcpy(Fullname, lastarg);\n    strcat(Fullname, \"/\");\n    stat(Fullname, &Xstatb);\n    if ((Xstatb.st_mode & S_IFMT) != S_IFDIR) goto accerr;\n    Option = PASS;\n    Dev = Xstatb.st_dev;\n    break;\n\ncase PASS:\n    pwd();\n    while (getname()) {\n        if (ckname(Hdr.h_name)) {\n            /* construct destination path */\n            sprintf(Fullname, \"%s/%s\", lastarg, Hdr.h_name);\n            mkdir_path(Fullname);\n            if (S_ISREG(Statb.st_mode)) {\n                copy_regular_file(Hdr.h_name, Fullname);\n            } else if (S_ISDIR(Statb.st_mode)) {\n                mkdir(Fullname, Statb.st_mode);\n            }\n            chown(Fullname, Statb.st_uid, Statb.st_gid);\n            chmod(Fullname, Statb.st_mode);\n            if (Mod_time)\n                set_time(Fullname, ...);\n        }\n    }\n    break;\n\n/* Usage:\n   find . -depth | cpio -pdmu /backup\n   # -d: create dirs as needed\n   # -m: preserve mtime\n   # -u: overwrite existing\n   # -l: hard link if possible\n*/",
+    "file_path": "usr/src/cmd/cpio.c",
+    "line_number": 126,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "cpio",
+      "copy"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "creativity": 4,
+        "concreteness": 4
+      },
+      "technical_context": "cpio -p mode (pass-through) does directory tree copy without intermediate archive. Reads filenames from stdin, copies each to destination dir preserving full metadata: uid, gid, mode, mtime (with -m), hard links (with -l), special files, symlinks. Effectively cp -a from 1979 (cp -a came much later). Used heavily for: chroot environment construction, system migration, large dir tree backup, when rsync isn't available. Flags: -d (create dirs), -m (mtime), -u (unconditional overwrite), -l (hard link). The `find ... -depth | cpio -pdmu /dest` idiom appears in countless Unix sysadmin scripts predating rsync. Modern rsync surpasses it but cpio -p still works in busybox/embedded.",
+      "human_story": "cp -r didn't exist in 1979 (or was weak). cpio -p filled the gap: `find . -depth | cpio -pdmu /backup` copies an entire tree preserving everything — owner, perms, mtime, hard links, symlinks, special files. cp -a equivalent, 15+ years before cp got -a. Sysadmins memorized 'pdmu' as the magic flags: pass-through, dirs, mtime, unconditional. Until rsync (1996), cpio -p was the way to clone directory trees on Unix. Today rsync is better (network, deltas, compression), but cpio -p still works in initramfs, busybox, and minimal environments. 1979 versatility: find + cpio = arbitrary tree copy."
+    },
+    "appraiser_note": "cpio -p モード (pass-through) はディレクトリツリーコピーを中間アーカイブなしで実行。 stdin からファイル名を読み、 各ファイルを destination dir にコピー、 **フルメタデータ保持**: uid、 gid、 mode、 mtime (-m)、 ハードリンク (-l)、 特殊ファイル、 シンボリックリンク。 事実上の **1979 年版 cp -a** (cp -a は後年)。 用途: chroot 環境構築、 システム移行、 大規模ディレクトリツリーバックアップ (rsync 不在時)。 フラグ: -d (ディレクトリ作成)、 -m (mtime 保持)、 -u (無条件上書き)、 -l (ハードリンク)。 **`find ... -depth | cpio -pdmu /dest` イディオム**は rsync 以前の数え切れない sysadmin スクリプトに登場。 1996 年 rsync で凌駕されたが、 cpio -p は initramfs/busybox/最小環境で今も生きる。 1979 年の汎用性: find + cpio = 任意ツリーコピー。"
+  },
+  {
+    "id": "cpio-004-endian-handling",
+    "text": "union { long l; short s[2]; char c[4]; } U;\n\n#define MKSHORT(v, lv) { \\\n    U.l = 1L; \\\n    if (U.c[0]) U.l=lv, v[0]=U.s[1], v[1]=U.s[0]; \\\n    else U.l=lv, v[0]=U.s[0], v[1]=U.s[1]; \\\n}\n\nlong mklong(v) short v[]; {\n    U.l = 1;\n    if (U.c[0])           /* little-endian (VAX) */\n        U.s[0] = v[1], U.s[1] = v[0];\n    else                  /* big-endian (PDP-11, SUN) */\n        U.s[0] = v[0], U.s[1] = v[1];\n    return U.l;\n}\n\n/* Runtime endian detection: U.l = 1; if U.c[0] == 1 then little-endian */",
+    "file_path": "usr/src/cmd/cpio.c",
+    "line_number": 78,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "cpio",
+      "portability"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "carefulness",
+      "emotion_intensity": 5,
+      "emotions": {
+        "carefulness": 5,
+        "concreteness": 4
+      },
+      "technical_context": "cpio's headers use short[2] pairs for 32-bit values (mtime, filesize). The byte ordering of those pairs differs by architecture: VAX (little-endian) stores low-short first; PDP-11 (PDP-endian, mixed) is different; SUN/MC68k (big-endian) stores high-short first. mklong/MKSHORT detect endianness at runtime via union trick: U.l=1, if U.c[0]==1 then little-endian. Then convert short[] pair to long with appropriate swap. This allows cpio archives to be readable across architectures — critical when tapes traveled between heterogeneous Unix systems in the 1980s. tar avoids this by using ASCII octal numbers (always portable). cpio's binary advantage came with this complexity cost. SVR4 'newc' cpio format dropped binary in favor of ASCII hex, eliminating endian issues while retaining cpio's pipe-friendly design.",
+      "human_story": "VAX, PDP-11, SUN — three architectures, three endiannesses, one cpio archive. 1980s Unix shops had mixed CPU fleets; a tape made on VAX needed to read on SUN. cpio's solution: runtime endian detection (union trick: U.l=1, check U.c[0]), then swap as needed. mklong reads short[2] pair correctly regardless of writer's architecture. tar avoided this with ASCII octal — slower to parse but always portable. cpio's binary headers paid a complexity tax for compactness. SVR4 'newc' format later switched to ASCII hex, getting best of both worlds. The runtime endian detect via union is now obsolete (compilers do __builtin_bswap, hardware has ntohl/htonl), but in 1979 this was the elegant solution."
+    },
+    "appraiser_note": "cpio ヘッダは **short[2] ペア**で 32 ビット値 (mtime、 filesize) を表現。 バイトオーダーがアーキ毎に違う: VAX (little-endian) は low-short が先、 PDP-11 (PDP-endian、 mixed) は独特、 SUN/MC68k (big-endian) は high-short が先。 **mklong/MKSHORT が runtime でエンディアン検出**: union トリック (U.l=1、 U.c[0]==1 なら little-endian)。 short[] ペアを long に適切なスワップで変換。 これで cpio アーカイブが **アーキ間で読める**——1980 年代に混在 Unix システム間でテープが移動する時に決定的。 tar は ASCII 8 進数で回避 (パース遅いが常に portable)。 cpio バイナリヘッダの利点は複雑性のコスト。 SVR4 'newc' 形式は後に ASCII 16 進に切替、 両世界の最良を得て endian 問題消失。 union によるランタイム endian 検出は現代では旧式 (コンパイラ __builtin_bswap、 ハードウェア ntohl/htonl) だが、 1979 年にはエレガントな解。"
+  },
+  {
+    "id": "cpio-005-vs-tar-philosophy",
+    "text": "/* cpio's defining differences from tar (#181): */\n\n/* 1. Mode-driven (-o/-i/-p), not action-driven (c/x/t/r/u) */\ncase 'o': Option = OUT;\ncase 'i': Option = IN;\ncase 'p': Option = PASS;\n\n/* 2. Filename from stdin (composable with find/grep/awk) */\ngetname() {\n    while ((c = getchar()) != EOF) {\n        if (c == '\\n') return 1;\n        *p++ = c;\n    }\n}\n\n/* 3. Pipe-friendly defaults */\nint Input = 0;     /* stdin */\nint Output = 1;    /* stdout */\n\n/* 4. Pass-through mode (no archive intermediate) */\ncase PASS:\n    while (getname()) copy_to_dest(Hdr.h_name);\n\n/* Usage philosophy:\n   tar: tar cf archive.tar /usr           # monolithic\n   cpio: find /usr | cpio -o > archive   # composable\n*/",
+    "file_path": "usr/src/cmd/cpio.c",
+    "line_number": 92,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "cpio",
+      "philosophy"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "antiquity": 4
+      },
+      "technical_context": "tar vs cpio: two archive formats from same Bell Labs source tree, diverging by philosophy. tar is monolithic (walks dirs, writes archive, all in one command); cpio is modular (accepts filenames from stdin, writes archive — pairs with find for traversal). AT&T System V standardized on cpio; BSD on tar. Linux supports both; tar dominates user-facing use; cpio dominates system internals (initramfs, RPM). The cpio philosophy aligns with Unix pipe ideal ('one program, one job') at cost of two-command verbosity. tar's mono-design wins for end-users. Modern descendants: rsync supersedes cpio -p for sync, pax is POSIX unification, tar.gz/tar.xz/tar.zst dominate distribution, cpio still owns initramfs and RPM.",
+      "human_story": "Same source tree, same year, two archive formats. tar said 'I'll handle everything — walking, archiving, restoring'. cpio said 'I'll handle archiving; let find do the walking'. tar won the end-user war (one command vs two), but cpio won specific niches (Linux initramfs, RPM packages, busybox systems). The split is Unix philosophy in action: should a tool do everything (tar) or compose (cpio)? Both worked. Both survive. tar's simplicity won users; cpio's composability won system designers. 50 years later, you tar.gz your source release but boot from cpio.gz."
+    },
+    "appraiser_note": "tar vs cpio: 同じ Bell Labs ソースツリーから 2 つのアーカイブ形式、 哲学で分岐。 **tar はモノリシック** (ディレクトリ走査 + archive 書込 + 復元、 全て 1 コマンド)、 **cpio はモジュラー** (stdin からファイル名受取 + archive 書込——走査は find とペア)。 **AT&T System V は cpio 標準化**、 **BSD は tar 標準化**。 Linux 両対応、 tar が end-user 向けで支配、 cpio がシステム内部で支配 (initramfs、 RPM)。 cpio 哲学は **Unix パイプ理想** (「one program, one job」) に沿う、 2 コマンドの冗長性が代償。 tar のモノ設計が end-user 勝利。 現代の派生: rsync が cpio -p を sync で超克、 pax が POSIX 統一、 tar.gz/.xz/.zst が配布支配、 cpio が initramfs と RPM を所有。 「**ソースリリースは tar.gz、 ブートは cpio.gz**」 ——50 年後も両方生きる。"
   }
 ]
