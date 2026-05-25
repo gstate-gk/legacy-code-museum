@@ -11576,5 +11576,140 @@
       "human_story": "Why does `echo $0` in your terminal sometimes show `-bash` instead of `bash`? Because login.c started bash with argv[0] = '-bash' as a signal: 'this is a LOGIN shell, please source /etc/profile and ~/.bash_profile'. The 1979 trick: stick '-' in front of the basename of the shell, pass it as argv[0]. Every modern shell honors this. bash -l is explicit; -bash is implicit. The minusnam[16] = '-' literal is a tiny piece of code with 50 years of consequences. Inheritance protocols don't need to be elegant to last; they just need to work."
     },
     "appraiser_note": "login は **`argv[0] = \"-sh\"` で /bin/sh に「これはログインシェル」 と伝える**。 構築: `minusnam[16] = \"-\"` リテラル、 `rindex(/bin/sh, '/')` で最後の `/` を見つけ、 `namep++` で `sh` の先頭へ、 `strcat(minusnam, \"sh\")` で `\"-sh\"` 完成。 `execlp(pwd->pw_shell, minusnam, 0)` で実体は /bin/sh だが argv[0] は -sh。 shell 起動時に `argv[0][0] == '-'` で自身を **login shell** と判定、 /etc/profile と ~/.profile を読む。 全シェル (sh/bash/csh/zsh/ksh/tcsh) がこの慣習を実装。 `bash -l` は現代の明示版。 exec 失敗時は \"No shell\" + exit。 `echo $0` で `-bash` と出るのは login.c がこの規約を 1979 年に確立したから——50 年の継承を持つ tiny piece of code。"
+  },
+  {
+    "id": "grep-001-opcode-compile",
+    "text": "#define CBRA   1\n#define CCHR   2\n#define CDOT   4\n#define CCL    6\n#define NCCL   8\n#define CDOL  10\n#define CEOF  11\n#define CKET  12\n#define CBACK 18\n#define STAR  01\n\ncompile(astr) {\n    ...\n    switch (c = *sp++) {\n    case '\\0': *ep++ = CEOF; return;\n    case '.':  *ep++ = CDOT; continue;\n    case '*':\n        if (lastep==0 || *lastep==CBRA || *lastep==CKET)\n            goto defchar;\n        *lastep |= STAR;     /* OR STAR bit onto previous opcode */\n        continue;\n    case '$':\n        if (*sp != '\\0') goto defchar;\n        *ep++ = CDOL; continue;\n    case '[': /* char class compile */\n    case '\\\\': /* \\( \\) \\1-\\9 */\n    defchar: default:\n        *ep++ = CCHR; *ep++ = c;\n    }\n}",
+    "file_path": "usr/src/cmd/grep.c",
+    "line_number": 145,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "regex",
+      "compiler"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "abstraction": 5
+      },
+      "technical_context": "compile() translates regex string to bytecode array (expbuf). 8 opcodes: CCHR (char literal), CDOT (.), CCL (char class), NCCL (negated cc), CDOL ($), CEOF (end), CBRA (\\(), CKET (\\)), CBACK (\\1-\\9). STAR (bit 01) is OR'd onto previous opcode: `a*` becomes 2 bytes: (CCHR | STAR), 'a'. The bit-overlay design saves memory — no separate STAR opcode needed. `^` sets circf flag for line-anchored match. The compile→execute split is now standard for regex engines (Python re.compile, JavaScript RegExp constructor, Rust regex::Regex::new), but in 1979 it was novel. compile is one-pass linear; produces expbuf which becomes input to advance().",
+      "human_story": "Ken Thompson's regex notation needed an internal form. compile() solves it: walk the pattern, emit opcodes. The STAR-as-OR-bit trick is elegance born of memory scarcity: `a*` becomes 2 bytes, not 3. Modern regex engines compile to richer NFAs or DFAs, but the compile→execute split is universal. Type `re.compile(r'a*')` in Python — you're doing in 2026 what Thompson formalized for ed's regex in the early 1970s and grep inherited in 1973."
+    },
+    "appraiser_note": "compile() は正規表現文字列をバイトコード配列 (expbuf) に変換。 8 オペコード: CCHR (文字定数)、 CDOT (.)、 CCL (文字クラス)、 NCCL (否定 CC)、 CDOL ($)、 CEOF (終端)、 CBRA (\\()、 CKET (\\))、 CBACK (\\1-\\9)。 **STAR (bit 01) は直前 opcode に OR**: `a*` は 2 バイト `(CCHR | STAR), 'a'`。 ビット重ね設計で省メモリ——STAR 専用 opcode が不要。 `^` は circf フラグで行頭アンカー。 compile→execute 分離は現代の regex エンジン (Python re.compile、 JavaScript RegExp、 Rust regex::Regex::new) の標準だが、 1979 年では novel。 ed の Thompson regex を grep が 1973 年に独立化、 そのコンパイル戦略がここに。"
+  },
+  {
+    "id": "grep-002-advance-backtracking",
+    "text": "advance(lp, ep) {\n    for (;;) switch (*ep++) {\n    case CCHR:\n        if (*ep++ == *lp++) continue;\n        return(0);\n    case CDOT:\n        if (*lp++) continue;\n        return(0);\n    case CEOF: return(1);\n    case CCHR|STAR:\n        curlp = lp;\n        while (*lp++ == *ep);    /* greedy: consume as much as possible */\n        ep++;\n        goto star;\n    star:\n        if(--lp == curlp) continue;\n        if(*ep == CCHR) {  /* fast path: next opcode is CCHR */\n            c = ep[1];\n            do {\n                if(*lp != c) continue;\n                if(advance(lp, ep)) return(1);\n            } while(lp-- > curlp);\n            return(0);\n        }\n        do {\n            if (advance(lp, ep)) return(1);\n        } while (lp-- > curlp);    /* backtrack: shrink by 1 char and retry */\n        return(0);\n    ...\n    }\n}",
+    "file_path": "usr/src/cmd/grep.c",
+    "line_number": 324,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "regex",
+      "backtracking"
+    ],
+    "interesting_score": 24,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "concreteness": 4
+      },
+      "technical_context": "advance() is a bytecode VM. CCHR/CDOT/CDOL/CEOF do immediate one-char matches and continue or return. CCHR|STAR implements greedy-then-backtrack: while loop consumes all matching chars (lp advances forward), then star: label uses do-while loop calling advance() recursively, decrementing lp on each failure — this is greedy matching with backtracking. For `a*b` on input `aaab`: first consume all `a`s (lp = end of aaa), then try matching `b` at each position from rightmost backward until success or curlp reached. The inner fast path (if(*ep == CCHR)) skips positions where the next required char doesn't match, avoiding wasteful recursive advance() calls. This bytecode VM + greedy + backtrack pattern is the ancestor of every regex engine: sed, awk, Perl, Python re, Ruby Regexp, Java Pattern, JavaScript RegExp.",
+      "human_story": "Why is regex matching so slow on pathological inputs like /a*a*a*a*b/? Because of this: greedy + backtrack. advance() consumes as much as possible (the greedy part), then recursively tries the rest. If it fails, lp-- (give back one char) and retry. Worst case, exponential time. The 1979 design is mathematically correct and easy to understand; modern engines (RE2, Rust regex) avoid backtracking entirely by compiling to DFAs, achieving linear time at the cost of less expressive regex (no backreferences). But every Perl-compatible regex engine — PCRE, JavaScript, Python — still uses Thompson's greedy+backtrack from 1973's grep."
+    },
+    "appraiser_note": "advance() はバイトコード VM。 CCHR/CDOT/CDOL/CEOF は即時 1 文字マッチ。 **CCHR|STAR が greedy + backtrack**: while ループで一致する限り消費 (lp 前進)、 star: ラベルで残りを advance() 再帰呼び出し、 失敗なら lp-- で 1 文字戻して再試行。 `a*b` で入力 `aaab` の場合: まず全 `a` 消費 (lp = aaa の次)、 そこから後ろ向きに `b` マッチを試し、 成功または curlp 到達まで。 内側の fast path (`if(*ep == CCHR)`) は次の必須文字が一致しない位置をスキップ、 無駄な advance() 再帰を回避。 bytecode VM + greedy + backtrack パターンが全 regex エンジンの祖: sed、 awk、 Perl、 Python re、 Ruby、 Java Pattern、 JavaScript RegExp。 RE2 や Rust regex は backtrack を完全に避けて DFA で線形時間を達成するが、 PCRE / JS / Python は今も Thompson の 1973 年方式。"
+  },
+  {
+    "id": "grep-003-bitmap-charclass",
+    "text": "char bittab[] = { 1, 2, 4, 8, 16, 32, 64, 128 };\n\n/* compile: */\ncase '[':\n    *ep++ = CCL;\n    neg = 0;\n    if((c = *sp++) == '^') { neg = 1; c = *sp++; }\n    cstart = sp;\n    do {\n        if (c=='-' && sp>cstart && *sp!=']') {\n            for (c = sp[-2]; c<*sp; c++)\n                ep[c>>3] |= bittab[c&07];\n            sp++;\n        }\n        ep[c>>3] |= bittab[c&07];\n    } while((c = *sp++) != ']');\n    if(neg) {\n        for(cclcnt = 0; cclcnt < 16; cclcnt++)\n            ep[cclcnt] ^= -1;\n        ep[0] &= 0376;\n    }\n    ep += 16;\n\n/* advance: */\ncase CCL:\n    c = *lp++ & 0177;\n    if(ep[c>>3] & bittab[c & 07]) {\n        ep += 16;\n        continue;\n    }\n    return(0);",
+    "file_path": "usr/src/cmd/grep.c",
+    "line_number": 194,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "regex",
+      "bitmap"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "concreteness": 4
+      },
+      "technical_context": "Char class `[abc]` or `[a-z]` stored as 16-byte bitmap (128 bits, sufficient for 7-bit ASCII). bittab[8] = {1,2,4,8,16,32,64,128} maps bit-index to bit-mask. To set bit for char c: `ep[c >> 3] |= bittab[c & 07]` — c >> 3 = byte index, c & 07 = bit position. Range `a-z` iterates from sp[-2] to *sp setting all bits in between. Negation `[^...]` flips all 16 bytes via XOR with -1, then clears bit 0 (NUL avoidance). Match in advance: `ep[c >> 3] & bittab[c & 07]` — O(1) lookup, no string scan. Modern regex engines extend this to 128KB bitmap for Unicode BMP, but the bit-twiddling logic is identical.",
+      "human_story": "How do you test 'is c in [a-z]?' in O(1)? Build a bitmap: 128 bits where bit c is 1 if c is in the class. Test = single bit lookup. 1979's grep does this in 16 bytes. Range syntax 'a-z' becomes a for-loop setting 26 bits. Negation 'XOR with -1' flips them all in 16 instructions. The math is high-school combinatorics; the elegance is making it 16 bytes per char class instead of hundreds. Modern PCRE uses 8KB bitmaps for Unicode BMP; the principle is the same as 1979 grep — bit-tested set membership for character classes."
+    },
+    "appraiser_note": "文字クラス `[abc]` や `[a-z]` を **16 バイト = 128 ビットのビットマップ**で格納 (7 bit ASCII で十分)。 `bittab[8] = {1,2,4,8,16,32,64,128}` はビット位置からマスクへの変換テーブル。 文字 c のビットを立てる: `ep[c >> 3] |= bittab[c & 07]`——c >> 3 = バイトインデックス、 c & 07 = ビット位置。 範囲 `a-z` は sp[-2] から *sp までループで全ビットセット。 否定 `[^...]` は 16 バイト全部を XOR -1 で反転、 bit 0 (NUL) だけクリア。 advance でのマッチは `ep[c >> 3] & bittab[c & 07]`——**O(1) 一発検査**、 文字列スキャン不要。 現代の PCRE は Unicode BMP 用に 8KB ビットマップに拡張するが、 ビット操作ロジックは 1979 grep と同一。"
+  },
+  {
+    "id": "grep-004-fast-path-first-char",
+    "text": "execute(file) {\n    ...\n    for (;;) {\n        ...\n        /* fast check for first character */\n        if (*p2==CCHR) {\n            c = p2[1];\n            do {\n                if (*p1!=c)\n                    continue;\n                if (advance(p1, p2))\n                    goto found;\n            } while (*p1++);\n            goto nfound;\n        }\n        /* regular algorithm */\n        do {\n            if (advance(p1, p2))\n                goto found;\n        } while (*p1++);\n        ...\n    }\n}",
+    "file_path": "usr/src/cmd/grep.c",
+    "line_number": 298,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "regex",
+      "optimization"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "minimalism",
+      "emotion_intensity": 4,
+      "emotions": {
+        "minimalism": 4,
+        "concreteness": 4
+      },
+      "technical_context": "Fast path optimization: when pattern starts with literal char (opcode CCHR), only test positions where that char appears. The do-while loop with `if (*p1 != c) continue` skips non-matching positions and only calls advance() at matching ones. For pattern 'error' on 1000-line file with 10 occurrences of 'e', advance() is called 10 times instead of (avg-line-length × 1000) times. This is the proto-Boyer-Moore: scan for the first byte, do full match only at candidates. Modern grep variants (GNU grep, ag, ripgrep) implement Boyer-Moore-Horspool or Aho-Corasick with SIMD-accelerated byte scanning. The 1979 fast path is the ancestor.",
+      "human_story": "Naive regex matching tries advance() at every input position. Slow. grep's 1979 optimization: if pattern starts with literal 'e', only try advance() at positions where 'e' appears. This is the proto-Boyer-Moore — a poor man's version, decades before BM/BMH/Aho-Corasick became standard. ripgrep (2016) does the same thing with SIMD instructions scanning 32 bytes at a time. The fundamental insight — 'don't call the expensive matcher at positions that can't possibly match' — is from grep's 6-line fast path in 1979."
+    },
+    "appraiser_note": "fast path 最適化: パターンが**リテラル文字で始まる** (opcode CCHR) 場合、 その文字が出現する位置でのみ advance() を呼ぶ。 do-while ループの `if (*p1 != c) continue` で非マッチ位置をスキップ、 マッチ位置でのみ advance()。 パターン 'error' で 1000 行ファイル中 'e' が 10 箇所なら、 advance() 呼び出しは 10 回 (vs 平均行長 × 1000 回)。 これが **proto-Boyer-Moore**——先頭バイトでスキャン、 候補位置でのみフルマッチ。 現代の GNU grep、 ag、 ripgrep は Boyer-Moore-Horspool や Aho-Corasick + SIMD バイトスキャンで実装、 ripgrep は 32 バイト並列スキャン。 「**マッチしえない位置で高コストマッチャを呼ばない**」 という根本的洞察が、 6 行の fast path に。"
+  },
+  {
+    "id": "grep-005-y-case-insensitive",
+    "text": "if (yflag) {\n    register char *p, *s;\n    for (s = ybuf, p = *argv; *p; ) {\n        if (*p == '\\\\') {\n            *s++ = *p++;\n            if (*p)\n                *s++ = *p++;\n        } else if (*p == '[') {\n            while (*p != '\\0' && *p != ']')\n                *s++ = *p++;\n        } else if (islower(*p)) {\n            *s++ = '[';\n            *s++ = toupper(*p);\n            *s++ = *p++;\n            *s++ = ']';\n        } else\n            *s++ = *p++;\n    }\n    *s = '\\0';\n    *argv = ybuf;\n}",
+    "file_path": "usr/src/cmd/grep.c",
+    "line_number": 109,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "regex",
+      "design"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "minimalism",
+      "emotion_intensity": 4,
+      "emotions": {
+        "minimalism": 4,
+        "elegance": 4
+      },
+      "technical_context": "grep -y (case-insensitive) is implemented by expanding the pattern itself: each lowercase letter becomes [Uu] char class before compile() runs. Pattern `abc` → `[Aa][Bb][Cc]`. Regex engine itself stays unchanged — char class machinery handles both cases. Existing `[...]` sequences pass through unmodified (the while loop), backslash escapes pass through too. Limitations: uppercase input letters don't expand (only islower triggers), and existing [abc] don't get expanded to [aAbBcC]. Later -i flag (4.0BSD) fixed this by adding case-insensitive logic inside the matcher. But the 1979 design — feature = pattern transformation, not engine extension — is the Unix philosophy in 17 lines.",
+      "human_story": "How do you add case-insensitive matching without changing the regex engine? Expand the pattern. abc becomes [Aa][Bb][Cc]. The regex engine, blissfully unchanged, sees a normal pattern with char classes. 17 lines added a feature without touching the 300+ lines of compile() and advance(). Limitations exist (uppercase doesn't expand, existing [abc] doesn't get extended), but the design is the Unix philosophy made concrete: features = composition of existing primitives, not extensions to the engine. The -i flag in 4.0BSD took the engine-modification approach instead — more flexible, more code."
+    },
+    "appraiser_note": "grep -y (case-insensitive) は **パターン自体を展開**して実装: 各小文字を [Uu] 文字クラスに変換、 compile() 前段で。 パターン `abc` → `[Aa][Bb][Cc]`。 **regex エンジン本体は変更ゼロ**——既存の文字クラス機能が両ケースを処理。 既存 `[...]` シーケンスはそのまま通過 (while ループ)、 バックスラッシュエスケープもそのまま。 制限: 大文字入力は展開しない (islower のみトリガー)、 既存 [abc] は [aAbBcC] に拡張されない。 後の -i フラグ (4.0BSD) で matcher 内部に case-insensitive ロジックを追加して改善。 だが 1979 年の設計——「**機能 = パターン変換、 エンジン拡張ではなく**」——は **Unix 哲学を 17 行で具現化**。"
   }
 ]
