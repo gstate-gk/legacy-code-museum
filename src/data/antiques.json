@@ -12467,5 +12467,140 @@
       "human_story": "Kernel calls execve() — what runs? Not main(). The kernel jumps to _start, an assembly routine in /lib/crt0.o. _start unpacks argv from the stack, calls main(argc, argv), then calls exit() with main's return value. Without crt0.o, your C program has no way to run. It's the bridge between 'OS launches process' and 'main() function executes'. cc selects different crt0 variants for profiling (mcrt0.o calls monitor()), Fortran (fcrt0.o), alternate memory models (crt2.o). Modern Linux splits crt0 into multiple files (crt1.o, crti.o, crtbegin.o) but the role is unchanged: glue between OS ABI and your main(). 1979's design lives on."
     },
     "appraiser_note": "/lib/crt0.o は **C ランタイム startup**——アセンブリオブジェクトで `_start` シンボルを定義、 全 C 実行可能ファイルの実際のエントリポイント。 カーネルが execve 後に `_start` へ jump、 `_start` がスタックから argv/envp を取り出し、 main(argc, argv) を call、 main の return 値で exit(retval) を call。 crt0.o なしでは OS のプロセス起動 ABI と C 関数 main() を繋ぐ glue が存在しない。 cc はフラグに応じて crt0 バリアントを選択: 標準 /lib/crt0.o、 /lib/mcrt0.o (-p profiling、 monitor() を呼ぶ)、 /lib/fcrt0.o (Fortran)、 /lib/crt2.o (代替メモリモデル)。 crt0 は **OS と言語の境界線**——「プロセス」 が「C プログラム」 になる場所。 現代の glibc は crt1.o + crti.o + crtbegin.o + crtend.o + crtn.o に分割されるが、 役割は 1979 年と同一: OS ABI と main() の glue。 「クルマでいうアイドリング→走行」 の遷移コード。"
+  },
+  {
+    "id": "ld-001-two-pass-design",
+    "text": "main(argc, argv) {\n    /* Pass 1: scan all files to gather symbol definitions */\n    for (c=1; c<argc; c++) {\n        if (*ap == '-') {\n            switch (ap[i]) {\n            case 'l': load1arg(&ap[i]); break;    /* library pass 1 */\n            ...\n            }\n        } else load1arg(ap);\n    }\n    endload(argc, argv);                        /* triggers pass 2 */\n}\n\nendload(argc, argv) {\n    brk(nextsym);                                /* finalize symbol table */\n    middle();                                     /* assign final addresses */\n    setupout();                                   /* prepare output file */\n    /* Pass 2: walk files again, copy segments with relocation */\n    for (c=1; c<argc; c++) {\n        if (*ap == '-') {\n            case 'l': load2arg(&ap[i]); break;\n        } else load2arg(ap);\n    }\n    finishout();                                  /* write header */\n}",
+    "file_path": "usr/src/cmd/ld.c",
+    "line_number": 302,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "ld",
+      "linker"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "elegance": 4
+      },
+      "technical_context": "ld uses 2-pass algorithm. Pass 1 (load1, load1arg): walk all inputs (.o files and -l libraries), build symbol table — what's defined where, what's undefined. Pass 2 (load2, endload): with symbols all known, walk files again copying text/data segments to output and applying relocation (rewriting references with final addresses). The 2-pass design is forced by the chicken-and-egg problem: address of symbol X depends on all earlier code's sizes, but X's references in later files need X's final address. Pass 1 collects sizes/defs, Pass 2 emits with full knowledge. middle() between passes computes final segment bases. brk(nextsym) finalizes the symbol table by extending the data segment. This 2-pass pattern is canonical: GNU ld, LLVM lld, Microsoft link.exe all use it (with internal optimizations like incremental linking on top).",
+      "human_story": "Why does linking take two passes? Because addresses are circular: file A references printf, file B (libc) provides printf, but printf's address depends on file A's text size which determines where text+data ends. Solution: walk files once to count sizes and collect symbols (Pass 1), compute final addresses (middle), then walk again to copy and fix up references (Pass 2). 1979's ld established this 2-pass design. GNU ld, LLVM lld, MS link.exe still use it. Modern incremental linking optimizes the common case (re-link with small changes) but the fundamental algorithm is 2-pass."
+    },
+    "appraiser_note": "ld は **2 パスアルゴリズム**。 **Pass 1** (load1、 load1arg): 全入力 (.o ファイルと -l ライブラリ) を走査、 シンボルテーブル構築——何がどこで定義され、 何が未定義か。 **Pass 2** (load2、 endload): シンボルが既知になった後、 ファイルを再走査して text/data セグメントを出力にコピー、 リロケーション適用 (参照を最終アドレスで書き換え)。 2 パス設計は鶏卵問題で強制: シンボル X のアドレスは先行コードのサイズに依存、 だが後続ファイルでの X 参照は X の最終アドレスを必要とする。 Pass 1 でサイズ/定義を集め、 Pass 2 で完全知識のもとに出力。 middle() でセグメント基底アドレス計算、 brk(nextsym) でデータセグメント拡張によりシンボルテーブル finalize。 **2-pass パターンは canonical**——GNU ld、 LLVM lld、 Microsoft link.exe 全部使用 (incremental linking 等の最適化を内部で追加)。"
+  },
+  {
+    "id": "ld-002-aout-format",
+    "text": "#define OMAGIC  0407     /* old magic: data immediately after text */\n#define NMAGIC  0410     /* new magic: data at page boundary above text */\n#define PAGRND  0777     /* page boundary (512 bytes - 1) */\n\n/* a.out file layout:\n *\n *   header (8 words = 32 bytes):\n *     magic, text size, data size, bss size,\n *     symbol table size, entry point,\n *     text reloc size, data reloc size\n *\n *   segment        origin\n *   header:        0\n *   text:          32                                  (4-byte aligned)\n *   data:          32 + textsize                       (4-byte aligned, or page-aligned for NMAGIC)\n *   text reloc:    32 + textsize + datasize\n *   data reloc:    32 + textsize + datasize + textrelsize\n *   symbol table:  ... + drsize\n */",
+    "file_path": "usr/src/cmd/ld.c",
+    "line_number": 72,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "ld",
+      "aout"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 5,
+      "emotions": {
+        "concreteness": 5,
+        "antiquity": 5
+      },
+      "technical_context": "a.out (assembler output) is V7/Bell-32V executable format. 32-byte header followed by text, data, relocation info, symbol table. Two main magic numbers: OMAGIC=0407 (text+data contiguous, simple PDP-11 style), NMAGIC=0410 (data at next 512-byte page boundary, enables shared-text execution where multiple instances share the same physical text pages). PAGRND=0777 is the page rounding mask (512-byte VAX page minus 1). Later ZMAGIC=0411 added for demand paging. The format is brutally simple compared to modern ELF: no sections (just 3 segments), no dynamic linking metadata, no debug sections separate from symbols. Entry point in header — kernel jumps here after execve, typically _start in crt0. Layout makes mmap easy: text starts at offset 32, data starts at offset 32+textsize (or page-aligned), bss is allocated by kernel at runtime (no disk space).",
+      "human_story": "a.out is the executable format that made Unix recognizable: read first 4 bytes, see 0407 or 0410 or 0411, you know it's an executable. 32-byte header tells you sizes; text starts at byte 32, data after, then relocation info, then symbol table. Simple. ELF (1995) added sections, dynamic linking, debug info — but the 'header + segments' shape is from a.out. Modern Linux has both: legacy a.out support lingered until 2017, modern executables are all ELF. The 0407/0410/0411 magic numbers are folklore — every Unix programmer of a certain age knows them."
+    },
+    "appraiser_note": "a.out (assembler output) は V7/Bell-32V 実行ファイル形式。 32 バイトヘッダ + text + data + リロケーション情報 + シンボルテーブル。 2 つのメインマジック: **OMAGIC=0407** (text+data 連続、 シンプルな PDP-11 流)、 **NMAGIC=0410** (data が次の 512 バイト page 境界、 shared-text 実行を可能に——複数インスタンスが同じ物理 text page を共有)。 PAGRND=0777 は page 切り上げマスク (512 バイト VAX page - 1)。 後に ZMAGIC=0411 が demand paging 用に追加。 形式は ELF と比べて極めて単純: セクション無し (3 セグメントのみ)、 動的リンクメタデータ無し、 デバッグセクションがシンボルと別れていない。 ヘッダにエントリポイント——カーネルが execve 後ここに jump、 通常 crt0 の _start。 layout で mmap が簡単: text は offset 32、 data は 32+textsize (or page-aligned)、 bss はランタイムにカーネルが確保 (ディスク不使用)。"
+  },
+  {
+    "id": "ld-003-symbol-table-types",
+    "text": "/* Symbol types: */\n#define UNDEF   0x0       /* undefined (extern reference) */\n#define ABS     0x2       /* absolute (compile-time constant) */\n#define TEXT    0x4       /* in text segment */\n#define DATA    0x6       /* in data segment */\n#define BSS     0x8       /* in bss segment */\n#define DATAO   0xA       /* data offset */\n#define BSSO    0xC       /* bss offset */\n#define TEXTO   0xE       /* text offset */\n#define ABSO    0x10      /* absolute offset */\n#define COMM    0x12      /* common (Fortran-style) */\n\n#define EXTERN  0x1       /* external visibility bit */\n#define TYPE    0x1E      /* type mask (lower 5 bits) */\n#define STABTYPS 0xE0     /* stab debug types */\n\n/* Hash table for O(1) lookup: */\nSYMBOL *hshtab[HSHSIZ];",
+    "file_path": "usr/src/cmd/ld.c",
+    "line_number": 75,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "ld",
+      "symbols"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 4,
+      "emotions": {
+        "abstraction": 4,
+        "concreteness": 4
+      },
+      "technical_context": "ld's symbol types: UNDEF (extern reference, will resolve later), ABS (compile-time constant), TEXT/DATA/BSS (in respective segment), COMM (Fortran-style common), TEXTO/DATAO/BSSO/ABSO (offset variants for relocation). EXTERN bit (0x1) indicates external visibility — set for non-static symbols. TYPE mask (0x1E) extracts the type. STABTYPS (0xE0) for stab debug info — used by adb debugger. Hash table hshtab[HSHSIZ] enables O(1) symbol lookup by name (8-char limit due to V7). The 9 type values express where the symbol lives (segment) and how it's resolved (direct, offset, common). Modern ELF has more nuanced types (FUNC, OBJECT, SECTION, FILE, etc.) but the basic concept of 'type + segment + bind' is from a.out.",
+      "human_story": "How does ld know where to put printf? Symbol table. Each symbol has a name (8 chars), a type (UNDEF/TEXT/DATA/BSS/...), and a value (address or offset). UNDEF means 'someone needs this but no one defined it yet' — Pass 1 hopes Pass 2 will resolve it. EXTERN means 'visible to other files' (non-static). Hash table for fast lookup. The 9 types are the universe of 1979 linker semantics. Modern ELF adds more (visibility, binding, function vs object) but the same core idea: type + value + name. The 8-char name limit came from V7 — modern linkers support arbitrary length."
+    },
+    "appraiser_note": "ld のシンボル型: **UNDEF** (extern 参照、 後で解決)、 **ABS** (コンパイル時定数)、 **TEXT/DATA/BSS** (各セグメント内)、 **COMM** (Fortran-style 共通)、 TEXTO/DATAO/BSSO/ABSO (リロケーション用 offset variants)。 **EXTERN ビット** (0x1) で外部可視性 (non-static で立つ)。 **TYPE マスク** (0x1E) で型抽出。 STABTYPS (0xE0) は adb デバッガが使う stab デバッグ情報。 **ハッシュテーブル hshtab[HSHSIZ]** で名前 O(1) lookup (V7 制約で 8 文字)。 9 型値が「シンボルがどこに居る (セグメント) + どう解決される (直接/オフセット/共通)」 を表現。 現代 ELF は更にニュアンス追加 (FUNC、 OBJECT、 SECTION、 FILE 等) するが、 「型 + セグメント + バインディング」 の基本概念は a.out 由来。"
+  },
+  {
+    "id": "ld-004-smart-library-scan",
+    "text": "load1arg(cp) {\n    long loc;\n\n    if (getfile(cp)==0)\n        load1(0, 0L);              /* single .o file */\n    else {\n        /* archive (.a) — walk members */\n        loc = sizeof(int);          /* skip archive magic */\n        for (;;) {\n            dseek(&text, loc, sizeof(archdr));\n            if (text.size <= 0) {\n                libp->loc = -1;\n                libp++;\n                return;\n            }\n            mget((short *)&archdr, sizeof archdr, &text);\n            if (load1(1, loc+sizeof(archdr))) {\n                /* this object defines an undef — pull it! */\n                libp->loc = loc;\n                libp++;\n            }\n            loc += round(archdr.ar_size, 1) + sizeof(archdr);\n        }\n    }\n}\n\nload1(libflg, loc) {\n    /* scan symbols; if libflg && ndef==0, skip this object */\n    ...\n    return libflg ? ndef : 1;\n}",
+    "file_path": "usr/src/cmd/ld.c",
+    "line_number": 539,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "ld",
+      "library"
+    ],
+    "interesting_score": 24,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "creativity": 4
+      },
+      "technical_context": "Smart library scan: -l libc.a doesn't link the entire archive — only members that define currently-undefined symbols. load1arg walks archive (.a) members one by one, calls load1(libflg=1, ...) for each. load1 returns ndef = number of newly-resolved undefined symbols. If ndef==0, this member is skipped (libp records loc=-1 conceptually). If ndef>0, this member is 'pulled' — its loc is saved in libp for Pass 2. Order-dependent: -l processes left-to-right per command-line position. cc foo.o bar.o -lm -lc works if foo/bar reference libm functions which reference libc — but cc foo.o bar.o -lc -lm fails if libm symbols are still undefined when libc is scanned. GNU ld --start-group/--end-group repeats scanning until stable. This 1979 design is in every static linker since.",
+      "human_story": "Why does cc command order matter? Because of how ld scans -l libraries. cc foo.o -lc means: link foo.o, then scan libc, pulling only objects that define foo's undefined symbols. If you wrote cc -lc foo.o, libc has nothing to resolve yet (foo.o not seen), so nothing pulled — link fails with 'undefined reference'. The smart-library-scan is 1979's clever design: don't bloat the executable with the entire libc, just pull what's needed. The order-dependency is the price. GNU ld's --start-group repeats scanning to handle circular deps, but the basic algorithm is unchanged."
+    },
+    "appraiser_note": "**Smart library scan**: -l libc.a は archive 全体をリンクせず、 **現在未解決のシンボルを定義するメンバー**だけリンク。 load1arg が archive (.a) メンバーを 1 つずつ walk、 各メンバーで load1(libflg=1, ...) を呼ぶ。 load1 は ndef = 新たに解決した未定義シンボル数を返す。 ndef==0 ならスキップ (libp に loc=-1 概念的記録)、 ndef>0 ならこのメンバーは「pulled」——loc を libp に保存し Pass 2 で処理。 **順序依存**: -l はコマンドライン左から右へ処理。 `cc foo.o bar.o -lm -lc` は foo/bar が libm 関数を参照し libm が libc を参照する場合のみ動く。 `cc -lm -lc foo.o bar.o` だと libc 走査時に未定義無し → 何も pull されない → 'undefined reference' エラー。 GNU ld の --start-group/--end-group は安定するまで繰り返し走査。 1979 年の設計が以降すべての静的リンカに継承——「ライブラリ全体ではなく必要分だけ」 の発明。"
+  },
+  {
+    "id": "ld-005-relocation",
+    "text": "/* address reference types */\n#define PCREL   1     /* PC-relative */\n#define LEN1    0     /* 1-byte reference */\n#define LEN2    2     /* 2-byte */\n#define LEN4    4     /* 4-byte */\n\n#define RTEXT   TEXT  /* text segment relative */\n#define RDATA   DATA  /* data segment relative */\n#define RBSS    BSS   /* bss segment relative */\n#define REXT    (01<<3)  /* external symbol */\n#define ROFF    (02<<3)  /* offset reference */\n\n/* symreloc: walk relocation entries, fix up references */\nsymreloc() {\n    /* for each relocation entry:\n     *   type = entry.type;\n     *   loc  = entry.location;\n     *   if (type & REXT)\n     *     value = symref->value;       \n     *   else\n     *     value = (segment base) + entry.offset;\n     *   if (type & PCREL)\n     *     value -= loc + entry.size;\n     *   write_value_to_output(loc, value, type & LEN_MASK);\n     */\n}",
+    "file_path": "usr/src/cmd/ld.c",
+    "line_number": 1238,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "ld",
+      "relocation"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "concreteness": 4
+      },
+      "technical_context": "Relocation entries from .o files describe 'fix up this address': location, target symbol or segment, reference type (PCREL, LEN1/2/4, RTEXT/RDATA/RBSS, REXT, ROFF). PCREL means PC-relative addressing — common for branches in VAX. LEN encodes width (1/2/4 bytes). REXT means resolve via symbol table; without it, resolve via segment base + offset. ld walks relocation entries during Pass 2, computes final value (symbol address or segment-base + offset), adjusts for PCREL (subtract location + size), writes the value at the relocation site. This is the most algorithmically subtle part of linking: each instruction encoding has different relocation requirements. VAX instructions use mostly PCREL for branches. Modern x86-64 has dozens of relocation types (R_X86_64_PC32, R_X86_64_GOT32, etc.). The principle stays: each relocation says 'patch this address with that computed value'.",
+      "human_story": "How does the compiler write `call printf` when printf's address is unknown? It writes `call 0` and adds a relocation entry: 'at offset N in text, patch a 4-byte address with printf's final location'. ld processes these entries after all symbol addresses are known. PCREL: PC-relative branches need value = target - (instruction + size) for the offset. LEN: how many bytes to overwrite. REXT: lookup symbol vs segment-base + offset. Every modern linker does this; ELF has R_X86_64_PC32 etc. (dozens of types). a.out's PCREL/LEN1/2/4/REXT are the minimal set that started it all in 1979."
+    },
+    "appraiser_note": "リロケーション情報は .o ファイルから「**このアドレスを修正せよ**」 と指示: 位置、 対象シンボル or セグメント、 参照型 (PCREL、 LEN1/2/4、 RTEXT/RDATA/RBSS、 REXT、 ROFF)。 **PCREL** は PC-相対アドレッシング——VAX の branch で頻出。 **LEN** で幅エンコード (1/2/4 バイト)。 **REXT** ならシンボルテーブル経由解決、 無ければセグメント基底 + offset。 ld は Pass 2 でリロケーションエントリを walk、 最終値計算 (シンボルアドレスまたはセグメント基底 + offset)、 PCREL なら補正 (location + size を引く)、 リロケーション位置に値を書く。 リンクの最もアルゴリズム的に微妙な部分——各命令エンコーディングが異なるリロケーション要件を持つ。 VAX 命令は branch で主に PCREL 使用。 現代 x86-64 は数十のリロケーション型 (R_X86_64_PC32、 R_X86_64_GOT32 等)。 原理は不変: 各リロケーションが「この位置にあの計算値を patch」 と指示。"
   }
 ]
