@@ -14357,5 +14357,140 @@
       "human_story": "Bell-32V 1979 shipped 4 comparison tools instead of 1 big one. cmp = bytes. comm = sorted sets. diff3 = 3-way merge. diff = LCS. Each does ONE thing well; users compose via shell pipes. Total: 1370 lines for 4 tools. A monolithic tool with -mode-binary -mode-sets -mode-merge -mode-lcs would be 3000+ lines and harder to maintain. The Unix philosophy of small composable tools beat the 'do everything in one' approach. Modern git embeds these (git diff, git merge), but Unix shell still uses the 4 originals. 50 years of comparison work, all founded on 1979 Bell Labs design decisions."
     },
     "appraiser_note": "Bell-32V 1979 は **4 つの比較ツール**を出荷、 異なる問題をカバー: cmp (バイナリバイト比較、 121 行) で「同じか?」、 comm (ソート集合比較、 166 行) で「集合演算」、 diff3 (3-way merge、 438 行) で「conflict ある merge」、 diff (LCS テキスト比較、 645 行) で「何が変わった?」。 各が one thing well、 ユーザーが shell で合成。 合計 LOC: 4 ツールで 1370 行。 単一モノリシックツールアプローチ (1 バイナリで全部処理) と比較——コードは多く、 合成性は低く、 保守性も悪い。 **4 ツールファミリーが Unix 哲学の頂点を示す**: 小さく、 集中、 合成可能、 共通慣習 (exit code、 stdin サポート、 POSIX フラグ)。 現代 git は内部で同等機能 (git diff、 git merge) を持つが、 Unix shell では 1979 オリジナル 4 つを今も使う。 50 年の比較作業が 1979 ベル研の設計判断に基づく。"
+  },
+  {
+    "id": "join-001-relational-fields",
+    "text": "#define NFLD 20      /* max fields per line */\n\nFILE *f[2];\nchar buf[2][BUFSIZ];\nchar *ppi[2][NFLD];      /* field pointers per file */\nint j1 = 1, j2 = 1;       /* join field per file */\nint sep1 = ' ';\nint sep2 = '\\t';\n\ninput(n) {\n    bp = buf[n];\n    pp = ppi[n];\n    if (fgets(bp, BUFSIZ, f[n]) == NULL)\n        return(0);\n    for (i = 0; ; i++) {\n        if (sep1 == ' ')\n            while ((c = *bp) == sep1 || c == sep2)\n                bp++;      /* skip blanks */\n        if (c == '\\n' || c == '\\0') break;\n        *pp++ = bp;          /* record field start */\n        while ((c = *bp) != sep1 && c != '\\n' && c != sep2 && c != '\\0')\n            bp++;\n        *bp++ = '\\0';        /* terminate field in-place */\n    }\n}",
+    "file_path": "usr/src/cmd/join.c",
+    "line_number": 142,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "join",
+      "relational"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 4,
+      "emotions": {
+        "abstraction": 4,
+        "concreteness": 4
+      },
+      "technical_context": "join treats text files as relational tables: lines = records, separator-delimited tokens = fields. input() reads one line, splits in-place by overwriting separators with NUL, stores field pointers in ppi[file][field_idx]. -t flag changes separator. -j1/-j2 specifies join column per file. NFLD=20 max fields. The in-place tokenization is K&R efficiency: no malloc per field, just point into the buffer. Separator handling supports both space-default (collapses multiples) and explicit char (-t ',' for CSV). This text-as-relation abstraction is the basis for Unix data processing — no schema required, fields identified by position. Modern CSV libraries handle quoting/escaping which 1979 join doesn't.",
+      "human_story": "join treats text files like database tables: each line is a record, each field is a column. The first column (default) is the join key. input() reads a line and splits it in-place — replaces separators with NUL bytes and points to each field. No malloc, no copy, just pointer arithmetic. -t flag picks the separator (default space/tab, comma for CSV, colon for /etc/passwd). The whole abstraction of 'text file as relational table' came from this design — fields by position, no schema needed. CSV with quoting wasn't a thing yet; join's input model is simple."
+    },
+    "appraiser_note": "join はテキストファイルを **リレーショナルテーブル**として扱う: 行 = レコード、 区切り文字で分けたトークン = フィールド。 input() が 1 行を読み、 区切り文字を NUL で上書きして in-place 分割、 フィールドポインタを ppi[file][field_idx] に格納。 -t フラグで区切り文字変更。 -j1/-j2 で各ファイルの join カラム指定。 NFLD=20 最大フィールド数。 **in-place トークン化**は K&R 効率: フィールド毎の malloc なし、 バッファへのポインタだけ。 区切り文字処理は space-default (連続をスキップ) と明示文字 (-t ',' で CSV) の両方サポート。 **テキスト = リレーション**抽象化が Unix データ処理の基盤——スキーマ不要、 位置でフィールド識別。 quoting/escaping の現代 CSV ライブラリ機能は 1979 join には無い、 シンプルな入力モデル。"
+  },
+  {
+    "id": "join-002-output-spec",
+    "text": "int olist[2*NFLD];        /* output fields */\nint olistf[2*NFLD];       /* from which file */\nint no;                   /* number of olist entries */\n\ncase 'o':\n    for (no = 0; no < 2*NFLD; no++) {\n        if (argv[2][0] == '1' && argv[2][1] == '.') {\n            olistf[no] = F1;\n            olist[no] = atoi(&argv[2][2]);\n        } else if (argv[2][0] == '2' && argv[2][1] == '.') {\n            olist[no] = atoi(&argv[2][2]);\n            olistf[no] = F2;\n        } else break;\n        argc--; argv++;\n    }\n    break;\n\n/* output: */\nfor (i = 0; i < no; i++) {\n    temp = ppi[olistf[i]][olist[i]];\n    if (olistf[i]==F1 && on1<=olist[i] ||\n        olistf[i]==F2 && on2<=olist[i] ||\n        *temp==0)\n        temp = null;\n    printf(\"%s\", temp);\n    printf(\"%c\", i == no-1 ? '\\n' : sep1);\n}",
+    "file_path": "usr/src/cmd/join.c",
+    "line_number": 57,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "join",
+      "select"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 4,
+      "emotions": {
+        "abstraction": 4,
+        "elegance": 4
+      },
+      "technical_context": "join -o syntax: comma-or-space separated list of '<file>.<column>' (e.g., '1.1 2.3 1.2'). Parsed into olist[] (column number) and olistf[] (file F1/F2). Output() iterates olist, printing fields in specified order with separator between, newline at end. Missing/empty fields substituted with 'null' string (-e flag, default ''). Equivalent to SQL 'SELECT f1.col1, f2.col3, f1.col2 FROM ...'. The -o syntax predates SQL standardization (1986) by 7 years. Modern tools: awk '{print $1, $3, ...}' for column reordering, but join -o uniquely combines reorder + join. pandas: .merge(...).loc[:, ['col1', 'col3']].",
+      "human_story": "Want columns 1 from file1, 3 from file2, 2 from file1 — in that order? `join -o 1.1 2.3 1.2 file1 file2`. The -o syntax came 7 years before SQL standardized SELECT. Each entry is '<file>.<column>' — clear, position-based, no quoting needed. Output prints fields in your specified order with separators, NULLs replaced by -e string. SQL: SELECT f1.x, f2.y, f1.z FROM ... — same idea, more verbose. awk can also pick columns but doesn't join. join -o is the singular tool for 'JOIN + reorder + project' in shell."
+    },
+    "appraiser_note": "join -o 構文: '<file>.<column>' 形式のリスト (例: `1.1 2.3 1.2`)。 olist[] (カラム番号) と olistf[] (ファイル F1/F2) にパース。 output() が olist を iterate、 指定順でフィールドを区切り文字で出力、 末尾改行。 欠損/空フィールドは null 文字列 (-e フラグ、 デフォルト '') で代入。 SQL の 'SELECT f1.col1, f2.col3, f1.col2 FROM ...' 等価。 **-o 構文は SQL 標準化 (1986) より 7 年早い**。 現代ツール: awk '{print $1, $3, ...}' でカラム並び替え、 でも join -o はユニークに **reorder + join** を結合。 pandas: .merge(...).loc[:, ['col1', 'col3']]。 シェルでの 'JOIN + reorder + project' の単一ツール、 1979 年から不変の API。"
+  },
+  {
+    "id": "join-003-outer-join",
+    "text": "int aflg;        /* outer join flag */\n\ncase 'a':\n    switch (argv[1][2]) {\n    case '1': aflg |= 1; break;    /* -a1: LEFT */\n    case '2': aflg |= 2; break;    /* -a2: RIGHT */\n    default:  aflg |= 3;            /* -a: FULL */\n    }\n    break;\n\n/* main loop: */\nwhile (n1>0 && n2>0 || aflg!=0 && n1+n2>0) {\n    if (n1>0 && n2>0 && comp()>0 || n1==0) {\n        if (aflg & 2) output(0, n2);    /* RIGHT OUTER */\n        get2();\n    } else if (n1>0 && n2>0 && comp()<0 || n2==0) {\n        if (aflg & 1) output(n1, 0);    /* LEFT OUTER */\n        get1();\n    } else {\n        output(n1, n2);                  /* INNER */\n        ...\n    }\n}\n\n/* -e for NULL replacement: */\ncase 'e':\n    null = argv[2];\n    argv++; argc--;\n    break;",
+    "file_path": "usr/src/cmd/join.c",
+    "line_number": 37,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "join",
+      "outer-join"
+    ],
+    "interesting_score": 24,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "creativity": 5,
+        "abstraction": 5
+      },
+      "technical_context": "join supports LEFT (-a1), RIGHT (-a2), and FULL (-a) OUTER JOIN via aflg bitfield. INNER JOIN is default (no -a). Loop continues while either file has records (aflg!=0 && n1+n2>0). For unmatched records: -a1 outputs file1's unmatched, -a2 outputs file2's. -e STR replaces NULL fields. SQL standardized LEFT/RIGHT OUTER JOIN in 1986 and FULL OUTER in 1992 — Unix join had all three 7-13 years earlier. The relational algebra textbook (Codd 1970) didn't include OUTER JOIN; SQL added it for practical needs. Unix join's pragmatic design preceded the theoretical canon — 1979 implementers needed it for real workflows.",
+      "human_story": "Need all employees, even those without salaries? `join -a1 -e 'N/A' employees salaries`. 1979 join had LEFT OUTER JOIN before SQL standardized it (1986). And FULL OUTER too (-a, no number) — SQL didn't standardize that until 1992. Codd's relational algebra paper (1970) doesn't have OUTER JOIN — it's a practical extension. Unix programmers in 1979 needed 'show me all records, with nulls for missing matches' and added it directly. SQL caught up later. The aflg bitfield (1=LEFT, 2=RIGHT, 1|2=FULL) elegantly handles all three cases."
+    },
+    "appraiser_note": "join は **LEFT (-a1)、 RIGHT (-a2)、 FULL (-a) OUTER JOIN** を aflg ビットフィールドでサポート。 INNER JOIN がデフォルト (-a なし)。 ループは片方のファイルにレコードがある限り続行 (aflg!=0 && n1+n2>0)。 不一致レコード: -a1 で file1 の不一致を出力、 -a2 で file2 の不一致を出力。 -e STR で NULL フィールド置換。 **SQL 標準化は LEFT/RIGHT OUTER が 1986、 FULL OUTER が 1992** ——Unix join はこれらを **7-13 年早く実装**。 Codd のリレーショナル代数論文 (1970) には OUTER JOIN なし——SQL の実用拡張。 Unix join の実用主義設計が理論的体系より先行——1979 年実装者が実 workflow で必要として直接追加。 aflg のビットフィールド (1=LEFT、 2=RIGHT、 1|2=FULL) で 3 つのケースをエレガントに扱う。"
+  },
+  {
+    "id": "join-004-fseek-backtrack",
+    "text": "else /* comp() == 0, match */ {\n    while (n2>0 && comp()==0) {\n        output(n1, n2);\n        top2 = ftell(f[F2]);\n        get2();\n    }\n    fseek(f[F2], bot2, 0);     /* rewind file2 to group start */\n    get2();\n    get1();\n    for (;;) {\n        if (n1>0 && n2>0 && comp()==0) {\n            output(n1, n2);\n            get2();\n        } else if (n1>0 && n2>0 && comp()<0 || n2==0) {\n            fseek(f[F2], bot2, 0);  /* rewind again */\n            get2();\n            get1();\n        } else {\n            fseek(f[F2], top2, 0);   /* skip past matched group */\n            bot2 = top2;\n            get2();\n            break;\n        }\n    }\n}",
+    "file_path": "usr/src/cmd/join.c",
+    "line_number": 113,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "join",
+      "many-to-many"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 5,
+      "emotions": {
+        "concreteness": 5,
+        "abstraction": 4
+      },
+      "technical_context": "join handles many-to-many (M:N) joins via fseek backtracking. When key matches: emit all combinations within the matching group of file2 against current file1 line. Then for next file1 records with same key, fseek file2 back to bot2 (group start) and replay. When file1 moves to a new key, fseek to top2 (past matched group) to skip already-processed file2 entries. Result: Cartesian product of matching groups. Requires file2 to be seekable (regular file, not pipe). GNU join later added memory buffering to support pipes. The seekable-file requirement is the main practical limitation of Bell-32V join — but it makes the algorithm work in O(N+M+K) time and constant memory.",
+      "human_story": "How does join handle duplicate keys on both sides? Backtracking. When file1 line matches file2 line, emit all file2 entries with this key (advance file2). When file2 group ends, rewind file2 to group start (fseek bot2), advance file1. If file1 still has same key, replay through file2 group. When file1 moves on, skip file2's matched group (fseek top2). Result: every (file1, file2) pair with same key gets emitted — Cartesian product within key groups. Needs file2 to be seekable (a real file, not a pipe). Modern GNU join buffers file2 in memory to allow pipe input. 1979 simplicity: just use the filesystem."
+    },
+    "appraiser_note": "join は **多対多 (M:N) join** を fseek バックトラッキングで処理。 キーマッチ時: 現在の file1 行に対して file2 のマッチグループの全エントリを出力 (file2 を進める)。 次の file1 レコードが同じキーなら、 file2 を bot2 (グループ開始) に **fseek で戻して**再生。 file1 が新しいキーに移ったら、 top2 (マッチグループ後) に fseek して既処理エントリをスキップ。 結果: マッチグループの **Cartesian product**。 file2 が seek 可能必須 (通常ファイル、 pipe 不可)。 GNU join はメモリバッファリングで pipe サポート追加。 **seek 可能ファイル要件**が Bell-32V join の主な実用制約——でも O(N+M+K) 時間 + 定数メモリで動く。 1979 年のシンプルさ: filesystem を使うだけ。"
+  },
+  {
+    "id": "join-005-sql-ancestor",
+    "text": "/* join (1979) vs SQL JOIN (standardized 1986/1992): */\n\n/* INNER JOIN: */\n/* join file1 file2          == SELECT * FROM file1 NATURAL JOIN file2 */\n\n/* LEFT OUTER JOIN: */\n/* join -a1 file1 file2       == LEFT JOIN  (SQL-92) */\n/* join -a2 file1 file2       == RIGHT JOIN (SQL-92) */\n/* join -a   file1 file2       == FULL OUTER JOIN (SQL-92, 1992) */\n\n/* Column selection: */\n/* join -o 1.1 2.3 1.2 ...    == SELECT f1.x, f2.z, f1.y (SQL-86) */\n\n/* NULL handling: */\n/* join -e 'NULL' ...          == COALESCE / NULL substitution */\n\n/* Custom separator: */\n/* join -t ',' file1 file2     == CSV processing */\n\n/* The shell-equivalent SQL query: */\n/*   sort file1 > /tmp/f1.sorted\n     sort file2 > /tmp/f2.sorted\n     join -1 1 -2 1 -o 1.2 2.3 -a1 -e 'N/A' /tmp/f1.sorted /tmp/f2.sorted\n   ==\n     SELECT f1.col2, f2.col3 FROM file1 f1\n     LEFT JOIN file2 f2 ON f1.col1 = f2.col1\n   (Unix shell + sort + join = lightweight SQL, before SQL existed) */",
+    "file_path": "usr/src/cmd/join.c",
+    "line_number": 1,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "join",
+      "sql-ancestor"
+    ],
+    "interesting_score": 25,
+    "ai_analysis": {
+      "primary_emotion": "antiquity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "antiquity": 5,
+        "abstraction": 5
+      },
+      "technical_context": "join (1979) implements relational JOIN operations 7-13 years before SQL standardization: INNER JOIN (default), LEFT (-a1) and RIGHT (-a2) OUTER (SQL-86), FULL OUTER (-a) (SQL-92), column projection (-o, SQL-86 SELECT), NULL substitution (-e, SQL COALESCE). Codd's relational algebra paper (1970) provided theory; join provided first practical implementation. Limitations vs SQL: single-column join only (no composite keys), equi-join only (no theta-joins like a.x < b.x), no built-in aggregation (use awk for that). But the basic JOIN concept and OUTER variants are all here. Combined with sort + uniq + awk, Unix shell provided SQL-like data processing throughout 1980s — many companies ran payroll, inventory, billing this way.",
+      "human_story": "join is SQL's grandfather. INNER JOIN, LEFT/RIGHT/FULL OUTER JOIN, column projection, NULL handling — all in Unix join (1979) before SQL standardized them (1986/1992). Codd's relational algebra paper (1970) had the theory; join made it practical. 1980s companies ran their data processing in shell: sort + join + awk = SQL. RDBMSs were expensive and limited; Unix tools were free and composable. join's design (text as relation, sort then join, OUTER for missing) shaped how people thought about data. SQL added composite keys, theta-joins, aggregation. But the JOIN core is from 1979 Unix."
+    },
+    "appraiser_note": "join (1979) は **SQL 標準化 7-13 年前にリレーショナル JOIN 演算を実装**: INNER JOIN (デフォルト)、 LEFT (-a1) と RIGHT (-a2) OUTER (SQL-86)、 FULL OUTER (-a) (SQL-92)、 カラム射影 (-o、 SQL-86 SELECT)、 NULL 置換 (-e、 SQL COALESCE)。 Codd のリレーショナル代数論文 (1970) が理論を提供、 join が**最初の実用実装**。 SQL との制限: 単一カラム join のみ (複合キー不可)、 等価 join のみ (a.x < b.x のような theta-join 不可)、 組み込み集約なし (awk 使用)。 でも JOIN 基本概念と OUTER variants は全て揃う。 sort + uniq + awk と組み合わせ、 Unix shell は 1980 年代を通じて SQL ライクなデータ処理を提供——多くの企業が payroll、 inventory、 billing をこの方式で運用。 SQL が複合キー、 theta-join、 集約を追加したが、 **JOIN コアは 1979 年 Unix から**。 join は SQL の祖父。"
   }
 ]
