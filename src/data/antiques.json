@@ -12116,5 +12116,86 @@
       "human_story": "awk made regex a first-class value. `$1 ~ /pattern/` is a boolean expression you can use anywhere — in if conditions, in compound patterns, in variable assignments. The regex can come from a variable: `pattern = read_config(); if ($0 ~ pattern) ...`. ed/grep/sed treat regex as static syntax; awk treats it as data. The b.c regex engine uses DFA (not NFA backtracking) for linear-time guaranteed performance — essential when processing GBs of log data. Modern DFA engines (RE2, Rust regex, GNU grep -F) descend from this 1977 choice. The MATCHOP operator's syntax (`~` and `!~`) survives in Perl, Ruby, and many other languages."
     },
     "appraiser_note": "**MATCHOP (~ !~)** は二項演算子: lhs は文字列式、 rhs は regex。 `$1 ~ /^abc/` は $1 を評価して /^abc/ とマッチ。 **regex 側を変数にできる**: `$0 ~ pattern` (pattern は文字列)。 これで **regex が第一級の値**になる、 単なるリテラルパターンではない。 makedfa() が regex を **DFA (決定性有限オートマトン)** にコンパイル——b.c で実装、 ed/grep/sed の NFA backtracking とは別。 DFA は **線形時間 O(n) 保証**、 backtrack/exponential blow-up なし——バックリファレンス不可の代わりに。 awk が DFA を選んだのは **データ処理に worst-case 保証が必要**だから。 後の GNU grep、 RE2 (Google)、 Rust regex も同じ理由で DFA 採用。 変数経由のプログラマブル regex で **データ駆動マッチング**が可能: パターン表、 実行時構築、 regex-as-config。 MATCHOP 構文 (`~`/`!~`) は Perl/Ruby/他言語にも継承。"
+  },
+  {
+    "id": "echo-001-23-line-minimal",
+    "text": "#include <stdio.h>\n\nmain(argc, argv)\nint argc;\nchar *argv[];\n{\n    register int i, nflg;\n\n    nflg = 0;\n    if(argc > 1 && argv[1][0] == '-' && argv[1][1] == 'n') {\n        nflg++;\n        argc--;\n        argv++;\n    }\n    for(i=1; i<argc; i++) {\n        fputs(argv[i], stdout);\n        if (i < argc-1)\n            putchar(' ');\n    }\n    if(nflg == 0)\n        putchar('\\n');\n    exit(0);\n}",
+    "file_path": "usr/src/cmd/echo.c",
+    "line_number": 1,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "echo",
+      "minimalism"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "minimalism",
+      "emotion_intensity": 5,
+      "emotions": {
+        "minimalism": 5,
+        "antiquity": 4
+      },
+      "technical_context": "echo.c is 23 lines total including #include. K&R-style C: argc/argv K&R declaration form, register hint for tight loop, nflg int as boolean counter, fputs+putchar rather than printf (avoids format string parsing overhead and vulnerability), exit(0) explicit even though main returning 0 would be equivalent (some pre-C89 compilers didn't honor main's return value). Function does: skip -n if present, fputs each remaining arg with space separator (no trailing space), final newline unless -n. Compiled binary ~1KB. Uses only fputs/putchar/exit from libc — minimal runtime dependency. The 23 lines exemplify Unix's 'do one thing well': no malloc, no error handling beyond exit(0), no format-string interpretation. The simplest useful command.",
+      "human_story": "23 lines for the most-used Unix command after ls. echo is the 'hello world' of Unix tools: it must exist, it must be tiny, it must just work. K&R-era programmers showed off by writing the minimum — register hints, int-as-bool, fputs instead of printf (faster, smaller, safer). The exit(0) is intentionally explicit because pre-C89 compilers couldn't reliably handle main's return value. Every byte of the 23 lines is deliberate. It compiles to ~1KB. Modern shells like bash provide echo as a builtin to avoid the fork/exec cost — but the spec they implement traces to these 23 lines."
+    },
+    "appraiser_note": "echo.c は `#include` 含め **23 行**。 K&R style C: argc/argv K&R 宣言、 register ヒント、 nflg int を bool counter として、 fputs+putchar (printf 解析オーバーヘッドと format string 脆弱性回避)、 exit(0) 明示 (C89 前のコンパイラは main の return を exit code として扱わなかった)。 機能: -n あれば skip、 各引数を fputs + 空白区切り (末尾なし)、 -n なしなら最後に改行。 バイナリ ~1KB。 libc 依存は fputs/putchar/exit のみ——最小ランタイム依存。 23 行が Unix の **「Do one thing well」** を体現: malloc なし、 エラー処理は exit(0) のみ、 format string 解釈なし。 **最も単純な実用コマンド**——ls の次によく使われる Unix 道具で、 K&R 時代のプログラマが「最小で書く」 ことを誇示した姿。"
+  },
+  {
+    "id": "echo-002-echo-wars-bsd-sysv",
+    "text": "/* Bell-32V (BSD-style): */\nif(argc > 1 && argv[1][0] == '-' && argv[1][1] == 'n') {\n    nflg++;        /* -n suppresses trailing newline */\n    ...\n}\nfor(i=1; i<argc; i++)\n    fputs(argv[i], stdout);    /* no backslash interpretation */\n\n/* System V style (interprets backslash, no -n): */\n/* echo \"a\\nb\" -> \"a\" newline \"b\" */\n/* echo -n hello -> \"-n hello\" */\n\n/* POSIX compromise: both behaviors allowed, prefer printf */",
+    "file_path": "usr/src/cmd/echo.c",
+    "line_number": 10,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "echo",
+      "compatibility"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "antiquity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "antiquity": 4,
+        "concreteness": 4
+      },
+      "technical_context": "Bell-32V echo (BSD lineage) interprets -n flag, doesn't process backslash escapes. System V echo does opposite: ignores -n (treats as literal arg), processes \\n \\t \\b \\c etc. POSIX 1003.1 couldn't unify and lets both behaviors stand. Result: portable shell scripts must avoid echo or test which version is present. GNU echo defaults BSD-style but adds -e to enable System V-style escapes, -E to force literal. bash builtin echo follows configurable xpg_echo shell option. The fork happened because System V wanted to add features (escape sequences), BSD wanted to add features (-n flag), and neither side compromised. The 1979 Bell-32V design is the BSD origin: 23 lines, -n yes, escapes no.",
+      "human_story": "Why is `echo -n hello` portable on macOS but prints \"-n hello\" on Solaris? Because echo split in two during the 1980s. Bell-32V (1979) had -n, no backslash escapes — BSD inherited this. System V (1983) added backslash escapes \\n \\t \\c, dropped -n. POSIX gave up on standardizing. Scripts dependent on either behavior aren't portable. The lesson: when two designs disagree about a tiny command, the right answer might be 'use printf' — which is what POSIX recommends. echo's 23 lines spawned 40 years of shell-script portability headaches."
+    },
+    "appraiser_note": "Bell-32V echo (BSD 系) は -n フラグを解釈し、 バックスラッシュエスケープを処理しない。 System V echo は逆: -n を無視 (リテラル引数として扱う)、 \\n \\t \\b \\c などを解釈。 POSIX 1003.1 は統一できず**両方を許容**。 結果: 可搬シェルスクリプトは echo を避けるか、 どちらの版か判定する必要がある。 GNU echo はデフォルト BSD 系、 -e で System V escape 有効化、 -E でリテラル強制。 bash builtin echo は xpg_echo shell オプションで挙動切替。 fork の原因: System V は escape 機能追加、 BSD は -n フラグ追加を選び、 互いに妥協せず。 1979 年 Bell-32V の設計が BSD 起源——23 行、 -n あり、 escape なし。 `echo -n hello` が macOS で動くが Solaris で「-n hello」 と出るのはこの分岐の結果。 40 年の shell-script 移植性問題を生んだ 23 行。"
+  },
+  {
+    "id": "echo-003-fputs-not-printf",
+    "text": "for(i=1; i<argc; i++) {\n    fputs(argv[i], stdout);    /* not printf(\"%s\", argv[i]) */\n    if (i < argc-1)\n        putchar(' ');           /* not printf(\" \") */\n}\nif(nflg == 0)\n    putchar('\\n');             /* not printf(\"\\n\") */",
+    "file_path": "usr/src/cmd/echo.c",
+    "line_number": 15,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "echo",
+      "performance"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 4,
+      "emotions": {
+        "concreteness": 4,
+        "minimalism": 4
+      },
+      "technical_context": "echo deliberately uses fputs/putchar instead of printf. Reasons: (1) Performance: printf scans format string at runtime; fputs/putchar skip this. (2) Code size: avoids linking the format-parsing portion of libc, keeping binary tiny (~1KB). (3) Safety: printf with user-controlled format string is the format-string-vulnerability classic (CVE staple); fputs has no format concept, so user input can't escape its data role. (4) Clarity: 'output this string' as `fputs(s, fd)` is more direct than `printf(\"%s\", s)`. Modern GNU echo shares code with printf in coreutils as a side benefit, but the 1979 design separated them. The same fputs-over-printf principle applies in modern critical paths: logging fast paths, embedded systems, kernel printk variants.",
+      "human_story": "Why doesn't echo use printf? Three reasons: speed (no format parsing), size (no format module in libc), safety (no format-string injection). In 1979, the third reason wasn't even articulated as a security concept — format-string vulnerabilities became famous in the late 1990s. But Bell-32V's echo accidentally got it right by using fputs, which has no concept of format directives. Modern critical-path logging often follows the same pattern: log handlers prefer raw writes over printf for performance and safety. The 23-line echo applied 'use the right tool' wisdom decades before security researchers formalized it."
+    },
+    "appraiser_note": "echo は意図的に printf ではなく **fputs/putchar** を使う。 理由: (1) **性能**: printf はランタイムで format 文字列をスキャン、 fputs/putchar はそのコストなし。 (2) **コードサイズ**: libc の format 解析部分をリンクせず、 バイナリを小さく (~1KB)。 (3) **安全性**: ユーザー制御の format 文字列を持つ printf は **format-string vulnerability** の古典 (CVE の定番)——fputs には format 概念がないので、 ユーザー入力がデータ役割から逃げられない。 (4) **明確性**: 「この文字列を出力」 は `fputs(s, fd)` の方が `printf(\"%s\", s)` より直接的。 現代の GNU echo は coreutils で printf と code を共有する副次効果はあるが、 1979 年の設計は分離していた。 同じ「fputs-over-printf」 原則は現代の critical-path logging、 embedded、 kernel printk variant でも適用。 1979 年の echo が、 セキュリティ研究者が format-string 脆弱性を形式化する数十年前に偶然 「正しい道具を使う」 智慧を実践していた。"
   }
 ]
