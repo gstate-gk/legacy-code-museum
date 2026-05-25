@@ -14087,5 +14087,140 @@
       "human_story": "diff3 -e + ed = the automatic merger. diff3 -e outputs ed commands; pipe to ed and watch the merge happen. The reverse-order output is the clever bit: edit from the end of the file backward, so line numbers stay stable. RCS (1982) used this in rcsmerge — when you check out, RCS runs diff3 -e against your version + the new HEAD + the common ancestor, pipes through ed for non-conflicting merges. Only conflicts need human resolution. Modern git replays the same logic in C code, but the original was 'pipe of small tools' — diff + diff3 + ed. Composition over reimplementation."
     },
     "appraiser_note": "**diff3 -e** が merge を **ed 編集スクリプト**として出力——ed にパイプすれば自動 merge 適用。 edscript() が**逆順**でコマンドを出力——重要な理由は ed の行番号が編集ごとにずれる、 末尾から処理すれば後の編集が前の行番号に影響しない。 パターン '%da\\n.\\n%d,%dc\\n' は append-then-change を出力、 '.' は ed テキストモード終端。 -e は非競合変更を自動解決、 -3 は base ファイルの変更のみ、 -x は競合のみ。 1982 年 RCS の rcsmerge コマンドが多用——チェックアウト時に diff3 -e を実行して ed にパイプ、 非競合な merge は自動、 競合のみ人間解決。 「**小さなツールのパイプ**」 (diff + diff3 + ed) が合成性の体現。 現代 git は同じロジックを C で再現するが、 オリジナルは pipe ベース——再実装より合成。"
+  },
+  {
+    "id": "cmp-001-byte-loop",
+    "text": "loop:\n    chr++;\n    c1 = getc(file1);\n    c2 = getc(file2);\n    if (c1 == c2) {\n        if (c1 == '\\n') line++;\n        if (c1 == EOF) {\n            if (eflg) exit(1);\n            exit(0);              /* same */\n        }\n        goto loop;\n    }\n    if (lflg == 0) exit(1);       /* silent */\n    if (c1 == EOF) goto earg;\n    if (c2 == EOF) goto earg;\n    if (lflg == 1) {\n        printf(\"%s %s differ: char %ld, line %ld\\n\", argv[1], arg, chr, line);\n        exit(1);\n    }\n    eflg = 1;\n    printf(\"%6ld %3o %3o\\n\", chr, c1, c2);\n    goto loop;",
+    "file_path": "usr/src/cmd/cmp.c",
+    "line_number": 64,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "cmp",
+      "comparison"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "minimalism",
+      "emotion_intensity": 5,
+      "emotions": {
+        "minimalism": 5,
+        "concreteness": 4
+      },
+      "technical_context": "cmp's core loop: getc each byte from each file, compare, dispatch by mode. Constant memory (just c1, c2). O(N) time, where N = first diff position (or file size if same). goto loop for tight inner loop. chr counts byte position; line counts newlines for human-readable output. EOF handling: both EOF = same; one EOF = differ (prefix relationship). Modes via lflg: 0 silent (exit immediately), 1 default (one-line message), 2 long (octal dump of differences, continues to scan). Compare with diff which builds LCS in memory; cmp's stream-based loop fits any file size in 2 bytes of RAM. Modern equivalents (cmp + sum + md5sum) all preserve this 'byte-stream comparison' model for definite answers.",
+      "human_story": "How does cmp compare two files? Read byte 1 from both, compare. Different? Done. Same? Read byte 2. Repeat. The simplest possible algorithm — getc, compare, getc, compare. Memory: 2 bytes (just the current bytes). Speed: O(N). 1979's cmp does this in 25 lines of inner loop. Modern cmp (GNU) is essentially the same loop with extra options. When you need to know 'is this byte-for-byte identical?', this is unbeatable. Hashing (md5sum) is faster across many files but cmp is the gold standard for one-vs-one comparison — no false positives ever."
+    },
+    "appraiser_note": "cmp の核心ループ: 各ファイルから getc で 1 バイトずつ読み、 比較、 モードで dispatch。 **定数メモリ** (c1、 c2 のみ)。 O(N) 時間、 N = 最初の差分位置 (or 同じならファイルサイズ)。 goto loop で tight な内部ループ。 chr がバイト位置をカウント、 line が改行を数えて人間向け出力。 EOF 処理: 両方 EOF = 同じ; 片方 EOF = 違う (prefix 関係)。 モードは lflg で: 0 silent (即 exit)、 1 default (1 行メッセージ)、 2 long (8 進ダンプ、 走査続行)。 diff が LCS をメモリに構築するのと対照——cmp の stream ベースループは **2 バイトの RAM で任意サイズのファイル**を処理可能。 現代の cmp + sum + md5sum すべて「**バイトストリーム比較**」 モデルを保持。 ハッシュより遅いが false positive なし、 「one-vs-one 比較の決定論的標準**」。"
+  },
+  {
+    "id": "cmp-002-exit-code-convention",
+    "text": "/* Exit code conventions established by cmp (and diff): */\n\n/* loop body: */\nif (c1 == EOF) exit(0);          /* same */\nif (lflg == 0) exit(1);           /* differ (silent) */\nprintf(\"differ at char %ld...\"); exit(1);  /* differ (default) */\n\nnarg:\n    printf(\"cmp: arg count\\n\");\n    exit(2);                       /* error: bad args */\nbarg:\n    if (lflg) printf(\"cmp: cannot open %s\\n\", arg);\n    exit(2);                       /* error: cannot open */\nearg:\n    printf(\"cmp: EOF on %s\\n\", arg);\n    exit(1);                       /* differ: one is prefix */\n\n/* Standard Unix exit code interpretation:\n   0 = success (files identical, in cmp)\n   1 = normal failure (files differ)\n   2 = error (bad invocation)\n*/",
+    "file_path": "usr/src/cmd/cmp.c",
+    "line_number": 100,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "cmp",
+      "convention"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 4,
+      "emotions": {
+        "abstraction": 4,
+        "antiquity": 4
+      },
+      "technical_context": "cmp established the 3-tier exit code convention now standard across Unix comparison tools (diff, comm, grep, expr): 0=success/match, 1=normal failure/no-match, 2=error. Distinct from binary 0/non-zero — three categories let shell scripts distinguish 'differs' (normal outcome to handle) from 'broken' (abort). This convention codified in POSIX 1992. Critical for shell idioms: `if cmp -s a b; then ...` works because 0 is truthy in shell. `case $? in 0|1) ok;; 2) abort;; esac` pattern. POSIX explicitly mandates these codes. The convention spread: grep returns 0 (found), 1 (not found), 2 (error); diff: 0 (same), 1 (differ), 2 (error). 1979 cmp set the template that 50 years of Unix tools follow.",
+      "human_story": "Why does `cmp -s file1 file2; echo $?` produce 0, 1, or 2? Because cmp established the 3-tier convention: 0 = same, 1 = differ, 2 = error. This lets shell scripts distinguish 'expected outcome' (differ) from 'broken' (couldn't open). The pattern: `case $? in 0) match;; 1) nomatch;; 2) error;; esac`. grep follows it (found/notfound/error), diff follows it, comm follows it. POSIX standardized it in 1992. 1979 cmp's choice to use 3 codes instead of 0/non-zero gave shell scripts much more expressiveness. 50 years of `if cmp -s` and `if grep` shell idioms rely on this."
+    },
+    "appraiser_note": "cmp が **3 段階 exit code 慣習**を確立、 現在 Unix 比較ツール (diff、 comm、 grep、 expr) で標準: **0=success/match、 1=normal failure/no-match、 2=error**。 binary 0/non-zero と異なり、 3 カテゴリで shell script は「**differ** (期待される結果) と **broken** (中断必要)」 を区別可能。 POSIX 1992 で codify。 シェルイディオムに必須: `if cmp -s a b; then ...` は 0 が truthy だから動く。 `case $? in 0|1) ok;; 2) abort;; esac` パターン。 POSIX が明示的にこのコードを要求。 慣習の伝播: grep (0 found / 1 not / 2 error)、 diff (0 same / 1 differ / 2 error)、 comm 等。 **1979 年 cmp が 50 年の Unix ツールの template** を設定。 `0/non-zero` binary より 3 段階の方が shell スクリプトに表現力を与えた。"
+  },
+  {
+    "id": "cmp-003-three-verbosity-levels",
+    "text": "int lflg = 1;        /* default verbosity */\n\nmain(argc, argv) {\n    if (argv[1][0]=='-' && argv[1][1]=='s') {\n        lflg--;       /* 1 -> 0 (silent) */\n        argv++; argc--;\n    }\n    if (argv[1][0]=='-' && argv[1][1]=='l') {\n        lflg++;       /* 1 -> 2 (long) */\n        argv++; argc--;\n    }\n    /* now lflg is 0, 1, or 2 */\n}\n\n/* Behavior by lflg: */\n/* 0 (silent, -s):  no output, exit 0 or 1 */\n/* 1 (default):     \"X Y differ: char N, line M\" + exit 1 */\n/* 2 (long, -l):    \"%6ld %3o %3o\" for each diff, scan continues */\n\nif (lflg == 0) exit(1);\nif (lflg == 1) {\n    printf(\"%s %s differ: char %ld, line %ld\\n\", ...);\n    exit(1);\n}\nprintf(\"%6ld %3o %3o\\n\", chr, c1, c2);   /* lflg == 2 */",
+    "file_path": "usr/src/cmd/cmp.c",
+    "line_number": 21,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "cmp",
+      "verbosity"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "minimalism",
+      "emotion_intensity": 4,
+      "emotions": {
+        "minimalism": 4,
+        "elegance": 4
+      },
+      "technical_context": "cmp uses single int lflg as 3-level verbosity: 0=silent (-s), 1=default, 2=long (-l). Increment/decrement to set: -s decrements to 0, -l increments to 2. Compact representation, easy to test (if lflg==0/==1/else). Three modes serve distinct needs: -s for shell scripts (just exit code), default for human use (one-line summary), -l for binary forensics (octal dump of all diffs). The 'increment-decrement to choose level' trick allows future -ss or -ll extension if needed, though no Unix tool actually uses this. Modern GNU cmp keeps the same three modes but adds -b (with byte chars), -i (initial skip), -n (max bytes) — more dimensions but same verbosity axis.",
+      "human_story": "How does cmp know if you want silent, normal, or verbose output? One variable. -s decrements (1→0=silent), -l increments (1→2=long). Default is 1 (one-line summary). Three levels serve three needs: shell scripts want -s (exit code only), users want default (one message), debuggers want -l (all differences as octal dump). The single-variable design is elegant: 3 lines of code handle all 3 modes. GNU cmp added more flags later (-b, -i, -n) but kept the 3-level verbosity. The 'lflg++ vs lflg--' trick is K&R era compactness; modern code would use enums."
+    },
+    "appraiser_note": "cmp は **単一 int lflg で 3 段階詳細度**: 0=silent (-s)、 1=default、 2=long (-l)。 増減で設定: -s は decrement で 0、 -l は increment で 2。 コンパクト表現、 テストしやすい (if lflg==0/==1/else)。 **3 モードが異なるニーズに対応**: -s は shell script (exit code のみ)、 default は人間用 (1 行サマリ)、 -l はバイナリフォレンジック (全 diff 8 進ダンプ)。 「increment-decrement でレベル選択」 トリックで -ss や -ll の将来拡張も可能 (実際は使われない)。 現代 GNU cmp は同じ 3 モードを保持、 -b (byte chars)、 -i (initial skip)、 -n (max bytes) を追加——次元は増えたが verbosity 軸は同じ。 単一変数設計のエレガンス: 3 行コードで 3 モード全部処理。 lflg++/lflg-- トリックは K&R 時代の簡潔さ、 現代なら enum を使う。"
+  },
+  {
+    "id": "cmp-004-octal-dump-format",
+    "text": "/* In -l mode, print each difference as octal: */\nprintf(\"%6ld %3o %3o\\n\", chr, c1, c2);\ngoto loop;\n\n/* %6ld: long integer, right-aligned in 6 chars\n   %3o:  octal, right-aligned in 3 chars (range 000-377)\n   \n   Example output:\n        1 060 052\n        2 061 053\n       64 040 010\n      100 060 050\n     1024 165 145\n   \n   Columns:\n     position   - byte offset in file (1-indexed)\n     file1 byte - octal value of byte from file1\n     file2 byte - octal value of byte from file2\n*/",
+    "file_path": "usr/src/cmd/cmp.c",
+    "line_number": 86,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "cmp",
+      "octal"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "antiquity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "antiquity": 4,
+        "concreteness": 4
+      },
+      "technical_context": "cmp -l output format: %6ld for offset (long, 6-char field), %3o twice for the two differing bytes in octal (3-char fields, since byte range 000-377 octal). Octal was natural for 1979 PDP-11/VAX programmers — same as od (#180), dd's EBCDIC tables, ar's modes. Modern programmers find hex more natural; GNU cmp added -b flag for printable chars alongside octal. The %6ld accommodates offsets up to 999999 (~1MB) cleanly aligned; larger files lose alignment but stay readable. Right-aligned columns enable easy visual scanning. Format mirrors od's output style — Unix's binary-inspection vocabulary is consistent across tools.",
+      "human_story": "cmp -l shows differences in octal: '1024 165 145' = at byte 1024, file1 has 0o165, file2 has 0o145. 1979 prefers octal because PDP-11/VAX dumps were octal, od is octal, dd's tables are octal — octal was the lingua franca of 1979 binary work. Today's hex generation finds it odd; GNU cmp's -b flag adds printable chars (' u  e' for the example) to ease reading. But the 8th-bit pattern of octal — 3 digits = 1 byte = 9 bits + sign — preserves 1979 binary culture. Format mirrors od's; the visual style of Unix binary inspection is consistent."
+    },
+    "appraiser_note": "cmp -l 出力フォーマット: %6ld でオフセット (long、 6 文字フィールド)、 %3o を 2 回で違う 2 バイトを 8 進 (3 文字フィールド、 バイト範囲 000-377 8 進)。 8 進は 1979 年 PDP-11/VAX プログラマには自然——od (#180)、 dd の EBCDIC テーブル、 ar のモードと同じ。 現代プログラマには 16 進が自然、 GNU cmp は -b フラグで印字可能文字を併記。 %6ld で 999999 (~1MB) までクリーン整列、 大きいファイルでは崩れるが読める。 右寄せカラムで視覚スキャンが楽。 **フォーマットは od の出力スタイルを継承**——Unix のバイナリ検査語彙はツール間で一貫。 1024 165 145 = byte 1024 で file1=0o165、 file2=0o145。 octal が 1979 年バイナリ作業の lingua franca、 GNU cmp -b は ' u  e' のような printable chars 追加で読みやすく。"
+  },
+  {
+    "id": "cmp-005-minimalism-121-lines",
+    "text": "/* cmp.c entire file (excerpted): */\n#include <stdio.h>\n#include <ctype.h>\n\nFILE *file1, *file2;\nint eflg;\nint lflg = 1;\nlong line = 1, chr = 0, skip1, skip2;\nlong otoi();\n\nmain(argc, argv) char **argv; {\n    /* arg parsing: ~25 lines */\n    /* skip handling: ~15 lines */\n    /* compare loop: ~25 lines (goto loop) */\n    /* error labels: ~10 lines */\n}\n\nlong otoi(s) char *s; {\n    /* 8/10-base parser: 12 lines */\n}\n\n/* Total: 121 lines\n   Functions: 2 (main + otoi)\n   External funcs used: getc, fopen, printf, exit, isdigit\n   Headers: stdio.h, ctype.h\n   Binary size: ~2KB on VAX\n*/",
+    "file_path": "usr/src/cmd/cmp.c",
+    "line_number": 1,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "cmp",
+      "minimalism"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "minimalism",
+      "emotion_intensity": 5,
+      "emotions": {
+        "minimalism": 5,
+        "elegance": 4
+      },
+      "technical_context": "cmp embodies 'do one thing well': 121 lines, 2 functions, 5 standard library functions, 2 headers. Comparable: diff (#183) 645 lines, diff3 (#184) 438 lines. cmp does what neither does — fast definite answer to 'are these byte-identical?'. No LCS, no merge, no algorithms beyond stream comparison. Binary ~2KB on 1979 VAX. Modern GNU cmp ~1500 lines with -b/-i/-n flags, internationalization, additional output formats — but core comparison loop identical. The minimalism enables: fast startup, no malloc overhead, perfectly composable in shell scripts (`if cmp -s ...`), tiny attack surface. cmp's role in Unix is to be the dependable simple option when you don't need diff's sophistication.",
+      "human_story": "cmp is 121 lines. diff is 645 lines. Why so much smaller? Because cmp does less. cmp asks 'same or different?'. diff asks 'where exactly and how?'. By limiting scope, cmp achieves: fast startup, tiny binary (~2KB), no memory allocation, perfectly reliable. When a shell script needs 'did the file change?', cmp -s gives the answer in microseconds with definite truth. Modern GNU cmp adds polish (locale, more flags) but the core 2-function design from 1979 is unchanged. 121 lines doing one thing perfectly is a Unix philosophy success story. Bigger tools have niches; cmp owns the 'are these identical?' niche."
+    },
+    "appraiser_note": "cmp は **「Do one thing well」 の体現**: 121 行、 2 関数、 標準ライブラリ関数 5 つ、 ヘッダ 2 つ。 比較: diff (#183) 645 行、 diff3 (#184) 438 行。 cmp はそれらができないことを行う——「**バイト一致か?**」 の高速・決定論的回答。 LCS なし、 merge なし、 stream 比較以外のアルゴリズムなし。 1979 年 VAX で ~2KB バイナリ。 現代 GNU cmp は ~1500 行 (-b/-i/-n、 国際化、 追加出力形式) だがコア比較ループは同一。 ミニマリズムが実現するもの: 高速起動、 malloc なし、 シェルスクリプトで完璧合成可能 (`if cmp -s ...`)、 小さな attack surface。 **cmp の役割は信頼できるシンプルオプション**——diff の精緻さが不要な時の選択肢。 1979 年の 2 関数設計が現代まで不変、 シェルスクリプトで「ファイル変わった?」 にマイクロ秒で確定回答。"
   }
 ]
