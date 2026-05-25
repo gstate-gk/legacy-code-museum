@@ -14492,5 +14492,140 @@
       "human_story": "join is SQL's grandfather. INNER JOIN, LEFT/RIGHT/FULL OUTER JOIN, column projection, NULL handling — all in Unix join (1979) before SQL standardized them (1986/1992). Codd's relational algebra paper (1970) had the theory; join made it practical. 1980s companies ran their data processing in shell: sort + join + awk = SQL. RDBMSs were expensive and limited; Unix tools were free and composable. join's design (text as relation, sort then join, OUTER for missing) shaped how people thought about data. SQL added composite keys, theta-joins, aggregation. But the JOIN core is from 1979 Unix."
     },
     "appraiser_note": "join (1979) は **SQL 標準化 7-13 年前にリレーショナル JOIN 演算を実装**: INNER JOIN (デフォルト)、 LEFT (-a1) と RIGHT (-a2) OUTER (SQL-86)、 FULL OUTER (-a) (SQL-92)、 カラム射影 (-o、 SQL-86 SELECT)、 NULL 置換 (-e、 SQL COALESCE)。 Codd のリレーショナル代数論文 (1970) が理論を提供、 join が**最初の実用実装**。 SQL との制限: 単一カラム join のみ (複合キー不可)、 等価 join のみ (a.x < b.x のような theta-join 不可)、 組み込み集約なし (awk 使用)。 でも JOIN 基本概念と OUTER variants は全て揃う。 sort + uniq + awk と組み合わせ、 Unix shell は 1980 年代を通じて SQL ライクなデータ処理を提供——多くの企業が payroll、 inventory、 billing をこの方式で運用。 SQL が複合キー、 theta-join、 集約を追加したが、 **JOIN コアは 1979 年 Unix から**。 join は SQL の祖父。"
+  },
+  {
+    "id": "sort-001-external-merge",
+    "text": "#define MEM (16*2048)        /* 32KB working memory */\n\nmain() {\n    ep = end + MEM;\n    lspace = (int *)sbrk(0);\n    while ((int)brk(ep) == -1) ep -= 512;\n    brk(ep -= 512);\n    nlines = (a-L) / (5*sizeof(char *));\n    ntext = nlines * 8;\n    tspace = (char *)(lspace + nlines);\n}\n\nsort() {\n    do {\n        cp = tspace;\n        lp = (char **)lspace;\n        /* Read until memory full */\n        while (lp < (char**)lspace+nlines && cp < tspace+ntext) {\n            *lp++ = cp;\n            while (c != '\\n') { *cp++ = c; c = getc(is); }\n            *cp++ = '\\n';\n        }\n        /* In-memory sort */\n        qsort((char **)lspace, lp);\n        /* Write sorted chunk to temp file */\n        newfile();\n        while (lp > (char**)lspace) {\n            cp = *--lp;\n            while (*cp++ != '\\n') putc(...);\n        }\n        fclose(os);\n    } while (done == 0);\n}",
+    "file_path": "usr/src/cmd/sort.c",
+    "line_number": 288,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "sort",
+      "external-sort"
+    ],
+    "interesting_score": 25,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "concreteness": 4
+      },
+      "technical_context": "sort uses external merge sort: read until 32KB memory full, qsort in-memory, write to temp file, repeat. MEM=32KB tuned for 1979 PDP-11/VAX. lspace holds line pointers, tspace holds line text. Allocation via sbrk: grow data segment until brk succeeds or fails (reduce by 512 each retry). Each pass produces one sorted temp file. For large inputs, many temp files created. Then merge() phase combines them. This 'chunks of in-memory sort + N-way merge' is the classical external sort, taught in every algorithms course. Knuth TAOCP Vol 3 (1973) describes the theory; Bell-32V sort is the canonical Unix implementation. Modern sort (GNU, busybox) uses bigger memory but same algorithm. MapReduce shuffle is conceptually the same applied to distributed nodes.",
+      "human_story": "How do you sort a file bigger than your memory? Knuth taught us in 1973: sort chunks that fit in memory, write them to disk, then merge. Bell-32V's sort (1979) does this: 32KB at a time, qsort, dump to /tmp/stmXXXXXaa. Read more, qsort, dump. Then merge() walks the temp files together to produce the final sorted output. PDP-11 had 256KB RAM; sort took 32KB of it for working memory and could process arbitrary-size files. The same algorithm runs today in GNU sort (with more memory) and in Hadoop/Spark (distributed across nodes). External merge sort is timeless because the I/O cost dominates — minimize disk seeks via sequential read+write."
+    },
+    "appraiser_note": "sort は **外部マージソート**を使用: 32KB メモリが満ちるまで読む、 qsort で in-memory ソート、 temp ファイルに書く、 繰り返し。 MEM=32KB は 1979 年 PDP-11/VAX 向けチューニング。 lspace がライン配列、 tspace がテキスト本体。 sbrk でメモリ確保——brk 成功するまで、 失敗時は 512 バイト減らしてリトライ。 各パスが 1 つの sorted temp ファイル生成。 大入力で多数 temp ファイル、 次の merge() フェーズで結合。 「**メモリに収まるチャンクごと in-memory sort + N-way マージ**」 が古典的 external sort、 アルゴリズム教科書必修。 Knuth TAOCP Vol 3 (1973) が理論記述、 Bell-32V sort が **canonical Unix 実装**。 現代 sort (GNU、 busybox) はメモリ多いが同じアルゴリズム。 MapReduce shuffle は分散ノードへの同じ適用。 I/O コストが支配的なので、 sequential read+write を最大化する古典手法が今も最適。"
+  },
+  {
+    "id": "sort-002-n-way-merge",
+    "text": "#define N 7        /* 7-way merge */\n\nstruct merg {\n    char l[L];\n    FILE *b;\n} *ibuf[256];\n\nmerge(a, b) {\n    /* Open up to N input streams */\n    for (i = a; i < b; i++) {\n        ibuf[j] = malloc(sizeof(struct merg));\n        ibuf[j]->b = fopen(setfil(i), \"r\");\n        if (!rline(ibuf[j])) j++;\n    }\n\n    /* N-way merge loop */\n    do {\n        i = j;\n        qsort((char **)ibuf, (char **)(ibuf+i));\n        /* Output smallest, advance that stream */\n        ...\n    } while (j > 0);\n}\n\n/* Multi-pass merge for many temp files: */\nfor (a = ...; a+N < nfiles ...; a = i) {\n    i = a + N;\n    if (i >= nfiles) i = nfiles;\n    newfile();\n    merge(a, i);     /* merge N files into 1 */\n}",
+    "file_path": "usr/src/cmd/sort.c",
+    "line_number": 351,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "sort",
+      "merge"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "abstraction": 4
+      },
+      "technical_context": "sort's merge phase uses N=7 way merge to combine sorted temp files. struct merg holds current line + FILE* per stream. qsort orders ibuf[] by current line value; output smallest; advance that stream. For 100+ temp files, multi-pass merging: combine 7 → 1, repeat until ≤7 files remain, final merge to stdout. N=7 chosen to balance: more streams = fewer passes, but more memory and slower qsort per output. Modern sort uses heap (priority queue) for O(log N) per output instead of qsort's O(N log N), and dynamic memory allows much larger N. But 1979's N=7 + multi-pass works correctly for any input size — just takes log_7(N_files) passes.",
+      "human_story": "After sort dumps temp files, merge combines them. N=7 way: keep current line from 7 sorted streams, output smallest, advance. Why 7? Balance: more streams = fewer merge passes = less I/O; but more streams = more memory and slower per-output sort. 7 was the 1979 sweet spot. If you have 100 temp files: pass 1 merges 7→1 (14 outputs + 2 remainders), pass 2 merges those 7→1 again, etc. log_7(100) ≈ 2.4 passes. Modern sort uses bigger N and heap-based merge, but the multi-pass merge concept is unchanged. Hadoop shuffle does this across machines instead of files."
+    },
+    "appraiser_note": "sort の merge フェーズが **N=7 way merge** で sorted temp ファイルを結合。 struct merg が現在行 + FILE* per stream。 qsort で ibuf[] を現在行値順に並べ、 最小値を出力、 そのストリームを進める。 100+ temp ファイル向けには **多段 merge**: 7 → 1 を繰り返し、 ≤7 ファイルになったら stdout へ最終 merge。 N=7 はバランス選択: streams 多 = passes 少 = I/O 少、 でも streams 多 = メモリ大 + qsort 遅。 7 が 1979 年の最適点。 現代 sort は heap (priority queue) で O(log N) per output、 動的メモリで N 大幅増。 でも 1979 年の N=7 + 多段は任意サイズ入力に対応——log_7(N) パス必要。 100 temp ファイル: log_7(100) ≈ 2.4 パス。 Hadoop shuffle は files ではなくマシン間で同じことを行う。"
+  },
+  {
+    "id": "sort-003-field-keys",
+    "text": "struct field {\n    int code;          /* fold or nofold */\n    int ignore;        /* what to ignore */\n    int nflg, rflg;    /* numeric, reverse */\n    int bflg[2];       /* skip blanks */\n    int m[2], n[2];    /* major.minor positions */\n} fields[NF+1], proto;\nint nfields;\n\nmain() {\n    if (**argv == '+') {\n        ++nfields;\n        copyproto();\n        field(++*argv, 0);    /* parse +pos */\n    }\n    /* for -pos: */\n    field(++*argv, nfields > 0);\n}\n\n/* Examples:\n   sort +2         # field 2 to end\n   sort +0 -1      # only field 0\n   sort +2n        # field 2 numeric\n   sort +2nr       # field 2 numeric reverse\n   sort +0 -1 +2n  # primary: field 0, secondary: field 2 numeric\n*/",
+    "file_path": "usr/src/cmd/sort.c",
+    "line_number": 737,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "sort",
+      "keys"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 4,
+      "emotions": {
+        "abstraction": 4,
+        "creativity": 4
+      },
+      "technical_context": "sort supports multi-field keys via +pos -pos syntax. +pos = start (inclusive), -pos = end (exclusive). field() parses 'major.minor' position with modifiers: b (skip leading blanks), n (numeric), r (reverse), f (fold case), i (ignore non-printable), d (dictionary). Multiple keys via multiple +pos -pos pairs: primary, secondary, tertiary. struct field array holds per-key config. NF=10 max keys. POSIX (1992) deprecated this in favor of -k pos1,pos2 (with 1-origin); but +pos -pos is still supported by GNU sort for compatibility. The 1979 syntax is awkward but expressive: every modifier per key, half-open interval. Modern equivalent: SQL ORDER BY col1 ASC, col2 DESC.",
+      "human_story": "Sort by 3rd column numerically, then by 1st column ascending? `sort +2n -3 +0 -1 file`. The +pos -pos syntax (0-origin, exclusive end) is Bell-32V's original. POSIX changed to -k 3n,3 -k 1,1 (1-origin, inclusive). Both work in GNU sort. Per-key modifiers: n (numeric), r (reverse), f (fold), b (skip blanks), i (ignore non-print), d (dictionary). 1979 had the full set; SQL added similar in ORDER BY 7 years later. NF=10 keys max — typical sort jobs use 1-3 keys, so plenty. struct field captures all options per key — clean data design."
+    },
+    "appraiser_note": "sort は **複数フィールドキー**を +pos -pos 構文でサポート。 +pos = start (inclusive)、 -pos = end (exclusive)。 field() が 'major.minor' 位置 + modifier をパース: b (空白 skip)、 n (数値)、 r (逆順)、 f (fold case)、 i (非印字無視)、 d (辞書順)。 複数キーは +pos -pos ペアを複数指定: primary、 secondary、 tertiary。 struct field 配列に key 毎 config 保存。 NF=10 最大キー数。 **POSIX (1992) で非推奨化、 -k pos1,pos2** (1-origin) に置換。 GNU sort 互換のため +pos -pos も残存。 1979 構文は awkward だが expressive: key 毎の全 modifier、 半開区間。 現代等価: SQL ORDER BY col1 ASC, col2 DESC。 7 年遅れて SQL に同じ機能。"
+  },
+  {
+    "id": "sort-004-translation-tables",
+    "text": "/* 256-byte character translation tables: */\n\nchar fold[256] = {\n    /* maps a-z to A-Z, rest identity */\n    ..., 0140, 0101, 0102, 0103, ... /* a -> A, b -> B */\n};\n\nchar nofold[256] = {\n    /* identity mapping */\n    ..., 0140, 0141, 0142, ...        /* a -> a (no fold) */\n};\n\nchar nonprint[256] = {\n    1,1,1,...,                         /* control chars: 1 = ignore */\n    0,0,0,...,                         /* printable: 0 = keep */\n};\n\nchar dict[256] = {\n    1,1,..., 0,..., 1,..., 0,..., 1   /* alphanumeric+space keep, rest ignore */\n};\n\n/* In comparison: */\ncmp(i, j) {\n    while ((t = code[*p] - code[*q]) == 0 && code[*p] != '\\n') {\n        p++; q++;\n    }\n    return t;\n}",
+    "file_path": "usr/src/cmd/sort.c",
+    "line_number": 39,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "sort",
+      "collation"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "concreteness": 4
+      },
+      "technical_context": "sort uses 256-byte lookup tables for character transformations: fold[] maps lowercase to uppercase (for -f case-insensitive), nofold[] is identity, nonprint[] marks ignore-if-1 (for -i), dict[] keeps only alphanumeric+space (for -d). Comparison uses code[*p] - code[*q] for O(1) per-char transformation. Table-driven design is faster than if/else chains and easily extensible. Modern equivalents: locale collation tables (LC_COLLATE), Unicode collation algorithm tables. The lookup-table-per-rule pattern is reused across Unix: dd's EBCDIC tables (#159), ar's mode strings (#156), getty's parity table (#164), and now sort's collation tables. 'Encode behavior in data, not code.'",
+      "human_story": "How does `sort -f` (case-insensitive) work? Lookup table: fold[i] is the canonical form of byte i. For 'a' (0x61), fold[0x61] = 0x41 ('A'). For 'A' (0x41), fold[0x41] = 0x41 ('A'). Compare canonical forms: 'a' and 'A' are equal. For `-d` (dict order), dict[i] = 1 if char i should be ignored (punctuation), 0 if kept (letters/digits/space). Compare while skipping ignored chars. Table-driven design: change behavior by swapping tables, no if/else changes. Same pattern as dd's EBCDIC tables (1979 was the year of 256-byte tables). Modern locale handling extends this to Unicode."
+    },
+    "appraiser_note": "sort は **256 バイト変換テーブル**で文字変換: fold[] が a-z を A-Z にマップ (-f case-insensitive)、 nofold[] が identity、 nonprint[] が ignore-if-1 (-i)、 dict[] が alphanumeric + space のみ keep (-d)。 比較は code[*p] - code[*q] で **O(1) 文字単位変換**。 **テーブル駆動設計**は if/else チェーンより高速 + 拡張容易。 現代等価: locale collation テーブル (LC_COLLATE)、 Unicode collation algorithm。 lookup-table-per-rule パターンは Unix で再利用: dd の EBCDIC テーブル (#159)、 ar のモード文字列 (#156)、 getty のパリティ表 (#164)、 そして sort の collation テーブル。 **「動作をデータにエンコード、 コードではなく**」。 1979 年は 256 バイトテーブルの年——多くの Unix ツールがこのパターン。"
+  },
+  {
+    "id": "sort-005-pipeline-foundation",
+    "text": "/* sort is the foundation for Unix data processing pipelines: */\n\n/* Special operating modes: */\n/* -c: check only (just verify sorted, don't sort) */\n/* -m: merge only (input already sorted) */\n/* -u: unique (sort + dedupe) */\n\n/* Combined with downstream tools: */\n/*   sort | uniq -c              # count unique lines */\n/*   sort | uniq -d              # show duplicates */\n/*   sort -t: -k 3n | head       # top-N by 3rd field */\n/*   comm -12 <(sort A) <(sort B) # intersection */\n/*   sort -k 1,1 | join - sorted # relational join */\n\n/* Typical big-data pipeline (1980s style): */\n/*   awk '{print $5}' big.log | sort | uniq -c | sort -rn | head -10 */\n/*   ^                          ^      ^         ^         ^         */\n/*   project field 5            sort   count     by count  top 10    */",
+    "file_path": "usr/src/cmd/sort.c",
+    "line_number": 1,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "sort",
+      "pipeline"
+    ],
+    "interesting_score": 24,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "elegance": 4
+      },
+      "technical_context": "sort enables the entire Unix data processing pipeline. uniq requires sorted input. comm requires sorted input. join requires sorted input. The Unix philosophy: small composable tools. sort+uniq=group+count. sort+uniq+sort=frequency analysis. sort+comm=set operations. sort+join=relational query. Without sort, downstream tools become awkward. With sort as foundation, shell becomes a data processing language. 1980s before SQL databases were ubiquitous, companies ran ETL via shell pipelines: awk extract | sort | uniq -c | sort -rn | head. Modern hadoop streaming and Spark are scaled-out versions of the same pipeline pattern.",
+      "human_story": "Why does sort matter so much? Because comm, join, uniq all need sorted input. sort is the glue that makes Unix data pipelines work. Without it, you can't count uniques (sort | uniq -c), can't set-intersect files (comm -12 sorted1 sorted2), can't relational join (sort | join). The whole 'shell as data language' rests on sort. 1980s companies ran their data analytics via awk-extract | sort | uniq -c | sort -rn | head — top-N report in one line. Modern equivalent: SQL SELECT ... GROUP BY ... ORDER BY ... LIMIT. The 1979 shell pipeline beats SQL on ad-hoc ease for many tasks; sort makes it possible."
+    },
+    "appraiser_note": "sort は **Unix データ処理パイプライン全体の土台**。 uniq は sorted 入力必須、 comm は sorted 必須、 join も同様。 Unix 哲学: 小さな合成可能ツール。 sort+uniq = group+count、 sort+uniq+sort = frequency 分析、 sort+comm = 集合演算、 sort+join = リレーショナルクエリ。 sort なしには後段ツールが awkward に。 sort が土台になることで、 **shell がデータ処理言語に**なる。 1980 年代 SQL DB 普及前、 企業は ETL を shell パイプラインで運用: awk 抽出 | sort | uniq -c | sort -rn | head——top-N レポートを 1 行で。 現代等価: SQL SELECT...GROUP BY...ORDER BY...LIMIT。 1979 shell パイプラインはアドホックタスクで SQL より楽な場合が多い——sort が可能にする。 Hadoop streaming/Spark はこのパイプラインパターンのスケールアウト版。"
   }
 ]
