@@ -11711,5 +11711,140 @@
       "human_story": "How do you add case-insensitive matching without changing the regex engine? Expand the pattern. abc becomes [Aa][Bb][Cc]. The regex engine, blissfully unchanged, sees a normal pattern with char classes. 17 lines added a feature without touching the 300+ lines of compile() and advance(). Limitations exist (uppercase doesn't expand, existing [abc] doesn't get extended), but the design is the Unix philosophy made concrete: features = composition of existing primitives, not extensions to the engine. The -i flag in 4.0BSD took the engine-modification approach instead — more flexible, more code."
     },
     "appraiser_note": "grep -y (case-insensitive) は **パターン自体を展開**して実装: 各小文字を [Uu] 文字クラスに変換、 compile() 前段で。 パターン `abc` → `[Aa][Bb][Cc]`。 **regex エンジン本体は変更ゼロ**——既存の文字クラス機能が両ケースを処理。 既存 `[...]` シーケンスはそのまま通過 (while ループ)、 バックスラッシュエスケープもそのまま。 制限: 大文字入力は展開しない (islower のみトリガー)、 既存 [abc] は [aAbBcC] に拡張されない。 後の -i フラグ (4.0BSD) で matcher 内部に case-insensitive ロジックを追加して改善。 だが 1979 年の設計——「**機能 = パターン変換、 エンジン拡張ではなく**」——は **Unix 哲学を 17 行で具現化**。"
+  },
+  {
+    "id": "ed-001-command-language",
+    "text": "commands() {\n    for (;;) {\n        /* address parsing */\n        do {\n            addr1 = addr2;\n            if ((a1 = address()) == 0) {\n                c = getchr();\n                break;\n            }\n            addr2 = a1;\n        } while (c == ',');\n        switch(c) {\n        case 'a': /* append */\n        case 'c': /* change */\n        case 'd': /* delete */\n        case 'i': /* insert */\n        case 'g': /* global */\n        case 'v': /* negated global */\n        case 's': /* substitute */\n        case 'p': case 'P': /* print */\n        case 'q': case 'Q': /* quit */\n        case 'r': /* read file */\n        case 'w': case 'W': /* write */\n        case 'k': /* mark */\n        case 'm': /* move */\n        case 't': /* transpose (copy) */\n        case 'u': /* undo */\n        case '!': /* shell escape */\n        case '=': /* print address */\n        ...\n        }\n    }\n}",
+    "file_path": "usr/src/cmd/ed.c",
+    "line_number": 157,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "editor",
+      "design"
+    ],
+    "interesting_score": 25,
+    "ai_analysis": {
+      "primary_emotion": "antiquity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "antiquity": 5,
+        "abstraction": 5
+      },
+      "technical_context": "ed defines the Unix text editor command language in ~25 single-character commands: a/c/d/i (modify), p/P/l (display), g/v (global), s (substitute), q/Q (quit), r/w (file I/O), k (mark), m/t (move/copy), u (undo), ! (shell), = (address). Each command optionally takes [addr1[,addr2]] prefix. address() parses 6 forms: numeric, dot, dollar, +N/-N, /regex/, 'mark. This grammar (addresses + 1-char command + arguments) became the universal Unix editor language. vi's :%s/foo/bar/g, sed's 1,$d, grep's /pattern/ — all inherit. Written by Ken Thompson in 1971 (V1 Unix), 50 years before POSIX still mandates ed.",
+      "human_story": "Twenty-five characters of vocabulary, and you can edit any text file ever written. Ken Thompson invented this language in 1971 for the V1 Unix editor. The grammar was so good that vi (1976) adopted it as the colon-command mode. sed (1973) became 'ed without interaction'. grep (1973) became 'just the g/re/p part'. ex (vi's underlying engine) is ed with extensions. The 25 commands of ed are the vocabulary of Unix text processing — a one-letter language that defined how programmers talk to text for half a century."
+    },
+    "appraiser_note": "ed は Unix テキストエディタコマンド言語を **約 25 個の 1 文字コマンド**で定義: a/c/d/i (編集)、 p/P/l (表示)、 g/v (global)、 s (substitute)、 q/Q (quit)、 r/w (file I/O)、 k (mark)、 m/t (move/copy)、 u (undo)、 ! (shell)、 = (address)。 各コマンドは optional `[addr1[,addr2]]` 接頭辞を取る。 address() は 6 形式をパース: 数値、 .、 $、 +N/-N、 /regex/、 'mark。 この文法 (アドレス + 1 文字コマンド + 引数) が **Unix エディタ言語**として普遍化——vi の :%s/foo/bar/g、 sed の 1,$d、 grep の /pattern/、 すべて継承。 Ken Thompson が 1971 年 (V1 Unix) に書き、 50 年後の POSIX で今も標準。"
+  },
+  {
+    "id": "ed-002-shared-regex-engine",
+    "text": "#define CBRA   1\n#define CCHR   2\n#define CDOT   4\n#define CCL    6\n#define NCCL   8\n#define CDOL  10\n#define CEOF  11\n#define CKET  12\n#define CBACK 14\n#define STAR  01\n\nchar expbuf[ESIZE+4];\n\ncompile(aeof) {\n    /* regex → opcode (same set as grep) */\n}\n\nexecute(gf, addr) {\n    /* bytecode VM (matches grep's advance()) */\n}",
+    "file_path": "usr/src/cmd/ed.c",
+    "line_number": 17,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "regex",
+      "shared"
+    ],
+    "interesting_score": 24,
+    "ai_analysis": {
+      "primary_emotion": "antiquity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "antiquity": 5,
+        "elegance": 4
+      },
+      "technical_context": "ed.c and grep.c share the same regex opcode constants (CCHR=2, CDOT=4, CCL=6, NCCL=8, CDOL=10, CEOF=11, CKET=12, STAR=01, CBRA=1) — because grep was forked from ed's g/re/p command in 1973. The regex engine architecture is identical: compile() translates pattern to bytecode (expbuf), execute() runs a bytecode VM matching against text. Only CBACK differs: 14 in ed, 18 in grep (drifted during fork). The Thompson regex grammar — literal, ., *, [...], [^...], ^, $, \\(...\\), \\1-\\9 — became POSIX BRE. Every Unix regex tool (ed/sed/grep/awk/vi/vim) traces back to this engine.",
+      "human_story": "Why do ed, grep, sed, and vi all use the same regex syntax? Because they descended from the same code. Ken Thompson wrote the regex engine for ed (V1, 1971); grep (1973) was carved out as 'just g/re/p'; sed (1973) became 'non-interactive ed'; vi (1976) embedded ex which embedded ed. The opcode constants CCHR=2, CDOT=4, CCL=6 are identical across ed.c and grep.c because someone literally copy-pasted them. Half a century later, when you write `grep '^[a-z]*$'` you're typing exactly the syntax Thompson designed for ed in 1971."
+    },
+    "appraiser_note": "ed.c と grep.c は **同じ regex オペコード定数** (CCHR=2, CDOT=4, CCL=6, NCCL=8, CDOL=10, CEOF=11, CKET=12, STAR=01, CBRA=1) を共有——grep が 1973 年に ed の g/re/p コマンドから fork されたから。 regex エンジン構造は同一: compile() がパターンをバイトコード (expbuf) に翻訳、 execute() がテキストとマッチするバイトコード VM。 CBACK だけ違う (ed: 14、 grep: 18、 fork 後にドリフト)。 Thompson regex 文法 (リテラル、 ., *, [...], [^...], ^, $, \\(...\\), \\1-\\9) が **POSIX BRE** として標準化。 ed/sed/grep/awk/vi/vim すべて 1971 年の Thompson エンジンに遡る。"
+  },
+  {
+    "id": "ed-003-tempfile-256blocks",
+    "text": "#define LBSIZE 512\n\nchar *tfname;\nint tfile = -1;\nchar ibuff[512];\nint iblock = -1;\nchar obuff[512];\nint oblock = -1;\n\nmain() {\n    tfname = mktemp(\"/tmp/eXXXXX\");\n    init();\n    ...\n}\n\nchar *getblock(atl, iof) {\n    bno = (atl >> 8) & 0377;     /* block number (upper 8 bits) */\n    off = (atl << 1) & 0774;     /* offset within block */\n    if (bno >= 255) {\n        error(T);                /* \"TMP\" - too many blocks */\n    }\n    if (bno == iblock) return(ibuff + off);\n    if (bno == oblock) return(obuff + off);\n    if (iof == READ) {\n        if (ichanged) blkio(iblock, ibuff, write);\n        iblock = bno;\n        blkio(bno, ibuff, read);\n        return(ibuff + off);\n    }\n    if (oblock >= 0) blkio(oblock, obuff, write);\n    oblock = bno;\n    return(obuff + off);\n}",
+    "file_path": "usr/src/cmd/ed.c",
+    "line_number": 891,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "editor",
+      "memory"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 5,
+      "emotions": {
+        "concreteness": 5,
+        "creativity": 4
+      },
+      "technical_context": "ed stores the entire edited file in /tmp/eXXXXX as 256 blocks of 512 bytes (128KB max). Only two 512-byte buffers (ibuff, obuff) are in memory — a user-space implementation of OS swapping. tline encodes position as (block_no << 8) | (word_offset). zero[] array indexes line numbers → tline pointers (one int per line = 2 bytes on PDP-11). 64K lines × 2 bytes = 128KB line index. When accessing different block: write old buffer to tempfile, read new one. Reading and writing have separate buffers (ibuff/obuff) to avoid thrashing when interleaving reads/writes. The 256-block limit was sufficient for V1 Unix source files. PDP-11 had ~256KB physical RAM total — ed's design used <2KB of buffer space.",
+      "human_story": "PDP-11 had 256KB total memory in 1971. Loading a 100KB file would consume 40% of RAM. Thompson's answer: don't load the file. Keep it in /tmp/eXXXXX as 256 blocks of 512 bytes (128KB max). Memory holds just two 512-byte buffers and a line index. Block access patterns work like OS paging: cache hit (same block) is free, cache miss writes old buffer and reads new. ed implemented swapping in user-space, 8 years before the 4.0BSD kernel got demand paging. The 'editor that doesn't fit the file in RAM' design pattern lived on in sed, awk, and grep — all stream-process files block by block."
+    },
+    "appraiser_note": "ed は **編集中ファイル全体を /tmp/eXXXXX** に **256 ブロック × 512 バイト = 128KB** で保持。 メモリには **わずか 2 つの 512 バイトバッファ (ibuff/obuff)**——ユーザー空間での OS スワッピング実装。 tline は (ブロック番号 << 8) | ワードオフセットでエンコード。 zero[] 配列が行番号 → tline ポインタの索引 (1 行 = int = PDP-11 で 2 バイト)、 64K 行 × 2 バイト = 128KB の行索引。 違うブロックにアクセスしたら古いバッファを tempfile に書き戻し、 新しいブロックをロード。 入力/出力で別バッファ (ibuff/obuff) を持つのは read/write 交互のスラッシング防止。 PDP-11 256KB RAM 時代、 ed のバッファ消費は 2KB 未満。 4.0BSD のデマンドページングより 8 年早い、 ユーザー空間 swapping。 「ファイルを RAM に乗せないエディタ」 設計が sed/awk/grep のストリーム処理へ継承。"
+  },
+  {
+    "id": "ed-004-global-command",
+    "text": "global(k) {\n    register int *a1;\n    char globuf[GBSIZE];\n\n    if (globp) error(Q);             /* nested global not allowed */\n    setall();\n    compile(c);                       /* compile regex */\n    gp = globuf;\n    while ((c = getchr()) != '\\n') {  /* gather command into globuf */\n        ...\n        *gp++ = c;\n    }\n    *gp++ = '\\n'; *gp++ = 0;\n\n    /* mark all matching lines (bit 0 of line address) */\n    for (a1 = zero; a1 <= dol; a1++) {\n        *a1 &= ~01;\n        if (a1 >= addr1 && a1 <= addr2 && execute(0, a1) == k)\n            *a1 |= 01;\n    }\n\n    /* fast path for g/.../d */\n    if (globuf[0] == 'd' && globuf[1] == '\\n' && globuf[2] == '\\0') {\n        gdelete();\n        return;\n    }\n\n    /* execute command on each marked line */\n    for (a1 = zero; a1 <= dol; a1++) {\n        if (*a1 & 01) {\n            *a1 &= ~01;\n            dot = a1;\n            globp = globuf;\n            commands();              /* recursive call */\n            a1 = zero;\n        }\n    }\n}",
+    "file_path": "usr/src/cmd/ed.c",
+    "line_number": 973,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "editor",
+      "grep-origin"
+    ],
+    "interesting_score": 25,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "creativity": 4
+      },
+      "technical_context": "global() implements g/regex/command — apply command to every matching line. Algorithm: (1) compile regex, (2) gather command string into globuf, (3) mark matching lines using bit 0 of line address (in-place flag), (4) for each marked line, set dot, redirect input to globuf, recursively call commands(). The 'globp' static enables nested input source switching. `v` is negated global (execute on non-matching lines). The literal command sequence `g/.../d` is so common it gets a dedicated gdelete() fast path (O(n) vs O(n²) for the general case where line numbers shift). The command name `grep` derives from `g/re/p` — this very function. sed's address language and global commands inherit directly.",
+      "human_story": "Type `g/error/d` in ed and every error-line vanishes. It's the killer feature: apply a command to all matching lines. global() does it via mark-and-execute: scan once to flag matches in the line address's bit 0, then loop executing the command on each flagged line. The recursion (commands() calls itself with input redirected to globuf) lets any ed command be the body. The special case for `g/.../d` is the speed hack — naive implementation is O(n²), the dedicated gdelete is O(n). The name `grep` came directly from this function: G-Regular Expression-Print, extracted into its own command in 1973."
+    },
+    "appraiser_note": "global() は **g/regex/command** を実装——マッチする全行にコマンド適用。 アルゴリズム: (1) regex コンパイル、 (2) コマンド文字列を globuf に蓄積、 (3) マッチする行に **行アドレスの bit 0** をマーク (in-place flag)、 (4) マークされた各行で dot を設定、 commands() の入力を globuf にリダイレクトして **再帰呼び出し**。 globp 静的変数で入力ソース切替を実現。 `v` は negated global (非マッチ行で実行)。 `g/.../d` は非常に頻繁なので **専用の gdelete() 高速パス** (汎用 O(n²) vs 専用 O(n))。 **コマンド名 `grep` の語源**——g/re/p、 この関数がそのまま 1973 年に独立コマンド化。 sed のアドレス言語と global コマンドが直接継承。"
+  },
+  {
+    "id": "ed-005-substitute-backreference",
+    "text": "substitute(inglob) {\n    gsubf = compsub();                    /* parse old, new, flags */\n    for (a1 = addr1; a1 <= addr2; a1++) {\n        if (execute(0, a1) == 0) continue;\n        dosub();\n        if (gsubf) {\n            while (*loc2) {                /* g flag: all occurrences */\n                if (execute(1, (int *)0) == 0) break;\n                dosub();\n            }\n        }\n        ...\n    }\n}\n\ndosub() {\n    /* copy pre-match */\n    while (lp < loc1) *sp++ = *lp++;\n    /* expand replacement (rhs) */\n    while (c = *rp++ & 0177) {\n        if (c == '&') {\n            sp = place(sp, loc1, loc2);   /* & = entire match */\n            continue;\n        } else if (c < 0 && (c &= 0177) >= '1' && c < nbra+'1') {\n            /* \\1-\\9 = backreference */\n            sp = place(sp, braslist[c-'1'], braelist[c-'1']);\n            continue;\n        }\n        *sp++ = c;\n    }\n    /* copy post-match */\n    lp = loc2;\n    while (*sp++ = *lp++);\n    /* swap genbuf into linebuf */\n}",
+    "file_path": "usr/src/cmd/ed.c",
+    "line_number": 1047,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "editor",
+      "sed-origin"
+    ],
+    "interesting_score": 24,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "creativity": 5,
+        "abstraction": 4
+      },
+      "technical_context": "substitute() implements s/old/new/[flags]. Per line: execute regex, if match call dosub(); with g flag, loop until no more matches. dosub() builds genbuf: pre-match text + expanded replacement + post-match text. Replacement supports special chars: '&' = entire match, '\\1'-'\\9' = backreferences to \\(...\\) groups. This is the heart of sed — `sed s/old/new/` is exactly ed's substitute() running on each line of stdin. POSIX BRE inherits the & and \\1-\\9 syntax. vim's :s/.../.../, perl's s///, every regex-replace tool descends from this. The compile/execute regex pair plus substitute() forms the core text transformation engine of Unix.",
+      "human_story": "Type `s/foo/bar/` in ed — line becomes bar where foo was. Type `s/\\(foo\\)\\(bar\\)/\\2\\1/` — foobar becomes barfoo. Type `s/abc/&!/g` — every 'abc' becomes 'abc!'. These three operations — substitute, backref, '&' for match — are sed's entire raison d'être, vim's :s command, perl's s/// operator. All extracted from ed's 70-line substitute() + dosub() pair. The '&' meaning 'whole match' and \\1-\\9 meaning 'capture groups' are 1971 conventions still binding in 2026. Five decades of regex-replace UI compressed into one Thompson algorithm."
+    },
+    "appraiser_note": "substitute() は **s/old/new/[flags]** を実装。 行ごと: regex execute、 マッチしたら dosub()、 g フラグなら更にマッチしなくなるまでループ。 dosub() は genbuf を構築: マッチ前 + 展開された置換文字列 + マッチ後。 置換文字列は特殊文字を解釈: **`&` = マッチ全体**、 **`\\1`〜`\\9` = `\\(...\\)` グループのバックリファレンス**。 これが **sed の本質**——`sed s/old/new/` は ed の substitute() を stdin の各行で実行するだけ。 POSIX BRE が `&` と `\\1`〜`\\9` を継承。 vim の :s/...//、 perl の s///、 全 regex 置換ツールが祖先。 compile/execute regex ペア + substitute() が **Unix テキスト変換エンジンの核心**——5 ペアの操作 (substitute、 backref、 &) が 50 年後の vim/sed/perl の置換 UI を支配。"
   }
 ]
