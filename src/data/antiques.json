@@ -13952,5 +13952,140 @@
       "human_story": "diff -e outputs the difference as an ed script: `3,4c` followed by replacement lines then `.`. Feed it to ed and the old file becomes the new file. This was the prototype of patch(1) — Larry Wall in 1985 built patch as a more robust applier of diff output, but the core idea ('encode changes as machine-applicable transformation') is from 1979 diff -e. Before patch, programmers shared `diff -e` output via mailing lists: 'apply this to your file 3.2 source'. Modern unified diff (1990s) and git patches inherit the concept. Code review, pull requests, kernel patches — all built on 'difference as data, applicable mechanically'. The 1979 diff -e flag started a revolution in collaborative software development."
     },
     "appraiser_note": "**diff -e** は差分を **ed エディタコマンド**として出力: `3,4c` (3-4 行 change) + 新しい行 + `.` 終端子、 または `7a` (7 行目に append)、 `10d` (10 行目 delete)。 これを ed に喰わせれば古いファイルが新しいファイルに: `ed old < patch.ed`。 これは **patch(1) (Larry Wall, 1985) の祖型**——patch がより強力な diff 出力適用ツールとして登場、 オープンソース開発の中心ツールに。 patch(1) 普及前は、 プロジェクトが **`diff -e` 出力をメーリングリストで共有**: 「これを 3.2 source に当ててください」。 現代の unified diff (GNU diff 1990s) や git patch も概念継承——「**機械適用可能な変換として差分をエンコード**」。 コードレビュー、 プルリクエスト、 カーネルパッチ——全部 1979 年の diff -e の発想の上に。 協力ソフトウェア開発の革命の始点。"
+  },
+  {
+    "id": "diff3-001-shell-c-architecture",
+    "text": "# diff3.sh - shell wrapper\n#!/bin/sh\ne=\ncase $1 in\n-*) e=$1; shift;;\nesac\ntrap \"rm -f /tmp/d3[ab]$$\" 0 1 2 13 15\ndiff $1 $3 >/tmp/d3a$$        # diff f1 vs f3\ndiff $2 $3 >/tmp/d3b$$        # diff f2 vs f3\n/usr/lib/diff3 $e /tmp/d3[ab]$$ $1 $2 $3\n\n/* diff3.c - C binary */\n/* diff3 [-e] d13 d23 f1 f2 f3 */\nmain(argc, argv) {\n    m = readin(argv[1], d13);    /* parse first diff */\n    n = readin(argv[2], d23);    /* parse second diff */\n    for (i=0; i<=2; i++)\n        fp[i] = fopen(argv[i+3], \"r\");\n    merge(m, n);\n}",
+    "file_path": "usr/src/cmd/diff3/diff3.sh",
+    "line_number": 1,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "Shell + C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "diff3",
+      "merge"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "abstraction": 4
+      },
+      "technical_context": "diff3 is split into shell wrapper (diff3.sh, user-facing) and C binary (/usr/lib/diff3, internal helper). Shell runs diff(1) twice — diff f1 f3 > d3a, diff f2 f3 > d3b — capturing both differences against base file f3. C binary takes both diff outputs and the three original files, performs the merge. The split keeps each piece simple: shell handles arg parsing/temp files/cleanup, C binary handles merge algorithm. /usr/lib/ vs /usr/bin/ convention: helpers hidden from user. RCS (1982) and CVS later called diff3.sh internally — composition of existing Unix tools rather than reimplementing diff. The 'pipe two diffs together' approach is the same idea behind tar+gzip, find+xargs, ls+grep.",
+      "human_story": "Why is diff3 split into shell + C? Reuse. The shell wrapper runs diff twice (alice vs base, bob vs base), pipes outputs to the C binary which does the merge logic. Each piece is simple: shell handles plumbing (temp files, signals, args), C handles algorithm. The C binary hides in /usr/lib/diff3 — user calls /usr/bin/diff3 (shell wrapper). This composition of existing diff(1) + new merge logic is pure Unix philosophy. Modern git embeds 3-way merge as one huge binary, but conceptually it's still 'diff twice, merge results'."
+    },
+    "appraiser_note": "diff3 は **shell wrapper** (diff3.sh、 ユーザー向け) と **C binary** (/usr/lib/diff3、 内部ヘルパー) に分割。 shell が diff(1) を 2 回実行——`diff f1 f3 > d3a`、 `diff f2 f3 > d3b` ——基準 f3 に対する両方の差分を取得。 C binary が 2 つの diff 出力 + 3 つの元ファイルを受け取り merge 実行。 分割でそれぞれシンプル: shell が arg parse/temp/cleanup、 C binary が merge アルゴリズム。 /usr/lib/ vs /usr/bin/ 慣習: ヘルパーをユーザーから隠す。 後の RCS (1982) と CVS が内部で diff3.sh を呼び出し——既存 Unix ツールの**合成**で diff を再実装せず。 「2 つの diff を pipe で繋ぐ」 アプローチは tar+gzip、 find+xargs、 ls+grep と同じ Unix 哲学。 現代 git は 3-way merge を 1 つの巨大バイナリに統合するが、 概念的には「2 回 diff、 結果を merge」。"
+  },
+  {
+    "id": "diff3-002-range-struct",
+    "text": "struct range {\n    int from, to;\n    /* from is first in range of changed lines\n     * to is last+1\n     * from=to=line after point of insertion for added lines\n     */\n};\n\nstruct diff {\n    struct range old, new;\n};\n\n#define NC 200\nstruct diff d13[NC];     /* changes f1 vs f3 */\nstruct diff d23[NC];     /* changes f2 vs f3 */\n\nint last[4];              /* last known correspondence line numbers */\n\nreadin(name, dd) char *name; struct diff *dd; {\n    for (i=0; getchange(fp[0]); i++) {\n        a = b = number(&p);\n        if (*p == ',') { p++; b = number(&p); }\n        kind = *p++;       /* 'a', 'd', or 'c' */\n        c = d = number(&p);\n        if (*p == ',') { p++; d = number(&p); }\n        if (kind == 'a') a++;\n        if (kind == 'd') c++;\n        b++; d++;          /* exclusive 'to' */\n        dd[i].old.from = a;\n        dd[i].old.to = b;\n        dd[i].new.from = c;\n        dd[i].new.to = d;\n    }\n}",
+    "file_path": "usr/src/cmd/diff3/diff3.c",
+    "line_number": 13,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "diff3",
+      "data-structure"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 4,
+      "emotions": {
+        "concreteness": 4,
+        "abstraction": 4
+      },
+      "technical_context": "diff3 parses diff(1)'s output into struct diff arrays. Each struct diff has old (range in modified file) and new (range in base file f3). struct range uses half-open intervals [from, to) — to-from = length, from==to = insertion point. readin() parses diff output formats: 'a' = append (line after), 'd' = delete, 'c' = change. Adjusts indices to half-open: a++ for append (line after target), c++ for delete (insertion point shifts), b++/d++ to make exclusive. NC=200 limits total changes. last[1-3] tracks line correspondence across 3 files during merge. The half-open interval convention is consistent throughout computer science (Python range, C++ STL, etc.) — making length calculations and emptiness checks uniform.",
+      "human_story": "diff outputs strings like '3,5c4,6' meaning change lines 3-5 in old to lines 4-6 in new. diff3 parses these into struct diff arrays: each entry has 'old' range (in alice or bob) and 'new' range (in base). Half-open intervals [from, to) make math uniform: to-from = length, from==to = empty (insertion). readin() handles 'a' (append), 'd' (delete), 'c' (change) by adjusting indices. NC=200 caps total changes per merge — typical files fit easily, huge refactors might not. The clean data structure makes the merge algorithm tractable: walk d13[] and d23[] in parallel, dispatching based on overlap."
+    },
+    "appraiser_note": "diff3 は diff(1) の出力を struct diff 配列にパース。 各 struct diff は old (変更ファイル内の範囲) と new (基準ファイル f3 内の範囲)。 struct range は **半開区間 [from, to)** ——to-from = 長さ、 from==to = 挿入点。 readin() が diff 出力形式をパース: 'a' = append (target の後)、 'd' = delete、 'c' = change。 半開区間に正規化: append なら a++ (target の次の行)、 delete なら c++ (挿入点シフト)、 b++/d++ で exclusive 'to'。 NC=200 で最大変更数制限。 last[1-3] で 3 ファイル間の行対応を merge 中追跡。 **半開区間慣習**はコンピュータサイエンス全般で一貫 (Python range、 C++ STL 等)、 長さ計算と空判定が統一的になる。 構造のクリーンさが merge アルゴリズムを実行可能に。"
+  },
+  {
+    "id": "diff3-003-merge-five-cases",
+    "text": "merge(m1, m2) {\n    d1 = d13; d2 = d23;\n    for (; (t1 = d1 < d13+m1) | (t2 = d2 < d23+m2); ) {\n\n        /* Case 1: only f1 changed */\n        if (!t2 || t1 && d1->new.to < d2->new.from) {\n            separate(\"1\");\n            change(1, &d1->old, 0);\n            keep(2, &d1->old, &d1->new);\n            change(3, &d1->new, 0);\n            d1++; continue;\n        }\n\n        /* Case 2: only f2 changed */\n        if (!t1 || t2 && d2->new.to < d1->new.from) {\n            separate(\"2\");\n            keep(1, &d2->old, &d2->new);\n            change(2, &d2->old, 0);\n            change(3, &d2->new, 0);\n            d2++; continue;\n        }\n\n        /* Cases 3,4: merge overlapping changes within same file */\n\n        /* Case 5: both changed same range */\n        if (d1->new.from == d2->new.from &&\n            d1->new.to   == d2->new.to) {\n            dup = duplicate(&d1->old, &d2->old);\n            separate(dup ? \"3\" : \"\");      /* \"\" = CONFLICT */\n            change(1, &d1->old, dup);\n            change(2, &d2->old, 0);\n            change(3, &d3->new, 0);\n            d1++; d2++; continue;\n        }\n\n        /* Overlap: extend ranges to coincide, retry */\n        if (d1->new.from < d2->new.from) {\n            d2->old.from -= d2->new.from - d1->new.from;\n            d2->new.from = d1->new.from;\n        }\n        /* ... similar for other end ... */\n    }\n}",
+    "file_path": "usr/src/cmd/diff3/diff3.c",
+    "line_number": 169,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "diff3",
+      "3-way-merge"
+    ],
+    "interesting_score": 25,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "creativity": 5
+      },
+      "technical_context": "merge() walks d13[] and d23[] in parallel, dispatching on 5 cases: (1) only f1 has change here → emit f1's change marked '====1'; (2) only f2 has change → '====2'; (3,4) merge consecutive overlapping changes within same file; (5) both files changed same range → check if identical via duplicate(); if so emit '====3' (resolved), if not emit '====' (CONFLICT). Overlapping ranges extended to coincide then re-evaluated. This 5-case taxonomy is the canonical 3-way merge algorithm. Modern git uses essentially the same logic (with refinements like recursive merge for criss-cross histories). The 'CONFLICT means both modified the same content differently' rule is the heart of merge.",
+      "human_story": "How does git know when there's a conflict? Same algorithm as 1979 diff3: parse two diffs (yours vs base, theirs vs base), walk them in parallel. If only you changed a range: take yours. If only they changed: take theirs. If both changed the same range identically: take it (no conflict). If both changed the same range differently: CONFLICT. This 5-case dispatch in 1979 merge() is the algorithm. git, mercurial, svn, perforce — all use this. Refinements like 'recursive merge' (when history has criss-crosses) are extensions, but the basic 5-case logic is from McIlroy's diff3."
+    },
+    "appraiser_note": "merge() が d13[] と d23[] を並行 walk、 **5 ケース dispatch**: (1) f1 だけここで変更 → f1 の変更を '====1' 付きで出力; (2) f2 だけ変更 → '====2'; (3,4) 同ファイル内の連続変更を統合; (5) 両ファイルが同範囲を変更 → duplicate() で同一かチェック、 同一なら '====3' (解決済み)、 違うなら '====' (CONFLICT)。 範囲オーバーラップは一致するまで拡張、 再評価。 この **5 ケース taxonomy が canonical な 3-way merge アルゴリズム**。 現代 git は本質的に同じロジック (recursive merge for criss-cross histories の改良あり)。 「**両方が同じ内容を違うように変更 = CONFLICT**」 ルールが merge の心臓。 git/mercurial/svn/perforce 全部この方式——McIlroy の 1979 年 diff3 の 5 ケース dispatch が現代分散開発の DNA。"
+  },
+  {
+    "id": "diff3-004-equal-separator",
+    "text": "separate(s) char *s; {\n    printf(\"====%s\\n\", s);\n}\n\nchange(i, rold, dup) struct range *rold; {\n    printf(\"%d:\", i);\n    last[i] = rold->to;\n    prange(rold);\n    if (dup) return;\n    i--;\n    skip(i, rold->from, (char *)0);\n    skip(i, rold->to, \"  \");\n}\n\nprange(rold) struct range *rold; {\n    if (rold->to <= rold->from)\n        printf(\"%da\\n\", rold->from-1);    /* append */\n    else {\n        printf(\"%d\", rold->from);\n        if (rold->to > rold->from+1)\n            printf(\",%d\", rold->to-1);\n        printf(\"c\\n\");                     /* change */\n    }\n}\n\n/* Output examples:\n   ====        unresolved CONFLICT\n   ====1       only file 1 changed\n   ====2       only file 2 changed\n   ====3       both changed identically (resolved)\n*/",
+    "file_path": "usr/src/cmd/diff3/diff3.c",
+    "line_number": 268,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "diff3",
+      "conflict"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "creativity": 4,
+        "abstraction": 4
+      },
+      "technical_context": "diff3's output uses '====' separator with optional number suffix: ==== (unresolved CONFLICT, requires human resolution), ====1 (only file 1 changed, take f1's version), ====2 (only file 2 changed, take f2's), ====3 (both changed identically, take either). Each section follows with '<file_num>:<range>' headers showing what each file has at the conflict point. The ==== marker is the proto-conflict-marker for all later VCSs. Git's <<<<<<< / ======= / >>>>>>> markers are diff3's idea reformatted to embed in the file body instead of as a separator between sections. `git merge --conflict-style=diff3` explicitly outputs in diff3-compatible form with HEAD, common-ancestor, branch sections matching f1, f3, f2.",
+      "human_story": "Why does git put <<<<<<< / ======= / >>>>>>> in conflicted files? Because diff3 had ==== in 1979. Same idea: mark the conflict, show both versions, let human resolve. diff3 output: ==== (4 equals = unresolved), ====1 (resolved by taking file 1), ====2 (file 2), ====3 (both same, resolved). Git evolved this to embed markers IN the file body for easier editing in place. `git merge --conflict-style=diff3` shows the common ancestor between markers too — making it identical in spirit to 1979 diff3's f1/f3/f2 sections. 50 years of conflict markers descend from those 4 equals."
+    },
+    "appraiser_note": "diff3 の出力は **`====` セパレータ**: ==== (未解決 CONFLICT、 人間が解決必要)、 ====1 (f1 だけ変更、 f1 採用)、 ====2 (f2 だけ変更、 f2 採用)、 ====3 (両方同じく変更、 採用)。 各セクションに `<file_num>:<range>` ヘッダで各ファイルの conflict 位置を表示。 ==== マーカーが**後の全 VCS の conflict marker の祖**。 git の <<<<<<< / ======= / >>>>>>> は diff3 のアイデアをファイル本体に埋め込む形に reformat。 `git merge --conflict-style=diff3` は明示的に diff3 互換出力——HEAD/common-ancestor/branch セクションが f1/f3/f2 に対応。 50 年の conflict marker 文化が **4 つの = から**始まった。 「**マーカーで区切る + 両方表示 + 人間が選ぶ**」 が共通哲学、 embedding 方式の違いは表現上のもの。"
+  },
+  {
+    "id": "diff3-005-ed-script-auto-merge",
+    "text": "main(argc, argv) {\n    if (*argv[1] == '-') {\n        switch (argv[1][1]) {\n        default:  eflag = 3; break;     /* -e: edit script */\n        case '3': eflag = 2; break;     /* -3: f3 changes only */\n        case 'x': eflag = 1;            /* -x: conflicts only */\n        }\n    }\n    ...\n    if (eflag)\n        edscript(j);\n}\n\nedscript(n) {\n    for (n = n-1; n >= 0; n--) {     /* REVERSE order */\n        p = &de[n];\n        if (p->new.to > p->new.from)\n            fmt = \"%da\\n.\\n%d,%dc\\n\";\n        else\n            fmt = \"%da\\n\";\n        ...\n        fseek(fp[2], (long)p->new.from, 0);\n        for (i = p->new.from; i < p->new.to; i++)\n            putchar(getc(fp[2]));\n        printf(\".\\n\");\n    }\n}\n\n/* Usage: diff3 -e mine.c yours.c base.c > merge.ed\n   ed mine.c < merge.ed     # apply automatically\n*/",
+    "file_path": "usr/src/cmd/diff3/diff3.c",
+    "line_number": 45,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "diff3",
+      "auto-merge"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "creativity": 5,
+        "abstraction": 4
+      },
+      "technical_context": "diff3 -e outputs the merge as an ed editor script: piping to ed automatically applies the merge. edscript() outputs commands in REVERSE order — critical because ed line numbers shift as edits are applied; processing back-to-front means later edits don't perturb earlier line numbers. The pattern '%da\\n.\\n%d,%dc\\n' emits append-then-change, with '.' terminator for ed's text mode. -e auto-resolves non-conflicting changes; -3 outputs only base file's changes; -x outputs only conflicts. Used heavily by RCS rcsmerge command in 1982: rcsmerge runs diff3 -e and pipes to ed for automatic merge during checkout, falling back to human resolution only on conflicts. This pipeline of small tools (diff + diff3 + ed) is composability incarnate.",
+      "human_story": "diff3 -e + ed = the automatic merger. diff3 -e outputs ed commands; pipe to ed and watch the merge happen. The reverse-order output is the clever bit: edit from the end of the file backward, so line numbers stay stable. RCS (1982) used this in rcsmerge — when you check out, RCS runs diff3 -e against your version + the new HEAD + the common ancestor, pipes through ed for non-conflicting merges. Only conflicts need human resolution. Modern git replays the same logic in C code, but the original was 'pipe of small tools' — diff + diff3 + ed. Composition over reimplementation."
+    },
+    "appraiser_note": "**diff3 -e** が merge を **ed 編集スクリプト**として出力——ed にパイプすれば自動 merge 適用。 edscript() が**逆順**でコマンドを出力——重要な理由は ed の行番号が編集ごとにずれる、 末尾から処理すれば後の編集が前の行番号に影響しない。 パターン '%da\\n.\\n%d,%dc\\n' は append-then-change を出力、 '.' は ed テキストモード終端。 -e は非競合変更を自動解決、 -3 は base ファイルの変更のみ、 -x は競合のみ。 1982 年 RCS の rcsmerge コマンドが多用——チェックアウト時に diff3 -e を実行して ed にパイプ、 非競合な merge は自動、 競合のみ人間解決。 「**小さなツールのパイプ**」 (diff + diff3 + ed) が合成性の体現。 現代 git は同じロジックを C で再現するが、 オリジナルは pipe ベース——再実装より合成。"
   }
 ]
