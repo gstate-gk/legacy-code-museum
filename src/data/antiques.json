@@ -12872,5 +12872,140 @@
       "human_story": "Pre-Bourne, you couldn't write `if cmd; then ...; fi` in shell — `if` was a separate program. Bourne made control flow part of shell syntax: for, while, until, if, case. 5 constructs transformed shell from command launcher to programming language. Look at the TWH/TUN trick: same code handles while AND until via `(execute==0)==(type==TWH)` — true equals true for while, false equals false for until. Genius brevity. Today's bash if/then/elif/else/fi, for/in/do/done, while/do/done, case/esac all descend directly from these 1977 case branches. The exit-code-as-boolean convention shaped Unix's `test`, `[`, `grep`, etc."
     },
     "appraiser_note": "**shell 制御フロー**: TFOR は word リストを走査して変数に代入、 TWH/TUN は while/until を処理 (巧妙に統一: `(execute()==0)==(type==TWH)` で同じコードが両方を扱う)、 TIF は exit code で dispatch (0=true)、 TSW は case-esac の glob マッチ (shell glob `* ? [abc]` を使う、 regex ではない)。 **5 つの構文が shell をコマンドインタプリタからプログラミング言語に変えた**。 Bourne 以前の Thompson shell には制御フロー無し——`if` は別プログラムだった。 Bourne が構文に統合。 exit-code-as-boolean (0=success=true) が Unix の呼び出し慣習に。 case-esac は shell glob (`ls *.c` で使うパターン) を使い regex ではない。 制御フローの再帰 execute() 呼び出しは親と変数スコープを共有——`for i in list; do ...; done` で $i は loop 後も見える。 現代 bash の if/then/elif/else/fi、 for/in/do/done、 while/do/done、 case/esac はすべて 1977 年の case ブランチの子孫。"
+  },
+  {
+    "id": "bc-001-bundle-rpn-translation",
+    "text": "%right '='\n%left '+' '-'\n%left '*' '/' '%'\n%right '^'\n%left UMINUS\n\ne   : e '+' e\n        = bundle(3, $1, $3, \"+\");\n    | e '-' e\n        = bundle(3, $1, $3, \"-\");\n    | e '*' e\n        = bundle(3, $1, $3, \"*\");\n    | e '/' e\n        = bundle(3, $1, $3, \"/\");\n    | e '^' e\n        = bundle(3, $1, $3, \"^\");\n    | '(' e ')'\n        = { $$ = $2; }\n    | LETTER\n        = { bundle(2, \"l\", $1); }\n    | LETTER '=' e\n        = { bundle(3, $3, \"ds\", $1); }\n    | SQRT '(' e ')'\n        = { bundle(2, $3, \"v\"); }\n    | LETTER '(' cargs ')'\n        = bundle(4, $3, \"l\", getf($1), \"x\");\n    ;",
+    "file_path": "usr/src/cmd/bc.y",
+    "line_number": 158,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "Yacc",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "bc",
+      "transpiler"
+    ],
+    "interesting_score": 25,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "abstraction": 5
+      },
+      "technical_context": "bc translates algebraic infix to dc's RPN postfix via yacc + bundle(). Each rule like `e '+' e = bundle(3, $1, $3, '+')` produces 'left right +' — RPN. yacc's bottom-up LALR(1) parsing reduces inner-most expressions first, which naturally generates RPN in output order. Operator precedence from %right/%left handles `a + b * c → a (b c *) +` correctly. Variables map to dc's single-letter registers: `x = 5` becomes ` 5dsx` (push 5, dup, save to x). Function calls: `f(5)` → ` 5lFx` (push arg, load F, execute). This is a classic transpiler: parse one language, emit another. The transpiler pattern was novel in 1975; today it's everywhere (CoffeeScript→JS, TypeScript→JS, Sass→CSS, JSX→JS).",
+      "human_story": "Type `1 + 2 * 3` in bc — yacc parses it as `1 + (2*3)`. Then bundle() emits RPN: ` 2 3 * 1 +` (postfix order). Send to dc, which is an RPN calculator. dc runs it, prints 7. bc is purely a frontend — it translates and delegates. The 'transpile + delegate' pattern is 1975's gift. CoffeeScript translates to JavaScript and delegates execution to V8. TypeScript does the same. Sass translates to CSS. Markdown translates to HTML. bc was the prototype: yacc parser + RPN emitter + dc executor. The 3-line bundle rule `e '+' e = bundle(3, $1, $3, '+')` is the entire algorithm."
+    },
+    "appraiser_note": "bc は代数中置記法を dc の RPN 後置記法に **yacc + bundle()** で翻訳。 各規則 `e '+' e = bundle(3, $1, $3, '+')` が「left right +」 = RPN を生成。 yacc の **bottom-up LALR(1) parsing が内側式から reduce** されるので、 自然に RPN 順で出力。 %right/%left の演算子優先順位で `a + b * c → a (b c *) +` を正しく扱う。 変数は dc の単一文字レジスタにマップ: `x = 5` → ` 5dsx` (5 を push、 dup、 x に save)。 関数呼び出し: `f(5)` → ` 5lFx` (引数 push、 F load、 実行)。 **古典的 transpiler**: 1 言語を parse、 別の言語を emit。 transpiler パターンは 1975 年に novel、 今は遍在 (CoffeeScript→JS、 TypeScript→JS、 Sass→CSS、 JSX→JS) ——全部 bc の祖。 3 行の bundle ルールがアルゴリズム全体。"
+  },
+  {
+    "id": "bc-002-control-flow-to-dc-macros",
+    "text": "stat: ...\n    | _IF CRS BLEV '(' re ')' stat\n        ={ conout($7, $2);\n           bundle(3, $5, $2, \" \");\n        }\n    | _WHILE CRS '(' re ')' stat BLEV\n        ={ bundle(3, $6, $4, $2);\n           conout($$, $2);\n           bundle(3, $4, $2, \" \");\n        }\n    | fprefix CRS re ';' e ')' stat BLEV\n        ={ bundle(5, $7, $5, \"s.\", $3, $2);\n           conout($$, $2);\n           bundle(5, $1, \"s.\", $3, $2, \" \");\n        }\n    ;\n\nCRS :\n        ={ $$ = cp;\n           *cp++ = crs++;          /* unique register letter */\n           *cp++ = '\\0';\n           if(crs == '[')crs+=3;\n           if(crs == 'a')crs='{';\n           bstack[bindx++] = lev++;\n        }\n    ;",
+    "file_path": "usr/src/cmd/bc.y",
+    "line_number": 92,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "Yacc",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "bc",
+      "control-flow"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "creativity": 5,
+        "abstraction": 4
+      },
+      "technical_context": "bc compiles if/while/for to dc macros + conditional execute. dc has [...] (string literal), sX (save to register), lXx (load and execute). bc allocates unique register names via CRS (starting from '0', skipping '[' and 'a-z'). For `if (cond) body`: emit body as macro saved in register A, then emit `cond A>` to conditionally execute. For `while`: emit body + re-evaluate condition + recursive macro call, all as one macro; initial call evaluates condition once. For `for(init; cond; incr) body`: emit body + incr + re-eval as macro, init + first cond as launcher. This is compile-time macro generation — no runtime if/while interpretation in bc. The dc bytecode is fully self-contained loop. Tail-recursive style: macro ends by calling itself.",
+      "human_story": "How does `while (i < 10) { i = i + 1 }` work in bc? bc compiles it to a dc macro: `[li1+dsi li10 >A] sA li10 >A`. The macro increments i, then re-tests i<10, then re-calls itself if true (tail recursion). Initial line tests once and starts the loop. No runtime while-loop in bc — it's all dc macros generated at compile time. This is 'compile to a stack machine' decades before LLVM. Modern WebAssembly, JVM bytecode, .NET CIL all do versions of this. bc shows the basic idea in 1975: take a high-level loop, compile to stack-machine instructions, execute on a stack VM (dc)."
+    },
+    "appraiser_note": "bc は if/while/for を **dc マクロ + 条件実行**にコンパイル。 dc は [...] (文字列リテラル)、 sX (レジスタ保存)、 lXx (ロード+実行) を持つ。 bc は CRS で **unique register 名**を割り当て ('0' から始め、 '[' と 'a-z' を skip)。 `if (cond) body`: 本体をレジスタ A に保存、 `cond A>` で条件実行を emit。 `while`: 本体 + 条件再評価 + マクロ自己呼び出しを 1 マクロとして emit、 初回呼び出しは条件を評価。 `for(init; cond; incr) body`: 本体 + incr + 条件再評価をマクロに、 init + 初回条件を launcher として。 **コンパイル時マクロ生成**——bc には runtime if/while なし、 dc バイトコードが自己完結ループ。 末尾再帰スタイル: マクロ末尾で自己呼び出し。 1975 年に「スタック機械にコンパイル」 ——LLVM/WebAssembly/JVM bytecode/CIL の祖。"
+  },
+  {
+    "id": "bc-003-function-definitions",
+    "text": "start: ...\n    |  start def dargs ')' '{' dlist slist '}'\n        ={  bundle(6, pre, $7, post, \"0\", numb[lev], \"Q\");\n            conout($$, $2);\n            ...\n        }\n    ;\n\ndef : _DEFINE LETTER '('\n        ={  $$ = getf($2);\n            pre = \"\";\n            post = \"\";\n            lev = 1;\n            bstack[bindx=0] = 0;\n        }\n    ;\n\nstat: ...\n    | _RETURN '(' e ')'\n        = bundle(4, $3, post, numb[lev], \"Q\");\n    ;\n\n/* function call: */\ne: ...\n    | LETTER '(' cargs ')'\n        = bundle(4, $3, \"l\", getf($1), \"x\");\n    ;",
+    "file_path": "usr/src/cmd/bc.y",
+    "line_number": 40,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "Yacc",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "bc",
+      "functions"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 4,
+      "emotions": {
+        "abstraction": 4,
+        "creativity": 4
+      },
+      "technical_context": "bc functions translate to dc named registers holding macros. `define f(x) { body }` → compile body as macro, save to register F. Arg passing: pp() emits arg-save code in `pre` (function prologue), tp() emits auto var setup in `pre` too. Body in middle. `post` is epilogue. `0 N Q` at end: push 0 (return value if no explicit return), then N (level count), Q (multi-level quit) to exit N macro-call layers. `return (e)` emits `e post N Q` — push value, run epilogue, exit N levels. Function call `f(5)`: ` 5 l F x` — push arg, load F, execute. Recursion works because Q only exits the inner-most calls. bc allows 26 functions (a-z) + arrays.",
+      "human_story": "How does bc do recursion? Functions are dc macros stored in named registers. `define f(x) { return f(x-1) + 1 }` becomes a macro F that, when executed, can call itself via `lFx`. The trick: each function call is a macro invocation, and dc maintains the call stack. `Q` exits N levels of macro calls — `return` knows what N is (the current nesting level `lev`) and emits the right number. This dc execution model (stack of macro calls, Q for multi-level exit) supports proper function semantics. 1975 bc had recursion years before many academic languages."
+    },
+    "appraiser_note": "bc 関数は **dc の named register に保存されたマクロ**にコンパイル。 `define f(x) { body }` → 本体をマクロにコンパイル、 レジスタ F に保存。 **引数渡し**: pp() が引数保存コードを `pre` (関数 prologue) に emit、 tp() が auto var セットアップを `pre` に。 本体が中間。 `post` が epilogue。 末尾の `0 N Q`: 0 (return 値が無い場合のデフォルト) を push、 N (レベルカウント)、 Q (multi-level quit) で N マクロ呼び出しレベル分を抜ける。 `return (e)`: `e post N Q` を emit——値 push、 epilogue 実行、 N レベル抜ける。 関数呼び出し `f(5)`: ` 5 l F x` ——引数 push、 F load、 実行。 **再帰**動作: Q が内側呼び出しだけを抜けるから。 bc は a-z の 26 関数 + 配列を許す。 1975 年の bc が、 多くの学術言語より早く再帰を実用化。"
+  },
+  {
+    "id": "bc-004-arbitrary-precision-controls",
+    "text": "/* scale: output precision */\n| SCALE '=' e\n    = bundle(2, $3, \"k\");\n| SCALE EQOP e\n    = bundle(4,\"K\",$3,$2,\"k\");\n| SCALE INCR\n    = bundle(1,\"Kd1+k\");\n\n/* ibase: input base */\n| BASE '=' e\n    = bundle(2, $3, \"i\");\n\n/* obase: output base */\n| OBASE '=' e\n    = bundle(2,$3,\"o\");\n\n/* Example usage in bc:\n   scale = 50\n   4 * a(1)            # 50-digit pi via arctan(1) * 4\n\n   obase = 16\n   1024                # output: 400\n\n   ibase = 2\n   11110000            # input binary, output decimal: 240\n*/",
+    "file_path": "usr/src/cmd/bc.y",
+    "line_number": 74,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "Yacc",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "bc",
+      "precision"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 4,
+      "emotions": {
+        "concreteness": 4,
+        "abstraction": 3
+      },
+      "technical_context": "bc exposes dc's k/i/o commands as named variables: scale (output decimal precision), ibase (input number base), obase (output number base). Compound assignment (`scale += 2`) emits K (push current scale) + value + op + k (set new scale). Increment (`scale++`) emits Kd1+k — push, dup (return old value), increment, set new. dc internally computes in base 100 (10^2 digits per byte) for memory efficiency, but presents bases 2-16 (and higher in modern bc) for user. ibase/obase enable arbitrary base conversion: set ibase=16, type 'ff', get 255 in decimal. GNU bc -l adds math functions (s/c/a/l/e/j/sqrt) at bc level on top of dc primitives. POSIX bc requires bases 2-16 minimum.",
+      "human_story": "Want 100 digits of pi? `scale=100; 4*a(1)` in bc. scale controls output precision (decimal digits). obase=16 outputs hex, ibase=2 reads binary. These three variables — scale, ibase, obase — make bc an arbitrary-precision base-converting calculator. Behind the scenes, dc does base-100 math (memory-efficient, 2 decimal digits per byte) and converts via i/o commands at I/O time. The user sees `1/3 = 0.333...` to whatever precision they ask. From 1975 bc's design, GNU bc -l added transcendental functions (sin, cos, atan, log, exp, bessel) — but the precision/base controls are all from Bell-32V."
+    },
+    "appraiser_note": "bc は dc の k/i/o コマンドを **名前付き変数**として公開: **scale** (出力 10 進精度)、 **ibase** (入力基数)、 **obase** (出力基数)。 複合代入 `scale += 2`: `K` (現在 scale を push) + 値 + op + `k` (新 scale 設定) を emit。 インクリメント `scale++`: `Kd1+k` ——push、 dup (古い値を return)、 inc、 新値設定。 dc は内部で **100 進**計算 (10^2 桁/byte、 メモリ効率) だが、 ユーザーには base 2-16 (現代 bc では更に大) を提示。 ibase/obase で任意基数変換: ibase=16 にして 'ff' を入力すると 10 進で 255。 GNU bc -l は dc プリミティブの上に bc レベルで math 関数 (s/c/a/l/e/j/sqrt) を追加。 POSIX bc は最低 base 2-16 を要求。 100 桁の円周率: `scale=100; 4*a(1)` で計算可能。"
+  },
+  {
+    "id": "bc-005-handwritten-yylex",
+    "text": "yylex() {\n    int c, ch;\nrestart:\n    c = getch();\n    peekc = -1;\n    while (c == ' ' || c == '\\t') c = getch();\n    if (c == '\\\\') { getch(); goto restart; }\n\n    if (c <= 'z' && c >= 'a') {\n        peekc = getch();\n        if (peekc >= 'a' && peekc <= 'z') {\n            /* reserved word - check 2-char prefix */\n            if (c=='i' && peekc=='f')  { c=_IF; goto skip; }\n            if (c=='w' && peekc=='h')  { c=_WHILE; goto skip; }\n            if (c=='f' && peekc=='o')  { c=_FOR; goto skip; }\n            if (c=='s' && peekc=='q')  { c=SQRT; goto skip; }\n            if (c=='r' && peekc=='e')  { c=_RETURN; goto skip; }\n            if (c=='b' && peekc=='r')  { c=_BREAK; goto skip; }\n            if (c=='d' && peekc=='e')  { c=_DEFINE; goto skip; }\n            if (c=='s' && peekc=='c')  { c=SCALE; goto skip; }\n            if (c=='b' && peekc=='a')  { c=BASE; goto skip; }\n            if (c=='i' && peekc=='b')  { c=BASE; goto skip; }\n            if (c=='o' && peekc=='b')  { c=OBASE; goto skip; }\n            if (c=='d' && peekc=='i')  { c=FFF; goto skip; }\n            if (c=='a' && peekc=='u')  { c=_AUTO; goto skip; }\n            if (c=='l' && peekc=='e')  { c=LENGTH; goto skip; }\n            if (c=='q' && peekc=='u')  { getout(); }\n            return(error);\n        skip:\n            peekc = -1;\n            ...\n        }\n    }\n}",
+    "file_path": "usr/src/cmd/bc.y",
+    "line_number": 347,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "bc",
+      "lexer"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "minimalism",
+      "emotion_intensity": 4,
+      "emotions": {
+        "minimalism": 4,
+        "concreteness": 4
+      },
+      "technical_context": "bc's lexer is hand-written, not lex-generated. Reads char, skips whitespace, handles backslash-newline continuation. For [a-z][a-z] pattern, checks 2-char prefix against ~15 reserved words: if/while/for/sqrt/return/break/define/scale/base/ibase/obase/dibits/auto/length/quit. Two letters of lookahead is enough because all reserved words have unique 2-char prefixes. Single letter [a-z] is a variable name (LETTER token). peekc is the lookahead buffer. The hand-written approach is simple, fast, and avoids the lex dependency. 1979 Bell-32V had lex, but bc chose hand-written for the 15 keywords. Reserved words prefixed with _ in yacc tokens (_IF, _WHILE) to avoid clashes with C keywords. Function quit calls getout() to exit bc.",
+      "human_story": "How does bc tell `if` (keyword) from `i` (variable)? Lookahead. Read char, peek next char. If both are a-z, it's a reserved word — match against 15 known prefixes. Otherwise it's a single-letter variable. 30 lines of hand-written lexer, no lex needed. 2 chars of lookahead is exactly enough — all 15 keywords (if, while, for, sqrt, return, break, define, scale, base, ibase, obase, dibits, auto, length, quit) have unique 2-letter starts. Beautifully economical. Modern lexers use lex/flex or PEG, but bc's 1979 hand-roll proves you can do tokenization with one peekc buffer and a switch on 2 chars."
+    },
+    "appraiser_note": "bc の lexer は **手書き**、 lex 生成ではない。 文字を読み、 空白 skip、 バックスラッシュ改行継続を処理。 [a-z][a-z] パターンには 2 文字 prefix を約 15 個の予約語と照合: if/while/for/sqrt/return/break/define/scale/base/ibase/obase/dibits/auto/length/quit。 **2 文字 lookahead で十分**——全予約語が unique な 2 文字 prefix を持つ。 単一 [a-z] は変数名 (LETTER トークン)。 peekc が lookahead バッファ。 手書きアプローチはシンプル、 速い、 lex 依存を避ける。 1979 年 Bell-32V には lex があるが、 bc は 15 キーワードのため手書きを選択。 yacc トークンの `_` 接頭辞 (`_IF`、 `_WHILE`) は C キーワードとの衝突回避。 `quit` 関数は getout() で bc 終了。 1 つの peekc バッファ + 2 文字 switch で完全なトークン化、 1979 年の手書き経済性。"
   }
 ]
