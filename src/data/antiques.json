@@ -12737,5 +12737,140 @@
       "human_story": "How do you tell make 'ignore all errors'? Add `.IGNORE:` to Makefile. 'Be silent'? `.SILENT:`. Define what suffixes are special? `.SUFFIXES: .c .o`. These special targets — names starting with '.' — encode build metadata as if they were file targets. Make recognizes them specially. GNU make extended this: `.PHONY: all clean install` marks targets that aren't files. Same idea, scaled up. The trick of 'encode metadata as a special-named target' is the 1979 design that lets makefile language be self-describing — no separate metadata syntax needed."
     },
     "appraiser_note": "**特殊ターゲット**は (`.` で始まる名前) は make ディレクティブで、 ファイル target ではない: .IGNORE (全コマンドエラー無視、 -i フラグ相当)、 .SILENT (コマンドエコーなし、 -s 相当)、 .SUFFIXES (暗黙ルール探索の拡張子リスト)、 .DEFAULT (未知 target のフォールバック規則)。 main.c が srchname() で存在チェックして対応フラグを設定。 .SUFFIXES は順序依存: 先に書いた拡張子が優先。 空 .SUFFIXES で全クリア (暗黙ルール無効化)。 GNU make は追加: .PHONY (ファイルではない target、 常に rebuild)、 .PRECIOUS (中間ファイル削除しない)、 .SECONDARY 等。 コマンドレベル prefix (@、 -) は .SILENT、 .IGNORE のコマンド単位版。 1979 年の特殊ターゲットが **「メタデータターゲット」 アイデアの先駆け**——別のメタデータ構文不要で makefile 言語を自己記述的に。"
+  },
+  {
+    "id": "sh-001-algol-macros",
+    "text": "/* mac.h (Bourne's ALGOL 68 macros): */\n#define IF      if(\n#define THEN    ){\n#define ELIF    }else if(\n#define ELSE    }else{\n#define FI      }\n#define WHILE   while(\n#define DO      ){\n#define OD      }\n#define BEGIN   {\n#define END     }\n#define LOOP    for(;;){\n#define POOL    }\n#define SWITCH  switch(\n#define IN      ){\n#define ENDSW   }\n#define ANDF    &&\n#define ORF     ||\n#define REG     register\n\n/* Typical usage in xec.c: */\nIF (t=argt) ANDF execbrk==0\nTHEN    REG INT treeflgs;\n        SWITCH type IN\n        case TCOM:\n            BEGIN\n                ...\n            END\n        case TFORK:\n            IF execflg ANDF (treeflgs&(FAMP|FPOU))==0\n            THEN parent=0;\n            ELSE WHILE (parent=fork()) == -1\n                 DO sigchk(); alarm(10); pause() OD\n            FI\n        ENDSW\nFI",
+    "file_path": "usr/src/cmd/sh/mac.h",
+    "line_number": 1,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "sh",
+      "bourne"
+    ],
+    "interesting_score": 25,
+    "ai_analysis": {
+      "primary_emotion": "antiquity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "antiquity": 5,
+        "playfulness": 4
+      },
+      "technical_context": "Stephen Bourne wrote /bin/sh entirely in C, but used C preprocessor macros to make it LOOK like ALGOL 68 (his previous language). IF/THEN/FI WHILE/DO/OD LOOP/POOL SWITCH/IN/ENDSW BEGIN/END replace C's if/while/for/switch/{}. Reverse-spelled terminators (IF→FI, DO→OD) are ALGOL 68 idiom. ANDF/ORF for &&/||, REG for register. The entire 60KB shell source uses this style. Notorious in the C community as 'Bourne ALGOL C' — readable to Bourne, opaque to C programmers. Successor shells (bash, dash) rewrote in normal C, but Bourne's macros remained in shipped /bin/sh until many vendor Unices retired it (2000s). The user-facing shell syntax (case...esac) still has the FI/OD echo: case ends in esac, the reverse spelling of case.",
+      "human_story": "Stephen Bourne loved ALGOL 68. He wrote /bin/sh in C but couldn't help himself — he wrote macros to make C look like ALGOL 68. IF...FI, WHILE...DO...OD, the reverse-spelled terminators. Reading sh's source feels like reading a different language. Other Bell Labs programmers hated it. Doug Comer called them 'his notorious macros'. But Bourne shipped /bin/sh this way for 20+ years. The user-facing case...esac syntax preserves the spirit (esac = case reversed). Most modern shells (bash, dash, mksh) rewrote in normal C — but they kept the user syntax. 1977's source style is gone; 1977's language design persists."
+    },
+    "appraiser_note": "**Stephen Bourne の ALGOL 68 マクロ**: /bin/sh は完全に C で書かれているが、 プリプロセッサマクロで **ALGOL 68 風**に見せる。 IF/THEN/FI、 WHILE/DO/OD、 LOOP/POOL、 SWITCH/IN/ENDSW、 BEGIN/END が C の if/while/for/switch/{} を置換。 **逆綴り終端子** (IF→FI、 DO→OD) は ALGOL 68 イディオム。 ANDF/ORF が &&/||、 REG が register。 60KB の shell ソース全体がこのスタイル。 C コミュニティで悪名高い 「Bourne ALGOL C」 ——Bourne には読みやすい、 C プログラマには不可解。 後継 shell (bash、 dash) は普通の C で書き直したが、 vendor Unix の /bin/sh は 2000 年代まで Bourne 流のまま。 ユーザー向け shell 構文 (case...esac) には FI/OD の精神が残る——esac は case の逆綴り。"
+  },
+  {
+    "id": "sh-002-execute-ast-dispatch",
+    "text": "execute(argt, execflg, pf1, pf2) {\n    SWITCH type IN\n    case TCOM:      /* simple command: cmd arg arg */\n    case TFORK:     /* fork off subprocess */\n    case TPAR:      /* (subshell) */\n    case TFIL:      /* pipe: cmd1 | cmd2 */\n    case TLST:      /* sequence: cmd1 ; cmd2 */\n    case TAND:      /* short-circuit AND: cmd1 && cmd2 */\n    case TORF:      /* short-circuit OR: cmd1 || cmd2 */\n    case TFOR:      /* for v in list; do ...; done */\n    case TWH:       /* while cmd; do ...; done */\n    case TUN:       /* until cmd; do ...; done */\n    case TIF:       /* if cmd; then ...; else ...; fi */\n    case TSW:       /* case x in pat) ...; ;; esac */\n    ENDSW\n}",
+    "file_path": "usr/src/cmd/sh/xec.c",
+    "line_number": 22,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "sh",
+      "ast"
+    ],
+    "interesting_score": 24,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "elegance": 4
+      },
+      "technical_context": "execute() is the shell's AST interpreter. Dispatches on 12 node types: TCOM (simple command), TFORK (subprocess), TPAR (subshell in parens), TFIL (pipe), TLST (sequence ;), TAND (&&), TORF (||), TFOR (for-in), TWH (while), TUN (until), TIF (if-else), TSW (case-esac). Each case recursively walks the tree: TFIL spawns two executes with pipe between them; TAND only runs right if left exit code is 0; TFOR loops assigning each list element to variable. The recursive descent on AST is the standard interpreter pattern. The 12-node taxonomy covers all shell control flow. Modern shells (bash, zsh) add functions, case-modifiers, arithmetic expansion, but the core AST node types unchanged since 1977.",
+      "human_story": "How does shell execute `cmd1 && cmd2 || cmd3 | cmd4`? Parser builds an AST: TORF(TAND(cmd1, cmd2), TFIL(cmd3, cmd4)). execute() walks the tree: try cmd1 (TAND left), if success try cmd2; if AND fails, try TFIL: pipe cmd3 to cmd4. 12 node types cover everything — sequencing, branching, looping, pipes, subshells. The recursive interpreter pattern is from Bourne 1977. Bash and zsh use the same approach, just with more node types (functions, arithmetic, parameter expansion). 12 types from 1977 cover the bulk of shell semantics."
+    },
+    "appraiser_note": "execute() は shell の **AST インタプリタ**。 12 ノードタイプで dispatch: TCOM (単純コマンド)、 TFORK (子プロセス)、 TPAR (サブシェル `(...)`)、 TFIL (パイプ)、 TLST (順次 `;`)、 TAND (`&&`)、 TORF (`||`)、 TFOR (for-in)、 TWH (while)、 TUN (until)、 TIF (if-else)、 TSW (case-esac)。 各 case が木を再帰 walk: TFIL は左右に execute を spawn してパイプで接続、 TAND は左の exit code が 0 のときのみ右、 TFOR はリスト要素を変数に代入してループ。 **AST の再帰下降は標準インタプリタパターン**。 12 ノード分類がすべての shell 制御フローをカバー。 現代 shell (bash、 zsh) は関数、 case-modifier、 算術展開を追加するが、 **コア AST ノードタイプは 1977 年から不変**。"
+  },
+  {
+    "id": "sh-003-pipe-implementation",
+    "text": "case TFIL:\n    BEGIN\n        INT pv[2];\n        chkpipe(pv);                /* pipe(2) syscall */\n        IF execute(t->lstlef, 0, pf1, pv) == 0\n        THEN execute(t->lstrit, execflg, pv, pf2);\n        ELSE closepipe(pv);\n        FI\n    END\n    break;\n\ncase TFORK:\n    /* child branch: */\n    IF treeflgs&FPIN\n    THEN\n        rename(pf1[INPIPE], 0);     /* stdin from pipe read end */\n        close(pf1[OTPIPE]);\n    FI\n    IF treeflgs&FPOU\n    THEN\n        rename(pf2[OTPIPE], 1);     /* stdout to pipe write end */\n        close(pf2[INPIPE]);\n    FI\n    initio(t->treio);                /* other redirections */\n    execa(com);                       /* exec the command */",
+    "file_path": "usr/src/cmd/sh/xec.c",
+    "line_number": 305,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "sh",
+      "pipe"
+    ],
+    "interesting_score": 25,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "concreteness": 4
+      },
+      "technical_context": "Unix pipe implementation: TFIL node has left and right children. shell calls chkpipe() = pipe(2) syscall to create pipe (returns 2 fds: read end pv[0], write end pv[1]). execute left side with pv as output target — left's child process renames pv[1] to stdout (1), closes pv[0]. execute right side with pv as input source — right's child renames pv[0] to stdin (0), closes pv[1]. Both children run in parallel via fork. Three-pipe chains like cmd1 | cmd2 | cmd3 parse to TFIL(cmd1, TFIL(cmd2, cmd3)) — recursive TFIL. The 5 syscalls (pipe, fork, dup2, close, exec) compose into the most powerful Unix abstraction: chained processes streaming data. Doug McIlroy proposed pipes in 1972; Bourne shell made them syntactic in 1977.",
+      "human_story": "ls | grep foo | sort: three programs running in parallel, each consuming the previous's output. How? Bourne shell's TFIL node + 5 syscalls. pipe(2) makes a pipe (2 file descriptors). fork(2) creates a child. dup2(2) redirects stdin/stdout to pipe ends. close(2) drops unused ends. exec(2) replaces child with the command. The shell does this twice (for cmd1|cmd2) or recursively for longer pipes. The result: data flows from ls's stdout, through grep's stdin, processed, out grep's stdout, into sort's stdin. McIlroy's 1972 pipe concept + Bourne's 1977 syntactic surface = Unix's most beloved abstraction."
+    },
+    "appraiser_note": "**Unix パイプ実装**: TFIL ノードは左右の子。 shell が **chkpipe() = pipe(2)** syscall でパイプ作成 (2 fd: 読端 pv[0]、 書端 pv[1])。 左側を execute、 出力先として pv を渡す——左の子プロセスが pv[1] を stdout (1) に rename、 pv[0] を close。 右側を execute、 入力元として pv を渡す——右の子が pv[0] を stdin (0) に rename、 pv[1] を close。 両方の子が fork で **並行実行**。 3 段パイプ `cmd1 | cmd2 | cmd3` は **TFIL(cmd1, TFIL(cmd2, cmd3))** に parse——再帰 TFIL。 **5 つの syscall** (pipe、 fork、 dup2、 close、 exec) が組み合わさって **Unix の最も強力な抽象**を構築: チェーン化されたプロセスがデータをストリーミング。 Doug McIlroy が 1972 年にパイプを提案、 Bourne shell が 1977 年に構文化。"
+  },
+  {
+    "id": "sh-004-builtin-vs-external",
+    "text": "case TCOM:\n    /* built-in lookup */\n    IF (internal = syslook(com[0], commands)) ORF argn == 0\n    THEN setlist(t->comset, 0);\n    FI\n\n    SWITCH internal IN\n    case SYSDOT:    /* . file (source) */\n    case SYSCD:     /* cd */\n    case SYSEXIT:   /* exit */\n    case SYSEXEC:   /* exec */\n    case SYSSHFT:   /* shift */\n    case SYSWAIT:   /* wait */\n    case SYSREAD:   /* read */\n    case SYSSET:    /* set */\n    case SYSXPORT:  /* export */\n    case SYSRDONLY: /* readonly */\n    case SYSEVAL:   /* eval */\n    case SYSUMASK:  /* umask */\n    case SYSTRAP:   /* trap */\n    case SYSBREAK:  /* break */\n    case SYSCONT:   /* continue */\n    case SYSNULL:   /* : (no-op) */\n    case SYSTIMES:  /* times */\n    default:\n        internal = builtin(argn, com);\n    ENDSW\n\n    /* if not built-in, falls through to TFORK + execa() */",
+    "file_path": "usr/src/cmd/sh/xec.c",
+    "line_number": 53,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "sh",
+      "builtin"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 4,
+      "emotions": {
+        "abstraction": 4,
+        "concreteness": 4
+      },
+      "technical_context": "Shell distinguishes built-in commands (run inside shell process) from external (fork+exec). Built-ins must modify shell state: cd changes shell's cwd (chdir in fork would lose effect), export modifies environment, exit terminates shell, shift modifies positional params, read sets shell variables, set changes shell flags, trap installs signal handlers, etc. ~18 built-ins via SYSDOT/SYSCD/SYSEXIT etc. syslook(name, commands) hash table lookup matches command name to internal code. External commands fall through to TFORK case → execa() does fork+execvp. The distinction is fundamental: `cd /tmp` only works as built-in because external /bin/cd's chdir(2) wouldn't affect parent shell. Modern shells extend the built-in set (bash has 70+) but the dispatch pattern is from Bourne 1977.",
+      "human_story": "Why is `cd` always a shell built-in, never /bin/cd? Because if cd were external, you'd fork a child, child chdir to /tmp, child exits — parent shell's cwd unchanged. The whole point of cd is to change shell's cwd; only running in shell process achieves this. Same for export, exit, read, set. ~18 built-ins in 1977 Bourne sh. Bash extended to 70+. But the boundary — 'commands that change shell state must be built-in' — is fundamental and unchanged. The `type cd` command tells you 'cd is a shell builtin' — that distinction is from 1977."
+    },
+    "appraiser_note": "shell は **built-in** (shell プロセス内実行) と **external** (fork+exec) を区別。 built-in は shell 状態を変更する必要: cd は shell の cwd を変更 (fork した子の chdir は親に反映されない)、 export は環境変数変更、 exit は shell 終了、 shift は位置パラメータ変更、 read は shell 変数設定、 set は shell flags 変更、 trap はシグナルハンドラ設定、 等。 **約 18 個の built-in** を SYSDOT/SYSCD/SYSEXIT などの定数で dispatch。 syslook(name, commands) のハッシュテーブル lookup でコマンド名を内部コードに対応。 external コマンドは TFORK case に fall through、 execa() で fork+execvp。 区別は根本的: `cd /tmp` が動くのは built-in だから——external /bin/cd の chdir(2) は親 shell に影響しない。 現代 shell は built-in を拡張 (bash は 70+) するが、 dispatch パターンは 1977 年 Bourne から。"
+  },
+  {
+    "id": "sh-005-control-flow",
+    "text": "case TFOR:\n    WHILE *args != ENDARGS ANDF execbrk == 0\n    DO   assign(n, *args++);     /* set $v */\n         execute(t->fortre, 0);   /* execute body */\n    OD\n    break;\n\ncase TWH:\ncase TUN:\n    WHILE execbrk==0 ANDF (execute(t->whtre,0)==0)==(type==TWH)\n    DO   i = execute(t->dotre, 0);\n    OD\n    break;\n\ncase TIF:\n    IF execute(t->iftre, 0) == 0\n    THEN execute(t->thtre, execflg);\n    ELSE execute(t->eltre, execflg);\n    FI\n    break;\n\ncase TSW:\n    WHILE t\n    DO   ARGPTR rex = t->regptr;\n         WHILE rex\n         DO   IF gmatch(r, s=macro(rex->argval)) ORF eq(r,s)\n              THEN execute(t->regcom, 0); t=0; break;\n              FI\n         OD\n    OD\n    break;",
+    "file_path": "usr/src/cmd/sh/xec.c",
+    "line_number": 332,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "sh",
+      "control-flow"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "creativity": 5,
+        "abstraction": 4
+      },
+      "technical_context": "Shell control flow: TFOR loops over a word list assigning each to variable; TWH/TUN handle while/until (cleverly unified via `(execute()==0)==(type==TWH)` — same code for both); TIF dispatches on exit code (0 = true); TSW does glob matching for case-esac (uses gmatch with shell glob syntax: * ? [abc], not regex). These 5 statements transform shell from command interpreter to programming language. Pre-Bourne, Thompson shell had no control flow — `if` was a separate program. Bourne integrated them as syntax. exit-code-as-boolean (0=success=true) became Unix's calling convention. case-esac uses shell glob (filename wildcards), not regex — same patterns used in ls *.c. The control flow's recursive execute() calls share variable scope with parent — `for i in list; do ...; done` modifies $i visible after loop.",
+      "human_story": "Pre-Bourne, you couldn't write `if cmd; then ...; fi` in shell — `if` was a separate program. Bourne made control flow part of shell syntax: for, while, until, if, case. 5 constructs transformed shell from command launcher to programming language. Look at the TWH/TUN trick: same code handles while AND until via `(execute==0)==(type==TWH)` — true equals true for while, false equals false for until. Genius brevity. Today's bash if/then/elif/else/fi, for/in/do/done, while/do/done, case/esac all descend directly from these 1977 case branches. The exit-code-as-boolean convention shaped Unix's `test`, `[`, `grep`, etc."
+    },
+    "appraiser_note": "**shell 制御フロー**: TFOR は word リストを走査して変数に代入、 TWH/TUN は while/until を処理 (巧妙に統一: `(execute()==0)==(type==TWH)` で同じコードが両方を扱う)、 TIF は exit code で dispatch (0=true)、 TSW は case-esac の glob マッチ (shell glob `* ? [abc]` を使う、 regex ではない)。 **5 つの構文が shell をコマンドインタプリタからプログラミング言語に変えた**。 Bourne 以前の Thompson shell には制御フロー無し——`if` は別プログラムだった。 Bourne が構文に統合。 exit-code-as-boolean (0=success=true) が Unix の呼び出し慣習に。 case-esac は shell glob (`ls *.c` で使うパターン) を使い regex ではない。 制御フローの再帰 execute() 呼び出しは親と変数スコープを共有——`for i in list; do ...; done` で $i は loop 後も見える。 現代 bash の if/then/elif/else/fi、 for/in/do/done、 while/do/done、 case/esac はすべて 1977 年の case ブランチの子孫。"
   }
 ]
