@@ -13547,5 +13547,140 @@
       "human_story": "Why are binary dumps always 16 bytes wide? Because od said so in 1979. 16 bytes = 8 shorts = fits in 80-column terminal + offset = comfortable visual chunk size. Modern hexdump, xxd, every GUI hex editor (HxD, Bless, Hex Fiend) defaults to 16-byte rows. A choice driven by 1979 terminal width + cache-line ergonomics that became universal. The final line shows the file's total size as the closing offset — a free byte-count for the user. 50 years later, every binary dump has the same shape because of this one decision."
     },
     "appraiser_note": "od は反復ごとに **8 unsigned short = 16 バイト**読む。 標準行レイアウト: 7 桁 8 進オフセット + 8 × 6 桁 8 進ワード = 79 桁 (80 桁端末に収まる)。 16 バイト幅の選択理由: (1) 時代の VAX キャッシュライン、 (2) 80 桁端末収容、 (3) 2 の累乗で binary friendly、 (4) 人間の視覚的 chunk サイズ。 最終行: ファイル総サイズを最終オフセットとして印字——ユーザーへの無料の byte カウント。 この **16 バイト規約**が hexdump、 xxd、 GNU od、 以降の全バイナリダンプツールに伝播。 GUI hex editor (HxD、 Bless、 Hex Fiend) でも 1 行 16 バイトがデフォルト。 1979 年の選択が普遍化したのは、 **表示・マシン・人間の全レベルで機能する**から。 50 年後の全バイナリダンプが同じ形状なのは、 この 1 つの決定のおかげ。"
+  },
+  {
+    "id": "tar-001-hblock-header",
+    "text": "#define TBLOCK 512\n#define NAMSIZ 100\n\nunion hblock {\n    char dummy[TBLOCK];\n    struct header {\n        char name[NAMSIZ];      /* filename, 100 bytes */\n        char mode[8];            /* \"0000644 \" octal mode */\n        char uid[8];             /* user id */\n        char gid[8];             /* group id */\n        char size[12];           /* file size in bytes */\n        char mtime[12];          /* modification time */\n        char chksum[8];          /* header checksum */\n        char linkflag;           /* '1' if hard link */\n        char linkname[NAMSIZ];   /* original file if link */\n    } dbuf;\n} dblock, tbuf[NBLOCK];",
+    "file_path": "usr/src/cmd/tar.c",
+    "line_number": 13,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "tar",
+      "format"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "antiquity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "antiquity": 5,
+        "concreteness": 4
+      },
+      "technical_context": "tar header is 512 bytes, union of dummy[512] byte array and struct header. Header fields: name[100], mode/uid/gid/size/mtime/chksum (ASCII octal strings), linkflag (1 byte), linkname[100]. Total 257 bytes; remaining 255 bytes are zero-padded. ASCII octal for numbers (not binary) for endian-independence + human readability. File contents follow header, padded to 512-byte boundary. Modern ustar (POSIX 1003.1-1988) adds prefix[155] for longer paths (255 chars total) and magic field for format identification. GNU tar pax format effectively removes length limits. The union pattern (raw bytes / structured access) is K&R C idiom. Same 512-byte block size as V7 BSIZE, dd, ed tempfile. Half-century of tarballs all use this layout.",
+      "human_story": "Why is your linux-6.7.tar.xz internally structured the way it is? Because 1979's tar set the format: 512-byte header per file, ASCII octal numeric fields, 100-char name limit. The union hblock is K&R C trick: same 512 bytes accessed as raw bytes (for I/O) or structured header (for parsing). ASCII octal because endian-independent + human-readable: hexdump a tar file and you can read filenames and sizes. POSIX ustar extended name limit to 255 in 1988; pax format made it unlimited in 2001. But the basic header layout is unchanged. Docker images, Linux distros, npm packages — all use 1979's tar format inside their wrapper compression."
+    },
+    "appraiser_note": "tar ヘッダは **512 バイト**、 union hblock で dummy[512] バイト配列 と struct header の両方アクセス。 ヘッダフィールド: name[100]、 mode/uid/gid/size/mtime/chksum (ASCII 8 進文字列)、 linkflag (1 バイト)、 linkname[100]。 合計 257 バイト、 残り 255 バイトは zero-padded。 **ASCII 8 進数値** (バイナリではない) で endian 非依存 + 人間可読。 ファイル内容はヘッダの後、 512 バイト境界に padded。 現代 ustar (POSIX 1003.1-1988) で prefix[155] を追加して長いパス対応 (合計 255 文字)、 GNU tar pax 形式は事実上無制限。 union パターン (raw bytes / structured access) は K&R C イディオム。 V7 BSIZE、 dd、 ed tempfile と同じ 512 バイトブロック。 半世紀のすべての tarball がこのレイアウトを使用。 Docker image、 Linux distro、 npm package——全部内部で 1979 年の tar 形式。"
+  },
+  {
+    "id": "tar-002-recursive-putfile",
+    "text": "putfile(longname, shortname) {\n    infile = open(shortname, 0);\n    fstat(infile, &stbuf);\n\n    if ((stbuf.st_mode & S_IFMT) == S_IFDIR) {\n        /* directory - recurse */\n        chdir(shortname);\n        while (read(infile, (char *)&dbuf, sizeof(dbuf)) > 0 && !term) {\n            if (dbuf.d_ino == 0) { i++; continue; }\n            if (strcmp(\".\", dbuf.d_name) == 0 ||\n                strcmp(\"..\", dbuf.d_name) == 0) {\n                i++; continue;\n            }\n            /* construct child path, recurse */\n            close(infile);\n            putfile(buf, cp);              /* recursive call */\n            infile = open(\".\", 0);\n            i++;\n            lseek(infile, (long)(sizeof(dbuf) * i), 0);\n        }\n        close(infile);\n        chdir(\"..\");\n        return;\n    }\n    /* regular file - write header + data blocks */\n    tomodes(&stbuf);\n    sprintf(dblock.dbuf.chksum, \"%6o\", checksum());\n    writetape((char *) &dblock);\n    while ((i = read(infile, buf, TBLOCK)) > 0 && blocks > 0) {\n        writetape(buf);\n        blocks--;\n    }\n}",
+    "file_path": "usr/src/cmd/tar.c",
+    "line_number": 294,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "tar",
+      "recursion"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 4,
+      "emotions": {
+        "concreteness": 4,
+        "antiquity": 4
+      },
+      "technical_context": "putfile recursively traverses directory trees using chdir. For directories: open, read entries via struct direct (V7 16-byte dirent), skip . and .., recurse on each. After recursion returns, chdir('..') restores parent. Pattern matches find's descend(). The close(infile) before recursion saves fd count (V7 NOFILE=20); re-open '.' after to continue. lseek to next entry position. V7 struct direct (16 bytes fixed) lets sizeof(dbuf)*i compute position; 4.2BSD's variable struct dirent broke this trick, requiring readdir(3) API. SIGINT handler sets 'term' to allow Ctrl-C interruption mid-traversal. For files: tomodes() converts stat to ASCII octal header fields, checksum(), writetape() emits header then data in 512-byte chunks.",
+      "human_story": "tar cf foo.tar /usr — how does it find all files? putfile() recursively walks the tree. For each dir: chdir into it, read entries one by one, skip . and .., recurse into each. After recursion, chdir('..') to climb back. For each regular file: open it, fill the tar header from stat info, checksum, write header, write data in 512-byte chunks. The close-then-reopen-and-seek pattern saves file descriptors (V7 only had 20 per process). V7 struct direct's fixed 16-byte size let lseek compute next position arithmetically — a trick 4.2BSD broke when dirent went variable-length. Recursion depth = directory depth, fine for normal trees."
+    },
+    "appraiser_note": "putfile が chdir を使って **ディレクトリツリーを再帰下降**。 ディレクトリの場合: open、 struct direct (V7 16 バイト dirent) でエントリを 1 つずつ read、 . と .. を skip、 各エントリで再帰。 再帰 return 後、 chdir('..') で親に戻る。 パターンは find の descend() と同じ。 再帰前の close(infile) が fd 数節約 (V7 NOFILE=20)、 後で '.' を再 open して continue、 lseek で次のエントリ位置へ。 V7 struct direct (16 バイト固定) で sizeof(dbuf)*i で位置計算可能、 4.2BSD の可変 struct dirent でこのトリックが壊れ readdir(3) API 必要に。 SIGINT ハンドラで 'term' をセット、 Ctrl-C で走査中断可能。 通常ファイルの場合: tomodes() で stat を ASCII 8 進ヘッダフィールドに変換、 checksum()、 writetape() でヘッダ + 512 バイトチャンクのデータ。"
+  },
+  {
+    "id": "tar-003-hardlink-tracking",
+    "text": "struct linkbuf {\n    ino_t inum;\n    dev_t devnum;\n    int count;\n    char pathname[NAMSIZ];\n    struct linkbuf *nextp;\n} *ihead;\n\nputfile(...) {\n    if (stbuf.st_nlink > 1) {\n        /* search for existing inode+device match */\n        for (lp = ihead; lp != NULL; lp = lp->nextp) {\n            if (lp->inum == stbuf.st_ino && lp->devnum == stbuf.st_dev) {\n                found++;\n                break;\n            }\n        }\n        if (found) {\n            /* already archived - write as link reference */\n            strcpy(dblock.dbuf.linkname, lp->pathname);\n            dblock.dbuf.linkflag = '1';\n            sprintf(dblock.dbuf.chksum, \"%6o\", checksum());\n            writetape((char *)&dblock);\n            close(infile);\n            return;\n        }\n        /* first encounter - remember */\n        lp = (struct linkbuf *) malloc(sizeof(*lp));\n        lp->nextp = ihead;\n        ihead = lp;\n        lp->inum = stbuf.st_ino;\n        lp->devnum = stbuf.st_dev;\n        lp->count = stbuf.st_nlink - 1;\n        strcpy(lp->pathname, longname);\n    }\n    /* fall through to normal file archiving */\n}",
+    "file_path": "usr/src/cmd/tar.c",
+    "line_number": 366,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "tar",
+      "hardlink"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "carefulness",
+      "emotion_intensity": 5,
+      "emotions": {
+        "carefulness": 5,
+        "abstraction": 4
+      },
+      "technical_context": "tar preserves hard links to avoid storing duplicate data and to restore link relationships. Each file with st_nlink > 1 is checked against linked list of (inum, devnum) tuples. First encounter: archive normally + add to list with pathname. Subsequent encounter (same inode): write header with linkflag='1' and linkname=original path; no data follows. Restoration creates ln(2) link to original. Without this, hard-linked files would be stored multiple times and restored as separate files (breaking link relationships). The (inum, devnum) tuple uniquely identifies a Unix inode (devnum needed because inodes are per-filesystem). Linear search through linkbuf list — fine for thousands of files, slow for millions. Modern GNU tar uses hash tables for O(1) lookup.",
+      "human_story": "ln /usr/bin/ar /usr/bin/ranlib — two paths, one inode, one set of bytes. If tar archived them as two separate files, you'd waste space and lose the link relationship on restore. tar's clever: track (inode, device) tuples in a linked list. First encounter: archive normally + remember. Second encounter (same inode): write a link reference, no data. On restore, ln(2) creates the hard link from the second path to the first. Saves space, preserves semantics. This works because Unix's file = (inode, device) — same data has one canonical location, multiple paths. 50 years of tar preserve this perfectly."
+    },
+    "appraiser_note": "tar は **ハードリンクを保存**——重複データを避け、 リンク関係を復元可能に。 st_nlink > 1 の各ファイルを (inum, devnum) タプルの連結リストと照合。 初回遭遇: 通常 archive + リスト追加 (pathname も)。 後続遭遇 (同 inode): linkflag='1' + linkname=元パス のヘッダを書く、 データ無し。 復元時に ln(2) で元へのリンク作成。 これなしだとハードリンクファイルは複数回保存され、 別ファイルとして復元される (リンク関係破壊)。 (inum, devnum) タプルが Unix inode を一意識別 (inode はファイルシステム毎なので devnum 必要)。 linkbuf リストの線形検索——数千ファイルは問題ない、 数百万で遅い。 現代 GNU tar はハッシュテーブルで O(1) lookup。 ln /usr/bin/ar /usr/bin/ranlib のような典型例で機能。"
+  },
+  {
+    "id": "tar-004-header-checksum",
+    "text": "checksum() {\n    register i;\n    register char *p;\n    register unsigned sum;\n\n    p = (char *) &dblock;\n    sum = 0;\n    for (i = 0; i < sizeof(dblock); i++) {\n        sum += 0xFF & *p++;\n    }\n    return(sum);\n}\n\nputfile(...) {\n    /* fill all header fields first */\n    tomodes(&stbuf);\n    /* chksum field is spaces during calculation (convention) */\n    sprintf(dblock.dbuf.chksum, \"%6o\", checksum());\n    writetape((char *) &dblock);\n}\n\ndoxtract(...) {\n    /* during extraction: verify */\n    if (chksum != stoi(dblock.dbuf.chksum)) {\n        fprintf(stderr, \"directory checksum error\\n\");\n        done(1);\n    }\n}",
+    "file_path": "usr/src/cmd/tar.c",
+    "line_number": 651,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "tar",
+      "integrity"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "carefulness",
+      "emotion_intensity": 4,
+      "emotions": {
+        "carefulness": 4,
+        "concreteness": 4
+      },
+      "technical_context": "Header checksum = sum of all 512 header bytes. Self-reference problem: chksum field is part of the header. Convention: fill chksum with 8 ASCII spaces (0x20 × 8 = 256) during calculation, then sprintf overwrites with octal sum. Reader pads with spaces too before verifying. Simple byte sum (not CRC) — weak error detection (bit-flip pairs cancel) but adequate for occasional tape errors. 6-digit octal = max 262143 = covers 512 × 255 = 130560 (max possible sum). Modern archive formats (zip, gzip) use CRC-32 for stronger error detection; tar's checksum is more about format identification than reliability. Failed checksum signals 'this might not be a tar archive' more than 'data is corrupt'.",
+      "human_story": "How does tar know an archive isn't corrupt? Header checksum: simple byte sum of the 512-byte header. Self-reference solved by writing spaces in chksum field during calculation, sprintf overwriting after. Reader does the same: zero-out chksum during recalc, compare to stored value. Weak by modern standards (CRC-32 catches more), but enough for tape errors. Also serves as format identifier — if you cat a non-tar file expecting tar, checksum fails immediately and you stop. The convention-based self-reference (spaces during calc) was elegant 1979 problem-solving; modern formats put checksums in a separate frame to avoid the issue."
+    },
+    "appraiser_note": "ヘッダチェックサム = 512 バイトヘッダ全部の **バイト和**。 自己参照問題: chksum フィールドがヘッダの一部。 **規約**: 計算時に chksum を 8 個の ASCII スペース (0x20 × 8 = 256) で埋める、 sprintf で 8 進和を書き込む。 読み手も検証前にスペースで埋める。 **単純バイト和** (CRC ではない)、 弱いエラー検出 (ペアビット反転は cancel) だが磁気テープエラーには十分。 6 桁 8 進 = 最大 262143 = 512 × 255 = 130560 (最大可能和) をカバー。 現代アーカイブ形式 (zip、 gzip) は **CRC-32** でより強力なエラー検出、 tar のチェックサムは信頼性より形式識別の意味合いが大きい。 チェックサム失敗は「tar アーカイブでないかも」 を示唆。 1979 年の規約ベース自己参照解決 (計算時スペース) はエレガント、 現代形式はチェックサムを別フレームに置いて問題を回避。"
+  },
+  {
+    "id": "tar-005-magtape-origin",
+    "text": "char magtape[] = \"/dev/mt1\";\nchar *usefile;\n\nmain(...) {\n    usefile = magtape;          /* default to mag tape */\n    ...\n    case 'f':\n        usefile = *argv++;      /* override with -f file */\n        break;\n    case '0':\n    case '1':\n        magtape[7] = *cp;       /* /dev/mt0 or /dev/mt1 */\n        usefile = magtape;\n        break;\n    case 'b':\n        nblock = atoi(*argv++);  /* blocking factor */\n        break;\n}\n\n/* tar = Tape ARchive\n   default: /dev/mt1 (mag tape unit 1)\n   override: -f file\n   1979 backup workflow:\n     tar c /usr          # backup /usr to /dev/mt1\n     tar t               # list tape contents\n     tar x               # restore from tape\n*/",
+    "file_path": "usr/src/cmd/tar.c",
+    "line_number": 51,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "tar",
+      "magnetic-tape"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "antiquity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "antiquity": 5,
+        "concreteness": 4
+      },
+      "technical_context": "tar's default target is /dev/mt1 (magnetic tape unit 1) — hence the name 'Tape ARchive'. 1970s Unix backed up to 9-track magnetic tape: 2400-foot reels holding ~175 MB at 1600 BPI. Tapes were sequential-only, no random access. magtape[7] mutation trick changes '1' to '0' for /dev/mt0. -f flag overrides to use a regular file. nblock (1-20) sets blocking factor: write N×512 bytes per I/O for better tape utilization (fewer inter-record gaps). By 1990s, tapes were replaced by disk-based backup, but tar format stayed: .tar.Z (1980s compress), .tar.gz (1990s gzip), .tar.bz2/.tar.xz/.tar.zst (later). Docker image layers, npm packages, Linux kernel sources — all use tar inside compression wrapper. The 'Tape' in tar is vestigial; 'ARchive' is universal.",
+      "human_story": "Why is the format called 'tar'? Tape ARchive. 1979's default target was /dev/mt1, a magnetic tape unit. 9-track reels held ~175 MB; tar wrote files sequentially. By 1990 mag tape was retreating, but .tar files stayed: pipe through compress (.tar.Z), then gzip (.tar.gz), then bzip2/xz/zstd. Today's Docker image layers are tar+gzip. The 'Tape' is gone (most users never touched mag tape), but 'ARchive' is universal. The magtape[7]='0' or '1' trick is from when /dev/mt0 and /dev/mt1 were the two main tape drives. The blocking factor (-b) optimized tape throughput by reducing inter-record gaps. All vestigial in modern tar, but the syntax persists for backward compatibility."
+    },
+    "appraiser_note": "tar のデフォルトターゲットは **/dev/mt1** (magnetic tape unit 1) ——名前の由来「Tape ARchive」。 1970 年代 Unix は **9-track 磁気テープ**にバックアップ: 2400 フィートリール、 1600 BPI で ~175 MB。 テープは sequential、 random access 不可。 magtape[7] mutation トリックで '1' を '0' に変えて /dev/mt0 へ。 -f フラグでファイル指定。 nblock (1-20) で blocking factor 設定: テープ効率良くするため N×512 バイト/IO (inter-record gap 削減)。 1990 年代にテープがディスクバックアップに置換、 でも tar 形式は残存: .tar.Z (1980s compress)、 .tar.gz (1990s gzip)、 .tar.bz2/.tar.xz/.tar.zst。 Docker image layer、 npm package、 Linux kernel ソース——全部圧縮ラッパー内で tar。 「Tape」 は痕跡的 (現代ユーザーは触れない)、 「ARchive」 は普遍。 magtape[7] のトリックは /dev/mt0 と /dev/mt1 が主要 2 テープドライブだった時代の名残。 後方互換性のため構文は残存。"
   }
 ]
