@@ -12332,5 +12332,140 @@
       "human_story": "Want files modified in the last week? `-mtime -7`. Owned by alice? `-user alice`. Larger than 100KB? `-size +200` (200 blocks = 100KB). Permissions 0755? `-perm 755`. find's 11 predicates expose struct stat as a query language. scomp() unifies '+N greater', '-N less', 'N equal' across all numeric predicates — write the comparison once. -perm with '-' prefix means 'at least these bits' (set bits required, others may be set too) — a common gotcha. 1979's set covers all the basics; modern GNU find layers convenience features on top, but the foundation is here."
     },
     "appraiser_note": "find は **struct stat フィールドを述語として公開**: mtime/atime/ctime (タイムスタンプ、 /A_DAY=86400 で日単位)、 user/group (uid/gid lookup via getunum で /etc/passwd や /etc/group 検索)、 size (512 バイトブロック、 (size+511)>>9 = ceiling 除算)、 perm (mode & 07777、 '-' は at-least-these-bits)、 links (st_nlink)、 type (st_mode & S_IFMT)。 **共通 scomp()** が +N (より大きい)、 -N (より小さい)、 N (等しい) を全数値述語で扱う——比較ロジックを 1 箇所で記述。 現代 GNU find はサイズサフィックス (c=バイト、 k=KB、 M=MB、 G=GB)、 -size に /N で完全一致、 より多くの時刻述語 (-min バリアント)、 -regex (vs -name の glob)、 -printf 出力フォーマットを追加。 1979 年のセットは基盤——11 述語で主要 stat フィールドを全部カバー。 SQL の WHERE owner='alice' AND modified_at > NOW() - INTERVAL '7 days' と概念的に同じ DSL を 1979 年に。"
+  },
+  {
+    "id": "cc-001-five-pass-pipeline",
+    "text": "char pass0[40] = \"/lib/ccom\";\nchar pass2[20] = \"/lib/c2\";\nchar passp[20] = \"/lib/cpp\";\nchar *pref = \"/lib/crt0.o\";\n\nmain() {\n    for (i=0; i<nc; i++) {\n        /* Pass 1: cpp (preprocess) */\n        av[0] = \"cpp\"; av[1] = clist[i]; av[2] = tmp4;\n        callsys(passp, av);\n\n        /* Pass 2: ccom (compile) */\n        av[0] = \"ccom\"; av[1] = tmp4; av[2] = tmp3;\n        callsys(pass0, av);\n\n        /* Pass 3: c2 (optimize, optional) */\n        if (oflag) {\n            av[0] = \"c2\"; av[1] = tmp5; av[2] = tmp3;\n            callsys(pass2, av);\n        }\n\n        /* Pass 4: as (assemble) */\n        av[0] = \"as\"; av[1] = \"-o\"; av[2] = setsuf(clist[i], 'o');\n        callsys(\"/bin/as\", av);\n    }\n    /* Pass 5: ld (link) */\n    if (cflag==0 && nl!=0) {\n        av[0] = \"ld\"; av[1] = \"-X\"; av[2] = pref;\n        callsys(\"/bin/ld\", av);\n    }\n}",
+    "file_path": "usr/src/cmd/cc.c",
+    "line_number": 41,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "cc",
+      "compiler"
+    ],
+    "interesting_score": 24,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "elegance": 4
+      },
+      "technical_context": "cc isn't the C compiler — it's the driver. The actual compiler is split across 5 programs: cpp (/lib/cpp, preprocessor handling #include/#define/#if), ccom (/lib/ccom, C compiler proper doing lex/parse/codegen), c2 (/lib/c2, peephole optimizer, optional with -O), as (/bin/as, assembler), ld (/bin/ld, linker). cc invokes each via callsys() (fork+execv+wait), passing intermediate files between passes. Why split? Memory constraints (each pass fits in PDP-11's 64KB address space), language independence (Fortran uses same as/ld), debuggability (errors localized to one pass), modular evolution (replace ccom without touching others). This 'compiler as pipeline' is Unix's defining architectural decision for compilers — opposite of monolithic compilers in DEC VMS or IBM mainframes. gcc and clang maintain the same structure: cc1 + as + ld.",
+      "human_story": "Other OSes had compilers as one giant program. Unix said: split it. cpp does macros. ccom does C-to-assembly. c2 optimizes. as makes machine code. ld links. cc orchestrates. Each pass is small enough to fit PDP-11 memory. Each can be replaced independently — swap ccom for a new C compiler, the rest still works. Same as/ld serves Fortran, Pascal, Ada. This 'compiler as pipeline' is the architectural difference between Unix and the rest of computing in 1979. Modern gcc has cc1+as+ld, clang has clang+as+lld — same pipeline, 50 years later."
+    },
+    "appraiser_note": "cc は **C コンパイラ本体ではなく、 ドライバ**。 実際のコンパイラは 5 プログラムに分割: cpp (/lib/cpp、 #include/#define/#if のプリプロセッサ)、 ccom (/lib/ccom、 C コンパイラ本体、 lex/parse/codegen)、 c2 (/lib/c2、 peephole optimizer、 -O ありで起動)、 as (/bin/as、 アセンブラ)、 ld (/bin/ld、 リンカ)。 cc は callsys() (fork+execv+wait) で各パスを起動、 中間ファイルでつなぐ。 分割理由: メモリ制約 (各パス PDP-11 64KB に収まる)、 言語独立性 (Fortran も同じ as/ld 使用)、 デバッグ性 (エラーが 1 パスに局所化)、 モジュラー進化 (ccom 入れ替えても他に影響なし)。 「コンパイラ = パイプライン」 は Unix の決定的アーキテクチャ判断——DEC VMS や IBM メインフレームのモノリシックコンパイラと対照的。 gcc も clang も同じ構造を維持: cc1 + as + ld。"
+  },
+  {
+    "id": "cc-002-tempfile-management",
+    "text": "char *tmp0, *tmp1, *tmp2, *tmp3, *tmp4, *tmp5;\n\nmain() {\n    if (pflag==0) {\n        tmp0 = copy(\"/tmp/ctm0a\");\n        while((c=fopen(tmp0, \"r\")) != NULL) {\n            fclose(c);\n            tmp0[9]++;          /* 衝突回避: 'a' -> 'b' -> ... */\n        }\n        while((creat(tmp0, 0400))<0)\n            tmp0[9]++;\n    }\n    if (signal(SIGINT, SIG_IGN) != SIG_IGN)\n        signal(SIGINT, idexit);\n    if (signal(SIGTERM, SIG_IGN) != SIG_IGN)\n        signal(SIGTERM, idexit);\n\n    (tmp1 = copy(tmp0))[8] = '1';\n    (tmp2 = copy(tmp0))[8] = '2';\n    (tmp3 = copy(tmp0))[8] = '3';\n    if (oflag) (tmp5 = copy(tmp0))[8] = '5';\n    if (pflag==0) (tmp4 = copy(tmp0))[8] = '4';\n    ...\n}\n\ndexit() {\n    cunlink(tmp1); cunlink(tmp2); cunlink(tmp3);\n    cunlink(tmp4); cunlink(tmp5); cunlink(tmp0);\n    exit(eflag);\n}",
+    "file_path": "usr/src/cmd/cc.c",
+    "line_number": 196,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "cc",
+      "tempfile"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "carefulness",
+      "emotion_intensity": 4,
+      "emotions": {
+        "carefulness": 4,
+        "concreteness": 4
+      },
+      "technical_context": "cc manages 6 temporary files /tmp/ctm0a..5a (intermediate outputs between passes). tmp4=cpp output (.i), tmp3=ccom output (.s), tmp5=c2 buffer, tmp0=lock-like. Collision avoidance: try fopen, if file exists increment 10th char ('a'→'b'→...) and retry. Signal handlers (SIGINT, SIGTERM) invoke dexit() which cunlink()s all tmp files — Ctrl-C cleanup. Modern mkstemp(3) avoids the TOCTOU race (file checked then created — another process could grab the name between); 1979's check-then-create was acceptable when /tmp had few processes. The tmp filename's 10th-char incrementing trick is K&R-style hack: one base name, modify one char to generate the family. Static names like /tmp/ctm0a are deliberate — make's parallel builds were uncommon in 1979.",
+      "human_story": "cc creates 6 temp files in /tmp during a build. They hold pass outputs (cpp→.i, ccom→.s, etc.). Two concurrent cc invocations could collide — solved by incrementing the 10th character: ctm0a, ctm0b, ctm0c... Then SIGINT/SIGTERM handlers ensure cleanup on Ctrl-C. The TOCTOU race (check-then-create) was tolerated because /tmp had little concurrency in 1979. Modern mkstemp(3) closes this gap. The trick of mutating one char in the basename to derive 6 related names is K&R economy: one allocation, 6 derived strings via byte writes. Wasteful by today's standards, clever by 1979's."
+    },
+    "appraiser_note": "cc は **6 つのテンポラリ**を /tmp/ctm0a..5a で管理 (各パスの中間出力)。 tmp4=cpp 出力 (.i)、 tmp3=ccom 出力 (.s)、 tmp5=c2 バッファ、 tmp0=ロック的役割。 衝突回避: fopen で確認、 存在すれば 10 文字目をインクリメント ('a'→'b'→...) してリトライ。 シグナルハンドラ (SIGINT/SIGTERM) で dexit() を呼んで全 tmp を cunlink()——Ctrl-C クリーンアップ。 現代の mkstemp(3) は TOCTOU race (確認後の create 間に他プロセスが取る可能性) を防ぐが、 1979 年は /tmp の並行が少なく check-then-create で十分。 10 文字目の文字変更トリックは K&R 流ハック: 1 つの基底名、 1 文字書き換えで関連 6 名を派生。 現代の標準では無駄、 1979 年では巧妙。"
+  },
+  {
+    "id": "cc-003-callsys-fork-exec-wait",
+    "text": "callsys(f, v)\nchar f[], *v[];\n{\n    int t, status;\n\n    if ((t=fork())==0) {\n        execv(f, v);\n        printf(\"Can't find %s\\n\", f);\n        exit(100);\n    } else if (t == -1) {\n        printf(\"Try again\\n\");\n        return 1;\n    }\n    while (t != wait(&status));\n    return (status&0177)==0 ? (status>>8)&0377 : 1;\n}",
+    "file_path": "usr/src/cmd/cc.c",
+    "line_number": 392,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "cc",
+      "subprocess"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "minimalism",
+      "emotion_intensity": 4,
+      "emotions": {
+        "minimalism": 4,
+        "elegance": 4
+      },
+      "technical_context": "callsys() is fork + execv + wait in 14 lines. Child: execv() replaces process image with the named program; if execv returns it failed (file not found, etc.) — print error and exit(100). Parent: wait(&status) loops until our child returns (wait can return for any child; check t to confirm). Return code extraction: status's lower 7 bits are signal number (non-zero means killed by signal → failure), upper 8 bits are exit code. `(status>>8)&0377` extracts exit code from typical Unix wait status format. This is the canonical fork-exec-wait pattern that every Unix programming book teaches; subprocess libraries (Python's subprocess, Go's exec.Command, Rust's std::process) all wrap this. The 'Try again' on fork failure is from times when NPROC limit was easily hit on small Unix systems.",
+      "human_story": "Want to run a program from your program? fork, exec, wait. 14 lines. Every Unix programming tutorial teaches this. cc's callsys is the canonical example: fork creates a child, child execs the target program (failure means program not found), parent waits for completion and returns the exit code. The exit code extraction `(status>>8)&0377` is folklore — wait()'s status word packs exit code in upper byte, signal info in lower byte. Modern subprocess libraries (Python's subprocess.run, Go's exec.Command, Rust's Command) hide this away, but underneath they're all calling fork+exec+wait — the same 14-line pattern from 1979's cc.c."
+    },
+    "appraiser_note": "callsys() は **fork + execv + wait の 14 行**。 子: execv() がプロセスイメージを指定プログラムで置換、 execv が return したら失敗 (ファイル無し等)——エラー印字して exit(100)。 親: wait(&status) で自分の子の終了を待つ (wait は任意の子で return するので t で確認)。 戻り値抽出: status の下位 7 bit はシグナル番号 (非ゼロならシグナル kill = 失敗)、 上位 8 bit は exit code。 `(status>>8)&0377` で典型的な Unix wait 形式から exit code 抽出。 これが **canonical fork-exec-wait パターン**——Unix プログラミング教科書の定番、 subprocess ライブラリ (Python subprocess、 Go exec.Command、 Rust std::process) すべてのラッパー。 「Try again」 は NPROC 上限が小さい Unix システムで fork 失敗が頻発した時代の名残。"
+  },
+  {
+    "id": "cc-004-extension-conventions",
+    "text": "getsuf(as)\nchar as[];\n{\n    register int c;\n    register char *s;\n    register int t;\n\n    s = as;\n    c = 0;\n    while(t = *s++)\n        if (t=='/')\n            c = 0;        /* path separator resets count */\n        else\n            c++;\n    s -= 3;\n    if (c<=14 && c>2 && *s++=='.')\n        return(*s);\n    return(0);\n}\n\nchar *setsuf(as, ch)\nchar as[];\n{\n    register char *s, *s1;\n\n    s = s1 = copy(as);\n    while(*s)\n        if (*s++ == '/')\n            s1 = s;\n    s[-1] = ch;\n    return(s1);\n}",
+    "file_path": "usr/src/cmd/cc.c",
+    "line_number": 358,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "cc",
+      "convention"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "minimalism",
+      "emotion_intensity": 4,
+      "emotions": {
+        "minimalism": 4,
+        "antiquity": 4
+      },
+      "technical_context": "getsuf() extracts file extension (last char after .): walks string counting chars since last /, then checks if 3rd-to-last char is '.', returns the suffix char. setsuf() replaces extension by mutating the last char in-place after copying. Constraints: c<=14 (V7 max filename length), c>2 (need room for X.Y). The 1-char-extension assumption is unique to V7/Bell-32V — .c, .s, .o, .a, .i are the universe. Multi-char extensions like .cpp, .cxx, .so, .dylib came later. Bell-32V cc established the canonical Unix extension vocabulary: .c (C source), .s (assembly), .i (preprocessed), .o (object), .a (archive). Modern compilers add many more (.cpp, .cc, .cxx, .C, .hh, .hpp, .so, .dylib, .dll) but the core 1-char convention from 1979 still dominates Unix source trees.",
+      "human_story": "How does cc know to compile hello.c into hello.o? Two helpers: getsuf extracts the single-letter extension (.c → 'c'), setsuf replaces it (.c → .o by mutating last byte). The 1-character extension assumption is V7-specific: .c, .s, .o, .a, .i — the universe of Unix source file types. Multi-char extensions (.cpp for C++, .so for shared object) appeared in the 1980s-90s. Bell-32V's cc established the canonical vocabulary: .c, .s, .o, .a. Half a century later, your gcc still recognizes these as the primary file types. The 14-char limit comes from V7 filesystem; modern systems lifted it, but Unix source trees still use short names by convention."
+    },
+    "appraiser_note": "getsuf() はファイル拡張子 (. の後の最後の文字) を抽出: 文字列を走査して / 以降の文字数をカウント、 末尾から 3 文字目が '.' ならその後の文字を返す。 setsuf() は拡張子を置換: コピー後、 最後の文字を in-place 書き換え。 制約: c<=14 (V7 最大ファイル名長)、 c>2 (X.Y の最小)。 **1 文字拡張子の前提**は V7/Bell-32V 固有——.c、 .s、 .o、 .a、 .i が宇宙の全て。 .cpp、 .cxx、 .so、 .dylib のような複数文字拡張子は後の時代。 Bell-32V cc が **Unix 拡張子規約**を確立: .c (C ソース)、 .s (アセンブリ)、 .i (前処理済み)、 .o (オブジェクト)、 .a (アーカイブ)。 現代コンパイラは多数追加 (.cpp、 .cc、 .cxx、 .C、 .hh、 .hpp、 .so、 .dylib、 .dll) するが、 1979 年の 1 文字規約が今も Unix ソースツリーを支配。"
+  },
+  {
+    "id": "cc-005-crt0-startup",
+    "text": "char *pref = \"/lib/crt0.o\";\n\nmain() {\n    /* select crt0 variant based on flags */\n    if (noflflag)\n        pref = proflag ? \"/lib/fmcrt0.o\" : \"/lib/fcrt0.o\";   /* Fortran */\n    else if (proflag)\n        pref = \"/lib/mcrt0.o\";                                  /* profiling */\n\n    if (argv[i][1] == '2') {\n        if(argv[i][2] == '\\0')\n            pref = \"/lib/crt2.o\";\n        else {\n            pref = \"/lib/crt20.o\";\n            f20 = 1;\n        }\n    }\n\n    /* always pass crt0 first to ld */\n    av[0] = \"ld\";\n    av[1] = \"-X\";\n    av[2] = pref;\n    /* ... .o files and libraries ... */\n    callsys(\"/bin/ld\", av);\n}",
+    "file_path": "usr/src/cmd/cc.c",
+    "line_number": 44,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "cc",
+      "runtime"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "concreteness": 4
+      },
+      "technical_context": "/lib/crt0.o is C runtime startup — an assembly object that defines _start, the actual entry point of every C executable. Kernel jumps to _start after execve; _start unpacks argv/envp from the stack, calls main(argc, argv), then calls exit(retval) with main's return value. Without crt0.o, there's no glue between the OS process-launch ABI and the C function main(). cc selects crt0 variant based on flags: standard /lib/crt0.o, /lib/mcrt0.o for -p profiling (calls monitor() to set up profiling), /lib/fcrt0.o for Fortran, /lib/crt2.o for alternate memory model. crt0 is the OS-language boundary — it's where 'a process' becomes 'a C program'. Every Unix C compiler still does this: glibc's crt1.o + crti.o + crtbegin.o + crtend.o + crtn.o (broken into more pieces) but the role is identical to 1979's crt0.o.",
+      "human_story": "Kernel calls execve() — what runs? Not main(). The kernel jumps to _start, an assembly routine in /lib/crt0.o. _start unpacks argv from the stack, calls main(argc, argv), then calls exit() with main's return value. Without crt0.o, your C program has no way to run. It's the bridge between 'OS launches process' and 'main() function executes'. cc selects different crt0 variants for profiling (mcrt0.o calls monitor()), Fortran (fcrt0.o), alternate memory models (crt2.o). Modern Linux splits crt0 into multiple files (crt1.o, crti.o, crtbegin.o) but the role is unchanged: glue between OS ABI and your main(). 1979's design lives on."
+    },
+    "appraiser_note": "/lib/crt0.o は **C ランタイム startup**——アセンブリオブジェクトで `_start` シンボルを定義、 全 C 実行可能ファイルの実際のエントリポイント。 カーネルが execve 後に `_start` へ jump、 `_start` がスタックから argv/envp を取り出し、 main(argc, argv) を call、 main の return 値で exit(retval) を call。 crt0.o なしでは OS のプロセス起動 ABI と C 関数 main() を繋ぐ glue が存在しない。 cc はフラグに応じて crt0 バリアントを選択: 標準 /lib/crt0.o、 /lib/mcrt0.o (-p profiling、 monitor() を呼ぶ)、 /lib/fcrt0.o (Fortran)、 /lib/crt2.o (代替メモリモデル)。 crt0 は **OS と言語の境界線**——「プロセス」 が「C プログラム」 になる場所。 現代の glibc は crt1.o + crti.o + crtbegin.o + crtend.o + crtn.o に分割されるが、 役割は 1979 年と同一: OS ABI と main() の glue。 「クルマでいうアイドリング→走行」 の遷移コード。"
   }
 ]
