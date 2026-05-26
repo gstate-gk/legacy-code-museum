@@ -14763,5 +14763,143 @@
       "human_story": "By 1979, Unix had a complete data processing toolkit: sort, uniq, comm, join, cmp, diff, diff3 — 2628 lines of C covering every SQL operation. DISTINCT? sort -u. GROUP BY + COUNT? sort | uniq -c. INNER JOIN? join. INTERSECT? comm -12. All composable via pipes, all streaming, all working on GB inputs with constant memory (per tool). 1980s companies ran their entire business analytics this way — payroll, inventory, customer reports — because Oracle was expensive and Unix was free (in the workplace). SQL won the database market by being declarative and optimizer-driven, but shell pipelines won the ad-hoc analysis market by being flexible and composable. Modern data engineers use both: pull from SQL into CSV, pipe through awk/sort/uniq, push back. The 1979 family of tools is still the foundation."
     },
     "appraiser_note": "uniq が完成させる **Bell-32V Unix 1979 データ処理ツール群**: sort (902 行、 順序付け)、 uniq (142、 重複除去/カウント)、 comm (166、 集合演算)、 join (214、 リレーショナル)、 cmp (121、 バイト比較)、 diff (645、 LCS)、 diff3 (438、 3-way merge)。 **合計 2628 行**で DISTINCT、 GROUP BY、 HAVING、 JOIN、 INTERSECT、 EXCEPT、 ORDER BY、 LIMIT、 WHERE、 SELECT——**SQL の全データ操作言語を合成可能なシェルツールで実装**、 SQL 主流化の 14 年前。 1980 年代 Unix shop は payroll、 inventory、 customer reports、 financial summaries を awk+sort+uniq+comm+join パイプラインで運用——Oracle (1979 リリースだが高価) より**安価でポータブル**。 SQL は**宣言的 + optimizer 駆動**で DB 市場を制し、 シェルパイプラインは**柔軟 + 合成可能**でアドホック分析市場を制した。 現代データエンジニアは両方使う——SQL から CSV へ、 awk/sort/uniq でパイプ、 戻す。 **1979 年の 7 ツール 2628 行が今も土台**。"
+  },
+  {
+    "id": "tr-001-code-table",
+    "text": "char code[256];\nchar squeez[256];\nchar vect[256];\n\nmain(argc, argv) {\n    ...\n    for (i = 0; i < 256; i++)\n        code[i] = vect[i] = 0;\n\n    /* Build code[] table: code[c] = d means \"translate c to d\" */\n    for (;;) {\n        if (cflag) c = *compl++;\n        else c = next(&string1);\n        if (c == 0) break;\n        d = next(&string2);\n        if (d == 0) d = lastd;\n        else lastd = d;\n        squeez[d & 0377] = 1;\n        code[c & 0377] = dflag ? 1 : d;\n    }\n\n    /* Fill identity for unset entries */\n    for (i = 0; i < 256; i++) {\n        if (code[i] == 0) code[i] = i;\n        else if (dflag) code[i] = 0;\n    }\n\n    /* Main translation loop: O(1) lookup per byte */\n    while ((c = getc(stdin)) != EOF) {\n        if (c == 0) continue;\n        if (c = code[c & 0377] & 0377)\n            if (!sflag || c != save || !squeez[c & 0377])\n                putchar(save = c);\n    }\n}",
+    "file_path": "usr/src/cmd/tr.c",
+    "line_number": 47,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "tr",
+      "translation-table"
+    ],
+    "interesting_score": 24,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "concreteness": 5
+      },
+      "technical_context": "tr uses a 256-byte code[] lookup table for O(1) byte translation. code[i]=i means identity (pass through), code[i]=j means translate i to j, code[i]=0 means delete. Build phase: walks string1/string2 in parallel via next(), sets code[c]=d for each pair. Then fills identity (code[i]=i) for unset entries, or 0 if -d flag. Main loop is a tight 4-line getc/putchar with single array lookup — fastest possible byte translation in C. squeez[256] marks chars eligible for -s squeeze; vect[256] is temporary boolean used for -c complement construction. & 0377 (octal 0xFF) masks to handle signed char on PDP-11 where char defaults to signed. Total table memory: 768 bytes (3×256), independent of input size. This 'encode behavior in 256-byte table' pattern is the canonical Unix design idiom, shared by dd (EBCDIC), sort (fold/dict), getty (parity), ar (modes).",
+      "human_story": "How do you translate every 'A' to 'a' in a 1GB file? Naive: scan each byte, check if it's A, replace. Slow. tr's answer (1979): build a 256-byte table where code['A']='a', code['B']='b', etc., and code[i]=i for everything else. Main loop: read byte c, write code[c]. One array lookup per byte, no branches. This is the table-driven design that runs through all of 1979 Unix — dd uses it for EBCDIC, sort uses it for fold/dict, getty uses it for parity, ar uses it for mode strings. The lesson: when you have a finite, small input domain (256 bytes), encode the operation as data, not code. The loop becomes trivial; the table becomes the program. Modern CPUs love it: hot loop fits in L1 cache, perfect branch prediction. 50 years later, GNU tr still does the same thing with dynamic-sized tables for Unicode."
+    },
+    "appraiser_note": "tr は **256 バイト変換テーブル `code[]`** で **O(1) バイト変換**: code[i]=i (恒等)、 code[i]=j (i→j 変換)、 code[i]=0 (削除)。 ビルド段で string1/string2 を next() で並行走査、 code[c]=d をセット。 未設定エントリは恒等で埋める、 -d 時は 0 (削除)。 メインループは 4 行の getc/putchar + 配列 lookup——**C で書ける最速の文字変換**。 squeez[256] が -s 圧縮対象、 vect[256] が -c 補集合構築の一時 boolean。 **`& 0377`** (8 進 0xFF) で PDP-11 の signed char 互換マスク。 全テーブルメモリ 768 バイト (3×256)、 入力サイズ無関係。 **「動作を 256 バイトテーブルにエンコード」 パターン**は 1979 年 Unix の **canonical 設計言語**——dd (EBCDIC)、 sort (fold/dict)、 getty (parity)、 ar (modes) と同系統。 教訓: **有限小入力ドメインなら、 操作をデータにエンコード、 ループは自明に**。 現代 CPU でも hot loop が L1 キャッシュに収まり branch prediction も完璧。 50 年後の GNU tr も同じ (動的サイズで Unicode 対応)。"
+  },
+  {
+    "id": "tr-002-range-expansion",
+    "text": "struct string {\n    int last, max;\n    char *p;\n} string1, string2;\n\nnext(s)\nstruct string *s;\n{\nagain:\n    if (s->max) {\n        /* In the middle of a range: a-z */\n        if (s->last++ < s->max)\n            return(s->last);\n        s->max = s->last = 0;\n    }\n    if (s->last && *s->p == '-') {\n        /* Detected range: prev_char - next_char */\n        nextc(s);                     /* skip '-' */\n        s->max = nextc(s);            /* read end of range */\n        if (s->max == 0) {\n            s->p--;\n            return('-');\n        }\n        if (s->max < s->last) {\n            s->last = s->max - 1;\n            return('-');\n        }\n        goto again;\n    }\n    return(s->last = nextc(s));\n}\n\nnextc(s)\nstruct string *s;\n{\n    c = *s->p++;\n    if (c == '\\\\') {\n        i = n = 0;\n        while (i < 3 && (c = *s->p) >= '0' && c <= '7') {\n            n = n * 8 + c - '0';\n            i++;\n            s->p++;\n        }\n        if (i > 0) c = n;             /* \\NNN form */\n        else c = *s->p++;             /* \\X form */\n    }\n    ...\n}",
+    "file_path": "usr/src/cmd/tr.c",
+    "line_number": 88,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "tr",
+      "range-expansion",
+      "generator"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "creativity": 4,
+        "elegance": 4
+      },
+      "technical_context": "tr's next() implements 'a-z' range expansion as a lazy generator. struct string holds {p: remaining string ptr, last: previous char returned, max: range end (0 if not in range)}. On each call: if in range mode (max != 0), return last+1 until last == max. Else read next char via nextc(); if followed by '-', enter range mode with max = char after '-'. Edge cases: if max < last (e.g. z-a), return '-' as literal; if max == 0 (e.g. 'a-' at end), also literal. nextc() handles \\NNN octal escapes (up to 3 digits, base 8) and \\X literal escapes. Lazy expansion saves memory: 'a-z' encoded as 3 ints (p, last, max), not 26-byte buffer. For 'a-zA-Z0-9', eager allocation needs 62 bytes; lazy uses 3 ints regardless. This generator pattern predates Python generators (2001) by 22 years.",
+      "human_story": "When you write `tr 'a-z' 'A-Z'`, where does the expansion happen? In tr (1979), it doesn't — at least not eagerly. The next() function returns one character at a time, lazily expanding 'a-z' into 'a','b','c',...,'z' as needed. struct string holds three integers: current position in input string, last char returned, and range end. When next() sees '-' after a char, it enters 'range mode' and yields successive chars until reaching the end. This is exactly Python's generator pattern, 22 years before Python had it. Memory savings: 'a-zA-Z0-9' is 9 input chars, eager expansion would be 62 bytes, lazy stays at 3 ints. Edge cases handled gracefully: 'z-a' (reverse range) treats '-' as literal; trailing '-' treats it as literal. K&R C with goto and pointer arithmetic, 24 lines for a lazy character generator with octal escape parsing. Modern equivalent: itertools.chain + str.expandranges()."
+    },
+    "appraiser_note": "tr の next() が **'a-z' 範囲記法**を **遅延 generator** で実装。 struct string が状態保持: p (残り文字列ポインタ)、 last (前回返した文字)、 max (range 終端、 0 なら range 外)。 動作: range モード (max != 0) なら last+1 を last == max まで返す、 そうでなければ nextc() で 1 文字読む、 次が '-' なら range モード突入、 nextc() で終端を max にセット。 エッジケース: max < last (例 z-a) → '-' リテラル、 max == 0 (例 'a-' で終わる) → '-' リテラル。 nextc() が **\\NNN 8 進エスケープ** (最大 3 桁) と **\\X リテラルエスケープ**をパース。 **遅延展開のメモリ節約**: 'a-z' は 3 整数 (p/last/max) のみ、 eager だと 26 バイト。 'a-zA-Z0-9' なら 62 バイト vs 3 整数。 **Python の generator パターン (2001) を 22 年先取り**。 K&R C の goto + ポインタ算術で **24 行**の lazy character generator + 8 進エスケープ。 1979 年に既に generator パターン完成。"
+  },
+  {
+    "id": "tr-003-complement",
+    "text": "if (cflag) {\n    while (c = next(&string1))\n        vect[c & 0377] = 1;       /* mark all chars in string1 */\n    j = 0;\n    for (i = 1; i < 256; i++)\n        if (vect[i] == 0)\n            vect[j++] = i;        /* collect complement */\n    vect[j] = 0;\n    compl = vect;\n}\n\n/* Main loop uses compl[] instead of next(&string1): */\nfor (;;) {\n    if (cflag) c = *compl++;\n    else c = next(&string1);\n    if (c == 0) break;\n    ...\n}\n\n/* Usage examples:\n   tr -c 'A-Za-z' '_'      # non-letters to underscore\n   tr -cd '0-9'            # keep only digits\n   tr -cs 'A-Za-z' '\\n'    # word splitter (McIlroy one-liner stage 1)\n*/",
+    "file_path": "usr/src/cmd/tr.c",
+    "line_number": 49,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "tr",
+      "complement"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 4,
+      "emotions": {
+        "abstraction": 4,
+        "elegance": 4
+      },
+      "technical_context": "tr's -c flag (complement) inverts string1: instead of operating on chars IN string1, operate on chars NOT in string1. Implementation: 2-step boolean-to-list conversion. (1) vect[c]=1 for each c in next(string1), marking string1 members. (2) Walk vect[1..255], collect chars where vect[i]=0 into vect[0..j], terminating with vect[j]=0. The same 256-byte buffer is reused for both marking and the complement list (different semantics, same memory). Excludes i=0 (NUL) since C strings can't contain NUL. Main loop dispatches: cflag=>iterate compl++ list; otherwise next(&string1). Set-theoretic operation: complement = U \\ string1, where U = {1..255}. Equivalent to regex [^...], SQL NOT IN, awk !condition. The boolean-mark-then-collect pattern is also used in tr's squeez[] for -s, and in many other 'two-pass over bitmap' algorithms.",
+      "human_story": "Why -c (complement)? Because some questions are easier stated as 'all chars EXCEPT these'. `tr -cd '0-9'` deletes everything except digits — phone number from messy text. `tr -cs 'A-Za-z' '\\n'` splits text into words by replacing non-letters with newlines (McIlroy's word-frequency one-liner). Implementation: mark string1 chars in a 256-byte boolean array, then walk it backward to collect unmarked positions into a list. Same buffer, different meanings: first a bitmap, then a list. Memory-efficient and clean. The complement concept appears everywhere in computing: regex [^abc], SQL NOT IN, set theory U\\S, awk !match. 1979's tr -c gave shell users the set-complement primitive over byte values, in 9 lines of C."
+    },
+    "appraiser_note": "tr の **-c (complement)** フラグが string1 を反転——string1 **以外**を変換対象に。 **2 ステップ実装**: (1) vect[c]=1 で string1 メンバーを boolean マーク、 (2) vect[1..255] を走査して vect[i]=0 のものを vect[0..j] に積む、 vect[j]=0 で終端。 **同じ 256 バイト buffer を boolean → list へ役割切り替え**——メモリ節約。 i=0 (NUL) を除外、 C 文字列が NUL を含めないため。 メインループの分岐: cflag なら compl++、 通常は next(&string1)。 集合論的に **補集合 = U \\ string1** (U = {1..255})。 等価: 正規表現 [^...]、 SQL NOT IN、 awk !condition。 **`tr -cd '0-9'`** で「数字以外を全削除」、 電話番号抽出。 **`tr -cs 'A-Za-z' '\\n'`** が McIlroy word-frequency one-liner の最初の段——非英字を改行に+連続圧縮で**単語分割**。 1979 年に **9 行 C** でシェルユーザーに set-complement プリミティブを提供。 boolean-mark-then-collect パターンは tr の squeez[]、 bitmap アルゴリズム全般に再利用。"
+  },
+  {
+    "id": "tr-004-delete-squeeze",
+    "text": "/* Main translation loop with -d (delete) and -s (squeeze): */\nwhile ((c = getc(stdin)) != EOF) {\n    if (c == 0) continue;\n    if (c = code[c & 0377] & 0377)            /* lookup; 0 = delete */\n        if (!sflag || c != save || !squeez[c & 0377])\n            putchar(save = c);\n}\n\n/* Building squeez[] table earlier: */\nfor (;;) {\n    ...\n    d = next(&string2);\n    ...\n    squeez[d & 0377] = 1;          /* mark each output char */\n    code[c & 0377] = dflag ? 1 : d;\n}\nwhile (d = next(&string2))\n    squeez[d & 0377] = 1;\n\n/* Flag combinations:\n   tr -d '0-9'              # delete digits\n   tr -s ' '                # squeeze spaces (\"a    b\" -> \"a b\")\n   tr -cs A-Za-z '\\n'       # words on separate lines (no blanks)\n   tr -ds '0-9' 'abc'       # delete digits, squeeze abc\n   tr -cd '\\n A-Za-z'       # keep only letters/space/newline\n*/",
+    "file_path": "usr/src/cmd/tr.c",
+    "line_number": 79,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "tr",
+      "delete",
+      "squeeze"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "abstraction": 4
+      },
+      "technical_context": "tr's -d (delete) and -s (squeeze) flags compose orthogonally with translation. -d: when -d flag is set, code[c]=0 instead of code[c]=d, marking c for deletion. Main loop's 'if (c = code[c] & 0377)' skips when result is 0 — delete is just a special translation to 'output nothing'. -s: build squeez[c]=1 for each c in string2. Main loop checks (!sflag || c != save || !squeez[c]) — output unless squeezing and same as previous output and marked. save variable holds previous output. Combining -cd gives 'keep only string1' (delete its complement). Combining -cs gives 'complement + squeeze' = word splitter idiom. Combining -ds gives 'delete then squeeze remaining'. All 8 combinations (none, -d, -s, -c, -cd, -cs, -ds, -cds) work coherently — flags are truly orthogonal. 1-line main loop handles all 8 cases.",
+      "human_story": "How does tr's 1-line main loop handle 8 flag combinations? Through orthogonal flag design. Delete is implemented as 'translate to byte 0' — code[c]=0, and the loop's `if (c = code[c])` skips zero values. Squeeze keeps state in `save` (last output) and squeez[] (which chars are squeeze candidates) — output the byte unless it equals save AND is squeezable. These two checks compose naturally with translation, with complement, with each other. `tr -cs A-Za-z '\\n'` (complement + squeeze) replaces every non-letter with newline and collapses consecutive newlines — splitting text into words, one per line. This is the first stage of McIlroy's 1986 word-frequency one-liner. Eight behaviors in 132 lines because the building blocks compose. 1979's lesson: design primitives that combine, not modes that don't."
+    },
+    "appraiser_note": "tr の **-d (delete) と -s (squeeze) フラグ**は変換と**直交**して合成。 -d: code[c]=0 にセット (削除マーク)、 メインループの **`if (c = code[c] & 0377)`** で 0 をスキップ——削除は「**バイト 0 への変換**」 として実装。 -s: squeez[c]=1 を string2 の各 c に立てる、 メインループで **(!sflag || c != save || !squeez[c])** チェック——squeeze 中 + 前回出力と同じ + 圧縮対象なら出力しない。 save が前回出力保持。 **8 通りの組み合わせ** (なし、-d、-s、-c、-cd、-cs、-ds、-cds) すべて **1 行のメインループ**で動く——フラグが**真に直交**。 -cd で「string1 以外を全削除」、 -cs で「補集合+圧縮」 = **word splitter idiom**、 -ds で「削除+残りを圧縮」 。 **1979 年の教訓**: モードを増やすのではなく**合成可能なプリミティブ**を設計。 8 動作を 132 行で実現できるのは building blocks が compose するから。 McIlroy word frequency one-liner の最初の段 `tr -cs A-Za-z '\\n'` がこの直交設計の極限活用例。"
+  },
+  {
+    "id": "tr-005-mcilroy-pipeline-entry",
+    "text": "# Doug McIlroy's famous 1986 word-frequency one-liner\n# (Programming Pearls Column 5, in response to Knuth's 10+ page Pascal solution):\n\n$ tr -cs A-Za-z '\\n' < doc.txt | tr A-Z a-z | sort | uniq -c | sort -rn | sed 10q\n\n# Pipeline decomposition:\n#   tr -cs A-Za-z '\\n'   : split into words (one per line)  [stage 1: tr]\n#   tr A-Z a-z           : lowercase                          [stage 2: tr]\n#   sort                  : group identical words             [stage 3]\n#   uniq -c              : count each                         [stage 4]\n#   sort -rn             : sort by count desc                 [stage 5]\n#   sed 10q              : top 10                             [stage 6]\n\n# tr is the pipeline ENTRY POINT — transforms raw text into\n# the format sort/uniq can process (line-oriented, normalized).\n\n# Modern equivalents (all conceptually the same pattern):\n#   Python: collections.Counter(re.findall(r'[a-z]+', text.lower())).most_common(10)\n#   Hadoop: Map (emit word, 1) -> Sort shuffle -> Reduce (sum)\n#   Spark:  df.selectExpr('explode(split(value, ...))').groupBy().count().orderBy()\n#   SQL:    SELECT word, COUNT(*) FROM words GROUP BY word ORDER BY 2 DESC LIMIT 10",
+    "file_path": "usr/src/cmd/tr.c",
+    "line_number": 1,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "tr",
+      "mcilroy",
+      "pipeline-entry"
+    ],
+    "interesting_score": 25,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "elegance": 5
+      },
+      "technical_context": "tr is the entry point of Unix shell data pipelines — it transforms raw text into the line-oriented, normalized form that sort/uniq/awk can process. McIlroy's 1986 word-frequency one-liner (Programming Pearls Column 5, 'Programming Style') uses tr twice: stage 1 splits text into words (tr -cs A-Za-z '\\n'), stage 2 normalizes case (tr A-Z a-z). The remaining 4 stages (sort | uniq -c | sort -rn | sed 10q) implement SQL's SELECT word, COUNT(*) FROM ... GROUP BY word ORDER BY 2 DESC LIMIT 10. The whole 6-stage pipeline replaces Knuth's 10+ page Pascal literate-programming solution. Pattern preserved in modern systems: Python collections.Counter, Hadoop MapReduce, Spark groupBy. The 'tokenize + normalize + group + count + sort + limit' pattern is the canonical text analytics workflow, and tr provides stages 1-2. Bell-32V's 132-line tr is the foundation of every word frequency analysis, log parsing, NLP preprocessing, and text mining task that uses shell.",
+      "human_story": "Why does McIlroy's 1986 one-liner start with tr? Because raw text isn't line-oriented yet. 'The quick brown fox' is one line, but contains 4 words. sort/uniq need words on separate lines to group them. tr -cs A-Za-z '\\n' is the transformation: replace every non-letter with newline (complement), collapse consecutive newlines (squeeze). Then tr A-Z a-z normalizes case (or 'The' and 'the' count separately). Now sort | uniq -c groups identical words and counts. This 'tokenize → normalize → group → count → sort → limit' pattern is the canonical text analytics workflow, born in 1979 Bell Labs. Knuth wrote a 10+ page Pascal program to do the same thing. McIlroy's 6-command shell pipeline became more famous than the 10 pages — not because it's shorter, but because it composes existing tools that the OS already had. tr is the pipeline's mouth, eating raw text and spitting out structured data for the rest to digest."
+    },
+    "appraiser_note": "tr は **Unix シェルパイプラインの入口**——生テキストを sort/uniq が処理できる**行指向 + 正規化形式**に変換。 **McIlroy 1986 word frequency one-liner** (Programming Pearls Column 5「Programming Style」) は **tr を 2 回使う**: stage 1 で `tr -cs A-Za-z '\\n'` で単語分割、 stage 2 で `tr A-Z a-z` でケース正規化。 残り 4 段 (sort | uniq -c | sort -rn | sed 10q) が SQL の SELECT word, COUNT(*) GROUP BY ORDER BY DESC LIMIT 10 を実装。 **6 段パイプラインで Knuth の 10+ ページ Pascal literate programming を置換**。 同パターンは現代でも: Python collections.Counter、 Hadoop MapReduce、 Spark groupBy、 SQL GROUP BY。 「**tokenize + normalize + group + count + sort + limit**」 が **canonical text analytics workflow**、 tr が stage 1-2 を担う。 Bell-32V の 132 行 tr が word frequency、 ログ解析、 NLP 前処理、 text mining——シェルを使うあらゆるテキスト分析の**土台**。 McIlroy の教訓: **既存ツールを合成するだけで OS レベルの問題解決**——書く必要なし、 OS が既に持っている。"
   }
 ]
