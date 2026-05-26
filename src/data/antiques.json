@@ -14627,5 +14627,141 @@
       "human_story": "Why does sort matter so much? Because comm, join, uniq all need sorted input. sort is the glue that makes Unix data pipelines work. Without it, you can't count uniques (sort | uniq -c), can't set-intersect files (comm -12 sorted1 sorted2), can't relational join (sort | join). The whole 'shell as data language' rests on sort. 1980s companies ran their data analytics via awk-extract | sort | uniq -c | sort -rn | head — top-N report in one line. Modern equivalent: SQL SELECT ... GROUP BY ... ORDER BY ... LIMIT. The 1979 shell pipeline beats SQL on ad-hoc ease for many tasks; sort makes it possible."
     },
     "appraiser_note": "sort は **Unix データ処理パイプライン全体の土台**。 uniq は sorted 入力必須、 comm は sorted 必須、 join も同様。 Unix 哲学: 小さな合成可能ツール。 sort+uniq = group+count、 sort+uniq+sort = frequency 分析、 sort+comm = 集合演算、 sort+join = リレーショナルクエリ。 sort なしには後段ツールが awkward に。 sort が土台になることで、 **shell がデータ処理言語に**なる。 1980 年代 SQL DB 普及前、 企業は ETL を shell パイプラインで運用: awk 抽出 | sort | uniq -c | sort -rn | head——top-N レポートを 1 行で。 現代等価: SQL SELECT...GROUP BY...ORDER BY...LIMIT。 1979 shell パイプラインはアドホックタスクで SQL より楽な場合が多い——sort が可能にする。 Hadoop streaming/Spark はこのパイプラインパターンのスケールアウト版。"
+  },
+  {
+    "id": "uniq-001-dual-buffer",
+    "text": "static char b1[1000], b2[1000];\n\nmain(argc, argv) {\n    ...\n    if (gline(b1))\n        exit(0);             /* empty input */\n\n    for (;;) {\n        linec++;\n        if (gline(b2)) {     /* read next line */\n            pline(b1);        /* output last buffered line */\n            exit(0);\n        }\n        if (!equal(b1, b2)) {\n            pline(b1);        /* output b1 (group ended) */\n            linec = 0;\n            do {\n                linec++;\n                if (gline(b1)) {\n                    pline(b2);   /* output last line */\n                    exit(0);\n                }\n            } while (equal(b1, b2));\n            pline(b2);\n            linec = 0;\n        }\n    }\n}",
+    "file_path": "usr/src/cmd/uniq.c",
+    "line_number": 14,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "uniq",
+      "dual-buffer"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "concreteness": 4
+      },
+      "technical_context": "uniq's core algorithm uses two alternating buffers b1[1000] and b2[1000] to detect adjacent duplicates. b1 = current group's representative line, b2 = newly read line. If equal: b2 is duplicate, advance. If not equal: output b1, then swap roles (now b1 is the new line, b2 is the prior representative). The dual-buffer pattern avoids memory copies — just read into the other buffer. Memory consumption is ~2KB constant regardless of input size — streaming design suitable for GB-scale sorted files. linec tracks group size for -c (count) mode. 1979's 1KB/line limit was adequate for typical text; GNU uniq uses dynamic buffers. The 'two-buffer alternating' pattern is also seen in tape/disk merge algorithms and double-buffered I/O.",
+      "human_story": "How do you detect adjacent duplicates without storing the whole stream? Bell-32V uniq's answer: two buffers, b1 and b2. Read first line into b1. Read next into b2. If equal, b2 is a duplicate — read next over b2 again. If different, output b1, then the roles flip: b1 holds the prior line, b2 the new — output b2 when the group ends. Total memory: ~2KB, regardless of how big the input is. This streaming design is why `sort huge.log | uniq -c` works on GB files. The dual-buffer pattern shows up everywhere in systems programming — disk merge, audio DSP, network packet handling. 1979 already had it in 142 lines."
+    },
+    "appraiser_note": "uniq の **核心アルゴリズム**は 2 つのバッファ b1[1000]/b2[1000] を **交互に使い回し**で隣接重複検出。 b1 = 現グループ代表行、 b2 = 新しく読んだ行。 等しければ b2 が重複——進む。 異なれば b1 を出力、 役割反転 (b1 が新行、 b2 が前代表)。 **デュアルバッファパターン**はメモリコピー不要——新しい行を読むだけで前のバッファが残る。 メモリ消費 **~2KB 定数**——入力サイズ無関係。 1GB の sorted file でも 2KB で処理可能、 **streaming 設計**の典型。 linec がグループ内行数を追跡、 -c (count) モードで出力。 1979 年の 1KB/行制限は典型テキストに十分、 GNU uniq は動的拡張。 **「2 バッファ交互」 パターン**はテープ/ディスク merge、 ダブルバッファ I/O、 オーディオ DSP、 ネットワークパケット処理など系統的に再利用。 1979 年に既に 142 行で完成。"
+  },
+  {
+    "id": "uniq-002-three-modes",
+    "text": "char mode;\nint uniq;        /* set when current line is a duplicate */\n\npline(buf) {\n    switch (mode) {\n    case 'u':                /* unique only */\n        if (uniq) {\n            uniq = 0;\n            return;          /* skip duplicates */\n        }\n        break;\n    case 'd':                /* duplicates only */\n        if (uniq) break;     /* output */\n        return;              /* skip non-duplicates */\n    case 'c':                /* count */\n        printf(\"%4d \", linec);\n    }\n    uniq = 0;\n    fputs(buf, stdout);\n    putchar('\\n');\n}\n\nequal(b1, b2) {\n    ...\n    while ((c = *b1++) != 0)\n        if (c != *b2++) return(0);\n    if (*b2 != 0) return(0);\n    uniq++;                  /* mark as duplicate */\n    return(1);\n}",
+    "file_path": "usr/src/cmd/uniq.c",
+    "line_number": 67,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "uniq",
+      "filter-modes"
+    ],
+    "interesting_score": 24,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "elegance": 4
+      },
+      "technical_context": "uniq's output filter is dispatched by mode variable (4 values: 0/u/d/c) inside pline(). Mode 'u' = unique-only (skip if duplicate flag set). Mode 'd' = duplicates-only (output only if duplicate). Mode 'c' = count (prefix '%4d ' formatted count). Default = output one per group. The 'uniq' int is set by equal() on match and reset by pline() after output — single-variable duplicate tracking. Each filter mode corresponds to a SQL HAVING clause: -d = HAVING COUNT(*) > 1, -u = HAVING COUNT(*) = 1, -c = SELECT line, COUNT(*) GROUP BY line, default = SELECT DISTINCT. uniq implements all four SQL group operations in one C switch statement, 14 years before SQL became mainstream. K&R C switch on ASCII char value is idiomatic for command-line flag dispatch.",
+      "human_story": "Why do uniq -u, uniq -d, uniq -c exist? Because filtering after group-by is the natural operation. Want lines that appeared only once? -u (HAVING COUNT = 1). Want only duplicates? -d (HAVING COUNT > 1). Want counts? -c (SELECT line, COUNT(*)). All four SQL GROUP BY operations in 142 lines of C, dispatched by a single char switch. SQL (1974 paper, 1979 first commercial) added the same in HAVING clause — but uniq beat it to the typical Unix shop by being free and pipeable. McIlroy's 'small tools, composed' philosophy in action: don't add modes to sort, add a separate uniq with its own modes. The mode variable being a char means case labels are ASCII letters — readable and matches the CLI flag exactly."
+    },
+    "appraiser_note": "uniq の **出力フィルタ**は mode 変数 (4 値: 0/u/d/c) で pline() 内で dispatch。 'u' = unique のみ (重複なら skip)、 'd' = duplicate のみ (一意なら skip)、 'c' = count (`%4d ` 右寄せ 4 桁 prefix)、 default = グループ毎 1 行出力。 uniq int フラグを equal() で立てて pline() でチェック + リセット——**1 変数で重複追跡**。 各モードが SQL の HAVING 句に対応: -d = HAVING COUNT(*) > 1、 -u = HAVING COUNT(*) = 1、 -c = SELECT line, COUNT(*) GROUP BY line、 default = SELECT DISTINCT。 **SQL GROUP BY 4 操作すべて**を 142 行 C の switch 文 1 つで実装——SQL 主流化の 14 年前。 K&R C の **switch (char) on ASCII** は CLI フラグ dispatch のイディオム——case ラベル = ASCII 文字で**フラグそのまま読める**。 McIlroy の **「小さなツールを合成」 哲学**: sort にモードを足すのではなく、 別ツール uniq に独自モード。 1979 年に **4 つの SQL 集計操作**が完成。"
+  },
+  {
+    "id": "uniq-003-field-skip",
+    "text": "int fields;    /* number of fields to skip */\nint letters;   /* number of chars to skip after fields */\n\nmain(argc, argv) {\n    if (*argv[1] == '-') {\n        if (isdigit(argv[1][1]))\n            fields = atoi(&argv[1][1]);    /* -N: skip N fields */\n        else\n            mode = argv[1][1];              /* -u/-d/-c flag */\n    }\n    if (*argv[1] == '+') {\n        letters = atoi(&argv[1][1]);        /* +M: skip M chars */\n    }\n}\n\nchar *skip(s)\nregister char *s;\n{\n    register nf, nl;\n    nf = nl = 0;\n\n    while (nf++ < fields) {\n        while (*s == ' ' || *s == '\\t') s++;     /* skip whitespace */\n        while (!(*s == ' ' || *s == '\\t' || *s == 0)) s++;   /* skip word */\n    }\n\n    while (nl++ < letters && *s != 0)\n        s++;\n\n    return(s);\n}\n\nequal(b1, b2) {\n    b1 = skip(b1);          /* advance past skipped portion */\n    b2 = skip(b2);\n    ...\n}",
+    "file_path": "usr/src/cmd/uniq.c",
+    "line_number": 102,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "uniq",
+      "field-skip"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "creativity": 4,
+        "abstraction": 4
+      },
+      "technical_context": "uniq supports partial-line comparison via -N (skip N fields) and +M (skip M chars) flags. skip() advances past the first 'fields' whitespace-separated tokens, then 'letters' more chars. equal() calls skip() on both buffers and compares the remainder. This enables 'compare only the substring' — e.g. uniq +20 ignores the leading 20 chars (a timestamp) and detects duplicate message bodies. POSIX 1992 deprecated -N/+M syntax in favor of -f N / -s M but both still work in GNU uniq for compatibility. The 1979 syntax overloads -<digit> with -<letter> for modes (mode = argv[1][1] when not isdigit), making the parser tricky. Concept ancestor of awk field selection, cut -f, and SQL substring().",
+      "human_story": "Need to dedupe log lines but ignore the timestamp? Bell-32V uniq's answer: -N to skip fields, +M to skip chars. `sort logs | uniq +20` ignores the first 20 chars (timestamp), finds duplicate message bodies. The skip() function walks past N whitespace-separated tokens, then M more chars, returning the rest for comparison. POSIX 1992 changed the syntax to `uniq -f 20 -s 20` (clearer), but the concept is identical. This 'compare a substring, not the whole line' idea is the ancestor of awk's field selection, cut -f, and SQL's substring()/regexp_replace functions. 1979 had it in 6 lines of skip() — minimal, expressive."
+    },
+    "appraiser_note": "uniq は **-N (フィールド skip) と +M (文字 skip)** で部分比較をサポート。 skip() が空白区切り N トークン進めてから M 文字追加スキップ、 残りを返す。 equal() が両バッファに skip() 適用して残りを比較。 **「部分文字列だけ比較」 ——** uniq +20 で先頭 20 文字 (timestamp) を無視、 メッセージ本体の重複検出。 **POSIX 1992 で -f N/-s M に置換** (より明示的) だが Bell-32V 構文も GNU uniq で互換動作。 1979 年構文は -<数字> と -<文字> でモード切替 (mode = argv[1][1] when not isdigit)——パーサ tricky。 **awk の field selection、 cut -f、 SQL の substring()** の概念的祖先。 1979 年は 6 行の skip() で minimal + expressive に実装——「**比較対象を絞る**」 という抽象を関数 1 つで表現。"
+  },
+  {
+    "id": "uniq-004-frequency-idiom",
+    "text": "# The legendary frequency analysis idiom:\n$ cat data | sort | uniq -c | sort -rn | head -10\n\n# Components:\n#   cat data    : produce input lines\n#   sort        : group identical lines together\n#   uniq -c     : count occurrences (REQUIRES sorted input)\n#   sort -rn    : reverse numeric sort (highest count first)\n#   head -N     : top N\n\n# SQL equivalent:\n#   SELECT line, COUNT(*) as cnt\n#   FROM data\n#   GROUP BY line\n#   ORDER BY cnt DESC\n#   LIMIT 10;\n\n# Examples:\n$ awk '{print $1}' access.log | sort | uniq -c | sort -rn | head -10\n#   Top 10 IP addresses by request count\n\n$ tr -cs A-Za-z '\\n' < doc.txt | tr A-Z a-z | sort | uniq -c | sort -rn | sed 10q\n#   Top 10 word frequencies (McIlroy's famous one-liner, 1986)\n\n# Knuth vs McIlroy (1986, Programming Pearls Column 5):\n#   Knuth: 10+ pages of literate programming in Pascal\n#   McIlroy: ONE LINE of shell using sort + uniq -c + sort -rn",
+    "file_path": "usr/src/cmd/uniq.c",
+    "line_number": 1,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "uniq",
+      "frequency-analysis",
+      "knuth-mcilroy"
+    ],
+    "interesting_score": 26,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "elegance": 5
+      },
+      "technical_context": "The 'sort | uniq -c | sort -rn | head -N' pipeline implements SQL's SELECT col, COUNT(*) FROM t GROUP BY col ORDER BY count DESC LIMIT N. Complexity: O(N log N) for sort, O(N) for uniq streaming, O(K log K) for second sort over K unique values, O(N) head. Memory: O(N) for sort (temp files), O(1) for uniq, O(K) for second sort. Without an in-memory hash table for the whole input, this scales to GB inputs. Famously demonstrated by Doug McIlroy in 1986 (Programming Pearls Column 5: 'Programming Style') as a one-line response to Knuth's 10+ page literate programming word-frequency program in Pascal. Hadoop MapReduce (2006) is the distributed version of this exact pipeline: Map emits (key, 1), Sort shuffles, Reduce sums = sort + uniq -c. Modern data engineering still uses this pattern in shell, awk, and SQL.",
+      "human_story": "The most famous Unix one-liner: `sort | uniq -c | sort -rn | head`. Doug McIlroy wrote it in 1986 (Programming Pearls Column 5) as a critique of Donald Knuth's 10+ page literate-programming solution to word frequency analysis in Pascal. McIlroy: six commands, one line. Knuth: a book chapter. The lesson wasn't that Knuth was wrong — it was that Unix already had the building blocks (sort, uniq -c, head) and composing them solved the problem trivially. Every DevOps engineer who's done `awk '{print $1}' access.log | sort | uniq -c | sort -rn | head -20` to find top IP addresses is using McIlroy's pattern, which rests on the 142 lines of Bell-32V uniq. Hadoop's Map → Sort → Reduce is the distributed version of the same pipeline. SQL's GROUP BY + COUNT + ORDER BY + LIMIT is the relational version. The pattern is older than both — 1979."
+    },
+    "appraiser_note": "**`sort | uniq -c | sort -rn | head -N`** は SQL の SELECT col, COUNT(*) GROUP BY col ORDER BY count DESC LIMIT N。 計算量 O(N log N + K log K)、 メモリは uniq 部 O(1)——**GB 入力にスケール**。 **Doug McIlroy が 1986 年 Programming Pearls Column 5「Programming Style」で Knuth に対する伝説的応答**として書いた——Knuth が word frequency analysis を Pascal の **10+ ページ literate programming** で実装したのに対し、 McIlroy は **シェル 1 行 6 コマンド** (tr -cs A-Za-z '\\n' < doc | tr A-Z a-z | sort | uniq -c | sort -rn | sed 10q)。 教訓は「Knuth が間違い」 ではなく「Unix が既に部品を持っていた」——sort + uniq -c + head を**合成するだけ**で問題が解ける。 **Hadoop MapReduce (2006) はこのパイプラインの分散版**——Map (key, 1) → Sort shuffle → Reduce sum = sort + uniq -c。 SQL の GROUP BY/COUNT/ORDER BY/LIMIT は同パターンの **関係版**。 1979 年の 142 行 uniq がこの全 ecosystem を可能にする土台——top-N analytics、 access log ranking、 word frequency、 すべてここから派生。"
+  },
+  {
+    "id": "uniq-005-data-processing-family",
+    "text": "/* Bell-32V Unix 1979 data processing tool family: */\n\n+------------------+\n|       sort       |  ← データ処理パイプラインの土台 (902 lines)\n| (外部マージソート)|\n+------------------+\n        |\n        v sorted output\n+------------------+\n|       uniq       |  ← 隣接重複除去 (142 lines)\n| (-u/-d/-c)       |\n+------------------+\n        |\n        v\n+------------------+\n|  comm / join     |  ← 集合演算 / リレーショナル結合\n| (set ops)        |  (166 + 214 lines)\n+------------------+\n        |\n        v\n+------------------+\n|       diff       |  ← 差分検出 (cmp / diff3)\n|                  |  (645 + 121 + 438 lines)\n+------------------+\n\n/* SQL equivalents (all from shell, 14 years before SQL was mainstream): */\n/* DISTINCT          = sort -u  OR  sort | uniq                          */\n/* GROUP BY + COUNT  = sort | uniq -c                                     */\n/* HAVING COUNT > 1  = sort | uniq -d                                     */\n/* INNER JOIN        = join sortedA sortedB                               */\n/* OUTER JOIN        = join -a1 sortedA sortedB                           */\n/* INTERSECT         = comm -12 sortedA sortedB                           */\n/* EXCEPT            = comm -23 sortedA sortedB                           */\n/* ORDER BY          = sort -k                                            */\n/* LIMIT             = head -N                                            */\n/* WHERE             = grep / awk                                         */\n/* SELECT col        = cut / awk                                          */",
+    "file_path": "usr/src/cmd/uniq.c",
+    "line_number": 142,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "uniq",
+      "data-processing-family"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "abstraction": 5
+      },
+      "technical_context": "uniq completes Bell-32V's data processing toolkit: sort (902 lines, ordering), uniq (142, dedup/count), comm (166, set ops), join (214, relational), cmp (121, byte compare), diff (645, LCS), diff3 (438, 3-way merge). Total 2628 lines covering DISTINCT, GROUP BY, HAVING, JOIN, INTERSECT, EXCEPT, ORDER BY, LIMIT, WHERE, SELECT — i.e., the entire SQL data manipulation language, implemented as composable shell tools 14 years before SQL became mainstream. 1980s Unix shops ran payroll, inventory, customer reports, and financial summaries via awk+sort+uniq+comm+join pipelines, often cheaper and more portable than Oracle (released 1979 but expensive). SQL added structure (declarative, optimizer-driven); shell pipelines added flexibility (ad-hoc, streaming, composable). Modern data engineering still chooses between the two — and often combines them (SELECT into CSV, pipe to shell).",
+      "human_story": "By 1979, Unix had a complete data processing toolkit: sort, uniq, comm, join, cmp, diff, diff3 — 2628 lines of C covering every SQL operation. DISTINCT? sort -u. GROUP BY + COUNT? sort | uniq -c. INNER JOIN? join. INTERSECT? comm -12. All composable via pipes, all streaming, all working on GB inputs with constant memory (per tool). 1980s companies ran their entire business analytics this way — payroll, inventory, customer reports — because Oracle was expensive and Unix was free (in the workplace). SQL won the database market by being declarative and optimizer-driven, but shell pipelines won the ad-hoc analysis market by being flexible and composable. Modern data engineers use both: pull from SQL into CSV, pipe through awk/sort/uniq, push back. The 1979 family of tools is still the foundation."
+    },
+    "appraiser_note": "uniq が完成させる **Bell-32V Unix 1979 データ処理ツール群**: sort (902 行、 順序付け)、 uniq (142、 重複除去/カウント)、 comm (166、 集合演算)、 join (214、 リレーショナル)、 cmp (121、 バイト比較)、 diff (645、 LCS)、 diff3 (438、 3-way merge)。 **合計 2628 行**で DISTINCT、 GROUP BY、 HAVING、 JOIN、 INTERSECT、 EXCEPT、 ORDER BY、 LIMIT、 WHERE、 SELECT——**SQL の全データ操作言語を合成可能なシェルツールで実装**、 SQL 主流化の 14 年前。 1980 年代 Unix shop は payroll、 inventory、 customer reports、 financial summaries を awk+sort+uniq+comm+join パイプラインで運用——Oracle (1979 リリースだが高価) より**安価でポータブル**。 SQL は**宣言的 + optimizer 駆動**で DB 市場を制し、 シェルパイプラインは**柔軟 + 合成可能**でアドホック分析市場を制した。 現代データエンジニアは両方使う——SQL から CSV へ、 awk/sort/uniq でパイプ、 戻す。 **1979 年の 7 ツール 2628 行が今も土台**。"
   }
 ]
