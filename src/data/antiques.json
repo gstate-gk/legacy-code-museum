@@ -15878,5 +15878,145 @@
       "human_story": "pwd's 80 lines in 1979 became 5 lines by 1992. Why? Because the kernel learned to do the work. 1979: userspace, read parent dirs, find self by inode, build path. 1983 4.2BSD: getwd() syscall — kernel walks structures directly, faster + race-free. 1992 POSIX: getcwd() standardized. Modern: kernel's d_path() walks the in-memory dcache (dentry cache), no disk reads, handles mount namespaces, bind mounts, chroots, overlayfs all transparently. The algorithm (ascend via .., find self in parent, prepend name) is unchanged — it just moved into the kernel. This same evolution happened with: ls (userspace read of dir entries -> opendir/readdir -> getdents syscall), find (userspace recursion -> fts() / openat() *at family), ps (reading /etc/ttytab -> /proc filesystem). 1979 pwd is preserved as the textbook example of how user-space tools evolve into kernel features when they're used enough to warrant optimization."
     },
     "appraiser_note": "pwd の進化: **80 行 userspace traversal (1979) → 1 syscall kernel call (1983 4.2BSD getwd、 1992 POSIX getcwd)** が、 **「頻出 userspace 操作の syscall 昇格」 という Unix 設計パターン**の典型。 元 pwd: open '..'、 read entries、 inode で self 発見、 name 前置、 chdir up、 反復。 modern getcwd(): **kernel が dcache (dentry cache) を walk**、 task の pwd から root まで、 kernel メモリで path 構築、 user buffer へコピー。 **利点**: in-memory dcache で O(depth) (disk read なし)、 kernel が lock 保持で race-free、 chdir 副作用なし、 mount namespace/bind mount/chroot/overlayfs を透過処理。 同じ進化が起きた例: **ls** (userspace read of dir entries → opendir/readdir → getdents syscall)、 **find** (userspace recursion → fts() / openat() *at family)、 **ps** (/etc/ttytab read → /proc filesystem)。 **1979 年 pwd は教科書例**——user-space ツールが十分使われると **kernel 機能に進化**する歴史。 同じアルゴリズム ('..' で上昇、 親内で self 発見、 名前前置) は kernel 内で生存中。"
+  },
+  {
+    "id": "date-001-epoch-calculation",
+    "text": "gtime()\n{\n    register int i, year, month;\n    int day, hour, mins, secs;\n    ...\n    timbuf = 0;\n    year += 1900;\n    for (i = 1970; i < year; i++)\n        timbuf += dysize(i);                  /* days in each year */\n    /* Leap year adjustment */\n    if (dysize(year) == 366 && month >= 3)\n        timbuf++;\n    while (--month)\n        timbuf += dmsize[month-1];            /* days in each month */\n    timbuf += day - 1;\n    timbuf = 24 * timbuf + hour;              /* days -> hours */\n    timbuf = 60 * timbuf + mins;              /* hours -> minutes */\n    timbuf = 60 * timbuf + secs;              /* minutes -> seconds */\n    return(0);\n}\n\n/* Unix epoch convention established here:\n   1970-01-01 00:00:00 UTC = time_t 0\n   Each subsequent second = +1 in time_t\n   32-bit signed long: max = 2,147,483,647 = 2038-01-19 03:14:07 UTC\n*/",
+    "file_path": "usr/src/cmd/date.c",
+    "line_number": 94,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "date",
+      "unix-epoch",
+      "time-t"
+    ],
+    "interesting_score": 24,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "concreteness": 4
+      },
+      "technical_context": "date establishes Unix epoch (1970-01-01 00:00:00 UTC) as time_t 0, with each subsequent second incrementing time_t by 1. gtime() converts YYMMDDHHMM[.SS] input to epoch seconds: accumulate days from 1970 to target year via dysize() (which returns 365 or 366 based on Gregorian leap rules), adjust for leap year if target year is leap and month >= 3, accumulate days per month from dmsize[12], add day-1 (1-indexed -> 0-indexed), then scale up: *24 hours, *60 minutes, *60 seconds. timbuf is `long` = 32 bits on PDP-11/VAX. The 32-bit time_t reaches max value 2^31-1 = 2,147,483,647 at 2038-01-19 03:14:07 UTC — this is the Y2038 problem, baked into Unix's design from 1979. The `year += 1900` line embeds Y2K: 2-digit year input is interpreted as 1900-1999. Both Y2K and Y2038 are direct consequences of the 1979 design choices encoded here. Modern systems use 64-bit time_t to push the wraparound to year 292 billion AD (~20x the universe's age), but embedded/legacy 32-bit systems remain vulnerable.",
+      "human_story": "Why is January 1, 1970 the Unix epoch? Because Unix development started in 1969 and 1970 was a clean cutoff. date(1) embeds this convention: timbuf = 0 at 1970-01-01, each second adds 1, scaled through days/hours/minutes/seconds. timbuf is `long` which on PDP-11 is 32 bits — max value 2,147,483,647 = January 19, 2038 at 03:14:07 UTC. That's the Y2038 bug, hardcoded into Unix's design 60 years in advance. The line `year += 1900` is Y2K in plain sight: 2-digit year `00` becomes 1900, not 2000. 1979 programmers thought their code wouldn't last 20 years. Modern systems use 64-bit time_t (good until year 292 billion AD), and 4-digit year input via %Y format. But embedded systems running 32-bit time_t in 2038 will see clocks jump to 1901 — date.c's design legacy."
+    },
+    "appraiser_note": "date が **Unix epoch (1970-01-01 00:00:00 UTC) を time_t 0** として確立、 以降 1 秒毎に time_t が 1 増。 gtime() が YYMMDDHHMM[.SS] 入力を epoch seconds に変換: 1970 年から target year まで dysize() で日数累積 (365 or 366、 Gregorian うるう年ルール)、 target year がうるう年で月 >= 3 なら +1 補正、 dmsize[12] で月毎日数累積、 day-1 (1-indexed → 0-indexed)、 *24 hours、 *60 minutes、 *60 seconds で scale up。 **timbuf は `long` = PDP-11/VAX で 32 bit**。 **32-bit time_t の最大値**: 2^31-1 = 2,147,483,647 = **2038-01-19 03:14:07 UTC**——これが **Y2038 問題**、 1979 年 Unix 設計に組み込み済み。 **`year += 1900`** 行が **Y2K**: 2 桁年入力を 1900-1999 として解釈。 両方とも 1979 年設計選択の直接的帰結。 modern システムは **64-bit time_t** で wraparound を **year 292 billion** に押し戻し (宇宙年齢の ~20 倍)、 実用上無限。 でも embedded/legacy 32-bit システムは脆弱。 1979 年プログラマは「**コードが 20 年以上使われるとは思わなかった**」 ——それが Y2K/Y2038 の文化的真相。"
+  },
+  {
+    "id": "date-002-string-reversal-parse",
+    "text": "gtime()\n{\n    ...\n    /* Find end of string */\n    ep = ap;\n    while (*ep) ep++;\n\n    /* Reverse the string in place */\n    sp = ap;\n    while (sp < ep) {\n        x = *sp;\n        *sp++ = *--ep;\n        *ep = x;\n    }\n\n    /* Now parse from start (which was end) */\n    sp = ap;\n    time(&timbuf);\n    L = localtime(&timbuf);\n    secs = gp(-1);\n    if (*sp != '.') {\n        mins = secs;          /* no dot means it was minutes */\n        secs = 0;\n    } else {\n        sp++;\n        mins = gp(-1);\n    }\n    hour = gp(-1);\n    day = gp(L->tm_mday);     /* default to current day */\n    month = gp(L->tm_mon + 1);\n    year = gp(L->tm_year);\n    ...\n}\n\ngp(dfault)\n{\n    register int c, d;\n\n    if (*sp == 0)\n        return(dfault);\n    c = (*sp++) - '0';\n    d = (*sp ? (*sp++) - '0' : 0);\n    if (c < 0 || c > 9 || d < 0 || d > 9)\n        return(-1);\n    return(c + 10*d);          /* digit order: read as if c is 1s, d is 10s */\n}",
+    "file_path": "usr/src/cmd/date.c",
+    "line_number": 100,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "date",
+      "string-parsing",
+      "in-place-reverse"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "creativity": 5,
+        "elegance": 4
+      },
+      "technical_context": "gtime() parses YYMMDDHHMM[.SS] input with a clever in-place reversal trick: walk to end of string (ep), then swap from both ends inward until sp meets ep. After reversal, parse from start: gp() reads 2 digits and returns c + 10*d — because the string is reversed, the 1s digit comes first and 10s second, so c + 10*d correctly reconstructs the value. The optional .SS handling is elegant: read first 2 digits as 'secs', check if next char is '.'. If not, those were actually minutes; if yes, skip the dot and read minutes. gp() takes a default value for missing fields — gp(L->tm_mday) means 'if input ends, use current day'. This enables partial input like `date 1342` (just hour:min, keep date current). The reversal-then-forward-parse pattern avoids backward iteration and string length checks, expressing 'parse right-to-left with optional suffix' in minimal K&R C. Modern code would use sscanf or regex, but the 1979 approach is more compact and direct.",
+      "human_story": "How do you parse `7904061342.18` when the `.18` is optional and might not be there? 1979 date's solution: physically reverse the string in place, then parse from the start. Walk to end of string (ep), swap chars from both ends until sp meets ep — classic in-place reversal. Now the string reads `81.243160497`, parse from start: read 2 digits, if next char is '.', those were seconds and skip the dot. Otherwise, those were minutes. gp() returns c + 10*d (not 10*c + d) because the string is reversed — the 1s digit comes first. Partial inputs work via defaults: gp(L->tm_mday) means 'if input is exhausted, use today's day'. This 'reverse then forward-parse' avoids backward iteration and string length math. Modern code would use sscanf or regex; 1979 K&R C does it with pointer arithmetic and an in-place swap. The aesthetics are clear: an algorithmic insight worth more than a library call."
+    },
+    "appraiser_note": "gtime() が YYMMDDHHMM[.SS] 入力を**巧妙な in-place 逆転**でパース: 文字列末尾まで walk (ep)、 sp と ep が出会うまで両端から swap——classic in-place reversal。 逆転後、 先頭から parse: gp() が 2 桁読み **c + 10*d** で返す——文字列逆順なので 1 の位が先、 10 の位が後、 これで正しい数値復元。 **optional .SS の処理が elegant**: 最初の 2 桁を 'secs' として読み、 次の char が '.' なら本当に秒、 そうでなければそれは分。 gp() がデフォルト値を取る——**gp(L->tm_mday)** で「入力が尽きたら現在日を使う」、 これで `date 1342` のような部分入力 (時:分のみ、 日付は現在) が可能。 **「逆転 → 前方 parse」 パターン**は逆順 iteration や文字列長計算を回避、 「optional suffix 付き右→左 parse」 を**最小 K&R C** で表現。 modern code は sscanf や regex 使うが、 1979 年のアプローチは**コンパクト + 直接的**——library call より価値ある **algorithmic insight**。"
+  },
+  {
+    "id": "date-003-dual-representation",
+    "text": "char *ctime();\nchar *asctime();\nstruct tm *localtime();\nstruct tm *gmtime();\n\n/* struct tm (broken-down time):\n   int tm_sec, tm_min, tm_hour;\n   int tm_mday, tm_mon, tm_year;\n   int tm_wday, tm_yday, tm_isdst;\n*/\n\nmain() {\n    ...\n    if (rc == 0)\n        time(&timbuf);                       /* current epoch time */\n    if (uflag) {\n        ap = asctime(gmtime(&timbuf));        /* UTC */\n        tzn = \"GMT\";\n    } else {\n        struct tm *tp;\n        tp = localtime(&timbuf);              /* local timezone */\n        ap = asctime(tp);\n        tzn = timezone(info.timezone, tp->tm_isdst);\n    }\n    /* asctime format: \"Wed Apr  6 13:42:18 1979\\n\" (26 bytes) */\n    printf(\"%.20s\", ap);                      /* \"Wed Apr  6 13:42:18 \" */\n    if (tzn)\n        printf(\"%s\", tzn);                    /* \"JST\" */\n    printf(\"%s\", ap+19);                       /* \" 1979\\n\" */\n}",
+    "file_path": "usr/src/cmd/date.c",
+    "line_number": 76,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "date",
+      "time-representation",
+      "asctime"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "elegance": 4
+      },
+      "technical_context": "Unix time uses dual representation: time_t (long integer, epoch seconds, suitable for arithmetic) and struct tm (year/month/day/hour/min/sec/wday/yday/isdst, suitable for display). localtime()/gmtime() convert time_t to struct tm in local/UTC timezones. asctime() formats struct tm into a fixed 26-byte string 'Wed Apr  6 13:42:18 1979\\n'. date inserts timezone string between time and year via clever printf: %.20s prints first 20 chars (up to time), then tzn (e.g. 'JST'), then ap+19 (year+newline) — splicing TZ into asctime's fixed output. The dual representation pattern (canonical integer + structured access) is the prototype of every time API since: Python datetime (timestamp + datetime object), Java Instant + LocalDateTime, JavaScript Date (ms epoch + getter methods), Go time.Time (internal nanos + accessor methods). The string-splicing technique is replaced in POSIX strftime(), which uses format strings like %a %b %e %T %Z %Y — but 1979 date achieves the same with raw printf and asctime's fixed output.",
+      "human_story": "Why does Unix have two time representations? time_t (just a big integer counting seconds since 1970) is great for arithmetic and storage but useless for humans. struct tm (separate fields for year, month, day, hour, etc.) is great for display but tedious for arithmetic. So Unix gives you both, with localtime/gmtime to convert one to the other, and asctime/ctime to format struct tm as text. asctime returns a fixed 26-byte string 'Wed Apr  6 13:42:18 1979\\n'. To insert the timezone name between time and year, 1979 date does printf %.20s (first 20 chars: 'Wed Apr  6 13:42:18 '), printf tzn (e.g. 'JST'), printf ap+19 (' 1979\\n'). String splicing through pointer arithmetic. Modern POSIX strftime() does this cleanly with format strings ('%a %b %e %T %Z %Y'), but the dual representation — integer epoch + struct accessor — survives in every modern time API: Python datetime, Java Instant, JavaScript Date, Go time.Time. All descend from the 1979 time_t / struct tm pair."
+    },
+    "appraiser_note": "Unix 時刻は **二重表現**: **time_t** (long integer、 epoch seconds、 算術向き) と **struct tm** (year/month/day/hour/min/sec/wday/yday/isdst、 表示向き)。 **localtime()/gmtime()** が time_t を struct tm に変換 (local/UTC TZ)。 **asctime()** が struct tm を **固定 26 バイト文字列** 'Wed Apr  6 13:42:18 1979\\n' にフォーマット。 date は**timezone 文字列を時刻と年の間に巧妙に挿入**: **%.20s** で先頭 20 字 (時刻まで)、 tzn (例 'JST')、 **ap+19** (年+改行) ——asctime の固定出力に**ポインタ算術で TZ をスプライス**。 **二重表現パターン** (canonical integer + 構造化アクセス) が後のすべての時刻 API の原型: Python datetime (timestamp + datetime object)、 Java Instant + LocalDateTime、 JavaScript Date (ms epoch + getter)、 Go time.Time (internal nanos + accessor)。 文字列スプライシングは POSIX strftime() の format string ('%a %b %e %T %Z %Y') に置換されたが、 **integer epoch + struct accessor** という二重表現は modern 全時刻 API に継承。"
+  },
+  {
+    "id": "date-004-wtmp-audit",
+    "text": "struct utmp wtmp[2] = { {\"|\", \"\", 0}, {\"{\", \"\", 0}};\n\n/* struct utmp:\n   char ut_line[8];    terminal line (or special marker)\n   char ut_name[8];    user name\n   long ut_time;       timestamp\n*/\n\nmain() {\n    ...\n    if (argc > 1) {\n        /* user is setting date */\n        ...\n        time(&wtmp[0].ut_time);                 /* timestamp BEFORE change */\n        if (stime(&timbuf) < 0) {\n            rc++;\n            printf(\"date: no permission\\n\");\n        } else if ((wf = open(\"/usr/adm/wtmp\", 1)) >= 0) {\n            time(&wtmp[1].ut_time);             /* timestamp AFTER change */\n            lseek(wf, 0L, 2);                   /* seek to end */\n            write(wf, (char *)wtmp, sizeof(wtmp));\n            close(wf);\n        }\n    }\n}\n\n/* The 2 special records:\n   '|' (pipe)      = before-change marker\n   '{' (open brace) = after-change marker\n   Neither is a valid terminal name, so they signal 'date change happened here'\n   in the wtmp log. `last` command can detect these and report time discontinuities.\n*/",
+    "file_path": "usr/src/cmd/date.c",
+    "line_number": 31,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "date",
+      "wtmp",
+      "audit-log"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 4,
+      "emotions": {
+        "concreteness": 4,
+        "creativity": 4
+      },
+      "technical_context": "When date sets the system clock (stime syscall, root-only), it records the change in /usr/adm/wtmp — the login history file — using two special records with non-terminal-name markers: '|' (before-change timestamp) and '{' (after-change timestamp). These markers are invalid as terminal names so they can't be confused with login records, but exist in the same struct utmp format. The `last` command reads wtmp and can report 'date change occurred between X and Y' by detecting these markers. This is forensic auditing: time-stamp manipulation is a common technique for hiding intrusions or backdating evidence, so wtmp preserves the discontinuity. stime() requires root (CAP_SYS_TIME in modern Linux), and the EPERM check prints 'no permission'. lseek(wf, 0L, 2) appends to end-of-file (whence=2 SEEK_END). Modern Linux: wtmp lives in /var/log/wtmp, utmpx extends utmp, adjtimex/clock_settime replace stime, systemd-journald additionally logs time changes via systemd-timesyncd. The audit principle — preserve discontinuities for forensic analysis — is unchanged.",
+      "human_story": "When you change the system time, what gets logged? In 1979 date(1), it writes two records to /usr/adm/wtmp (login history) with special terminal names: '|' marks 'time was X before change', '{' marks 'time is Y after change'. These aren't real terminal names, so they're recognizable as time-change markers, not login events. The `last` command can detect them and warn 'time discontinuity between X and Y'. Why preserve this? Forensics. Attackers backdate system clocks to hide intrusions; setting time without leaving evidence would help cover tracks. Bell Labs in 1979 already thought about this — and the lseek(0L, SEEK_END) ensures the record is appended (not overwriting). Modern Linux moved wtmp to /var/log/wtmp, replaced stime() with adjtimex/clock_settime, and systemd-journald logs time changes too. But the principle — preserve clock-change events in audit logs — is unchanged 47 years later."
+    },
+    "appraiser_note": "date がシステムクロックを設定する時 (stime syscall、 root-only)、 **/usr/adm/wtmp** (ログイン履歴ファイル) に変更を**特殊レコード**で記録: **'|'** (before-change timestamp)、 **'{'** (after-change timestamp)——通常 terminal 名と衝突しない markers。 **`last` コマンド**が wtmp を読み、 これらマーカーを検出して「**X-Y 間で時刻変更**」 を報告可能。 **フォレンジック監査**: タイムスタンプ操作は侵入隠蔽や証拠 backdating の常套手段、 wtmp が**不連続を保持**する。 stime() は root 必須 (modern Linux の CAP_SYS_TIME)、 EPERM チェックで 'no permission' 出力。 **lseek(wf, 0L, 2)** で末尾追記 (whence=2 SEEK_END)。 modern Linux: wtmp は /var/log/wtmp に移動、 utmpx が utmp 拡張、 **adjtimex/clock_settime が stime() 置換**、 **systemd-journald** が時刻変更も追加ログ。 47 年後も**「audit log で不連続を保持する」 原則は不変**——1979 年 Bell Labs が既に「**時刻操作はフォレンジック対象**」 と認識した先見性。"
+  },
+  {
+    "id": "date-005-y2k-y2038-legacy",
+    "text": "/* Two design choices baked into 1979 date.c that haunt computing:\n\n   Y2K (millennium bug):\n*/\n        year += 1900;          /* 2-digit YY assumed 1900-1999 */\n        for (i = 1970; i < year; i++)\n            timbuf += dysize(i);\n        /* Input \"00\" -> year 1900, not 2000. Bug in 2000. */\n\n/*\n   Y2038 (Unix epoch overflow):\n*/\n        long timbuf;           /* 32-bit on PDP-11/VAX */\n        /* max value 2^31-1 = 2,147,483,647 seconds = 2038-01-19 03:14:07 UTC */\n        /* After overflow: jumps to negative, wraps to 1901-12-13 */\n\n/* Modern fixes:\n   Y2K: 4-digit year (%Y format), windowing, RFC 3339 / ISO 8601 dates\n   Y2038: 64-bit time_t (max year ~292 billion AD), time64_t syscalls,\n          y2038-safe filesystems (ext4, XFS, btrfs all updated)\n\n   Affected systems in 2038:\n     - 32-bit embedded Linux (industrial control, IoT)\n     - 32-bit filesystem metadata (ext2/ext3, some older ext4)\n     - Network protocols with 32-bit time (NTP era detection)\n     - Legacy applications using time(NULL) and storing as 32-bit int\n*/\n\n/* The 1979 lesson:\n   - Integers used for time always have a wraparound\n   - 2-digit anything (year, version) will face ambiguity\n   - 'It won't matter in N years' bets often lose\n*/",
+    "file_path": "usr/src/cmd/date.c",
+    "line_number": 1,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "date",
+      "y2k",
+      "y2038"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 5,
+      "emotions": {
+        "concreteness": 5,
+        "abstraction": 4
+      },
+      "technical_context": "date.c contains two notorious time bugs in plain sight: Y2K (year += 1900 assumes 1900-1999 range) and Y2038 (long timbuf is 32-bit signed, overflows at 2,147,483,647 seconds = 2038-01-19 03:14:07 UTC). Y2K was solved through cultural adaptation: 4-digit year input, windowing (interpret 00-69 as 2000-2069, 70-99 as 1970-1999), and ISO 8601 date format. The cost was ~$300-600 billion globally in remediation. Y2038 is harder: 32-bit time_t is embedded in filesystem metadata (ext2/3 ctime), network protocols (NTP era), embedded Linux kernels (industrial control, IoT devices that won't be updated), and applications that explicitly use int32 for time. Linux kernel introduced 64-bit time_t syscalls (clock_gettime64) starting 2019, filesystems migrated (ext4 inode extensions, XFS v5, btrfs), glibc 2.34 (2021) made 64-bit time_t default on 32-bit ABIs. But embedded systems running unmodified 32-bit code in 2038 will see clocks jump to 1901, with consequences for certificate validity, log timestamps, scheduled events, and any time-based logic. The 1979 design choice 'long is enough' becomes a 60-year fuse.",
+      "human_story": "Two bugs in date.c that became famous: Y2K (year += 1900 assumed 1900-1999) and Y2038 (long timbuf is 32 bits, overflows at 2038-01-19 03:14:07 UTC). Y2K cost the world ~$300-600B in cleanup; Y2038 is potentially worse because it's at the OS/library/firmware level, harder to fix in deployed systems. 32-bit time_t is in filesystem metadata, network protocols, embedded device firmware, and applications that hardcoded int32 for time. Modern fixes: 64-bit time_t (good until year ~292 billion), 4-digit years via %Y, ISO 8601 dates, glibc 2.34 (2021) made 64-bit time_t default. Linux kernel added time64_t syscalls in 2019. Filesystems updated metadata formats. But embedded Linux running unpatched 32-bit code in 2038 will see clocks jump to 1901 — certificates expire, logs go backward, schedulers misfire. The 1979 'long is enough' bet became a 60-year fuse. Lesson: assume integer time wraps; always think about the next century, not just the next decade."
+    },
+    "appraiser_note": "date.c は **2 つの有名な時刻バグ**を内包: **Y2K** (year += 1900 で 1900-1999 と想定) と **Y2038** (long timbuf が 32-bit signed、 2,147,483,647 秒 = **2038-01-19 03:14:07 UTC** で overflow)。 **Y2K** は文化的適応で解決: 4 桁年入力、 windowing (00-69 → 2000-2069、 70-99 → 1970-1999)、 ISO 8601 date format。 全世界で約 **$300-600 億**の remediation コスト。 **Y2038** はより難しい: 32-bit time_t がファイルシステムメタデータ (ext2/3 ctime)、 ネットワークプロトコル (NTP era)、 embedded Linux kernel (産業制御、 IoT デバイスで更新不可)、 int32 を時刻に明示利用するアプリに**埋め込まれている**。 Linux カーネルが 2019 年から **64-bit time_t syscall** (clock_gettime64) 導入、 ファイルシステム移行 (ext4 inode 拡張、 XFS v5、 btrfs)、 **glibc 2.34 (2021)** で 32-bit ABI でも 64-bit time_t デフォルト化。 でも 2038 年に**未更新 32-bit code を走らせる embedded システム**は時計が 1901 年に jump——証明書失効、 ログ逆行、 スケジューラ misfire。 **1979 年の「long で十分」 という賭けが 60 年フューズ**になった。 **教訓**: 整数時刻は必ず wraparound する、 次の 10 年でなく**次の世紀**を考えるべし。"
   }
 ]
