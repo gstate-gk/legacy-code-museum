@@ -16018,5 +16018,145 @@
       "human_story": "Two bugs in date.c that became famous: Y2K (year += 1900 assumed 1900-1999) and Y2038 (long timbuf is 32 bits, overflows at 2038-01-19 03:14:07 UTC). Y2K cost the world ~$300-600B in cleanup; Y2038 is potentially worse because it's at the OS/library/firmware level, harder to fix in deployed systems. 32-bit time_t is in filesystem metadata, network protocols, embedded device firmware, and applications that hardcoded int32 for time. Modern fixes: 64-bit time_t (good until year ~292 billion), 4-digit years via %Y, ISO 8601 dates, glibc 2.34 (2021) made 64-bit time_t default. Linux kernel added time64_t syscalls in 2019. Filesystems updated metadata formats. But embedded Linux running unpatched 32-bit code in 2038 will see clocks jump to 1901 — certificates expire, logs go backward, schedulers misfire. The 1979 'long is enough' bet became a 60-year fuse. Lesson: assume integer time wraps; always think about the next century, not just the next decade."
     },
     "appraiser_note": "date.c は **2 つの有名な時刻バグ**を内包: **Y2K** (year += 1900 で 1900-1999 と想定) と **Y2038** (long timbuf が 32-bit signed、 2,147,483,647 秒 = **2038-01-19 03:14:07 UTC** で overflow)。 **Y2K** は文化的適応で解決: 4 桁年入力、 windowing (00-69 → 2000-2069、 70-99 → 1970-1999)、 ISO 8601 date format。 全世界で約 **$300-600 億**の remediation コスト。 **Y2038** はより難しい: 32-bit time_t がファイルシステムメタデータ (ext2/3 ctime)、 ネットワークプロトコル (NTP era)、 embedded Linux kernel (産業制御、 IoT デバイスで更新不可)、 int32 を時刻に明示利用するアプリに**埋め込まれている**。 Linux カーネルが 2019 年から **64-bit time_t syscall** (clock_gettime64) 導入、 ファイルシステム移行 (ext4 inode 拡張、 XFS v5、 btrfs)、 **glibc 2.34 (2021)** で 32-bit ABI でも 64-bit time_t デフォルト化。 でも 2038 年に**未更新 32-bit code を走らせる embedded システム**は時計が 1901 年に jump——証明書失効、 ログ逆行、 スケジューラ misfire。 **1979 年の「long で十分」 という賭けが 60 年フューズ**になった。 **教訓**: 整数時刻は必ず wraparound する、 次の 10 年でなく**次の世紀**を考えるべし。"
+  },
+  {
+    "id": "kill-001-syscall-wrapper",
+    "text": "#include <signal.h>\n\nmain(argc, argv) {\n    register signo, pid, res;\n    ...\n    res = kill(pid = atoi(*argv), signo);\n    if (res < 0) {\n        printf(\"%u: %s\\n\", pid, sys_errlist[errno]);\n        errlev = 1;\n    }\n    ...\n}\n\n/* The entire kill command is essentially:\n     1. parse signal number (default SIGTERM)\n     2. parse pid(s)\n     3. invoke kill(pid, signo) syscall\n     4. report errors\n   \n   The actual work — signal dispatch to the target process —\n   happens entirely inside the kernel. The kill command is a\n   40-line user-space gateway to one of Unix's most powerful IPC\n   primitives.\n*/",
+    "file_path": "usr/src/cmd/kill.c",
+    "line_number": 31,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "kill",
+      "syscall-wrapper",
+      "minimalism"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "abstraction": 5
+      },
+      "technical_context": "kill is a 40-line K&R C program that does essentially one thing: invoke the kill(pid, signo) syscall. The actual work — dispatching the signal to the target process, switching kernel context, invoking the target's signal handler or default action — happens entirely inside the kernel. The kill command is the thinnest possible user-space wrapper around a kernel mechanism. This 'kernel does the work, user tool is a gateway' pattern is the canonical Unix design philosophy: complex functionality lives in the kernel where it can be optimized and shared, while user tools provide minimal CLI interfaces. The same pattern: cat (read+write syscalls), ls (getdents syscall), chmod (chmod syscall), mount (mount syscall), kill (kill syscall) — each is a thin wrapper. 50 years later, the kill(pid, signo) syscall API is unchanged; only the syntactic sugar above it (signal name expansion, -l flag, pkill/killall variants) has evolved.",
+      "human_story": "What does kill(1) actually do? Almost nothing. 40 lines of K&R C, and the only real work is one line: `res = kill(pid, signo)` — a syscall. The kernel does all the heavy lifting: validates permission, finds the target process, queues the signal, switches context, runs the signal handler or default action. The kill command is a 40-line gateway to one of Unix's most powerful IPC primitives. This 'kernel does the work, user tool is a thin gateway' is the canonical Unix design: complex shared functionality lives in the kernel, user tools provide minimal CLI access. Same pattern in cat (read/write), ls (getdents), chmod (chmod syscall), mount (mount syscall). The kill(pid, signo) syscall API hasn't changed since 1979; pkill, killall, and signal-name expansion are just syntactic sugar on top. The genuinely interesting code lives in the kernel signal dispatch, not in this 40-line wrapper."
+    },
+    "appraiser_note": "kill は **40 行 K&R C** で本質的に**1 つのことだけ**実行: kill(pid, signo) syscall 呼び出し。 **実際の仕事**——signal を target プロセスにディスパッチ、 kernel コンテキスト切替、 target の signal handler または default 動作実行——**すべて kernel 内**で発生。 kill コマンドは **kernel メカニズムへの最薄 user-space wrapper**。 「**kernel が仕事、 user tool は gateway**」 パターンが **canonical Unix 設計哲学**: 複雑機能は kernel に (共有・最適化可能)、 user tools は最小 CLI インターフェース提供。 同パターン: cat (read+write)、 ls (getdents)、 chmod (chmod syscall)、 mount (mount syscall)、 kill (kill syscall)——すべて薄い wrapper。 **50 年経っても kill(pid, signo) syscall API は不変**——変わったのは**糖衣構文** (signal 名展開、 -l フラグ、 pkill/killall variants) のみ。 **真に興味深いコードは kernel の signal dispatch にあり、 この 40 行 wrapper にはない**——でもこの薄さこそが Unix 設計の本質。"
+  },
+  {
+    "id": "kill-002-default-sigterm",
+    "text": "if (*argv[1] == '-') {\n    signo = atoi(argv[1]+1);     /* \"-9\" -> 9 */\n    argc--;\n    argv++;\n} else\n    signo = SIGTERM;             /* default: graceful */\n\n/* Signal behavior comparison:\n   SIGTERM (15): catchable, allows cleanup\n     - handler runs: close files, save state, release locks\n     - graceful exit with exit(0) if no handler\n   \n   SIGKILL (9): uncatchable, instant kill\n     - kernel terminates immediately, no handler runs\n     - data may be partially written, locks abandoned\n     - last resort when SIGTERM is ignored\n   \n   kill PID  -> tries graceful (SIGTERM)\n   kill -9 PID -> forces immediate (SIGKILL)\n   \n   The 'kindly default, override when needed' pattern is core Unix design.\n*/",
+    "file_path": "usr/src/cmd/kill.c",
+    "line_number": 21,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "kill",
+      "sigterm",
+      "graceful-termination"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "concreteness": 4
+      },
+      "technical_context": "kill's default signal is SIGTERM (15) — a 'kindly' termination request that processes can catch and handle: flush files, save state, release locks, then exit. SIGKILL (9) is the uncatchable nuclear option — kernel terminates immediately without invoking handlers. The 'default SIGTERM, opt-in SIGKILL via -9' design embeds the Unix philosophy of 'kindly default, override when needed'. This pattern propagates: systemd's KillSignal=SIGTERM + SendSIGKILLAfter timeout, docker stop's SIGTERM + grace period + SIGKILL, kubernetes pod termination's preStop hook + SIGTERM + terminationGracePeriodSeconds + SIGKILL. All inherit the SIGTERM-then-SIGKILL pattern from 1979 kill(1). Signal-handler programming pattern: register handler with signal()/sigaction(), do cleanup atomically (signal-safe), set a flag, let main loop notice and exit cleanly. Without SIGTERM, you couldn't write robust daemons — every server process from sshd to nginx depends on graceful termination via SIGTERM.",
+      "human_story": "Why does `kill PID` not actually kill? It sends SIGTERM, which asks the process politely to terminate. The process can catch it, run cleanup (flush files, save state, release locks), then exit gracefully. SIGKILL (-9) is the uncatchable forced kill — kernel terminates instantly, no handler, possible data loss. The 'kindly default, force on demand' design is core Unix philosophy: `kill PID` tries graceful, `kill -9 PID` is for when graceful fails. This SIGTERM-then-SIGKILL pattern propagates everywhere: systemd waits for SIGTERM then escalates to SIGKILL, docker stop has --time=10 for graceful period, kubernetes has terminationGracePeriodSeconds. All inherit from 1979 kill(1). Daemon writers depend on SIGTERM to do cleanup: close listening sockets, drain connections, write state, exit 0. Without graceful termination, every server crash would risk data loss."
+    },
+    "appraiser_note": "kill のデフォルト signal は **SIGTERM (15)** ——**「親切な」 終了要求**、 プロセスが catch + ハンドル可能: file flush、 state 保存、 lock 解放後 graceful exit。 **SIGKILL (9) は uncatchable な核オプション**——kernel が即終了、 ハンドラ実行なし。 「**default SIGTERM、 -9 で SIGKILL opt-in**」 設計が **Unix 哲学の「親切な default、 必要なら override」 を体現**。 同パターンが伝播: systemd の **KillSignal=SIGTERM + SendSIGKILLAfter timeout**、 docker stop の **SIGTERM + grace period + SIGKILL**、 kubernetes pod termination の **preStop hook + SIGTERM + terminationGracePeriodSeconds + SIGKILL**。 すべて **1979 kill(1) の SIGTERM→SIGKILL パターン**継承。 **signal-handler プログラミングパターン**: signal()/sigaction() でハンドラ登録、 atomic に cleanup (signal-safe)、 flag 設定、 main ループが気づいて clean exit。 **SIGTERM なしでは robust daemon を書けない**——sshd から nginx までの全 server プロセスが graceful termination via SIGTERM に依存。"
+  },
+  {
+    "id": "kill-003-numeric-signal",
+    "text": "if (*argv[1] == '-') {\n    signo = atoi(argv[1]+1);       /* \"-9\" -> 9, \"-15\" -> 15 */\n    argc--;\n    argv++;\n} else\n    signo = SIGTERM;\n\n/* 1979 Bell-32V kill: numeric signals only\n   $ kill -9 1234       # OK (SIGKILL)\n   $ kill -15 1234      # OK (SIGTERM)\n   $ kill -TERM 1234    # FAIL: atoi(\"TERM\") = 0, invalid signal\n   \n   POSIX (1992) added:\n     kill -TERM PID     # signal name without SIG prefix\n     kill -SIGTERM PID  # with SIG prefix\n     kill -s TERM PID   # -s flag form\n     kill -l             # list all signal names/numbers\n     kill -l 9           # name from number: KILL\n     kill -l TERM        # number from name: 15\n   \n   Common signals (1979 V7 numbering):\n     1=HUP 2=INT 3=QUIT 4=ILL 5=TRAP 6=IOT 7=EMT 8=FPE\n     9=KILL 10=BUS 11=SEGV 12=SYS 13=PIPE 14=ALRM 15=TERM\n     17=STOP 18=TSTP 19=CONT 20=CHLD\n*/",
+    "file_path": "usr/src/cmd/kill.c",
+    "line_number": 22,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "kill",
+      "signal-number",
+      "atoi"
+    ],
+    "interesting_score": 17,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 3,
+      "emotions": {
+        "concreteness": 3,
+        "elegance": 3
+      },
+      "technical_context": "Bell-32V kill accepts only numeric signal specifications: -9 (SIGKILL), -15 (SIGTERM), -1 (SIGHUP), etc. Implementation: atoi(argv[1]+1) — skip the dash, convert digit string to integer. atoi('9') = 9, atoi('TERM') = 0 (invalid). Signal name expansion is a POSIX 1992 extension via -s flag or kill -SIGNAME PID. 1979 sysadmins memorized signal numbers: 1=HUP, 2=INT, 9=KILL, 11=SEGV, 13=PIPE, 15=TERM, etc. These numbers became cultural shorthand: 'kill dash nine' is universally understood as 'force kill'. The argv[1]+1 pointer arithmetic skips the leading dash without a copy — typical K&R C compactness. argc-- and argv++ shift the argument list after consuming the signal flag. Modern coreutils kill (~300 lines) adds: signal name table, -l listing, -L verbose, error messages, but the syscall invocation is still the same single line.",
+      "human_story": "How do you tell 1979 kill which signal to send? Numeric prefix: `-9` for SIGKILL, `-15` for SIGTERM, `-1` for SIGHUP. Implementation: atoi(argv[1]+1) — skip the dash, parse the rest as integer. atoi('9') = 9. atoi('TERM') = 0 (invalid). Signal names weren't supported until POSIX 1992 added -SIGNAME and -s flags. 1979 sysadmins memorized: 1=HUP, 2=INT, 9=KILL, 15=TERM, 11=SEGV. These numbers became cultural shorthand — 'kill dash nine' is universally understood as 'force kill', even to engineers who don't know what SIGKILL is. Modern coreutils kill is ~300 lines vs 1979's 40, mostly to handle signal name tables, -l (list), -L (verbose), better errors. But the actual syscall call is the same one line — the 1979 code is the irreducible core."
+    },
+    "appraiser_note": "Bell-32V kill は **数値シグナル指定のみ**: -9 (SIGKILL)、 -15 (SIGTERM)、 -1 (SIGHUP) など。 実装: **atoi(argv[1]+1)** ——dash を skip、 残りを整数化。 atoi('9') = 9、 atoi('TERM') = 0 (無効)。 **シグナル名展開は POSIX 1992 拡張** (-s フラグまたは kill -SIGNAME PID)。 1979 sysadmin はシグナル番号を**暗記**: 1=HUP、 2=INT、 9=KILL、 11=SEGV、 13=PIPE、 15=TERM、 など。 これらの数字が**文化的略号**化: 「kill dash nine」 は SIGKILL を知らないエンジニアにも「強制 kill」 として通じる。 **argv[1]+1 ポインタ算術**で先頭 dash を skip——コピーなし、 K&R C のコンパクトさ。 **argc-- + argv++** で signal flag 消費後の引数 shift。 modern coreutils kill (~300 行) は signal 名テーブル、 -l リスト、 -L verbose、 エラーメッセージ追加だが、 **syscall 呼び出しは同じ 1 行**——1979 年コードが irreducible core。"
+  },
+  {
+    "id": "kill-004-partial-failure",
+    "text": "int errlev;\n\nerrlev = 0;\n...\nargv++;\nwhile (argc > 1) {\n    if (**argv < '0' || **argv > '9')\n        goto usage;\n    res = kill(pid = atoi(*argv), signo);\n    if (res < 0) {\n        printf(\"%u: %s\\n\", pid, sys_errlist[errno]);\n        errlev = 1;\n    }\n    argc--;\n    argv++;\n}\nreturn(errlev);\n\n/* Multiple pids in one invocation:\n   $ kill 1234 5678 9999\n   9999: No such process\n   $ echo $?\n   1                # errlev set because 9999 failed\n   \n   Partial failure pattern:\n     - All operations attempted (no early abort)\n     - Per-pid error reported to stderr\n     - errlev accumulated\n     - exit code reflects 'any failure'\n   \n   Same pattern in: rm multi-file, cp multi-source, chmod multi-target,\n                    git commit -a with merge conflicts, kubectl delete\n                    with multiple resources.\n*/",
+    "file_path": "usr/src/cmd/kill.c",
+    "line_number": 27,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "kill",
+      "partial-failure",
+      "multi-target"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 4,
+      "emotions": {
+        "concreteness": 4,
+        "elegance": 3
+      },
+      "technical_context": "kill accepts multiple pids in one invocation, processes them in a loop, reports per-pid errors to stderr, and accumulates failure into errlev for the final exit code. The loop doesn't early-abort on failure: kill 1234 5678 9999 sends to all three even if 9999 doesn't exist; only 9999 reports an error. errlev=1 if any failed. sys_errlist[errno] looks up the human-readable error string from the kernel error number (modern: strerror(errno)). The 'best-effort, partial failure, accumulated exit code' pattern is universal in Unix multi-target operations: rm file1 file2 (continues on missing files), cp src1 src2 dest, chmod 644 *.c, git commit -a with conflicts, kubectl delete multiple. All inherit the principle: try every operation, report each failure, exit non-zero if any failed. Modern shell scripts rely on this: 'kill $(jobs -p) 2>/dev/null' tries to kill all jobs, succeeds for live ones, ignores errors for already-dead.",
+      "human_story": "What if you `kill 1234 5678 9999` and 9999 is already dead? 1979 kill continues to the next pid, prints '9999: No such process' to stderr, then exits with code 1 (one failure occurred). It doesn't abort early — best-effort delivery to all targets. This 'partial failure with accumulated exit code' is universal in Unix multi-target commands: rm processes each file independently, cp does multi-source copies, chmod handles multi-target, git commit with conflicts, kubectl delete multiple resources. All inherit the principle: try everything, report each failure, exit nonzero if any failed. Modern shell scripts depend on this: `kill $(jobs -p) 2>/dev/null` works even when some jobs are already dead — kill ignores the dead ones, succeeds for the live, exits gracefully. The 1979 design choice — best-effort, never abort on first failure — saved billions of shell scripts from awkward retry logic."
+    },
+    "appraiser_note": "kill は**複数 pid を一括処理**、 ループで反復、 per-pid エラーを stderr 出力、 errlev に集約して最終 exit code に。 ループは**失敗で early-abort しない**: `kill 1234 5678 9999` は 9999 が存在しなくても 3 つ全てに送信試行、 9999 のみエラー報告。 失敗があれば errlev=1。 **sys_errlist[errno]** で kernel エラー番号を人間可読文字列に変換 (modern: strerror(errno))。 **「best-effort、 partial failure、 accumulated exit code」 パターン**は Unix 多 target 操作全般に universal: **rm file1 file2** (missing file で続行)、 **cp src1 src2 dest**、 **chmod 644 *.c**、 **git commit -a** with conflicts、 **kubectl delete** 複数 resource。 すべて**原則継承**: すべての操作を試行、 各失敗を報告、 何か失敗したら exit nonzero。 modern shell スクリプトの依存: `kill $(jobs -p) 2>/dev/null` で全ジョブ kill 試行、 live なら成功、 dead は無視、 gracefully exit。 **1979 年の design choice** (best-effort、 first failure で abort しない) が**何十億のシェルスクリプトを awkward retry logic から救った**。"
+  },
+  {
+    "id": "kill-005-signal-ipc-primitive",
+    "text": "/* 1979 Bell-32V kill: 40 lines, 1 syscall.\n   But kill(pid, signo) is the gateway to Unix's async IPC primitive.\n   \n   Evolution of signal-based IPC:\n     1971 Unix V1  : limited signals (PDP-7)\n     1975 V6       : signal() syscall, ~13 signals\n     1979 V7/32V   : 31 signals (this file)\n     1983 4.2BSD   : sigvec, sigsetmask (reliable signals)\n     1992 POSIX    : sigaction, sigprocmask, sigsuspend\n     2000+ Linux   : RT signals 32-64, sigqueue with data\n     2010+         : signalfd + epoll (event loop integration)\n   \n   Modern Linux signal mechanisms (all descend from kill syscall):\n     raise(signo)             - send to self\n     kill(pid, signo)          - send to specific pid\n     killpg(pgid, signo)       - send to process group\n     tgkill(tgid, tid, signo)  - send to specific thread\n     pthread_kill(tid, signo)  - thread-targeted (libpthread)\n     sigqueue(pid, signo, val) - signal with attached data\n   \n   Signal usage in production:\n     SIGHUP   : daemon config reload (nginx, sshd, syslogd, postfix)\n     SIGUSR1  : log rotate, dump stats (apache, varnish)\n     SIGTERM  : graceful shutdown (systemd default, docker stop)\n     SIGKILL  : forced kill (OOM killer, SIGKILL timeout escalation)\n     SIGSTOP  : suspend (Ctrl-Z via shell)\n     SIGCONT  : resume (fg/bg via shell)\n     SIGCHLD  : child died (parent supervisor wakeup)\n     SIGPIPE  : broken pipe (shell pipeline cleanup)\n   \n   40 lines of 1979 kill expose this entire mechanism to users.\n*/",
+    "file_path": "usr/src/cmd/kill.c",
+    "line_number": 1,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "kill",
+      "signal-ipc",
+      "async-notification"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "elegance": 4
+      },
+      "technical_context": "The 40-line kill command is the user-space entry point to Unix's asynchronous IPC primitive: signals. Signals are kernel-mediated async notifications between processes — small (signal number), unreliable (coalesced if pending), uncatchable in special cases (SIGKILL/SIGSTOP). Evolution: V1 limited signals -> V7 31 signals (this file) -> 4.2BSD reliable signals via sigvec -> POSIX 1992 sigaction with sigset_t -> Linux RT signals 32-64 + signalfd. Modern variations: killpg (process group), tgkill (specific thread), pthread_kill (thread via pthread API), sigqueue (signal with data payload). Signal usage taxonomy: SIGHUP for daemon reload (nginx/sshd/syslogd), SIGUSR1/2 for app-specific (log rotate), SIGTERM/SIGKILL for shutdown (systemd/docker), SIGSTOP/SIGCONT for job control (Ctrl-Z), SIGCHLD for parent supervision, SIGPIPE for pipeline cleanup. Every server process, every container runtime, every supervisor depends on these signals. The kill(1) command exposes this entire mechanism in 40 lines.",
+      "human_story": "What does 40 lines of 1979 K&R C give you? Access to Unix's most powerful async IPC primitive: signals. Signals are kernel-mediated notifications between processes — tiny (just a signal number), async (interrupt program flow anywhere), and some are uncatchable (SIGKILL/SIGSTOP). Evolution: V1's basic signals -> V7's 31 -> 4.2BSD's reliable signals -> POSIX's sigaction -> Linux's RT signals + signalfd. Modern variants address process groups (killpg), specific threads (tgkill, pthread_kill), data-carrying signals (sigqueue). Every modern server uses signals: nginx SIGHUP reload, sshd SIGTERM graceful shutdown, systemd's whole lifecycle, docker stop's SIGTERM-then-SIGKILL, kubernetes pod termination. The 40-line kill command from 1979 is the gateway to all of this — a tiny tool exposing a kernel mechanism that became the basis for daemon control, job management, and container orchestration."
+    },
+    "appraiser_note": "**40 行の kill コマンド**が Unix の**非同期 IPC プリミティブ (signal) への user-space 入口**。 signal は kernel mediated な非同期通知: 小さい (signal 番号のみ)、 unreliable (pending coalesced)、 特殊ケースで uncatchable (SIGKILL/SIGSTOP)。 **進化**: V1 限定 → V7 31 signals (本 file) → 4.2BSD reliable signals via sigvec → POSIX 1992 sigaction with sigset_t → Linux RT signals 32-64 + signalfd。 **modern variants**: killpg (プロセスグループ)、 tgkill (特定スレッド)、 pthread_kill (pthread API)、 sigqueue (data payload 付き signal)。 **signal usage 分類**: SIGHUP (daemon reload: nginx/sshd/syslogd)、 SIGUSR1/2 (app-specific: log rotate)、 SIGTERM/SIGKILL (shutdown: systemd/docker)、 SIGSTOP/SIGCONT (job control: Ctrl-Z)、 SIGCHLD (parent supervision)、 SIGPIPE (pipeline cleanup)。 全 server プロセス、 全 container runtime、 全 supervisor が依存。 **40 行が現代 OS の root core を expose**——daemon control、 job management、 container orchestration の基盤。"
   }
 ]
