@@ -15178,5 +15178,145 @@
       "human_story": "What did Bell Labs do with /usr/dict/words? In 1976, Doug McIlroy wrote 'spell', the first practical Unix spell checker. Its core was look — for each word in the document, ask look 'is this in the dictionary?'. If not, print as misspelling. This was the world's first command-line spell checker, predating Microsoft Word's by a decade. The architecture — sorted dictionary file + binary search lookups + normalization — is the same one used in modern aspell, hunspell, MS Word's spell check, Google Docs' spell check, every IDE's spell check, and every full-text search engine's term index. /usr/dict/words itself spawned thousands of derivative dictionaries; SCOWL (used in aspell) descends from it. The pattern also generalizes: DBMS B-tree indexes are binary search organized in tree structure; git's packfile index is binary search over sorted SHA lists; Bloom filters are probabilistic existence checks for when even binary search is too slow. The 162-line look program is the seed."
     },
     "appraiser_note": "look は **/usr/dict/words ecosystem の fast lookup プリミティブ**——Bell Labs 1979 年の中核。 辞書は **約 25000 語の sorted English words (~200KB)**。 look が O(log N) で word existence check 提供。 **spell (McIlroy 1975)** が look を内部で使用: tokenize → lowercase → sort-unique → look each word → 見つからなければ misspelling 報告——**世界初の実用 Unix spell checker**、 MS Word より 10 年早い。 「**sorted dictionary + binary search + normalization**」 パターンは現代の直系祖: aspell/hunspell、 DBMS B-tree primary key lookup、 **git packfile object lookup** (sorted SHA list の binary search)、 Bloom filter (確率的 existence check)、 **全文検索 inverted index** (sorted term list)、 Spotlight/desktop search。 /usr/dict/words 自体が数千の派生辞書を生み、 SCOWL (aspell が使用) は /usr/dict/words の子孫。 **DBMS B-tree index は binary search を tree 化したもの**、 **git packfile index は sorted SHA への binary search**、 **Bloom filter は binary search より速い probabilistic version**——すべての種が 162 行の look。"
+  },
+  {
+    "id": "pr-001-page-layout",
+    "text": "/*\n *   print file with headings\n *  2+head+2+page[56]+5\n */\n\nint length = 66;        /* total page length (lines) */\nint plength = 61;       /* printable page length */\nint margin = 10;        /* header area */\n\nprint(fp, argp) {\n    ...\n    plength = length - 5;     /* leave 5 lines at bottom */\n    if (ntflg)\n        plength = length;     /* -t: no header/footer */\n    ...\n    sprintf(linebuf, \"\\n\\n%s %s  %s Page %d\\n\\n\\n\",\n            cbuf+4, cbuf+20, header, page);\n    for (cp = linebuf; *cp; ) put(*cp++);\n    putpage();\n    if (ntflg == 0)\n        while (line < length)\n            put('\\n');\n    page++;\n}\n\n/* Page structure (66 lines total, encoded in 2+head+2+page[56]+5):\n   2 blank lines (top)\n   1 header line  (date + filename + Page N)\n   2 blank lines (header spacing)\n   56 content lines\n   5 blank lines (bottom margin)\n   ------\n   66 lines / page = 11 inches at 6 lines/inch (US Letter continuous form)\n*/",
+    "file_path": "usr/src/cmd/pr.c",
+    "line_number": 200,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "pr",
+      "page-layout",
+      "line-printer"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 5,
+      "emotions": {
+        "concreteness": 5,
+        "elegance": 3
+      },
+      "technical_context": "pr's page layout is hardcoded as '2+head+2+page[56]+5' (file comment) totaling 66 lines per page. This is 11 inches at 6 lines/inch — the physical specification of US continuous-form line printer paper. length=66 (total), plength=61 (printable), margin=10 (header area). Header format: 2 blank lines + 1 line with 'Date Time filename Page N' + 2 blank lines + 56 content lines + 5 blank lines. The -t flag (ntflg) suppresses header/footer (plength=length, no sprintf). Header is built with sprintf into linebuf and walked char-by-char via put(). After content, padding newlines fill to 'length' boundary, ensuring next page starts at form-feed boundary on continuous paper. The physical hardware constraint is encoded in the source code — modern enscript/a2ps abstract this to PostScript logical pages, decoupling text formatting from physical paper.",
+      "human_story": "Why 66 lines per page? Because line printers in 1979 used 11-inch continuous-form paper at 6 lines per inch — 11 × 6 = 66. The pr comment '2+head+2+page[56]+5' encodes this physical reality: 2 blank lines top, 1 header line, 2 spacing lines, 56 content lines, 5 bottom margin. After printing, padding newlines bring you to line 66 — the next form-feed perforation. Then the next page header starts cleanly. The hardware specification is literally baked into the constants. This worked for 25 years until laser printers and PostScript broke the assumption — pages became logical, paper sizes varied, line spacing changed. Modern enscript/a2ps abstract this away: pr formats for physical 11×6 paper, while modern tools produce PostScript/PDF independent of physical dimensions. 1979's pr shows how tightly software was coupled to hardware before printer abstraction layers existed."
+    },
+    "appraiser_note": "pr のページレイアウトは **`2+head+2+page[56]+5`** (ファイル冒頭コメント) でハードコード——合計 **66 行/ページ**。 これは **11 インチ × 6 行/インチ**——US 連続用紙 line printer の**物理仕様**。 length=66 (全体)、 plength=61 (本文最大)、 margin=10 (ヘッダエリア)。 ヘッダ書式: 2 行空白 + 1 行ヘッダ (日付/時刻/ファイル名/Page N) + 2 行空白 + 56 行本文 + 5 行下マージン。 **-t フラグ (ntflg)** でヘッダ/フッタ抑制 (plength=length、 sprintf スキップ)。 ヘッダは sprintf で linebuf に組立、 put() で 1 文字ずつ。 本文後、 length 境界まで改行詰めで**連続用紙の form-feed 境界**に揃える。 **物理ハードウェア制約が source code に直接エンコード**——modern enscript/a2ps が PostScript 論理ページに抽象化、 テキスト整形と物理紙の分離。 1979 年の pr は **printer 抽象化レイヤ登場前のハードウェア-ソフトウェア密結合**を示す。 25 年間ワークしたが、 レーザープリンタ + PostScript 普及で前提崩壊——ページが論理化、 紙サイズ可変、 行間可変に。"
+  },
+  {
+    "id": "pr-002-circular-buffer-sentinels",
+    "text": "#define BUFS  6720\nchar buffer[BUFS];          /* multi-column buffering */\n\nnexbuf()\n{\n    register int n;\n    register char *rbufp;\n\n    rbufp = bufp;\n    n = &buffer[BUFS] - rbufp;\n    if (n > 512)\n        n = 512;\n    if ((n = fread(rbufp, 1, n, file)) <= 0) {\n        fclose(file);\n        *rbufp = 0376;          /* END marker */\n    }\n    else {\n        rbufp += n;\n        if (rbufp >= &buffer[BUFS])\n            rbufp = buffer;     /* wrap around */\n        *rbufp = 0375;          /* CONTINUE marker */\n    }\n    bufp = rbufp;\n}\n\ntpgetc(ai)\n{\n    ...\nloop:\n    c = **(p = &colp[i]) & 0377;\n    if (c == 0375) {            /* hit CONTINUE marker */\n        nexbuf();\n        c = **p & 0377;\n    }\n    if (c == 0376)              /* hit END marker */\n        return(0);\n    (*p)++;\n    if (*p >= &buffer[BUFS])\n        *p = buffer;            /* wrap around */\n    if (c == 0)\n        goto loop;\n    return(c);\n}",
+    "file_path": "usr/src/cmd/pr.c",
+    "line_number": 282,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "pr",
+      "ring-buffer",
+      "sentinel"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "creativity": 5,
+        "elegance": 4
+      },
+      "technical_context": "pr's multi-column output requires reading data for N columns in parallel from a single file (each column N pages apart). Solution: a 6720-byte circular buffer with two sentinel bytes — 0375 (CONTINUE, 'load more here') and 0376 (END, 'EOF reached'). nexbuf() reads up to 512 bytes via fread, places sentinel at the next position. tpgetc() checks each byte: if 0375, call nexbuf() to refill; if 0376, return 0 (EOF); otherwise advance pointer with wrap-around. The sentinels are chosen to be outside printable ASCII (0xFD/0xFE) so they can't appear in normal text data. Each column has its own colp[i] pointer into the shared buffer — N pointers walking the same circular memory independently. This 'ring buffer with out-of-band sentinel bytes' pattern predates Linux kernel ring buffer (printk, ftrace) by 12 years, Kafka log segments by 32 years. Bell-32V pr embedded a userspace ring buffer in 421 lines of C, before 'ring buffer' was a common term.",
+      "human_story": "How do you output 3 columns from a single file when each column is 56 lines apart? You can't read column 1 fully then column 2 — they're interleaved. pr's answer: a 6720-byte circular buffer with 'magic bytes' marking state. 0375 means 'this is where the loaded data ends, call nexbuf() to load more'. 0376 means 'EOF, stop'. Each column has its own pointer chasing through the same circular memory. The magic bytes are chosen outside printable ASCII (0xFD/0xFE) so they can't accidentally match real text. This 'ring buffer + out-of-band markers' pattern predates Linux's printk ring buffer (1991) by 12 years and Kafka's log segments (2011) by 32 years. The same idea reappears in: protobuf wire format magic bytes, Kafka magic bytes, DBMS sentinel records, lockfree queue with sentinel nodes. 1979's pr embedded a user-space ring buffer in 421 lines of C, before the term existed."
+    },
+    "appraiser_note": "pr の**多段組み出力**は単一ファイルから N カラム分のデータを並列に読む必要——各カラムは N ページ離れた位置。 解決: **6720 バイトの循環バッファ + 2 つのセンチネル**——**0375 (CONTINUE、 'ここに ロード追加して')** と **0376 (END、 'EOF')**。 nexbuf() が最大 512 バイトを fread、 次の位置にセンチネル配置。 tpgetc() が各バイトをチェック: 0375 なら nexbuf() で補充、 0376 なら 0 (EOF) 返却、 それ以外はポインタ前進 (wrap-around)。 **センチネルが printable ASCII 範囲外 (0xFD/0xFE)**——通常テキストと衝突しない。 各カラムが独自の colp[i] で共有バッファ内を独立に走る——N ポインタが同じ循環メモリを独立に walk。 **「ring buffer + out-of-band sentinel bytes」 パターン**は **Linux カーネル ring buffer (printk、 ftrace、 1991 年) を 12 年先取り、 Kafka log segment (2011 年) を 32 年先取り**。 同 idea が再出: protobuf wire format magic byte、 Kafka magic byte、 DBMS sentinel record、 lockfree queue with sentinel node。 1979 年 pr は **421 行内に userspace ring buffer 内蔵**——「ring buffer」 という用語が定着する前。"
+  },
+  {
+    "id": "pr-003-n-column-parallel",
+    "text": "char *colp[72];                /* per-column buffer pointers, max 72 cols */\n\nprint(fp, argp) {\n    ...\n    if (mflg)\n        ncol = nofile;          /* -m: column = file count */\n    colw = width / (ncol == 0 ? 1 : ncol);\n    ...\n    colp[ncol] = bufp = buffer;\n    ...\n}\n\nputpage()\n{\n    ...\n    /* Multi-column: prime each column pointer */\n    colp[0] = colp[ncol];\n    if (mflg == 0)\n        for (i = 1; i <= ncol; i++) {\n            colp[i] = colp[i-1];\n            for (j = margin; j < length; j++)\n                while ((c = tpgetc(i)) != '\\n')\n                    if (c == 0)\n                        break;\n        }\n    \n    /* Multi-column output: weave columns line by line */\n    while (line < plength) {\n        lastcol = colw;\n        for (i = 0; i < ncol; i++) {\n            while ((c = pgetc(i)) && c != '\\n')\n                if (col < lastcol || tabc != 0)\n                    put(c);\n            if (c == 0) continue;\n            if (tabc) put(tabc);\n            else while (col < lastcol) put(' ');\n            lastcol += colw;\n        }\n        while ((c = pgetc(ncol)) && c != '\\n')\n            put(c);\n        put('\\n');\n    }\n}",
+    "file_path": "usr/src/cmd/pr.c",
+    "line_number": 238,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "pr",
+      "multi-column",
+      "parallel-streams"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 4,
+      "emotions": {
+        "abstraction": 4,
+        "creativity": 4
+      },
+      "technical_context": "pr's multi-column output uses colp[72] as per-column buffer pointers — N independent positions walking the same circular buffer. colw = width/ncol gives each column's character width. The 'prime' phase advances colp[i] to skip ahead by (length-margin) lines × i, positioning each column at its start. Then the output loop weaves: for each output line, iterate columns i=0..ncol-1, read chars from pgetc(i), put them out, pad with spaces (or tab if -s tabc) to lastcol boundary. This is the in-memory transpose of N column-major page-sized streams into a row-major line-sequential output. The same pattern is the core of multi-way merge in external sort (#188), MapReduce shuffle phase, SQL FULL OUTER JOIN row-level, CSS multi-column layout, newspaper typesetting. 1979 pr implements 'merge N parallel streams row-wise' in ~30 lines of C with circular buffer state.",
+      "human_story": "How do you print column 1, column 2, column 3 side by side from a single file? You read N pages worth of data, then weave them line by line: line 1 of col 1, padding, line 1 of col 2, padding, line 1 of col 3, newline; line 2 of col 1, ... pr's colp[72] array holds one pointer per column, each pointing into the shared circular buffer at a different position. The output loop iterates columns left-to-right for each line, then advances to next line. This is the same 'merge N streams row-wise' pattern as multi-way merge in external sort, MapReduce shuffle, SQL FULL OUTER JOIN, and modern CSS multi-column layout. 1979 pr did it in ~30 lines of C with circular buffer state. The key insight: you don't need N file descriptors for N columns — you need N pointers into a shared buffer big enough to hold the readahead window."
+    },
+    "appraiser_note": "pr の多段組み出力は **colp[72]** を**カラム別バッファポインタ**として使用——N 独立ポジションが同じ循環バッファを walk。 colw = width/ncol で各カラム文字幅。 **prime フェーズ**で colp[i] を (length-margin) × i 行分先送り、 各カラムを開始位置に配置。 **output ループ**: 各出力行で i=0..ncol-1 をループ、 pgetc(i) で文字読み、 put() で出力、 lastcol 境界までスペース埋め (or -s tabc でタブ)。 これは **「N カラム単位ページサイズストリームを行単位連続出力に in-memory 転置」 ——row-major 化**。 同パターン: external sort の N-way merge (#188)、 MapReduce shuffle phase、 SQL FULL OUTER JOIN 行レベル、 CSS multi-column layout、 新聞組版。 1979 年 pr は **30 行 C + 循環バッファ状態**で実装。 **重要 insight**: N カラムのために N ファイルディスクリプタ不要——**先読みウィンドウを保持する共有バッファへの N ポインタ**で十分。 1979 年が現代の column-layout に至る基本パターンを確立。"
+  },
+  {
+    "id": "pr-004-multifile-merge",
+    "text": "int nofile;\nchar isclosed[10];\nFILE *ifile[10];                  /* up to 10 files */\n\nmopen(ap)\nchar **ap;\n{\n    register char **p, *p1;\n\n    p = ap;\n    while ((p1 = *p) && p++ <= lastarg) {\n        if ((ifile[nofile] = fopen(p1, \"r\")) == NULL) {\n            isclosed[nofile] = 1;\n            nofile--;\n        }\n        else\n            isclosed[nofile] = 0;\n        if (++nofile >= 10) {\n            fprintf(stderr, \"pr: Too many args\\n\");\n            done();\n        }\n    }\n}\n\ntpgetc(ai)\n{\n    register char **p;\n    register int c, i;\n\n    i = ai;\n    if (mflg) {\n        if ((c = getc(ifile[i])) == EOF) {\n            if (isclosed[i] == 0) {\n                isclosed[i] = 1;\n                if (--nofile <= 0)\n                    return(0);\n            }\n            return('\\n');         /* this column empty */\n        }\n        if (c == FF && ncol > 0)\n            c = '\\n';\n        return(c);\n    }\n    ...\n}\n\n/* Usage:\n   pr -m file1.txt file2.txt file3.txt    # 3-column side-by-side\n   pr -m old.c new.c                       # human code review\n   pr -m -t -s'|' a b c                    # tab-separated 3-way merge\n*/",
+    "file_path": "usr/src/cmd/pr.c",
+    "line_number": 218,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "pr",
+      "multi-file",
+      "parallel-view"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 4,
+      "emotions": {
+        "abstraction": 4,
+        "elegance": 3
+      },
+      "technical_context": "pr's -m flag (merge) handles multiple files as parallel columns. mopen() fopens up to 10 files into ifile[] array. tpgetc() in mflg mode bypasses the circular buffer and directly getc() from ifile[i] — each file = one column. EOF returns '\\n' (empty column) for that line until --nofile reaches 0 (all closed). Form-feed (FF, 014) within file converts to newline since column mode prevents page breaks. The pattern is N-way file merging row-wise — same as paste -d (System III, 1981) but simpler API. Used for: side-by-side comparison (old.c vs new.c), parallel reports (Q1 sales/support/eng), human-readable diff (before sdiff/diff -y existed). The 10-file limit reflects 1979 PDP-11 file descriptor scarcity; modern pr handles many more. This is the ancestor of vimdiff/sdiff/git difftool side-by-side displays, BSD column tool, CSS multi-column layout for separate sources.",
+      "human_story": "Want to print three documents side-by-side on one piece of paper? 1979 pr -m does it: pr -m sales.txt support.txt engineering.txt. Each file becomes a column, lines weave together row-by-row. fopen each file into ifile[i], in tpgetc just getc(ifile[i]) for column i. When a file ends, that column becomes empty '\\n's while others continue. Up to 10 files (PDP-11 fd limit). This was the human-readable diff before sdiff (1981), the parallel-report layout before spreadsheets were common on Unix, the 'compare versions side by side' before vimdiff. paste -d in System III (1981) is the cleaner descendant — same idea, simpler flags. Modern vimdiff/sdiff/git difftool side-by-side display all derive from pr -m. The 1979 lesson: when you want to compare or contrast N text streams, line them up in columns and let human pattern recognition do the rest."
+    },
+    "appraiser_note": "pr の **-m フラグ (merge)** が複数ファイルを並列カラムとして扱う。 mopen() が最大 **10 ファイル**を ifile[] 配列に fopen。 mflg モードの tpgetc() は循環バッファをバイパス、 直接 getc(ifile[i]) で読む——**1 ファイル = 1 カラム**。 EOF は '\\n' (空欄カラム) を返し、 --nofile が 0 で全終了。 ファイル内 form-feed (FF, 014) は newline に変換 (カラムモードはページ分割禁止)。 パターンは **N-way ファイル merge 行単位**——paste -d (System III、 1981) より早いが API シンプル。 用途: side-by-side 比較 (old.c vs new.c)、 並列レポート (Q1 sales/support/eng)、 **人間用 diff** (sdiff/diff -y より前)。 **10 ファイル制限**は 1979 年 PDP-11 file descriptor 数の希少性反映、 modern pr は多数対応。 これが **vimdiff/sdiff/git difftool side-by-side、 BSD column ツール、 CSS multi-column** の祖。 1979 年の教訓: **N テキストストリーム比較/対照は、 カラム整列で人間のパターン認識に任せる**。"
+  },
+  {
+    "id": "pr-005-fixtty-resource-protection",
+    "text": "char *tty;\nint mode;\n\nmain() {\n    ...\n    if (signal(SIGINT, SIG_IGN) != SIG_IGN)\n        signal(SIGINT, onintr);\n    ...\n    fixtty();\n    ...\n}\n\nfixtty()\n{\n    struct stat sbuf;\n\n    tty = ttyname(1);              /* find tty for stdout */\n    if (tty == 0)\n        return;                    /* not a tty (file/pipe) */\n    stat(tty, &sbuf);\n    mode = sbuf.st_mode & 0777;    /* save original mode */\n    chmod(tty, 0600);              /* lock out other writers */\n}\n\ndone()\n{\n    if (tty)\n        chmod(tty, mode);          /* restore */\n    exit(0);\n}\n\nonintr()                           /* SIGINT handler */\n{\n    if (tty)\n        chmod(tty, mode);          /* restore even on interrupt */\n    _exit(1);\n}",
+    "file_path": "usr/src/cmd/pr.c",
+    "line_number": 123,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "pr",
+      "tty-protection",
+      "signal-safety"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 4,
+      "emotions": {
+        "concreteness": 4,
+        "creativity": 4
+      },
+      "technical_context": "fixtty() prevents other users on the multi-user Unix system from interfering with a long printing job. ttyname(1) detects if stdout is a tty (interactive terminal output, e.g. to a serial-connected line printer); if not, returns. Otherwise stat() saves current mode (typically 0622 = own rw, others w), then chmod(tty, 0600) revokes group/other write permission. Long pr | lpr jobs can take hours on 1979 printers; without this, another user's `write` or `wall` command would corrupt the output mid-page. done() restores mode on normal exit; onintr() (SIGINT handler) restores even on Ctrl-C, preventing 'tty stuck inaccessible' bugs. The signal(SIGINT, SIG_IGN) != SIG_IGN guard respects parent shell's job control setup. This is the prototype of resource-acquisition-with-guaranteed-release: RAII (C++), defer (Go), try-finally (Java/Python), atexit() — all descend from this signal-based cleanup pattern. The modern `mesg n` shell command implements the same concept independently.",
+      "human_story": "It's 1979. You start a 2-hour print job: pr report.txt | lpr. Halfway through, your colleague runs `write you` and types 'hey, lunch?'. Without protection, that message appears mid-page in your printout, ruining it. fixtty() is the defense: detect stdout's tty (e.g. /dev/tty03), save current permissions (0622 — others can write), chmod 0600 (only you can write). When done, restore. The trickier bit: what if pr crashes or is Ctrl-C'd halfway? onintr() handles SIGINT, restores permissions before exit. Without onintr, your tty would be stuck at 0600 — even YOU couldn't write to it from another shell. This 'acquire resource, guarantee release on all exit paths' pattern is the prototype of every defensive programming idiom: C++ RAII destructors, Go defer, Java try-finally, Python with-statements, atexit handlers — all descend from the K&R C signal-based pattern shown here. The modern `mesg n` shell command implements the same idea independently."
+    },
+    "appraiser_note": "fixtty() がマルチユーザー Unix で**長い印刷ジョブを他ユーザーの干渉から保護**。 ttyname(1) が stdout の tty 検出 (例: シリアル接続 line printer)、 そうでなければリターン。 そうなら stat() で現在 mode (typically 0622 = own rw、 others w) を保存、 **chmod(tty, 0600)** で他者 write 権限を剥奪。 1979 年プリンタの長 pr | lpr ジョブは数時間——保護なしだと他ユーザーの `write` や `wall` が印刷物の途中に混入し台無し。 **done()** が正常終了時 mode 復元、 **onintr() (SIGINT ハンドラ)** が Ctrl-C でも復元、 「tty 詰まり」 バグ防止。 `signal(SIGINT, SIG_IGN) != SIG_IGN` ガードが**親シェルの job control 設定を尊重**。 これが **「リソース取得 + 全終了パスでの確実な解放」** の原型: **C++ RAII デストラクタ、 Go defer、 Java try-finally、 Python with、 atexit ハンドラ**——すべて K&R C の signal ベース cleanup パターンから派生。 現代の `mesg n` シェルコマンドが**同じ概念を独立実装**。 1979 年の教訓: 異常終了でリソースリークしない設計は OS-level プログラミングの基礎。"
   }
 ]
