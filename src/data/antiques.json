@@ -15738,5 +15738,145 @@
       "human_story": "How does '130 clock ticks' become '0:02.16'? printt() does mixed-radix arithmetic: digit 0 is 1/60 sec (PDP-11's 60 Hz tick), digit 1 is 1/10 sec, digit 2 is sec, digit 3 is tens of sec (with base 6 to overflow at 60), digit 4 is min, etc. quant[]={6,10,10,6,10,6,10,10,10} encodes the bases for each position. The loop a%quant[i]; a/=quant[i] decomposes the number into mixed-radix digits — same algorithm as binary/hex conversion but with varying bases. Output walks digits in reverse with 3 cases: digit, zero-pad, or space-suppress. Separator strings sep[]/nsep[] encode where '.' and ':' go. 27 lines that convert any clock-tick count into 'hh:mm:ss.dd' format. The same algorithm formats Python's timedelta, Java's Duration, Go's time.Duration — all descendants of this 1979 printt(). The lesson: time-of-day is mixed-radix (60/60/24/...), and the algorithm to format it is the same one that prints any positional number — just with non-uniform bases."
     },
     "appraiser_note": "printt() が clock ticks を人間可読の **hh:mm:ss.dd** に変換、 **mixed-radix 算術**で実現。 **quant[] = {6, 10, 10, 6, 10, 6, 10, 10, 10}** が各桁の基数: 6 (1/60 sec、 60Hz tick から)、 10 (1/10 sec)、 10 (sec の 1 桁)、 6 (sec の 10 桁、 6 で 60sec/min に繰り上げ)、 10 (min の 1 桁)、 6 (min の 10 桁、 60min/hour に繰り上げ)、 10/10/10 (hour 桁)。 **変換ループ digit[i] = a % quant[i]; a /= quant[i]** は **mixed-radix 分解**——2 進/16 進変換と同アルゴリズム、 桁ごとに基数可変。 **出力ループ**が桁を逆順に walk、 **3 ケース**で文字選択: 実際の数字、 zero-padding (leading nonzero 後)、 suppress (pad[i] = ' ' で上位桁)。 **sep[]/nsep[] 区切り文字列**が位置的 punctuation ('.', ':') をエンコード。 **27 行関数**が**全 time formatting library の祖**: POSIX strftime、 Python timedelta.__str__、 Java Duration.toString、 Go time.Duration.String。 **mixed-radix アプローチ**は専用 time-arithmetic より elegant——同一アルゴリズムが任意の非 10 進位取り表記をフォーマット。"
+  },
+  {
+    "id": "pwd-001-root-anchor",
+    "text": "struct stat d, dd;\n\nmain() {\n    int rdev, rino;\n    \n    stat(\"/\", &d);\n    rdev = d.st_dev;            /* root's device number */\n    rino = d.st_ino;            /* root's inode number */\n    for (;;) {\n        stat(dot, &d);          /* dot = \".\" (current dir) */\n        if (d.st_ino == rino && d.st_dev == rdev)\n            prname();           /* reached root, print and exit */\n        ...\n    }\n}\n\n/* (dev, inode) pair uniquely identifies a file across the whole Unix system.\n   inode alone is unique only within a filesystem; mounts give multiple FS.\n   Root \"/\" is identified by stat(\"/\") at startup; loop termination compares\n   current dir's (dev, ino) to root's. This is more robust than path string\n   comparison (which can be fooled by symlinks, bind mounts).\n*/",
+    "file_path": "usr/src/cmd/pwd.c",
+    "line_number": 17,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "pwd",
+      "inode",
+      "filesystem"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "concreteness": 4
+      },
+      "technical_context": "pwd identifies the filesystem root by stat()ing '/' at startup and saving its device + inode numbers as (rdev, rino). The (dev, ino) pair uniquely identifies any file across the entire Unix system — inode alone is unique only within a single filesystem, but multiple mounted filesystems can have the same inode number. Loop termination compares current directory's (d.st_dev, d.st_ino) to root's saved (rdev, rino). This is far more robust than path-string comparison: symlinks, bind mounts, chroots, namespaces can make path strings misleading, but (dev, ino) is the kernel's ground truth. The same pattern is used in find -inum, rsync's --link-dest hardlink detection, du's hardlink deduplication, and modern container path resolution. Every modern OS that supports mount namespaces (Linux, FreeBSD jails, Solaris zones) still uses (dev, ino) as the canonical file identity. The pwd algorithm encodes this principle in 4 lines.",
+      "human_story": "How do you know when you've reached the root of the filesystem? You can't just check if the path is '/' — you don't have the path yet, that's what you're computing. pwd's answer: stat '/' at startup, save its (dev, inode). Loop: stat current dir; if its (dev, inode) matches root's, we've arrived. This is the Unix way of identifying files — (dev, ino) is unique system-wide, while inode alone is only unique within one filesystem. The trick survives every kind of trickery: symlinks, bind mounts, chroots, container namespaces. Modern tools that need 'is this the same file' (find -inum, rsync --link-dest, du with hard links, container path resolution) use the exact same (dev, ino) comparison. 4 lines of 1979 C teach the universal file-identity principle."
+    },
+    "appraiser_note": "pwd は起動時 stat('/') でルートディレクトリの **device + inode** 番号を (rdev, rino) として保存、 ファイルシステムのルート判定の anchor に。 **(dev, ino) ペアが Unix システム全体で unique ファイル識別子**——inode 単独は 1 FS 内のみ unique、 マウントされた複数 FS で同じ inode 番号が共存可能。 ループ終了は current dir の (d.st_dev, d.st_ino) と root の保存値の一致。 **path 文字列比較より遥かに堅牢**: symlink、 bind mount、 chroot、 namespace で path 文字列は欺けるが **(dev, ino) は kernel の ground truth**。 同パターン: find -inum、 rsync --link-dest hardlink 検出、 du の hardlink 重複排除、 modern container path 解決。 mount namespace サポートする modern OS (Linux、 FreeBSD jails、 Solaris zones) すべて **(dev, ino) を canonical file identity** として使用。 pwd アルゴリズムが**この原則を 4 行**でエンコード。"
+  },
+  {
+    "id": "pwd-002-dotdot-ascent",
+    "text": "for (;;) {\n    stat(dot, &d);                       /* d = current dir stat */\n    if (d.st_ino == rino && d.st_dev == rdev)\n        prname();                         /* root reached */\n    \n    if ((file = open(dotdot, 0)) < 0) {   /* open \"..\" for reading */\n        fprintf(stderr, \"pwd: cannot open ..\\n\");\n        exit(1);\n    }\n    fstat(file, &dd);                     /* dd = parent dir stat */\n    chdir(dotdot);                        /* move CWD to parent */\n    ...\n}\n\n/* The 3-step ascent:\n   1. open(\"..\", O_RDONLY) - get fd to parent dir for reading contents\n   2. fstat(fd, &dd)       - get parent's dev/inode (race-safe via fd)\n   3. chdir(\"..\")           - move process CWD to parent\n   \n   open + chdir together: open for reading entries, chdir for next iteration.\n   fstat (not stat): race-safe because fd locks the directory identity even\n   if name changes between open and use.\n*/",
+    "file_path": "usr/src/cmd/pwd.c",
+    "line_number": 24,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "pwd",
+      "directory-traversal",
+      "ascent"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 4,
+      "emotions": {
+        "concreteness": 4,
+        "creativity": 3
+      },
+      "technical_context": "pwd's ascent loop uses 3 syscalls per level: open('..', O_RDONLY) gets a file descriptor to the parent for reading its entries; fstat(fd, &dd) reads parent's (dev, inode) through the fd — race-safe because the fd locks the directory's identity; chdir('..') moves process CWD to parent so '.' becomes the new starting point next iteration. The fstat-via-fd pattern (not stat-via-path) is the canonical race-safe access — between an open and a subsequent stat, the path could be renamed, but the fd refers to the same inode. This 'pin-then-inspect' pattern is the precursor to modern fexecve, openat, fchmod, fstatat — the whole *at() family. The chdir() side effect mutates process state, but pwd is itself a child process (forked from shell), so the shell's CWD is unaffected. Process state isolation: every Unix process has its own CWD inode reference. Modern containers use the same primitive: pivot_root changes the root for a process group, not the whole system.",
+      "human_story": "How does pwd climb to the parent? Three syscalls: open('..') to get a file descriptor to the parent (for reading its entries), fstat(fd) to get parent's (dev, ino) — race-safe through the fd, and chdir('..') to actually move the process CWD up. The fstat-through-fd trick is important: if you stat by path between open and use, the path could be renamed or removed, but the fd is pinned to one inode. This 'open-then-fstat' pattern is the ancestor of fexecve, openat, fchmod, fstatat, the entire *at() family of syscalls invented later. The chdir() mutates the process CWD, but pwd is a child process forked from the shell — shell's CWD is unaffected by the child mucking around. Process-private CWD is what makes pivot_root and container filesystems possible: each process can have its own view of 'where am I'."
+    },
+    "appraiser_note": "pwd の上昇ループは**レベル毎 3 つの syscall**: **open('..', O_RDONLY)** で親ディレクトリの fd 取得 (エントリ読み取り用)、 **fstat(fd, &dd)** で親の (dev, inode) を fd 経由で取得 (race-safe)、 **chdir('..')** でプロセス CWD を親に移動 (次イテレーションで '.' が新しい起点)。 **fstat-via-fd パターン** (stat-via-path ではない) が **canonical race-safe アクセス**——open と subsequent stat の間に path が rename される可能性があるが、 fd は同じ inode を pin。 「**pin-then-inspect**」 パターンが**modern fexecve、 openat、 fchmod、 fstatat、 *at() 系全 syscall の前駆**。 chdir() の副作用がプロセス状態を変更、 でも pwd 自体がシェルから fork された子プロセス——シェルの CWD は影響なし。 **プロセス状態の isolation**: 全 Unix プロセスは独自の CWD inode 参照を持つ。 modern container も同プリミティブ: pivot_root が**プロセスグループ単位**で root 変更、 system 全体ではない。"
+  },
+  {
+    "id": "pwd-003-inode-search",
+    "text": "struct direct dir;\n\n/* struct direct (Bell-32V V7 filesystem):\n   unsigned short d_ino;    inode number (16-bit)\n   char d_name[14];         filename, NUL-padded, max 14 chars\n   Total: 16 bytes per entry, fixed size\n*/\n\nif (d.st_dev == dd.st_dev) {\n    /* Same filesystem: compare inodes directly */\n    if (d.st_ino == dd.st_ino)\n        prname();                /* self-reference (at root) */\n    do\n        if (read(file, (char *)&dir, sizeof(dir)) < sizeof(dir)) {\n            fprintf(stderr, \"read error in ..\\n\");\n            exit(1);\n        }\n    while (dir.d_ino != d.st_ino);     /* found self in parent */\n}\nelse do {\n    /* Different filesystem (mount point): stat each entry */\n    if (read(file, (char *)&dir, sizeof(dir)) < sizeof(dir)) {\n        fprintf(stderr, \"read error in ..\\n\");\n        exit(1);\n    }\n    stat(dir.d_name, &dd);\n} while (dd.st_ino != d.st_ino || dd.st_dev != d.st_dev);",
+    "file_path": "usr/src/cmd/pwd.c",
+    "line_number": 34,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "pwd",
+      "directory-entry",
+      "mount-point"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "creativity": 5,
+        "concreteness": 4
+      },
+      "technical_context": "pwd finds its own name by reading the parent directory's entries and matching its own inode. struct direct in V7 filesystem is 16 bytes: unsigned short d_ino (16-bit inode) + char d_name[14] (NUL-padded filename). pwd reads these entries via read() on the directory fd — yes, directories were just files in V7. Two cases: same filesystem (d.st_dev == dd.st_dev) means inode comparison is sufficient; different filesystem (mount point crossing) requires stat()ing each entry because inode numbers are not unique across filesystems. The match-by-inode pattern works because Unix filesystems guarantee that a file appears in its parent directory's entries, with d_ino set to its inode. Modern Linux: directories are no longer read() directly (must use opendir/readdir), and filenames are variable-length (ext4) or hash-organized (btrfs), but the principle 'find self in parent's entries' is unchanged. getcwd() syscall does this inside the kernel using dcache.",
+      "human_story": "How does pwd discover its own name? By reading the parent directory and looking for itself. struct direct is a 16-byte fixed-size record: 2-byte inode + 14-byte name. pwd reads these entries one by one with read(). When d_ino matches its own inode, the d_name is its own name. Two cases: same filesystem means inode numbers are comparable (just look for matching d_ino); crossing a mount point means inodes might collide between filesystems, so stat() each entry and compare (dev, ino). This works because Unix filesystems guarantee every file appears in its parent's entries by inode. Modern filesystems use variable-length names (ext4) or B-trees (btrfs), and you can't read() a directory directly anymore — must use opendir/readdir. But the algorithm 'find self in parent by inode' is unchanged, and getcwd() syscall does exactly this inside the kernel using dcache."
+    },
+    "appraiser_note": "pwd は親ディレクトリのエントリを読み、 自分の inode と一致するものを探して**自分の名前**を発見。 **struct direct** (V7 FS) は **16 バイト固定サイズ**: unsigned short d_ino (16-bit inode) + char d_name[14] (NUL-padded、 最大 14 文字)。 pwd は read() でこれらエントリを読む——**V7 ではディレクトリも単なるファイル**だった。 **2 つのケース**: 同一 FS (d.st_dev == dd.st_dev) は inode 比較で十分、 マウントポイント越え (異 FS) は inode 番号が FS 間で衝突する可能性があるので**各エントリを stat() して (dev, ino) ペア比較**。 **inode マッチが動く理由**: Unix FS の不変条件——ファイルは必ず親ディレクトリのエントリに d_ino とともに存在。 **modern Linux**: ディレクトリの直接 read() は不可 (opendir/readdir 必須)、 ファイル名は可変長 (ext4) または B-tree (btrfs)、 でも **「親内で inode 検索」 という原理は不変**——getcwd() syscall が kernel 内で dcache を使い同じことを行う。"
+  },
+  {
+    "id": "pwd-004-prepend-construction",
+    "text": "char name[512];\nint off = -1;\n\ncat()\n{\n    register i, j;\n\n    i = -1;\n    while (dir.d_name[++i] != 0);    /* strlen(dir.d_name) */\n    if ((off + i + 2) > 511)\n        prname();                     /* overflow: output and exit */\n    \n    /* Shift existing path right by (i+1) bytes */\n    for (j = off + 1; j >= 0; --j)\n        name[j + i + 1] = name[j];\n    \n    off = i + off + 1;                /* new length */\n    name[i] = '/';                    /* separator */\n    \n    /* Prepend new name */\n    for (--i; i >= 0; --i)\n        name[i] = dir.d_name[i];\n}\n\n/* Build sequence as we ascend:\n   1. find myapp:    name = \"myapp\"\n   2. find projects: name = \"projects/myapp\"\n   3. find keita:    name = \"keita/projects/myapp\"\n   4. find home:     name = \"home/keita/projects/myapp\"\n   5. root reached -> prname() prepends \"/\" -> \"/home/keita/projects/myapp\"\n*/",
+    "file_path": "usr/src/cmd/pwd.c",
+    "line_number": 66,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "pwd",
+      "string-construction",
+      "prepend"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "concreteness": 4
+      },
+      "technical_context": "cat() prepends each discovered directory name to the path buffer. Since pwd discovers names from leaf to root (myapp, projects, keita, home), it needs to build the path in reverse — or prepend as it goes. cat()'s approach: compute new name length via inline strlen (while(d_name[++i]!=0)), check overflow against 512-byte buffer, shift existing path right by (i+1) bytes, place '/' at position i, prepend new name in positions [0..i-1]. The shift loop runs backward (j = off+1; j >= 0; --j) for overlap safety, like memmove. Without prepending, pwd would need to collect names in an array and reverse at output time — equivalent but uses more memory. The 1979 design keeps path always in correct order, no separate reverse step. Modern code would use snprintf or strncat with a tail pointer, but the shift-and-prepend logic is the textbook 'how to build a string from the right end' algorithm. Same pattern in: shell PATH manipulation (prepending to PATH), URL path reconstruction (proxy rewrites), filesystem mount path overlay.",
+      "human_story": "pwd discovers names from leaf upward — first myapp, then projects, then keita, then home. But the output should be /home/keita/projects/myapp. How? Two options: collect names in array, reverse at output; or prepend each name to the buffer as you go. 1979 pwd chose prepending. cat() shifts the existing buffer right by (name length + 1) bytes, places '/' as separator, copies the new name into the front. After each step, name[] holds the correct partial path. The backward shift loop (j = off+1; j >= 0; --j) is overlap-safe, like memmove. When root is reached, prname() prepends leading '/' and outputs. This 'always-correct-order' approach avoids a separate reverse step, but costs O(N) shifts per insertion = O(depth²) total. Modern code might use snprintf with a tail pointer, but the shift-and-prepend pattern is the textbook approach for 'build a string from the right end'."
+    },
+    "appraiser_note": "cat() が発見した各ディレクトリ名を path バッファに**前置 (prepend)**。 pwd は名前を**葉から root へ**発見 (myapp、 projects、 keita、 home)、 でも出力は逆順——前置で**常に正しい順序**を保つ。 cat() のアプローチ: インライン strlen で新名前長計算 (while(d_name[++i]!=0))、 512 バイトバッファ overflow チェック、 **既存 path を (i+1) バイト右シフト**、 位置 i に '/' 配置、 位置 [0..i-1] に新名前を前置コピー。 **シフトループは逆順** (j = off+1; j >= 0; --j) で overlap-safe (memmove と同じ)。 前置なしだと array に集めて出力時に reverse——等価だがメモリ余分使用。 **1979 年の設計は常に path を正しい順序**で保持、 別途 reverse 不要。 modern code なら snprintf や tail pointer 使用するが、 **shift-and-prepend ロジック**は「文字列を末尾から build する」 教科書アルゴリズム。 同パターン: shell PATH manipulation (prepending to PATH)、 URL path reconstruction (proxy rewrites)、 filesystem mount path overlay。"
+  },
+  {
+    "id": "pwd-005-getcwd-evolution",
+    "text": "/* Evolution of \"get current directory\":\n\n   1979 Bell-32V pwd (this file, 80 lines):\n     - userspace traversal of \"..\"\n     - read() parent directory entries\n     - find self by inode match\n     - prepend each name\n     - mount-point handling via stat()\n   \n   1983 4.2BSD getwd() syscall:\n     - kernel does the work\n     - O(depth) using kernel structures\n     - race-free, no chdir side-effects\n   \n   1992 POSIX getcwd():\n     - unified interface (buf, size)\n     - overflow-safe\n     - standardized across Unix variants\n   \n   2026 modern Linux:\n     - getcwd() syscall using dcache (in-memory)\n     - alternate: readlink(\"/proc/self/cwd\")\n     - kernel handles mount namespaces, bind mounts, chroots transparently\n\n   Modern pwd implementation (GNU coreutils, simplified):\n*/\n\nint main(int argc, char **argv) {\n    char *cwd = getcwd(NULL, 0);   /* kernel does it all */\n    if (cwd) {\n        printf(\"%s\\n\", cwd);\n        free(cwd);\n    }\n    return 0;\n}\n\n/* From 80 lines (1979) to 5 lines (modern). The algorithm now lives\n   inside the kernel's d_path() walking dcache. But the principle —\n   ascend via .., find self by inode, prepend names — is unchanged. */",
+    "file_path": "usr/src/cmd/pwd.c",
+    "line_number": 1,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "pwd",
+      "getcwd",
+      "kernel-evolution"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "elegance": 4
+      },
+      "technical_context": "pwd's evolution from 80-line userspace traversal (1979) to 1-syscall kernel call (1983 4.2BSD getwd, 1992 POSIX getcwd) exemplifies the Unix design pattern of 'frequently-used userspace operations promoted to syscalls'. Original pwd: open '..', read entries, find self by inode, prepend name, chdir up, repeat. Modern getcwd(): kernel walks dcache (dentry cache) from current task's pwd to root, building the path in kernel memory, copying to user buffer. Benefits: O(depth) with in-memory dcache vs O(depth × entries_per_dir) with disk reads; race-free since kernel holds locks; no chdir side-effect; handles mount namespaces, bind mounts, chroots, overlayfs transparently. The same evolution happened with: directory listing (ls userspace -> opendir/readdir libc -> getdents syscall), file matching (find userspace recursion -> fts() / openat()), process info (ps reading /etc/ttytab -> /proc filesystem). The 1979 pwd is preserved as historical illustration of why kernel acceleration of common operations matters.",
+      "human_story": "pwd's 80 lines in 1979 became 5 lines by 1992. Why? Because the kernel learned to do the work. 1979: userspace, read parent dirs, find self by inode, build path. 1983 4.2BSD: getwd() syscall — kernel walks structures directly, faster + race-free. 1992 POSIX: getcwd() standardized. Modern: kernel's d_path() walks the in-memory dcache (dentry cache), no disk reads, handles mount namespaces, bind mounts, chroots, overlayfs all transparently. The algorithm (ascend via .., find self in parent, prepend name) is unchanged — it just moved into the kernel. This same evolution happened with: ls (userspace read of dir entries -> opendir/readdir -> getdents syscall), find (userspace recursion -> fts() / openat() *at family), ps (reading /etc/ttytab -> /proc filesystem). 1979 pwd is preserved as the textbook example of how user-space tools evolve into kernel features when they're used enough to warrant optimization."
+    },
+    "appraiser_note": "pwd の進化: **80 行 userspace traversal (1979) → 1 syscall kernel call (1983 4.2BSD getwd、 1992 POSIX getcwd)** が、 **「頻出 userspace 操作の syscall 昇格」 という Unix 設計パターン**の典型。 元 pwd: open '..'、 read entries、 inode で self 発見、 name 前置、 chdir up、 反復。 modern getcwd(): **kernel が dcache (dentry cache) を walk**、 task の pwd から root まで、 kernel メモリで path 構築、 user buffer へコピー。 **利点**: in-memory dcache で O(depth) (disk read なし)、 kernel が lock 保持で race-free、 chdir 副作用なし、 mount namespace/bind mount/chroot/overlayfs を透過処理。 同じ進化が起きた例: **ls** (userspace read of dir entries → opendir/readdir → getdents syscall)、 **find** (userspace recursion → fts() / openat() *at family)、 **ps** (/etc/ttytab read → /proc filesystem)。 **1979 年 pwd は教科書例**——user-space ツールが十分使われると **kernel 機能に進化**する歴史。 同じアルゴリズム ('..' で上昇、 親内で self 発見、 名前前置) は kernel 内で生存中。"
   }
 ]
