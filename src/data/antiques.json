@@ -15598,5 +15598,145 @@
       "human_story": "What's the most common C developer task? Fix linker errors. 'undefined reference to printf' has frustrated every C programmer since 1972. The fix dance starts with nm: pipe through grep ' U ' to see what's missing, then nm /usr/lib/*.a | grep ' T missing_name' to find which library has it, then add -llib to your compile command. Done in 30 seconds with experience. nm + shell composition is the entire binary-inspection toolchain: grep (filter by type), awk (extract names), sort/uniq (deduplicate), comm (intersect), c++filt (demangle), ldd (dynamic libs), objdump (full disassembly). Together they form the systems-programmer's microscope. Security auditors use nm to find strcpy/gets/sprintf calls. Library maintainers use it to track ABI changes. Reverse engineers use it as first reconnaissance. All from a 239-line program written in 1979, whose output format became the de facto language for talking about binaries."
     },
     "appraiser_note": "nm は **canonical Unix linker-error-detective ツール**。 ワークフロー: 「undefined reference to foo」 リンカエラー → nm object | grep ' U ' で不足シンボル一覧 → nm /usr/lib/*.a | grep ' T foo' で提供ライブラリ発見 → -lfoo でリンク解決。 この **4 ステップデバッグダンス**が 50 年間 C 開発の基礎。 nm は Unix シェルと強力に合成: grep でタイプフィルタ、 awk で名前カラム抽出、 sort/uniq で重複除去、 comm でプログラム間積集合、 c++filt で C++ demangling。 ldd (動的リンカビュー)、 objdump (フルディスアセンブル)、 readelf (ELF 詳細) と組み合わせ、 nm は **「binary inspection toolchain」** の一部——全 systems プログラマが使う顕微鏡。 同パターンで **セキュリティ監査** (unsafe 関数検出)、 **ライブラリ依存分析** (prog が libfoo から何使うか)、 **reverse engineering** (binary 内部) すべて可能。 1979 年の **239 行 nm** が、 Linux/BSD/macOS/組込みシステムまで継承する**ワークフロー文化**の種。"
+  },
+  {
+    "id": "time-001-fork-exec-wait",
+    "text": "main(argc, argv) {\n    struct tms buffer, obuffer;\n    int status;\n    register p;\n    time_t before, after;\n\n    if (argc <= 1)\n        exit(0);\n    \n    time(&before);                          /* record start time */\n    p = fork();                              /* split into parent + child */\n    if (p == -1) {\n        fprintf(stderr, \"Try again.\\n\");\n        exit(1);\n    }\n    if (p == 0) {                            /* child branch */\n        execvp(argv[1], &argv[1]);           /* replace with target program */\n        fprintf(stderr, \"%s: %s\\n\", argv[1], sys_errlist[errno]);\n        exit(1);                             /* only reached if exec failed */\n    }\n    /* parent branch continues here */\n    signal(SIGINT, SIG_IGN);\n    signal(SIGQUIT, SIG_IGN);\n    times(&obuffer);\n    while (wait(&status) != p)              /* wait for THIS child */\n        times(&obuffer);\n    time(&after);\n    \n    if ((status & 0377) != 0)\n        fprintf(stderr, \"Command terminated abnormally.\\n\");\n    ...\n    exit(status >> 8);                       /* high 8 bits = exit code */\n}",
+    "file_path": "usr/src/cmd/time.c",
+    "line_number": 11,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "time",
+      "fork-exec-wait",
+      "process-model"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "abstraction": 4
+      },
+      "technical_context": "time exemplifies the canonical Unix fork+exec+wait process model. fork() splits the process; parent gets child pid (positive), child gets 0, errors give -1. Child calls execvp(argv[1], &argv[1]) to replace itself with the target program (PATH-searched). Parent ignores SIGINT/SIGQUIT to survive Ctrl-C, captures times() before/during wait, and loops `while (wait(&status) != p)` to wait for THIS specific child (in case other children exit first; modern code uses waitpid(p, ...)). Status decoding: low 8 bits = killing signal, high 8 bits = exit code — this layout is the de facto Unix convention encoded in POSIX macros WIFEXITED/WEXITSTATUS/WTERMSIG. The fork+exec+wait pattern is unchanged from 1979 to 2026 — every shell, init, cron, systemd, docker daemon uses it. This is the most stable systemcall API in computing history; changing it would break every Unix program ever written.",
+      "human_story": "How does a shell run a program? Three system calls: fork (split into parent + child), exec (child becomes the target program), wait (parent waits for child to finish). 1979's time command shows this in its purest form: time(&before) records start, fork() splits, child calls execvp to become argv[1], parent calls wait() to block until child exits. After wait, status holds child's exit code (high 8 bits) and possibly killing signal (low 8 bits). This three-syscall dance is unchanged since 1979 — every shell (sh, bash, zsh, fish), every supervisor (init, systemd, runit), every container runtime (docker, podman), every job scheduler (cron, at), all do fork+exec+wait. It's the most stable API in Unix history. Changing it would break literally every Unix program. The 1979 lesson: get the primitives right once, and they outlive everything else."
+    },
+    "appraiser_note": "time が **canonical Unix fork+exec+wait プロセスモデル**を体現。 fork() がプロセス分割、 親は子の pid (正)、 子は 0、 エラーは -1。 子は **execvp(argv[1], &argv[1])** で target プログラムに自身を置換 (PATH 検索)。 親は SIGINT/SIGQUIT を ignore して Ctrl-C 生存、 wait 前後で times() 取得、 **`while (wait(&status) != p)`** ループで**この**子を待つ (他の子が先に exit する場合に備えて、 modern は waitpid(p, ...))。 **status デコード**: 下位 8 bit = killing signal、 上位 8 bit = exit code——このレイアウトは Unix の defacto 慣習、 POSIX マクロ WIFEXITED/WEXITSTATUS/WTERMSIG にエンコード。 **fork+exec+wait パターンは 1979 年から 2026 年まで不変**——全シェル、 init、 cron、 systemd、 docker daemon が使用。 **Unix 史上最も安定した syscall API**——変えると全 Unix プログラムが壊れるため。 1979 年の教訓: **プリミティブを正しく設計すれば他のすべてより長く生きる**。"
+  },
+  {
+    "id": "time-002-times-syscall",
+    "text": "#include <sys/times.h>\n\n/* struct tms (Bell-32V):\n   time_t tms_utime;    user CPU time for this process\n   time_t tms_stime;    system CPU time for this process\n   time_t tms_cutime;   user CPU time of children (cumulative)\n   time_t tms_cstime;   system CPU time of children (cumulative)\n*/\n\nmain() {\n    struct tms buffer, obuffer;\n    ...\n    times(&obuffer);                          /* before wait */\n    while (wait(&status) != p)\n        times(&obuffer);                      /* update during wait */\n    ...\n    times(&buffer);                            /* after wait */\n    \n    printt(\"user\", buffer.tms_cutime - obuffer.tms_cutime);\n    printt(\"sys \", buffer.tms_cstime - obuffer.tms_cstime);\n}\n\n/* Three time categories established forever:\n   user time : CPU spent in user-mode application code\n   sys  time : CPU spent in kernel handling syscalls for this proc\n   real time : wall-clock elapsed time (from time() syscall)\n   \n   user + sys < real  : process was waiting (I/O, sleep)\n   user + sys ≈ real  : CPU-bound\n   user > real        : parallel execution across multiple CPUs\n*/",
+    "file_path": "usr/src/cmd/time.c",
+    "line_number": 34,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "time",
+      "times-syscall",
+      "cpu-accounting"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "concreteness": 4
+      },
+      "technical_context": "times() syscall fills struct tms with 4 cumulative CPU time values: tms_utime (user-mode CPU for this process), tms_stime (kernel-mode CPU for this process), tms_cutime (children's user, cumulative), tms_cstime (children's system, cumulative). time(1) uses cutime/cstime since it measures children. The user vs system distinction reflects kernel design: user-mode runs application code, kernel-mode runs syscalls (read, write, open, fork). CPU-bound programs show high user, I/O-bound show high system, waiting programs show low user+system but high real. Units: clock ticks (60Hz on PDP-11, 100Hz on modern Linux, accessed via CLK_TCK or sysconf(_SC_CLK_TCK)). times() is the ancestor of getrusage (more fields: maxrss, page faults, IO), clock_gettime(CLOCK_PROCESS_CPUTIME_ID) (nanosecond precision), /proc/[pid]/stat (kernel internal view), perf stat (with hardware counters). The 4-field tms struct established the data model for CPU accounting that every monitoring tool still uses.",
+      "human_story": "What's the difference between 'user time' and 'system time'? user = your code running. system = the kernel running on your behalf (handling syscalls like read, write, open). A pure-compute program (fibonacci) is mostly user. A grep over a huge file is heavy on system (lots of read syscalls). A `sleep` is neither — the process isn't running. times() syscall returns all four values: your user/system + your children's cumulative user/system. time(1) measures children, so it uses cutime/cstime (the children's time, accumulated). This data model — user vs system, separated for this process and its children — was established in 1979 and survives unchanged. getrusage() adds more fields (max memory, IO ops), clock_gettime adds nanosecond precision, /proc adds live view, perf stat adds hardware counters. But the fundamental categories are still user/system, established in struct tms's 4 fields."
+    },
+    "appraiser_note": "times() syscall が **struct tms に 4 つの累積 CPU 時間値**を格納: **tms_utime** (このプロセスの user-mode CPU)、 **tms_stime** (このプロセスの kernel-mode CPU)、 **tms_cutime** (子プロセスの user、 累積)、 **tms_cstime** (子プロセスの system、 累積)。 time(1) は子計測なので cutime/cstime 使用。 **user vs system 区別**はカーネル設計を反映: user-mode はアプリケーションコード、 kernel-mode は syscall (read、 write、 open、 fork)。 CPU バウンド = user 高、 I/O バウンド = system 高、 待機 = 両方低 + real 高。 単位は **clock ticks** (PDP-11 60Hz、 modern Linux 100Hz、 CLK_TCK / sysconf(_SC_CLK_TCK) で取得)。 times() は **getrusage の祖** (maxrss、 page faults、 IO 数追加)、 **clock_gettime(CLOCK_PROCESS_CPUTIME_ID) の祖** (ns 精度)、 **/proc/[pid]/stat の祖** (カーネル内部ビュー)、 **perf stat の祖** (ハードウェアカウンタ統合)。 **4 フィールド tms 構造体が CPU accounting データモデルを確立**——50 年経ってもすべての監視ツールが踏襲する categorization。"
+  },
+  {
+    "id": "time-003-wall-clock",
+    "text": "time_t before, after;\n\nmain() {\n    ...\n    time(&before);                  /* before fork */\n    p = fork();\n    ...\n    while (wait(&status) != p) ...;\n    time(&after);                   /* after wait completes */\n    ...\n    printt(\"real\", (after - before) * 60);\n}\n\n/* time() returns Unix epoch seconds (since 1970-01-01 00:00:00 UTC)\n   Multiply by 60 to get ticks (matching tms times units)\n   \n   real >> user + sys   : I/O wait, sleep, blocked\n   real ≈ user + sys    : CPU-bound, single core\n   real < user + sys    : parallel across multiple cores (user includes all)\n   real < 0 (negative)  : clock adjusted during measurement (NTP sync!)\n                          modern fix: clock_gettime(CLOCK_MONOTONIC)\n*/",
+    "file_path": "usr/src/cmd/time.c",
+    "line_number": 17,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "time",
+      "wall-clock",
+      "elapsed-time"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 4,
+      "emotions": {
+        "concreteness": 4,
+        "elegance": 3
+      },
+      "technical_context": "time(1) measures wall-clock elapsed time via the time() syscall, taking samples before fork() and after wait() returns. time() returns Unix epoch seconds (since 1970-01-01 UTC) with 1-second precision — coarse by modern standards, but adequate for 1979 commands that took seconds-to-minutes. The (after - before) * 60 multiplies by 60 to match the clock-tick units used elsewhere in printt(). The 'real time' value includes fork/exec overhead since time() is sampled outside the wait. Pitfall: time() returns wall-clock time, susceptible to NTP adjustments mid-measurement — modern code uses clock_gettime(CLOCK_MONOTONIC) which never goes backward. The real/user/sys triad relationship: real >> user+sys means waiting (I/O, sleep); real ≈ user+sys means CPU-bound single-core; user > real means parallel execution across multiple cores (user accumulates per-core CPU time). This triad is the universal vocabulary for performance analysis.",
+      "human_story": "How does time measure 'real' elapsed seconds? Sample time() before fork, sample again after wait, subtract. time() returns Unix epoch seconds (1970 onwards), 1-second precision. Multiply by 60 to convert to the clock-tick units used for user/sys (60 Hz PDP-11). This includes fork/exec overhead — that's correct, because that overhead IS real elapsed time. The gotcha is NTP: if your system clock adjusts mid-measurement, real time can go backward or jump forward. Modern code uses clock_gettime(CLOCK_MONOTONIC) which is immune to clock adjustments. The real/user/sys triad relationship reveals process behavior: real >> user+sys means waiting (sleep, I/O); real ≈ user+sys means CPU-bound single-core; user > real means parallel (multi-core CPU time accumulates faster than wall clock). This vocabulary — real, user, sys — is the universal language for talking about process performance, born in 1979."
+    },
+    "appraiser_note": "time(1) は **time() syscall** で wall-clock elapsed time を計測——fork() 前後と wait() 完了後にサンプリング。 time() は **Unix epoch seconds** (1970-01-01 UTC 起点) を **1 秒精度**で返す——modern からは粗いが、 1979 年は秒-分単位コマンドに十分。 **(after - before) * 60** で 60 倍して clock-tick 単位に揃える (printt() 内部で統一)。 real time には fork/exec オーバーヘッド含む——正しい (それも real elapsed time の一部)。 **罠**: time() が wall-clock を返すので NTP 調整中だと real time が backward / jump 可能、 modern は clock_gettime(CLOCK_MONOTONIC) で monotonic 保証。 **real/user/sys 三項関係**がプロセス挙動を明かす: real >> user+sys = 待機 (sleep、 I/O)、 real ≈ user+sys = CPU-bound single-core、 user > real = 並列 (multi-core CPU 時間が壁時計より速く累積)。 この **「real、 user、 sys」 vocabulary** が、 プロセス性能議論の universal language——1979 年生まれ、 50 年継承。"
+  },
+  {
+    "id": "time-004-signal-survival",
+    "text": "main() {\n    ...\n    p = fork();\n    ...\n    if (p == 0) {\n        execvp(argv[1], &argv[1]);\n        ...\n    }\n    /* parent only from here */\n    signal(SIGINT, SIG_IGN);\n    signal(SIGQUIT, SIG_IGN);\n    times(&obuffer);\n    while (wait(&status) != p)\n        times(&obuffer);\n    ...\n}\n\n/* Why ignore SIGINT/SIGQUIT in parent:\n   $ time ./long_command\n   ^C   <-- user presses Ctrl-C\n   \n   1. Shell sends SIGINT to foreground process group\n   2. Both time (parent) AND command (child) receive SIGINT\n   3. time ignores it -> keeps running, calls wait()\n   4. child dies (default behavior for SIGINT)\n   5. time's wait() returns with status\n   6. time prints real/user/sys, exits\n   \n   Result: user sees timing even when interrupting.\n   Without ignore: time dies with child, no timing output, data lost.\n   \n   Note: child's SIGINT default is preserved because execvp resets\n   user-installed handlers; parent's signal() doesn't affect child.\n*/",
+    "file_path": "usr/src/cmd/time.c",
+    "line_number": 32,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "time",
+      "signal-handling",
+      "supervisor"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "creativity": 4,
+        "concreteness": 4
+      },
+      "technical_context": "time(1) installs signal(SIGINT, SIG_IGN) and signal(SIGQUIT, SIG_IGN) in the parent after fork, ensuring time survives Ctrl-C and Ctrl-\\\\. When user interrupts, shell sends SIGINT to the foreground process group; both time and child receive it. Child dies (default), but time stays alive, returns from wait(), prints partial timing info, exits with child's status. Without this protection, time would die alongside child, losing the timing measurement — exactly when the user most needs to know how long it ran. The asymmetry is enabled by execvp's signal-handler reset: when child calls execvp, user-installed handlers revert to default, so child's SIGINT default (die) is preserved while parent's SIGINT ignore takes effect. This 'parent survives, child dies, parent reports' pattern is the prototype for every Unix supervisor: shell (job control), init (orphan adoption), systemd, supervisord, runit, docker daemon, kubernetes pod manager. The 'measurement tool that outlives the measured process' is essential design for reliability — 1979 time established it in 2 signal() calls.",
+      "human_story": "What happens when you Ctrl-C a `time ./long_program`? Both time and long_program receive SIGINT. Without protection, both die — and you lose the timing info just when you wanted it most (the program was clearly too slow). time's fix: signal(SIGINT, SIG_IGN) in the parent only. When Ctrl-C arrives, child dies (default), time keeps running, calls wait(), reports 'real X user Y sys Z, Command terminated abnormally', exits cleanly. The asymmetry works because exec resets the child's signal handlers — child runs with SIGINT default (die), parent runs with SIGINT ignored (survive). This 'parent survives, child dies, parent reports' is the prototype of every Unix supervisor: shell job control, init, systemd, supervisord, docker, kubernetes. The measurement tool must outlive the measured process or the measurement is useless. 1979 time encoded this principle in 2 signal() calls."
+    },
+    "appraiser_note": "time(1) が fork 後の親に **signal(SIGINT, SIG_IGN) と signal(SIGQUIT, SIG_IGN)** をインストール、 time が Ctrl-C と Ctrl-\\\\ で生存。 ユーザーが中断時、 シェルが foreground process group に SIGINT 送信——time と子両方が受信。 **子は default で死亡、 time は生存、 wait() から戻り、 部分計測結果を出力、 子の status で exit**。 この保護なしだと time も子と一緒に死亡——**計測欲しかった瞬間に失う**。 非対称性は **execvp の signal handler reset** で実現: 子の execvp が user-installed handler を default にリセット、 親の signal() は子に影響しない——子は SIGINT default (死亡)、 親は ignore (生存)。 **「親生存、 子死亡、 親が報告」 パターン**は **Unix supervisor の原型**: シェル job control、 init (orphan 養子化)、 systemd、 supervisord、 runit、 docker daemon、 kubernetes pod manager。 **計測ツールは計測対象より長生きすべき**——信頼性のための essential design、 1979 年 time が **2 つの signal() 呼び出し**で確立。"
+  },
+  {
+    "id": "time-005-mixed-radix-formatter",
+    "text": "char quant[] = { 6, 10, 10, 6, 10, 6, 10, 10, 10 };\nchar *pad    = \"000      \";\nchar *sep    = \"\\0\\0.\\0:\\0:\\0\\0\";\nchar *nsep   = \"\\0\\0.\\0 \\0 \\0\\0\";\n\nprintt(s, a)\nchar *s;\nlong a;\n{\n    char digit[9];\n    register i;\n    char c;\n    int nonzero;\n\n    for (i = 0; i < 9; i++) {\n        digit[i] = a % quant[i];\n        a /= quant[i];\n    }\n    fprintf(stderr, s);\n    nonzero = 0;\n    while (--i > 0) {\n        c = digit[i] != 0 ? digit[i] + '0' :\n            nonzero      ? '0'             :\n                            pad[i];\n        fprintf(stderr, \"%c\", c);\n        nonzero |= digit[i];\n        c = nonzero ? sep[i] : nsep[i];\n        fprintf(stderr, \"%c\", c);\n    }\n    fprintf(stderr, \"\\n\");\n}\n\n/* quant[] is mixed-radix bases:\n   digit 0: 1/60 sec  (60 Hz tick)\n   digit 1: 1/10 sec\n   digit 2: seconds (1s)\n   digit 3: tens of seconds (6 -> 60s = 1 minute)\n   digit 4: minutes\n   digit 5: tens of minutes (6 -> 60min = 1 hour)\n   digit 6: hours\n   digit 7-8: hours overflow\n   \n   Produces output like: '   1:23.45' or '0:02.5'\n*/",
+    "file_path": "usr/src/cmd/time.c",
+    "line_number": 48,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "time",
+      "mixed-radix",
+      "format"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "creativity": 5,
+        "elegance": 4
+      },
+      "technical_context": "printt() converts clock ticks to human-readable hh:mm:ss.dd via mixed-radix arithmetic. quant[]={6,10,10,6,10,6,10,10,10} are the bases for each digit position: 6 (1/60 sec from 60Hz ticks), 10 (1/10 sec), 10 (sec ones), 6 (tens of sec, base 6 = 60sec/min), 10 (min ones), 6 (tens of min, base 6 = 60min/hour), 10/10/10 (hour digits). The conversion loop digit[i] = a % quant[i]; a /= quant[i] is mixed-radix decomposition — same algorithm as base-conversion but with varying base per position. Output loop walks digits in reverse, choosing 3 character cases: actual digit ('0'+digit), zero-padding ('0' if leading nonzero seen), or suppression (pad[i] = ' ' for top digits). Separator strings sep[]/nsep[] encode positional punctuation: '.', ':', ':' between specific digit pairs. This 27-line function is the ancestor of every time-formatting library: POSIX strftime, Python timedelta.__str__, Java Duration.toString, Go time.Duration.String. The mixed-radix approach is more elegant than dedicated time-arithmetic — same algorithm formats any non-decimal positional system.",
+      "human_story": "How does '130 clock ticks' become '0:02.16'? printt() does mixed-radix arithmetic: digit 0 is 1/60 sec (PDP-11's 60 Hz tick), digit 1 is 1/10 sec, digit 2 is sec, digit 3 is tens of sec (with base 6 to overflow at 60), digit 4 is min, etc. quant[]={6,10,10,6,10,6,10,10,10} encodes the bases for each position. The loop a%quant[i]; a/=quant[i] decomposes the number into mixed-radix digits — same algorithm as binary/hex conversion but with varying bases. Output walks digits in reverse with 3 cases: digit, zero-pad, or space-suppress. Separator strings sep[]/nsep[] encode where '.' and ':' go. 27 lines that convert any clock-tick count into 'hh:mm:ss.dd' format. The same algorithm formats Python's timedelta, Java's Duration, Go's time.Duration — all descendants of this 1979 printt(). The lesson: time-of-day is mixed-radix (60/60/24/...), and the algorithm to format it is the same one that prints any positional number — just with non-uniform bases."
+    },
+    "appraiser_note": "printt() が clock ticks を人間可読の **hh:mm:ss.dd** に変換、 **mixed-radix 算術**で実現。 **quant[] = {6, 10, 10, 6, 10, 6, 10, 10, 10}** が各桁の基数: 6 (1/60 sec、 60Hz tick から)、 10 (1/10 sec)、 10 (sec の 1 桁)、 6 (sec の 10 桁、 6 で 60sec/min に繰り上げ)、 10 (min の 1 桁)、 6 (min の 10 桁、 60min/hour に繰り上げ)、 10/10/10 (hour 桁)。 **変換ループ digit[i] = a % quant[i]; a /= quant[i]** は **mixed-radix 分解**——2 進/16 進変換と同アルゴリズム、 桁ごとに基数可変。 **出力ループ**が桁を逆順に walk、 **3 ケース**で文字選択: 実際の数字、 zero-padding (leading nonzero 後)、 suppress (pad[i] = ' ' で上位桁)。 **sep[]/nsep[] 区切り文字列**が位置的 punctuation ('.', ':') をエンコード。 **27 行関数**が**全 time formatting library の祖**: POSIX strftime、 Python timedelta.__str__、 Java Duration.toString、 Go time.Duration.String。 **mixed-radix アプローチ**は専用 time-arithmetic より elegant——同一アルゴリズムが任意の非 10 進位取り表記をフォーマット。"
   }
 ]
