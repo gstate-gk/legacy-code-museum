@@ -16158,5 +16158,145 @@
       "human_story": "What does 40 lines of 1979 K&R C give you? Access to Unix's most powerful async IPC primitive: signals. Signals are kernel-mediated notifications between processes — tiny (just a signal number), async (interrupt program flow anywhere), and some are uncatchable (SIGKILL/SIGSTOP). Evolution: V1's basic signals -> V7's 31 -> 4.2BSD's reliable signals -> POSIX's sigaction -> Linux's RT signals + signalfd. Modern variants address process groups (killpg), specific threads (tgkill, pthread_kill), data-carrying signals (sigqueue). Every modern server uses signals: nginx SIGHUP reload, sshd SIGTERM graceful shutdown, systemd's whole lifecycle, docker stop's SIGTERM-then-SIGKILL, kubernetes pod termination. The 40-line kill command from 1979 is the gateway to all of this — a tiny tool exposing a kernel mechanism that became the basis for daemon control, job management, and container orchestration."
     },
     "appraiser_note": "**40 行の kill コマンド**が Unix の**非同期 IPC プリミティブ (signal) への user-space 入口**。 signal は kernel mediated な非同期通知: 小さい (signal 番号のみ)、 unreliable (pending coalesced)、 特殊ケースで uncatchable (SIGKILL/SIGSTOP)。 **進化**: V1 限定 → V7 31 signals (本 file) → 4.2BSD reliable signals via sigvec → POSIX 1992 sigaction with sigset_t → Linux RT signals 32-64 + signalfd。 **modern variants**: killpg (プロセスグループ)、 tgkill (特定スレッド)、 pthread_kill (pthread API)、 sigqueue (data payload 付き signal)。 **signal usage 分類**: SIGHUP (daemon reload: nginx/sshd/syslogd)、 SIGUSR1/2 (app-specific: log rotate)、 SIGTERM/SIGKILL (shutdown: systemd/docker)、 SIGSTOP/SIGCONT (job control: Ctrl-Z)、 SIGCHLD (parent supervision)、 SIGPIPE (pipeline cleanup)。 全 server プロセス、 全 container runtime、 全 supervisor が依存。 **40 行が現代 OS の root core を expose**——daemon control、 job management、 container orchestration の基盤。"
+  },
+  {
+    "id": "mkfs-001-fs-layout",
+    "text": "/* V7 FS disk layout produced by mkfs:\n   block 0:        boot loader (1 block = 512 bytes)\n   block 1:        superblock (struct filsys)\n   block 2..N:     inode list (NIPB inodes per block)\n   block N+1..M:   data blocks (files + directories)\n*/\n\nmain() {\n    /* Step 1: Write boot loader to block 0 */\n    f = open(string, 0);\n    read(f, (char *)&head, sizeof head);\n    c = head.a_text + head.a_data;\n    read(f, buf, c);\n    wtfs((long)0, buf);                  /* boot block */\n    \n    /* Step 2: Set sizes */\n    filsys.s_fsize = getnum();\n    n = getnum();\n    n /= NIPB;\n    filsys.s_isize = n + 3;\n    \n    /* Step 3: Zero inode blocks (block 2..s_isize) */\n    for (n = 2; n != filsys.s_isize; n++) {\n        wtfs(n, buf);                     /* zeroed inode blocks */\n        filsys.s_tinode += NIPB;\n    }\n    \n    /* Step 4: Build free block list */\n    bflist();\n    \n    /* Step 5: Walk proto file, create directory tree */\n    cfile((struct inode *)0);\n    \n    /* Step 6: Write superblock LAST */\n    filsys.s_time = utime;\n    wtfs((long)1, (char *)&filsys);\n}",
+    "file_path": "usr/src/cmd/mkfs.c",
+    "line_number": 52,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "mkfs",
+      "filesystem-layout",
+      "superblock"
+    ],
+    "interesting_score": 24,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 5,
+      "emotions": {
+        "concreteness": 5,
+        "abstraction": 4
+      },
+      "technical_context": "mkfs produces the canonical Unix V7 filesystem disk layout: block 0 = boot loader, block 1 = superblock (struct filsys), blocks 2..s_isize = inode list (8 inodes per 512-byte block), remainder = data blocks. The boot block is 512 bytes of a.out text+data, loaded by BIOS at power-on. The superblock at fixed block 1 holds total size (s_fsize), inode area size (s_isize), free block cache (s_free[NICFREE=50]), free inode cache, and modification flags. Inode 0 is reserved (NULL), inode 1 historically held bad blocks list, inode 2 is always the root directory '/'. Generation order matters: inode blocks zeroed FIRST (every inode is initially 'unused'), free list built SECOND (after knowing which blocks are bad and not inode-used), proto-driven tree LAST (allocates blocks from free list, fills inodes), superblock written FINALLY with all final sizes. The 'superblock at block 1' convention is preserved across BSD FFS (with multiple backup copies), ext2/3/4 (block 1 or larger offset), XFS, btrfs — every Unix descendant FS knows to look for the superblock near the start of disk. fsck depends on this fixed location to recover from corruption.",
+      "human_story": "How do you turn a raw disk into a usable filesystem? mkfs writes 4 distinct regions: boot block (where BIOS loads), superblock (fs metadata), inode list (all file metadata), data blocks (file contents). Order matters: zero out inode blocks first (so every inode is 'unused'), build the free block list next (knowing which blocks aren't bad or already used by inodes), populate initial files/dirs from the proto file, write the superblock LAST with the final sizes. This 4-region layout — boot, superblock at block 1, inodes, data — is the V7 design that ext2, ext3, ext4 still follow today (with bitmap and journaling added). Even fsck depends on the superblock living at a known location. Every disk you've ever used in Linux/Unix/macOS/BSD descended from this 615-line file's vision of how to initialize a filesystem."
+    },
+    "appraiser_note": "mkfs が **canonical Unix V7 FS disk layout** を生成: **block 0 = boot loader、 block 1 = superblock、 block 2..s_isize = inode list (NIPB=8 inodes/block)、 残り = data blocks**。 boot block は 512 byte の a.out text+data、 BIOS が起動時にロード。 **block 1 の superblock** が全体サイズ (s_fsize)、 inode 領域サイズ (s_isize)、 free block cache (s_free[NICFREE=50])、 free inode cache、 変更フラグ保持。 **inode 0 = 未使用 (NULL)、 inode 1 = bad block list (歴史的)、 inode 2 = root directory '/'**。 **生成順序が重要**: inode blocks を**最初に**ゼロクリア (全 inode 初期 unused)、 **次に** free list 構築 (bad/inode 使用 block 判明後)、 **次に** proto file からツリー作成 (free list から alloc + inode 設定)、 **superblock は最後** (最終サイズ確定後)。 「**block 1 = superblock**」 convention が BSD FFS (backup copy 複数)、 ext2/3/4 (block 1 or larger offset)、 XFS、 btrfs に継承——全 Unix descendant FS が disk 先頭近くで superblock 検索。 **fsck は固定位置依存**で corruption recovery。"
+  },
+  {
+    "id": "mkfs-002-proto-syntax",
+    "text": "/* Proto file syntax — declarative DSL for initial filesystem:\n *\n *  /usr/mdec/dboot.b           ← boot loader filename\n *  10000 500                    ← fs size, inode count\n *  d--777 0 0                   ← root: directory mode=777, uid=0, gid=0\n *       bin    d--755 0 0       ← subdir /bin\n *           sh   ---755 0 0 /bin/sh    ← regular file (copy source)\n *           ls   ---755 0 0 /bin/ls\n *       $                        ← end of /bin\n *       dev    d--755 0 0\n *           tty c--666 0 0 0 0   ← character device: major=0, minor=0\n *           hd  b--600 0 0 0 1   ← block device\n *       $\n *  $                              ← end of root\n */\n\ncfile(par)                       /* recursively create files */\nstruct inode *par;\n{\n    struct inode in;\n    ...\n    in.i_mode = getmode();       /* parse \"d--777\" -> IFDIR | 0777 */\n    in.i_uid = getnum();\n    in.i_gid = getnum();\n    \n    switch (in.i_mode & IFMT) {\n    case IFDIR:\n        entry(in.i_number, \".\", ...);\n        entry(par ? par->i_number : in.i_number, \"..\", ...);\n        for (;;) {\n            getstr();\n            if (string[0] == '$') break;     /* end of directory */\n            entry(...);\n            cfile(&in);                       /* recurse */\n        }\n        break;\n    case IFREG:\n        getstr();                              /* source filename */\n        f = open(string, 0);\n        while ((c = read(f, db, BSIZE)) > 0) {\n            wtfs(alloc(), db);                 /* allocate + write */\n        }\n        break;\n    case IFCHR: case IFBLK:\n        in.i_un.i_rdev = getnum()*256 + getnum();\n        break;\n    }\n    iput(&in, &ibc, ib);          /* write inode */\n}",
+    "file_path": "usr/src/cmd/mkfs.c",
+    "line_number": 197,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "mkfs",
+      "proto-file",
+      "declarative-dsl"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "creativity": 5,
+        "elegance": 4
+      },
+      "technical_context": "mkfs accepts a 'proto file' — a declarative DSL describing the initial filesystem structure. Syntax: type-permission-uid-gid for each entry, with 'd' for directory, '-' for regular file, 'c' for character device, 'b' for block device. Directories nest with '$' as the end marker (like Lisp parens). Regular files name a source file to copy contents from. Devices specify major/minor numbers. cfile() is recursive: for IFDIR it reads entries until '$', for IFREG it copies a source file, for IFCHR/IFBLK it just records the rdev number. The proto syntax makes filesystem construction REPRODUCIBLE (same proto = same FS), TEXT-BASED (grep/diff/version-control), and DOCUMENTABLE (proto file is also the FS spec). This 'declarative filesystem description' pattern is the conceptual ancestor of: Kickstart (RedHat installer config), preseed.cfg (Debian), cloud-init user-data (cloud VM provisioning), Ansible/Puppet/Chef (config management), Dockerfile (container layer definitions), Nix expressions (entire OS as data). All express 'this is what I want the system to look like' rather than 'follow these steps to build it'.",
+      "human_story": "How do you describe the initial contents of a filesystem? mkfs's answer is a declarative DSL — a proto file. Each line describes one file or directory: type ('d', '-', 'c', 'b'), permission octal, uid, gid, optional source path. Directories nest with '$' marking the end (like Lisp parens or YAML indentation). cfile() recursively walks the proto: for a directory, read entries until '$' and recurse; for a regular file, copy a source file's bytes into newly allocated blocks; for a device, just record the major/minor numbers. The proto file makes FS construction REPRODUCIBLE (same proto = same disk), textual (versionable, diffable, greppable), and self-documenting (the proto IS the spec). This 'declare what you want' pattern shows up everywhere later: Kickstart/preseed for OS installs, cloud-init for VM provisioning, Ansible/Puppet for config, Dockerfile for containers, Nix for entire systems. 1979's proto file is the ancestor of all declarative infrastructure-as-code."
+    },
+    "appraiser_note": "mkfs は **proto file** ——FS 初期構造を記述する**宣言的 DSL**を受け付ける。 構文: 各エントリに type + permission + uid + gid——'d' (directory)、 '-' (regular file)、 'c' (character device)、 'b' (block device)。 directory は **'$' を end marker** として nest (Lisp parens のように)。 regular file は**コピー元 source ファイル**を指定、 device は **major/minor** 番号。 **cfile() は再帰**: IFDIR なら '$' まで読んで再帰、 IFREG なら source ファイルを新規 allocate した block にコピー、 IFCHR/IFBLK なら rdev 番号記録。 **proto 構文**が FS 構築を **REPRODUCIBLE** (同 proto = 同 FS)、 **TEXT-BASED** (grep/diff/version control)、 **DOCUMENTABLE** (proto = FS spec) にする。 「**宣言的 filesystem description**」 パターンは概念的祖先: **Kickstart** (RedHat installer)、 **preseed.cfg** (Debian)、 **cloud-init user-data** (cloud VM provisioning)、 **Ansible/Puppet/Chef** (config management)、 **Dockerfile** (container layer)、 **Nix expressions** (entire OS as data)。 すべて「**こうあって欲しい**」 を表現、 「**こう作れ**」 ではない。 **1979 年 proto file が declarative infrastructure-as-code 全ての祖**。"
+  },
+  {
+    "id": "mkfs-003-chained-free-list",
+    "text": "struct filsys {\n    ...\n    short s_nfree;              /* number of free blocks in s_free[] */\n    daddr_t s_free[NICFREE];    /* cached free block list (NICFREE = 50) */\n    ...\n};\n\ndaddr_t alloc() {\n    daddr_t bno;\n    \n    filsys.s_tfree--;\n    bno = filsys.s_free[--filsys.s_nfree];     /* pop from cache */\n    if (bno == 0) { printf(\"out of free space\\n\"); exit(1); }\n    \n    if (filsys.s_nfree <= 0) {\n        /* Cache exhausted: load next chunk from chain */\n        rdfs(bno, (char *)&fbuf);              /* read block at bno */\n        filsys.s_nfree = fbuf.df_nfree;\n        for (i = 0; i < NICFREE; i++)\n            filsys.s_free[i] = fbuf.df_free[i];\n    }\n    return(bno);\n}\n\nbfree(bno) daddr_t bno; {\n    filsys.s_tfree++;\n    if (filsys.s_nfree >= NICFREE) {\n        /* Cache full: spill current to disk */\n        fbuf.df_nfree = filsys.s_nfree;\n        for (i = 0; i < NICFREE; i++)\n            fbuf.df_free[i] = filsys.s_free[i];\n        wtfs(bno, (char *)&fbuf);              /* write cache to this block */\n        filsys.s_nfree = 0;\n    }\n    filsys.s_free[filsys.s_nfree++] = bno;\n}\n\n/* Chain structure: */\n/*   superblock.s_free[0..49] (in-memory + on-disk in superblock)\n     ↓ first entry points to next chain block when cache exhausted\n     chain block 0: [df_nfree=50, df_free[0..49]] — first ptr to chain block 1\n     chain block 1: [df_nfree=50, df_free[0..49]] — first ptr to chain block 2\n     ...\n*/",
+    "file_path": "usr/src/cmd/mkfs.c",
+    "line_number": 400,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "mkfs",
+      "free-list",
+      "block-management"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "creativity": 5,
+        "concreteness": 4
+      },
+      "technical_context": "V7 FS tracks free blocks via a chained list, not a bitmap. The superblock holds an inline cache of 50 free block numbers (s_free[NICFREE]). alloc() pops from this cache; when cache empties, the popped block's contents ARE the next chain link (df_nfree count + df_free[50] addresses). bfree() pushes to cache; when cache fills, the cache is written to the freed block itself, and a new cache begins. The freed block serves dual purpose: data storage AND chain link. Compare to bitmap: bitmap uses N/8 bytes for N blocks (fixed overhead) and allows O(1) per-block status check; chained list uses ~256 bytes in superblock + O(1) chain blocks on-demand. For 1979's small RAMs and small disks, chained list was more memory-efficient. Drawbacks: harder to allocate contiguous blocks (no spatial info), fsck must walk entire chain to verify consistency, LIFO order (without interleaving) causes seek-unfriendly allocation. BSD FFS (1984) moved to bitmap with cylinder groups for both spatial locality and faster fsck. ext2 (1993) uses block bitmap. Modern FSes use bitmaps universally. But the V7 chained list was the right choice for 1979's resource-constrained PDP-11/VAX systems.",
+      "human_story": "How does V7 FS track which blocks are free? Not a bitmap — a chained linked list. The superblock holds an inline cache of 50 free block numbers. alloc() pops one; when the cache empties, the popped block's CONTENTS are the next chain link (also 50 addresses). bfree() pushes; when full, the cache spills to the freed block itself. The freed block IS the link — clever dual use. No separate bitmap needed: just the superblock cache plus chain blocks scattered through the disk. For 1979's tiny RAMs (256KB on PDP-11), this was memory-efficient — bitmap would need ~16KB just for a 64MB disk. Drawbacks emerged: no spatial info (can't find contiguous free regions), fsck has to walk the whole chain, LIFO order causes seek-unfriendly allocation without the f_m/f_n interleaving trick (see trace 4). BSD FFS in 1984 moved to bitmap with cylinder groups, ext2 in 1993 used straight bitmap. Modern FSes universally use bitmaps. But the V7 chained list was the right choice when RAM was scarce and disks were small."
+    },
+    "appraiser_note": "V7 FS は **chained list** で free block 管理——**bitmap ではない**。 superblock が **inline cache 50 個** (s_free[NICFREE]) 保持。 **alloc()** が cache から pop、 cache 空になると **pop した block 自体が次の chain link** (df_nfree + df_free[50])。 **bfree()** が cache に push、 cache 満杯になると**現 cache を解放 block 自体に書き出し**、 新 cache 開始。 **解放 block の dual purpose**: data storage AND chain link。 **bitmap 比較**: bitmap は N/8 byte (fixed overhead)、 O(1) per-block status check、 chained list は ~256 byte in superblock + chain blocks on-demand。 1979 年の小 RAM (PDP-11 256KB) と小 disk では chained list が**memory-efficient** ——bitmap だと 64MB disk に 16KB 必要。 **欠点**: 連続 block 確保困難 (空間情報なし)、 fsck が chain 全体 walk 必要、 LIFO 順序が interleaving (痕跡 4) なしだと seek-unfriendly。 **BSD FFS (1984)** が cylinder group + bitmap に移行、 **ext2 (1993)** が straight bitmap。 modern FS は全 bitmap。 でも **V7 chained list は 1979 年制約への正解**——RAM 希少 + 小 disk への最適化。"
+  },
+  {
+    "id": "mkfs-004-interleaving",
+    "text": "int f_n = MAXFN;              /* default 500 */\nint f_m = 3;                  /* default 3 */\n\nbflist() {\n    char flg[MAXFN];\n    int adr[MAXFN];\n    int i, j;\n    daddr_t f, d;\n    \n    /* Compute permutation [adr] using (m, n) rotation */\n    for (i = 0; i < f_n; i++) flg[i] = 0;\n    i = 0;\n    for (j = 0; j < f_n; j++) {\n        while (flg[i])\n            i = (i+1) % f_n;\n        adr[j] = i+1;\n        flg[i]++;\n        i = (i + f_m) % f_n;        /* rotate by f_m */\n    }\n    \n    /* Walk disk in n-block groups, freeing in permuted order */\n    d = filsys.s_fsize - 1;\n    while (d % f_n) d++;\n    for (; d > 0; d -= f_n)\n    for (i = 0; i < f_n; i++) {\n        f = d - adr[i];\n        if (f < filsys.s_fsize && f >= filsys.s_isize)\n            if (badblk(f)) { ... } \n            else bfree(f);          /* add to free list in permuted order */\n    }\n}\n\n/* Example: f_n=10, f_m=3\n   step 0: i=0, adr[0]=1, i=(0+3)%10=3\n   step 1: i=3, adr[1]=4, i=(3+3)%10=6\n   step 2: i=6, adr[2]=7, i=(6+3)%10=9\n   step 3: i=9, adr[3]=10, i=(9+3)%10=2\n   step 4: i=2, adr[4]=3, ...\n   adr[] = [1, 4, 7, 10, 3, 6, 9, 2, 5, 8]\n   \n   When 10 blocks are freed in this order, alloc() returns them in reverse:\n   8, 5, 2, 9, 6, 3, 10, 7, 4, 1\n   Sequential allocations land f_m=3 blocks apart — short seeks on rotating disk.\n*/",
+    "file_path": "usr/src/cmd/mkfs.c",
+    "line_number": 494,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "mkfs",
+      "interleaving",
+      "rotational-latency"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "creativity": 5,
+        "abstraction": 5
+      },
+      "technical_context": "V7 mkfs implements (m,n) rotational interleaving when building the initial free list, to optimize sequential file access on rotating disks. The chained free list is LIFO by default, so freeing blocks 0,1,2,... sequentially would cause alloc() to return ...,2,1,0 — reverse-order allocation forcing disk arm to seek backward for sequential writes. The fix: permute the free order. adr[j] = (i + f_m) % f_n produces a sequence where consecutive entries are f_m apart. Default m=3, n=500: each next allocation lands 3 blocks away from the previous one. This matches the disk's rotational latency — after reading/writing block N, blocks N+1, N+2 will have already rotated past the head; block N+3 is the next reachable block. By spacing allocations 3 apart, sequential I/O avoids waiting for a full disk rotation. The technique was state-of-the-art for late-1970s rotating disks. BSD FFS (1984) improved this with explicit cylinder group awareness. Modern SSDs and NVMe have no rotational latency, so interleaving was eventually dropped. But 1979's f_m/f_n is a textbook example of FS designers embedding hardware knowledge into software algorithms — and the 10-line bflist() permutation could yield 2-5x throughput improvement on V7-era hardware.",
+      "human_story": "Why does mkfs free blocks in a weird permuted order? To optimize sequential file access on 1970s rotating disks. The chained free list is LIFO, so if you free blocks 0, 1, 2, ..., alloc() returns ..., 2, 1, 0 — backward order. Writing a sequential file would constantly seek backward. The fix: permute the free order so adjacent free entries are f_m=3 blocks apart. adr[] = [1, 4, 7, 10, 3, ...] — every step jumps 3 forward. After freeing in this order, sequential allocations land 3 blocks apart on disk. Why 3? After reading block N from a rotating disk, blocks N+1 and N+2 have already passed the read head — N+3 is the next sector you can read without waiting a full rotation. By spacing allocations 3 apart, you avoid the 16ms-per-rotation penalty. 10 lines of code that yielded 2-5x throughput improvement on V7 hardware. BSD FFS (1984) replaced this with explicit cylinder group awareness; modern SSDs made it obsolete (no rotational latency). But 1979's f_m/f_n is the textbook example of 'encode hardware knowledge in the algorithm'."
+    },
+    "appraiser_note": "V7 mkfs が初期 free list 構築時に **(m,n) 回転式 interleaving** を実装、 rotating disk での sequential ファイルアクセスを最適化。 chained free list は LIFO ——block 0,1,2,... を順次 free すると alloc() が ...,2,1,0 を返す (逆順)、 sequential 書き込みで disk arm が**後ろへ seek** ——大ペナルティ。 **修正**: free 順序を**permute**——adr[j] = (i + f_m) % f_n で **連続エントリが f_m 個離れる**。 default m=3, n=500: 次の alloc は前の 3 block 先。 これが**rotational latency にマッチ**: disk arm が block N を読み終わった瞬間、 block N+1、 N+2 は既に head を通過済、 **N+3 が次に到達可能な sector**。 allocation を 3 個間隔にすれば、 **full rotation 待ち (16ms) を回避**。 1970 年代後半の rotating disk への state-of-the-art 最適化。 **BSD FFS (1984)** が explicit cylinder group awareness で更に洗練、 **modern SSD/NVMe** は rotational latency ゼロで interleaving 廃止。 でも 1979 年 f_m/f_n は **「ハードウェア知識をアルゴリズムに encode」** の教科書例—— **10 行のコード**で V7 ハードウェア 2-5 倍スループット向上。"
+  },
+  {
+    "id": "mkfs-005-direct-indirect-pointers",
+    "text": "/* dinode (V7 disk inode) — 64 bytes: */\nstruct dinode {\n    unsigned short di_mode;\n    short di_nlink;\n    short di_uid;\n    short di_gid;\n    off_t di_size;\n    char di_addr[40];              /* 13 3-byte addresses */\n    time_t di_atime, di_mtime, di_ctime;\n};\n\n#define LADDR  10              /* direct addresses */\n#define NADDR  13              /* total: 10 direct + 3 indirect */\n\n/* In iput() — write inode with multi-level pointers: */\ncase IFDIR:\ncase IFREG:\n    /* Direct: i_addr[0..9] point to data blocks */\n    for (i = 0; i < *aibc; i++) {\n        if (i >= LADDR) break;\n        ip->i_un.i_addr[i] = ib[i];\n    }\n    /* Single indirect: i_addr[10] points to a block of pointers */\n    if (*aibc >= LADDR) {\n        ip->i_un.i_addr[LADDR] = alloc();      /* allocate indirect block */\n        for (i = 0; i < NINDIR-LADDR; i++) {\n            ib[i] = ib[i+LADDR];\n            ib[i+LADDR] = (daddr_t)0;\n        }\n        wtfs(ip->i_un.i_addr[LADDR], (char *)ib);\n    }\n\n/* Capacity:\n   10 direct × 512 = 5 KB     (small files: 1 syscall = 1 disk read)\n   1 single  × 128 × 512 = 64 KB\n   1 double  × 128² × 512 = 8 MB\n   1 triple  × 128³ × 512 = 1 GB\n   \n   Total max file size: ~1 GB on V7 (huge for 1979).\n*/",
+    "file_path": "usr/src/cmd/mkfs.c",
+    "line_number": 580,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "mkfs",
+      "inode-pointers",
+      "direct-indirect"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "elegance": 5
+      },
+      "technical_context": "V7 inode contains a 40-byte di_addr[] field (13 3-byte block numbers). First 10 are direct pointers — data block numbers. Position 10 is single-indirect (points to a block of pointers, 128 entries × 512 bytes = 64 KB more). Position 11 is double-indirect (128 × 128 × 512 = 8 MB). Position 12 is triple-indirect (128³ × 512 = 1 GB). Total max file ~1 GB, vast for 1979. Design rationale: small files (typical 1979 source code, docs) fit in 10 direct pointers = 5 KB, requiring just 1 disk read per data block (no pointer chasing). Large files (databases, binaries) use indirect chains. The 'small fast, large possible' tradeoff. Inode is fixed 64 bytes so 8 fit per block — good for inode block I/O efficiency. This direct+indirect structure survived UNCHANGED in BSD FFS (1984, expanded to 12+3), Linux ext2/ext3 (1993, 12+3), Minix FS. Only ext4 (2008) replaced indirect with extents (contiguous block ranges, much better for huge files), and XFS/btrfs/ZFS use B-trees. But 25+ years (1979-2008) of file systems used essentially this 1979 design. Every C file you compiled, every text document you edited, every binary you ran in that era — all addressed by direct+indirect block pointers from this template.",
+      "human_story": "How does V7 store a file? The inode contains 13 'block pointers'. First 10 are direct — they point to the actual data blocks. Pointer 11 is 'single indirect' — points to a block that contains 128 more pointers (8 MB total reach). Pointer 12 is 'double indirect' — points to a block of pointers to blocks of pointers (8 MB reach). Pointer 13 is 'triple indirect' (1 GB reach). Why? Small files (5 KB or less) fit entirely in direct pointers — just 1 disk read per data block, no pointer chasing. Large files (databases, binaries) use the indirect chain, paying 2-4 reads per data block but enabling files up to 1 GB. The 'small fast, large possible' tradeoff. This design survived 25+ years: BSD FFS (12+3), ext2 (12+3), ext3 (12+3) all used direct+indirect. Only ext4 (2008) replaced it with extents (contiguous ranges) for better huge-file performance. But every C program, every config file, every email you read in the 1980s-2000s was addressed by direct+indirect block pointers from this 1979 design. That's how persistent good data structures are."
+    },
+    "appraiser_note": "V7 inode は **40 byte di_addr[]** フィールド (13 個の 3-byte block 番号) 保持。 **最初 10 = direct pointers** ——data block 番号直接。 **位置 10 = single-indirect** (block of pointers、 128 entries × 512 byte = 64 KB)。 **位置 11 = double-indirect** (128 × 128 × 512 = 8 MB)。 **位置 12 = triple-indirect** (128³ × 512 = 1 GB)。 **総最大ファイル ~1 GB** ——1979 年として広大。 **設計理由**: 小ファイル (1979 年 typical source code、 docs) は 10 direct で 5 KB、 **1 disk read = 1 data block** (pointer chasing なし)。 大ファイル (database、 binary) は indirect chain 使用。 **「small fast、 large possible」 trade-off**。 inode は固定 64 byte、 8 個/block——inode block I/O 効率良。 この **direct+indirect 構造**が **BSD FFS (1984, 12+3 に拡張)**、 **Linux ext2/ext3 (1993, 12+3)**、 **Minix FS** で**そのまま継承**。 **ext4 (2008)** が初めて indirect を **extent (連続 block range)** に置換 ——巨大ファイル効率向上。 **XFS/btrfs/ZFS は B-tree**。 でも **25+ 年間 (1979-2008)** のファイルシステムが基本的に **1979 年のこの design**を使用。 **「**良いデータ構造は時を超える**」 ——コンパイルした全 C プログラム、 編集した全テキスト、 実行した全バイナリが direct+indirect block pointer で addressing されてきた。"
   }
 ]
