@@ -15318,5 +15318,145 @@
       "human_story": "It's 1979. You start a 2-hour print job: pr report.txt | lpr. Halfway through, your colleague runs `write you` and types 'hey, lunch?'. Without protection, that message appears mid-page in your printout, ruining it. fixtty() is the defense: detect stdout's tty (e.g. /dev/tty03), save current permissions (0622 — others can write), chmod 0600 (only you can write). When done, restore. The trickier bit: what if pr crashes or is Ctrl-C'd halfway? onintr() handles SIGINT, restores permissions before exit. Without onintr, your tty would be stuck at 0600 — even YOU couldn't write to it from another shell. This 'acquire resource, guarantee release on all exit paths' pattern is the prototype of every defensive programming idiom: C++ RAII destructors, Go defer, Java try-finally, Python with-statements, atexit handlers — all descend from the K&R C signal-based pattern shown here. The modern `mesg n` shell command implements the same idea independently."
     },
     "appraiser_note": "fixtty() がマルチユーザー Unix で**長い印刷ジョブを他ユーザーの干渉から保護**。 ttyname(1) が stdout の tty 検出 (例: シリアル接続 line printer)、 そうでなければリターン。 そうなら stat() で現在 mode (typically 0622 = own rw、 others w) を保存、 **chmod(tty, 0600)** で他者 write 権限を剥奪。 1979 年プリンタの長 pr | lpr ジョブは数時間——保護なしだと他ユーザーの `write` や `wall` が印刷物の途中に混入し台無し。 **done()** が正常終了時 mode 復元、 **onintr() (SIGINT ハンドラ)** が Ctrl-C でも復元、 「tty 詰まり」 バグ防止。 `signal(SIGINT, SIG_IGN) != SIG_IGN` ガードが**親シェルの job control 設定を尊重**。 これが **「リソース取得 + 全終了パスでの確実な解放」** の原型: **C++ RAII デストラクタ、 Go defer、 Java try-finally、 Python with、 atexit ハンドラ**——すべて K&R C の signal ベース cleanup パターンから派生。 現代の `mesg n` シェルコマンドが**同じ概念を独立実装**。 1979 年の教訓: 異常終了でリソースリークしない設計は OS-level プログラミングの基礎。"
+  },
+  {
+    "id": "tee-001-openf-fd-array",
+    "text": "int openf[20] = { 1 };     /* output fd table; openf[0] = stdout (fd 1) */\nint n = 1;                  /* number of output fds */\n\nmain(argc, argv) {\n    ...\n    while (argc-- > 1) {\n        if (aflag) {\n            openf[n] = open(argv[1], 1);            /* O_WRONLY */\n            if (openf[n] < 0)\n                openf[n] = creat(argv[1], 0666);    /* create if not exist */\n            lseek(openf[n++], 0L, 2);                /* seek to end (append) */\n        } else\n            openf[n++] = creat(argv[1], 0666);       /* truncate or create */\n        ...\n        argv++;\n    }\n    ...\n}\n\nstash(p) {\n    ...\n    for (k = 0; k < n; k++)\n        write(openf[k], out+i, d < p-i ? d : p-i);\n}",
+    "file_path": "usr/src/cmd/tee.c",
+    "line_number": 9,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "tee",
+      "fd-table",
+      "uniform-io"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "abstraction": 4
+      },
+      "technical_context": "tee uses openf[20]={1} as a uniform fd table — array initialization places fd 1 (stdout) at index 0, rest zero-initialized. n tracks count, incremented as files are opened. Each file argument is opened via creat() (default mode: truncate-or-create 0666) or with -a flag via open(O_WRONLY) + lseek(SEEK_END) for append. The stash() write loop iterates 0..n-1 uniformly — stdout and files are indistinguishable to the loop. This embodies Unix's core philosophy: stdout is just another fd, no special-casing. The pre-O_APPEND-flag pattern (open + lseek SEEK_END) was canonical in 1979; POSIX later added O_APPEND for atomic append semantics. 20-fd limit reflects PDP-11 file descriptor scarcity. This 'uniform fd treatment' design appears throughout Unix: select/poll/epoll loop over fd arrays, signalfd/timerfd/eventfd unify event sources, /proc/N/fd lists all fds uniformly. Bell-32V tee's 20-element openf[] is the minimal expression.",
+      "human_story": "How does tee write to stdout AND files at the same time? It treats them all as the same thing — file descriptors. openf[20]={1} initializes the array with fd 1 (stdout) at position 0, the rest zero. Each command-line file gets fopened (or appended with -a), its fd stored in openf[n++]. The write loop iterates all n positions, calling write() on each — stdout and files indistinguishable. This is Unix's 'everything is a file' philosophy in 95 lines. The pre-O_APPEND pattern (open + lseek SEEK_END) was 1979 standard; POSIX added O_APPEND later for atomic append. The 20-fd ceiling reflects PDP-11 scarcity — modern tee handles many more. The same 'uniform fd loop' pattern shows up everywhere in Unix: select/poll/epoll, signalfd/timerfd/eventfd, /proc/N/fd. 95-line tee was the minimal implementation of this design idea."
+    },
+    "appraiser_note": "tee は **openf[20] = { 1 }** を**統一 fd テーブル**として使用——配列初期化で **fd 1 (stdout) を index 0** に、 残りは zero-init。 n がカウント、 ファイル open のたびインクリメント。 各引数ファイルは **creat()** (default: truncate-or-create 0666) または -a なら **open(O_WRONLY) + lseek(SEEK_END)** で追記。 stash() の write ループが 0..n-1 を**均一に**反復——stdout もファイルも区別なし。 これが Unix の **「すべてはファイル」 哲学**の体現: stdout は単なる fd、 特殊扱いなし。 **pre-O_APPEND パターン (open + lseek SEEK_END)** は 1979 年 canonical、 POSIX が後に atomic append のため **O_APPEND** 追加。 20 fd 上限は PDP-11 file descriptor の希少性反映。 「**uniform fd 処理**」 デザインは Unix 全体に: select/poll/epoll が fd 配列をループ、 signalfd/timerfd/eventfd が event source を統一、 /proc/N/fd が全 fd を均一リスト——tee の 20 要素 openf[] が**最小表現**。"
+  },
+  {
+    "id": "tee-002-tty-pipe-detection",
+    "text": "int t = 0;            /* tty/pipe flag */\n\nmain() {\n    ...\n    fstat(1, &buf);\n    t = (buf.st_mode & S_IFMT) == S_IFCHR;       /* is stdout a tty? */\n    if (lseek(1, 0L, 1) == -1 && errno == ESPIPE)\n        t++;                                      /* or a pipe? */\n    \n    while (argc-- > 1) {\n        ...\n        if (stat(argv[1], &buf) >= 0) {\n            if ((buf.st_mode & S_IFMT) == S_IFCHR)\n                t++;                              /* output file is tty? */\n        }\n        ...\n    }\n}\n\nstash(p) {\n    int d;\n    d = t ? 16 : p;                              /* chunk size: 16 if tty, else full buffer */\n    for (i = 0; i < p; i += d)\n        for (k = 0; k < n; k++)\n            write(openf[k], out+i, d < p-i ? d : p-i);\n}",
+    "file_path": "usr/src/cmd/tee.c",
+    "line_number": 38,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "tee",
+      "tty-detection",
+      "buffering"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "creativity": 5,
+        "concreteness": 4
+      },
+      "technical_context": "tee detects tty and pipe outputs to dynamically adjust write chunk size. Detection: (1) fstat(1) checks S_IFCHR (character device = tty); (2) lseek(1, 0, SEEK_CUR) returning -1 with errno=ESPIPE indicates a pipe (not seekable); (3) each output file is checked similarly. If any output is interactive (t>0), stash() uses 16-byte chunks for low latency; otherwise full 512-byte buffer for throughput. Why 16 bytes? Balances write() syscall overhead (32 calls per buffer) against latency (16-byte granularity feels real-time on 1979 CRT terminals). Main loop adds 't > 0 && p > 0 break' to flush partial buffers on tty/pipe — interactive responsiveness. This is the precursor to stdio's _IOLBF (line-buffered for tty) vs _IOFBF (fully buffered for file) default. Modern equivalents: setvbuf() with line-buffering on stderr, tcsetattr noncanonical mode, Linux tty/pty layer. The lseek-ESPIPE trick to detect pipes is still used today; lseek on a pipe always returns ESPIPE.",
+      "human_story": "Why does tee write 16 bytes at a time to ttys but 512 to files? Because user experience differs. On a CRT terminal in 1979, 512-byte bursts cause jerky scrolling — text appears in chunks, not flowing. 16-byte chunks scroll smoothly. But files don't care about scrolling, and 32 write() calls per buffer is wasteful overhead — use the full buffer. tee detects this difference via fstat (S_IFCHR = character device = tty) and lseek (returns ESPIPE if target is a pipe). If any output is interactive, switch to 16-byte mode for the whole operation. This is the ancestor of stdio's line-buffered (_IOLBF for tty) vs fully buffered (_IOFBF for file) defaults — same idea, different abstraction layer. The lseek-on-pipe-returns-ESPIPE trick is still the canonical way to detect a pipe in 2026, used by Python, Go, Rust, and many others."
+    },
+    "appraiser_note": "tee は tty/pipe 出力を検出して **write チャンクサイズを動的調整**。 検出法: (1) **fstat(1) で S_IFCHR チェック** (character device = tty)、 (2) **lseek(1, 0, SEEK_CUR) が -1 + errno=ESPIPE** ならパイプ (seek 不可)、 (3) 各出力ファイルも同様にチェック。 出力に interactive あり (t>0) なら stash() が **16 バイトチャンク**で低レイテンシ、 なければ 512 バイトバッファ全部で高スループット。 **なぜ 16 バイト?** ——write() syscall オーバーヘッド (バッファ当たり 32 回) とレイテンシ (16 バイト粒度なら 1979 年 CRT 端末でリアルタイム感覚) のバランス。 メインループの 't > 0 && p > 0 break' で部分バッファも flush——interactive 応答性。 これが **stdio の _IOLBF (tty で行バッファ) vs _IOFBF (file で完全バッファ) default** の祖。 現代等価: setvbuf() で stderr を line-buffered に、 tcsetattr noncanonical モード、 Linux tty/pty レイヤ。 **lseek-ESPIPE による pipe 検出**は 2026 年現在も canonical——Python、 Go、 Rust 他が同じ手法を使用。"
+  },
+  {
+    "id": "tee-003-sigint-ignore",
+    "text": "while (argc > 1 && argv[1][0] == '-') {\n    switch (argv[1][1]) {\n    case 'a':\n        aflag++;\n        break;\n    case 'i':\n    case 0:\n        signal(SIGINT, SIG_IGN);     /* ignore Ctrl-C */\n    }\n    argv++;\n    argc--;\n}\n\n/* Why -i?\n   $ long_command | tee -i log.txt | grep ERROR\n   \n   When you Ctrl-C:\n   1. Shell sends SIGINT to foreground process group\n   2. long_command, tee, grep all receive SIGINT\n   3. tee -i ignores SIGINT -> stays alive\n   4. tee keeps reading until pipe EOF, completes file write\n   5. No partial log files, no data loss\n\n   Ancestor of: nohup, dtach, screen, tmux\n*/",
+    "file_path": "usr/src/cmd/tee.c",
+    "line_number": 26,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "tee",
+      "signal-handling",
+      "robustness"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "creativity": 4,
+        "elegance": 3
+      },
+      "technical_context": "tee's -i flag installs signal(SIGINT, SIG_IGN) to make tee survive Ctrl-C. Why: in a long pipeline like `cmd | tee -i log | grep`, Ctrl-C sends SIGINT to all foreground processes. Without -i, tee dies mid-write, log.txt is truncated — data loss. With -i, tee keeps reading until upstream EOF, ensuring complete file output. The case 'i': case 0: fall-through handles both '-i' and bare '-' (no char after -) — bare - is a conventional 'read from stdin' marker in Unix utilities. signal() is the 1970s API (process-level handler); modern code prefers sigaction() for race-free semantics, but signal() suffices for SIG_IGN which has no race window. The 'robust intermediate pipeline tool' design is the ancestor of nohup (1980), dtach, screen, tmux — tools that survive signals to keep operations going. Modern CI/CD pipelines (Docker, Jenkins) routinely use `2>&1 | tee -i build.log` to guarantee build logs survive even if the build is interrupted.",
+      "human_story": "What happens when you Ctrl-C a long `make 2>&1 | tee build.log`? Without -i, tee dies mid-write, leaving build.log truncated. With -i, tee installs SIGINT-as-ignored and survives. It keeps reading until make's pipe closes (EOF), then writes the rest and exits cleanly. build.log is complete. The case 'i': case 0: fall-through quirk handles bare '-' (no flag char) the same as '-i' — '-' alone is Unix convention for stdin marker. The 1970s signal() API has known race conditions, but for SIG_IGN there's no race because there's no handler to call. This 'robust intermediate tool' design is the ancestor of every tool that needs to survive process group signals: nohup (1980), dtach, screen, tmux. Every CI/CD pipeline that does `make | tee -i build.log` relies on this 1979 design choice for log preservation."
+    },
+    "appraiser_note": "tee の **-i フラグ**が **signal(SIGINT, SIG_IGN)** を install して tee を Ctrl-C から生存させる。 理由: `cmd | tee -i log | grep` のような長パイプで Ctrl-C すると、 foreground process group 全てに SIGINT 届く。 -i なしだと tee が中途で死に log.txt 切り詰め——**data loss**。 -i ありなら upstream EOF まで読み続け、 完全ファイル出力保証。 **case 'i': case 0: fall-through** が `-i` と `-` 単体 (`-` だけ、 後続文字なし) を同様処理——`-` 単体は Unix 慣習で stdin マーカー。 **signal() は 1970 年代 API** (プロセスレベルハンドラ)、 modern は sigaction() 推奨だが SIG_IGN は race window がないので signal() で十分。 「**頑健な中継パイプライン ツール**」 デザインは **nohup (1980)、 dtach、 screen、 tmux** の祖——シグナルを生存して操作継続するツール群。 現代 CI/CD パイプライン (Docker、 Jenkins) が `2>&1 | tee -i build.log` で**ビルド中断でもログ保証**——1979 年の design choice 依存。"
+  },
+  {
+    "id": "tee-004-identity-with-side-effect",
+    "text": "# tee's mathematical essence: identity function with side effect\n\n# Normal filter:    f(input) = output       (transformation)\n# tee:              f(input) = input        (identity)\n#                              + side_effect (write to file)\n\n# This makes tee transparent in pipelines:\n\n$ command | tee file | next\n#         |          ↘ side effect: file <- input\n#         ↘ passthrough: input -> stdout -> next\n\n# Chain multiple observations:\n$ data | tr A-Z a-z | tee /tmp/step1 \\\n       | sort | tee /tmp/step2 \\\n       | uniq -c | tee /tmp/step3 \\\n       | sort -rn | head\n\n# Each /tmp/stepN captures intermediate state without breaking the pipe.\n\n# Modern descendants:\n#   Haskell IO monad:   tap-and-pass pattern via >>= and >>\n#   RxJS:               .tap(side_effect) preserves stream\n#   OpenTelemetry:      annotate-without-modify\n#   AOP (aspect-oriented programming):  cross-cutting concerns\n\n# Sudo + redirect problem (tee's killer app):\n$ echo 'config' | sudo tee /etc/protected.conf\n# > redirect happens in shell (not under sudo), so 'sudo cmd > file' fails\n# tee runs UNDER sudo, can write to root-only files",
+    "file_path": "usr/src/cmd/tee.c",
+    "line_number": 1,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "tee",
+      "unix-philosophy",
+      "identity-function"
+    ],
+    "interesting_score": 24,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "elegance": 5
+      },
+      "technical_context": "tee is mathematically an identity function with a side effect: f(input) = input + write(file, input). Unlike grep/sort/tr which transform, tee passes the stream through unchanged while writing to file(s) on the side. This makes tee composable with any pipeline without changing semantics — insert tee anywhere to observe. The 'observe without modify' pattern is fundamental in functional programming (Haskell IO monad's tap), reactive streams (RxJS tap, Project Reactor doOnNext), distributed tracing (OpenTelemetry span annotation), AOP (cross-cutting concerns). tee's killer modern application is the sudo + redirect pattern: `echo config | sudo tee /etc/file` — shell redirect happens in non-sudo context, so `sudo cmd > /etc/file` fails for non-root users; tee runs UNDER sudo, can write root-owned files. This 95-line program is the minimal expression of side-effecting identity, predating functional programming's formal treatment of the concept by decades.",
+      "human_story": "What is tee, mathematically? An identity function with a side effect. It takes input and outputs the same input unchanged — that's the identity. But on the way through, it writes the data to one or more files — that's the side effect. This means you can insert tee ANYWHERE in a pipeline without changing what the pipeline does, only adding an observation point. Functional programmers later formalized this as the 'tap' pattern: Haskell IO monad's >>=, RxJS's .tap(), Reactor's .doOnNext(), OpenTelemetry's span.annotate(). Distributed tracing systems are essentially massively distributed tee operations. The killer modern application is sudo + redirect: when you write `sudo cmd > /etc/protected.conf`, the > happens in your shell (not under sudo), so it fails for root-only files. The fix is `echo config | sudo tee /etc/protected.conf` — tee runs UNDER sudo and can write. 95 lines of K&R C that became the universal solution to a problem that wouldn't exist for another 20 years."
+    },
+    "appraiser_note": "tee の数学的本質: **副作用付き identity 関数** f(input) = input + write(file, input)。 grep/sort/tr が変換するのに対し、 tee は**ストリームを不変に通過**、 ファイル書き込みは副作用として。 これでパイプライン**任意位置に挿入可能、 セマンティクス不変**——観測点だけ追加。 **「観測しつつ変更しない」 パターン**は関数型プログラミングの基礎: Haskell IO monad の tap、 RxJS tap、 Project Reactor doOnNext、 OpenTelemetry span annotation、 AOP の cross-cutting concerns。 **tee の killer modern application は sudo + redirect**: `echo config | sudo tee /etc/file`——シェル redirect は非 sudo context で起きるので `sudo cmd > /etc/file` は非 root user で失敗。 tee なら**sudo 配下で実行、 root-owned file に書ける**。 95 行 K&R C が**副作用付き identity の最小表現**、 関数型プログラミングが概念を formalize する数十年前に。 1979 年に「pass through, observe on the side」 という抽象を OS ツールとして実装。"
+  },
+  {
+    "id": "tee-005-broadcast-write",
+    "text": "stash(p) {\n    int k;\n    int i;\n    int d;\n    d = t ? 16 : p;\n    for (i = 0; i < p; i += d)\n        for (k = 0; k < n; k++)\n            write(openf[k], out+i, d < p-i ? d : p-i);\n}\n\n/* Nested loop:\n   outer: chunk position i in buffer (steps of d)\n   inner: every output fd k = 0..n-1\n   \n   Write order:\n     write to openf[0] (stdout) chunk[0..d]\n     write to openf[1] (file1)  chunk[0..d]\n     write to openf[2] (file2)  chunk[0..d]\n     write to openf[0] (stdout) chunk[d..2d]\n     write to openf[1] (file1)  chunk[d..2d]\n     ...\n   \n   This 'chunk-synchronized' write ensures all outputs progress together.\n   If process crashes mid-write, all output files are partially-but-consistently written.\n*/",
+    "file_path": "usr/src/cmd/tee.c",
+    "line_number": 79,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "tee",
+      "broadcast-write",
+      "fan-out"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "concreteness": 4
+      },
+      "technical_context": "tee's stash() is a 3-line nested loop implementing broadcast write — same data fanned out to N file descriptors. Outer loop walks the buffer in chunks of d bytes (16 if interactive, full buffer otherwise). Inner loop writes the chunk to every output fd via write(openf[k], out+i, ...). The chunk-synchronized order — fd[0] chunk N, then fd[1] chunk N, then fd[2] chunk N, then fd[0] chunk N+1, ... — ensures all outputs progress together. If the process crashes mid-write, all output files are partially-but-equally written, no one is far ahead of the others. This is the minimal implementation of broadcast / fan-out write, which appears in: syslog (broadcast to console/file/network), Kafka topic to multiple consumers, multicast network (1 packet to N sockets), CDN edge cache (1 file to N nodes), Splunk Forwarder. The 'd < p-i ? d : p-i' ternary handles the final chunk size (avoid over-read at end of buffer). K&R C compactness — entire fan-out in 8 lines.",
+      "human_story": "How do you write the same data to multiple files at once? Two nested loops. Outer: walk buffer in d-byte chunks. Inner: for each chunk, write to every output fd. Why this order — chunk to all fds, then next chunk to all fds — rather than full content to fd[0], then fd[1], etc.? Crash safety. If tee dies halfway through, all output files have the same partial content — none lags behind. The 'd < p-i ? d : p-i' final-chunk dance avoids over-write at buffer end. This 8-line stash() function is broadcast write, fan-out, multicast — pick your name. Modern systems use the same pattern: syslog forwarding to multiple destinations, Kafka topic with N consumers, multicast packets to N socket subscribers, CDN replication to N edge nodes, Splunk Forwarder, fluentd. Every log shipper in production is doing what tee's nested loop has been doing since 1979."
+    },
+    "appraiser_note": "tee の stash() は **3 行のネストループ**で **broadcast write** を実装——同じデータを N fd に fan-out。 outer ループがバッファを d バイト chunk で walk (interactive なら 16、 file なら full)、 inner ループが各 chunk を**全出力 fd** へ write(openf[k], out+i, ...)。 **chunk-synchronized 順序**——fd[0] chunk N → fd[1] chunk N → fd[2] chunk N → fd[0] chunk N+1 → ...——で**全出力が同期して進む**。 プロセス crash 時、 全出力ファイルが**部分的だが等しく**書かれる、 どれも先行/遅延しない。 これが **broadcast / fan-out write の最小実装**——syslog (console/file/network broadcast)、 Kafka topic to N consumers、 multicast network (1 packet to N sockets)、 CDN edge cache、 Splunk Forwarder で再利用。 **`d < p-i ? d : p-i` 3 項演算子**で最終 chunk サイズを処理 (バッファ終端の over-read 防止)。 K&R C のコンパクト性——**全 fan-out が 8 行**で。 modern システムでも本質は同じ: syslog forwarding、 Kafka topic、 multicast packets、 CDN replication、 fluentd——プロダクションの log shipper は 1979 年から **tee のネストループ**を続けている。"
   }
 ]
