@@ -15040,5 +15040,143 @@
       "human_story": "Why is `| wc -l` so universal? Because most shell queries end with 'how many?'. How many files? `ls | wc -l`. How many errors? `grep ERROR log | wc -l`. How many unique IPs? `awk '{print $1}' log | sort -u | wc -l`. wc is the Unix COUNT(*), and the pipe is the FROM. Combined with grep (WHERE), sort -u (DISTINCT), and tr (tokenize), shell becomes a query language for plain text. 1979's wc enabled this 14 years before SQL became ubiquitous. Modern data engineering uses the same pattern: Spark.count(), pandas len(), SQL COUNT(*) — all derived. But wc -l on a 1GB log is faster than any of them because it does nothing but count: no schema, no query plan, no parsing — just getc and increment. The 86 lines of K&R C are why every devops dashboard, every CI line-count check, every security audit, every quick 'is this thing big or small?' uses wc."
     },
     "appraiser_note": "wc は **Unix シェルパイプラインの canonical sink**——ストリームを consume して**1 つの数値** (または 3 つ) に集約。 **`... | wc -l` イディオム**が DB なしの SQL COUNT(*)、 `sort -u | wc -l` が COUNT(DISTINCT)、 `grep P | wc -l` が COUNT(*) WHERE。 wc -w が tokenized text に対し SUM(LEN_WORDS)。 tr の word splitter と組み合わせで **TTR (Type-Token Ratio) 分析がシェル 3 行で**——自然言語解析が 1979 年からシェルでできた。 wc -l は **I/O 律速、 modern hardware で multi-GB/秒**、 awk END{print NR}、 Python sum(1 for _)、 SQL COUNT(*) より速い。 **「pipeline | wc -l」 パターン**は Unix イディオム——CI/CD 行数チェック、 セキュリティ監査ログ件数、 devops プロセス数、 データサイエンス quick check、 すべて 1979 年 86 行 wc から派生。 現代等価: SQL COUNT、 Spark count()、 Hadoop reducer、 pandas len()——でも wc -l がそれら全てに先行 + 行カウントで凌駕。 **「単純に数えるだけ」 の極致**: schema なし、 query plan なし、 parsing なし、 ただ getc + increment——86 行 K&R C がなぜ全 devops dashboard、 CI、 監査、 quick analysis で使われるかの答え。"
+  },
+  {
+    "id": "look-001-binary-search",
+    "text": "bot = 0;\nfseek(dfile, 0L, 2);              /* seek to end */\ntop = ftell(dfile);                /* file size in bytes */\n\nfor (;;) {\n    mid = (top + bot) / 2;          /* midpoint in bytes */\n    fseek(dfile, mid, 0);           /* seek to mid */\n    do {\n        c = getc(dfile);\n        mid++;\n    } while (c != EOF && c != '\\n');  /* sync to next line */\n    if (!getword(entry))\n        break;\n    canon(entry, word);\n    switch (compare(key, word)) {\n    case -2: case -1: case 0:\n        if (top <= mid) break;\n        top = mid;                  /* search upper half */\n        continue;\n    case 1: case 2:\n        bot = mid;                  /* search lower half */\n        continue;\n    }\n    break;\n}",
+    "file_path": "usr/src/cmd/look.c",
+    "line_number": 56,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "look",
+      "binary-search"
+    ],
+    "interesting_score": 24,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "abstraction": 5
+      },
+      "technical_context": "look implements binary search over a sorted file using byte offsets. bot=0 (start), top=ftell(dfile) after fseek-to-end (file size), mid=(top+bot)/2. Each step: fseek to mid, sync to next line boundary, read a word, compare to key, narrow range to upper or lower half. Convergence: top<=mid terminates. For a 200KB dictionary (~25000 words), log2(200000)≈17 iterations find any word — vs ~12500 linear scans (~750x faster). Each iteration is 1 fseek + a few getc; OS buffer cache makes subsequent accesses near-instant. 1979 K&R C uses literal whence=2 (later named SEEK_END in ANSI C). This is the canonical application of Knuth TAOCP Vol 3 (1973) binary search to file I/O — before DBMS B-tree indexes (System R 1974, Ingres 1975 used different structures initially), this was THE way to do fast lookups in Unix.",
+      "human_story": "How do you find a word in a 25,000-word dictionary fast? Linear scan reads ~12,500 entries on average. Binary search: 17 disk seeks. That's the 1979 look algorithm: jump to file middle (fseek mid), sync to next line, compare. Too small? Search upper half. Too big? Search lower half. Repeat 17 times, find any word. The trick that makes it work in 1979 (no mmap!) is fseek + getc + the OS buffer cache — the OS caches the pages, so repeated seeks into the same dictionary stay fast. This is Knuth TAOCP Vol 3 (1973) binary search applied to file I/O. Before DBMS B-tree indexes became commonplace, look was how Unix did fast lookups. Every modern database B-tree, every git packfile index, every binary-search-over-sorted-array, descends from this 17-line loop."
+    },
+    "appraiser_note": "look は sorted ファイルの**二分探索**を**バイトオフセット**で実装。 bot=0 (先頭)、 top=ftell(dfile) を fseek-to-end (whence=2) 後で取得 = ファイルサイズ、 mid=(top+bot)/2。 各ステップ: fseek to mid、 行境界に同期、 単語読む、 key と比較、 範囲を上下半分に縮める。 収束: top<=mid で終了。 200KB 辞書 (~25000 語) なら **log2(200000) ≈ 17 イテレーション**で任意単語発見——線形 ~12500 比較に対し **~750 倍高速**。 各イテレーション = 1 fseek + 数回 getc、 **OS buffer cache** で連続アクセスは memory-fast。 1979 K&R C は **whence=2 リテラル**を使用 (ANSI C 後に SEEK_END マクロ化)。 **Knuth TAOCP Vol 3 (1973) Binary Search の file I/O への canonical application**——DBMS B-tree index が普及する前 (System R 1974、 Ingres 1975 当初は別構造)、 Unix で fast lookup と言えばコレ。 modern DBMS B-tree、 git packfile index、 binary-search-over-sorted-array すべて 17 行のループから派生。"
+  },
+  {
+    "id": "look-002-line-resync",
+    "text": "mid = (top + bot) / 2;\nfseek(dfile, mid, 0);\ndo {\n    c = getc(dfile);\n    mid++;\n} while (c != EOF && c != '\\n');\n/* Now mid points to the start of the next line */\n\n/* The fatal problem of byte-offset binary search:\n   fseek(15) lands in the MIDDLE of a line:\n   \n   0:  apple\\n               (offset 0)\n   6:  banana\\n              (offset 6)\n   13: cherry\\n              (offset 13)\n   20: date\\n                (offset 20)\n   \n   fseek(15) lands at 'r' (cherry's middle). \n   We need to advance to the next \\n + 1 to get a line start.\n*/",
+    "file_path": "usr/src/cmd/look.c",
+    "line_number": 61,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "look",
+      "line-boundary",
+      "self-synchronizing"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "creativity": 4,
+        "elegance": 4
+      },
+      "technical_context": "Binary search over a text file faces a structural problem: byte offsets don't align with line boundaries. fseek(mid) lands mid-line most of the time. look's solution: after seeking, read bytes until '\\n' is found, then mid points to the next line's start. The cost is at most one line length of extra reads per iteration — negligible. This 'read to next delimiter to resync' is the canonical self-synchronizing data format pattern, applied in: B-tree page headers (find next entry boundary), JSON Lines / NDJSON (read to next \\n), Kafka log segments (offset+length headers), Apache Parquet (read to next page boundary). The same problem appears in network protocols (TCP byte stream → application messages), where applications insert framing. The 1979 look's 4-line do-while is the minimal expression of this pattern — and it remains correct as long as no line spans more than one search step's worth of bytes.",
+      "human_story": "Binary search over text files has a problem: fseek(file_middle) lands mid-line, not at a line start. look's fix is so simple it's almost invisible: after seeking, read bytes until you hit '\\n', then mid points to the next line. 4 lines of C. The cost: a few extra getc calls per iteration, negligible. This 'random offset → record boundary via resync' pattern is everywhere now: JSON Lines binary search (seek + readline), B-tree page boundaries, Kafka log segments, NDJSON log searchers, even network TCP framing. The pattern is so fundamental it's hard to imagine doing without it — but 1979's look was one of the first to use it on disk files. The lesson: text formats are self-synchronizing if you have a unique delimiter (\\n is unique because it can't appear in normal word characters). Binary formats need length-prefixed framing because no byte sequence is forbidden."
+    },
+    "appraiser_note": "テキストファイルへの二分探索の**構造的問題**: バイトオフセットは行境界と揃わない。 fseek(mid) はほぼ常に行の途中に着地。 look の解決: seek 後、 **`\\n` まで getc で読み捨て**、 mid を次行の先頭に揃える。 コスト = 1 イテレーション当たり最大 1 行分の追加 read——無視できる。 「**random offset → record boundary 再同期**」 パターンは **self-synchronizing データフォーマットの canonical pattern**: B-tree ページヘッダ、 JSON Lines/NDJSON (seek + readline)、 Kafka log segment、 Apache Parquet ページ境界、 ネットワーク TCP framing (length-prefix)。 1979 年 look の **4 行 do-while** はこのパターンの**最小表現**——1 行が 1 探索ステップ分のバイトを超えない限り正しく動く。 教訓: **テキストフォーマットは unique delimiter があれば自己同期** (\\n は通常の単語文字に現れないので unique)。 バイナリフォーマットは length-prefix framing が必要 (禁止バイト列がないため)。"
+  },
+  {
+    "id": "look-003-five-value-compare",
+    "text": "compare(s, t)\nregister char *s, *t;\n{\n    for (; *s == *t; s++, t++)\n        if (*s == 0)\n            return(0);              /* exact match */\n    return(*s == 0 ? -1 :           /* s is prefix of t */\n           *t == 0 ?  1 :           /* t is prefix of s */\n           *s < *t  ? -2 :          /* s < t lexicographically */\n                      2);            /* s > t lexicographically */\n}\n\n/* Five values vs strcmp's three:\n     0   exact match\n    -1   s is prefix of t  (key=\"he\", word=\"hello\")\n     1   t is prefix of s\n    -2   strict s < t\n     2   strict s > t\n   \n   Why 5? To detect prefix matches without separate strncmp.\n   look outputs all lines where key is a prefix: case -1 and case 0.\n*/",
+    "file_path": "usr/src/cmd/look.c",
+    "line_number": 114,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "look",
+      "prefix-match",
+      "compare"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "creativity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "creativity": 4,
+        "abstraction": 4
+      },
+      "technical_context": "look's compare() returns 5 values (-2/-1/0/1/2) instead of strcmp's 3 (negative/zero/positive). The extra states encode prefix relationship: -1 = s is prefix of t (key 'he' is prefix of 'hello'), 1 = reverse. This single function detects exact match, prefix match, and strict lexicographic order in one C function with 4-line nested ternary. The binary search uses cases -2/-1/0 to narrow upward (matches are higher or equal) and cases 1/2 to narrow downward. The forward scan after binary search uses cases -1/0 to print and case -2 to stop. Without this 5-value design, look would need separate strcmp + strncmp calls. K&R C's switch fall-through (case -1: case 0:) elegantly handles multiple cases identically. Modern equivalents: C++ string::starts_with(), Python str.startswith(), SQL LIKE 'prefix%', regex ^prefix — all derived from look's compare semantics.",
+      "human_story": "Why does look's compare() return 5 values instead of strcmp's 3? Because look needs to detect prefix matches, not just exact matches. `look hello` should match 'hello', 'hellos', 'helloed' — anything starting with 'hello'. compare() returns -1 when key is a prefix of word ('he' is prefix of 'hello'), 0 when exact, -2 when strictly less, 1 when key has word as prefix, 2 when strictly greater. The binary search code then uses switch with case fall-through: case -2: case -1: case 0: all mean 'matches are at or above this position', case 1: case 2: mean 'matches are below'. One compare function does the work of strcmp + strncmp in 4 lines of nested ternaries. Modern languages added str.startswith() as a separate method, SQL added LIKE 'pre%', regex added ^anchor — all expressing the prefix-match concept that look's compare() captured in 1979."
+    },
+    "appraiser_note": "look の compare() が **5 値返却** (-2/-1/0/1/2) ——strcmp の 3 値 (負/0/正) より多い。 追加状態は **prefix 関係**をエンコード: **-1 = s が t の prefix** (key 'he' が 'hello' の prefix)、 1 = 逆。 1 つの関数で exact match + prefix match + strict lexicographic を **4 行のネスト 3 項演算子**で検出。 二分探索が case -2/-1/0 で上方向に絞り (一致以上)、 case 1/2 で下方向に絞る。 binary search 後の forward scan が case -1/0 で出力、 -2 で停止。 この 5 値設計なしには strcmp + strncmp 2 回呼ぶ必要。 K&R C の switch **fall-through** (case -1: case 0:) で複数 case を同一処理——elegant。 現代等価: C++ string::starts_with()、 Python str.startswith()、 SQL LIKE 'prefix%'、 正規表現 ^prefix——すべて look の compare() の semantics から派生。 prefix match の concept が 1979 年の **1 関数 11 行**に込められている。"
+  },
+  {
+    "id": "look-004-canon-normalization",
+    "text": "canon(old, new)\nchar *old, *new;\n{\n    register c;\n    for (;;) {\n        *new = c = *old++;\n        if (c == 0 || c == tab) {\n            *new = 0;\n            break;\n        }\n        if (dict) {\n            if (!isalnum(c))\n                continue;           /* skip non-alphanumeric */\n        }\n        if (fold) {\n            if (isupper(c))\n                *new += 'a' - 'A';   /* lowercase */\n        }\n        new++;\n    }\n}\n\n/* Modes:\n   -d (dict): keep only alphanumeric chars\n             'don\\'t' -> 'dont'\n             'state-of-art' -> 'stateofart'\n   -f (fold): case-insensitive\n             'Hello' -> 'hello'\n             'HELLO' -> 'hello'\n   -df (both): standard spell-check mode\n   -t<c>: terminator (e.g., -t: for /etc/passwd, stop at ':')\n*/",
+    "file_path": "usr/src/cmd/look.c",
+    "line_number": 142,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "look",
+      "canonicalization"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 4,
+      "emotions": {
+        "abstraction": 4,
+        "elegance": 4
+      },
+      "technical_context": "canon() normalizes both the search key and each dictionary entry before compare(). Modes: -d (dict mode) strips non-alphanumeric chars via isalnum (treats 'don't' as 'dont' and 'state-of-art' as 'stateofart'); -f (fold) lowercases ASCII uppercase via arithmetic ('a' - 'A' = 32, adding to uppercase gives lowercase); -t<char> sets the terminator (default '\\n', can be ':' for /etc/passwd-style files). Both inputs run through canon() then compare() — equivalence-class comparison. The 'normalize then compare' pattern predates Unicode collation algorithm (UCA, 1990s) by 11 years; the ASCII version implements the same idea for English text. Modern equivalents: Unicode NFC/NFD normalization, locale collation (LC_COLLATE), case-folding for case-insensitive matching, accent-stripping for diacritic-insensitive search. Database collation specifications (CI_AI = case-insensitive accent-insensitive) are direct descendants of look's -df mode.",
+      "human_story": "When you search for 'hello' in a dictionary, should 'Hello' match? What about 'don't' — is the apostrophe significant? look's answer: it depends on flags. -d (dict mode) strips non-alphanumeric chars, so 'don't' and 'dont' are equal. -f (fold) ignores case. -df is the standard spell-check mode. -t: lets look search /etc/passwd by treating ':' as field separator. Both the search key and each dictionary line run through canon() — same normalization on both sides, then compare. This 'normalize then compare' pattern is the ancestor of Unicode collation algorithm (1990s), which normalizes all of Unicode for international text. Database collation specifications like 'CI_AI' (case-insensitive accent-insensitive) descend directly from look's -df mode. The 1979 lesson: equality is defined by what you consider equivalent, and the equivalence class is selectable via flags."
+    },
+    "appraiser_note": "canon() が比較前に**検索キーと各辞書エントリの両方を正規化**。 モード: **-d (dict)** が isalnum で非英数字を除去 ('don\\'t' → 'dont'、 'state-of-art' → 'stateofart')、 **-f (fold)** が ASCII 大文字を小文字化 (算術 'a' - 'A' = 32、 大文字に加算で小文字)、 **-t<char>** がフィールド区切り (default '\\n'、 /etc/passwd には ':')。 両入力に canon() を通してから compare()——**同値クラス比較**。 「**正規化してから比較**」 パターンは **Unicode collation algorithm (UCA、 1990 年代) を 11 年先取り**——ASCII 版が英語テキストに対し同じ idea を実装。 現代等価: Unicode NFC/NFD 正規化、 locale collation (LC_COLLATE)、 case-folding、 accent-stripping。 DB の collation 仕様 (CI_AI = case-insensitive accent-insensitive) は look の -df モードの直系子孫。 1979 年の教訓: **等値は何を equivalent とみなすかで定義され、 同値クラスはフラグで選択可能**。"
+  },
+  {
+    "id": "look-005-spell-checker-ecosystem",
+    "text": "# /usr/dict/words ecosystem (Bell Labs 1979):\n\n# The dictionary itself:\n$ ls -l /usr/dict/words\n-rw-r--r-- 1 root  ~200KB  # ~25000 sorted English words\n\n# look as the fast lookup primitive:\n$ look hello                    # outputs: hello, hellos, helloed, helloing, ...\n$ look -df Hello                # case-insensitive: same matches\n\n# spell (McIlroy 1975) uses look internally:\n#   1. tokenize document into words (tr -cs A-Za-z '\\n')\n#   2. lowercase (tr A-Z a-z)\n#   3. sort -u\n#   4. for each word: look -df word /usr/dict/words\n#   5. if not found: report as misspelling\n\n$ spell document.txt\nmisspelt\ntypo\nrecieve\n\n# Modern descendants (all use sorted-dict + binary-search pattern):\n#   aspell, hunspell        - desktop spell checkers\n#   GNU look                  - POSIX standardized\n#   IDE spell check          - VSCode, IntelliJ\n#   MS Word, Google Docs     - same pattern, bigger dict\n#   Spotlight, grep -F        - 'is this word known?' queries\n#   DBMS B-tree index         - same binary search, tree-organized\n#   git packfile lookup       - binary search over sorted SHA list",
+    "file_path": "usr/src/cmd/look.c",
+    "line_number": 5,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "look",
+      "spell-checker",
+      "dictionary"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "elegance": 4
+      },
+      "technical_context": "look is the fast-lookup primitive at the heart of the /usr/dict/words ecosystem at Bell Labs 1979. The dictionary is ~25,000 sorted English words (~200KB). look provides O(log N) word existence checks via binary search. spell (McIlroy 1975) uses look as its core: tokenize document, lowercase, sort-unique, look each word, report misses as misspellings — the world's first practical Unix spell checker. The pattern (sorted dictionary + binary search + normalization) is the direct ancestor of: modern spell checkers (aspell, hunspell), DBMS B-tree primary key lookups, git packfile object lookups (binary search over sorted SHA list), Bloom filters (probabilistic existence checks), full-text search inverted indexes (sorted term lists), Spotlight/desktop search. The /usr/dict/words file itself spawned thousands of derivative dictionaries; SCOWL (Spell Checker Oriented Word Lists) used in aspell descends from /usr/dict/words.",
+      "human_story": "What did Bell Labs do with /usr/dict/words? In 1976, Doug McIlroy wrote 'spell', the first practical Unix spell checker. Its core was look — for each word in the document, ask look 'is this in the dictionary?'. If not, print as misspelling. This was the world's first command-line spell checker, predating Microsoft Word's by a decade. The architecture — sorted dictionary file + binary search lookups + normalization — is the same one used in modern aspell, hunspell, MS Word's spell check, Google Docs' spell check, every IDE's spell check, and every full-text search engine's term index. /usr/dict/words itself spawned thousands of derivative dictionaries; SCOWL (used in aspell) descends from it. The pattern also generalizes: DBMS B-tree indexes are binary search organized in tree structure; git's packfile index is binary search over sorted SHA lists; Bloom filters are probabilistic existence checks for when even binary search is too slow. The 162-line look program is the seed."
+    },
+    "appraiser_note": "look は **/usr/dict/words ecosystem の fast lookup プリミティブ**——Bell Labs 1979 年の中核。 辞書は **約 25000 語の sorted English words (~200KB)**。 look が O(log N) で word existence check 提供。 **spell (McIlroy 1975)** が look を内部で使用: tokenize → lowercase → sort-unique → look each word → 見つからなければ misspelling 報告——**世界初の実用 Unix spell checker**、 MS Word より 10 年早い。 「**sorted dictionary + binary search + normalization**」 パターンは現代の直系祖: aspell/hunspell、 DBMS B-tree primary key lookup、 **git packfile object lookup** (sorted SHA list の binary search)、 Bloom filter (確率的 existence check)、 **全文検索 inverted index** (sorted term list)、 Spotlight/desktop search。 /usr/dict/words 自体が数千の派生辞書を生み、 SCOWL (aspell が使用) は /usr/dict/words の子孫。 **DBMS B-tree index は binary search を tree 化したもの**、 **git packfile index は sorted SHA への binary search**、 **Bloom filter は binary search より速い probabilistic version**——すべての種が 162 行の look。"
   }
 ]
