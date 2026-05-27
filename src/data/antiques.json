@@ -15458,5 +15458,145 @@
       "human_story": "How do you write the same data to multiple files at once? Two nested loops. Outer: walk buffer in d-byte chunks. Inner: for each chunk, write to every output fd. Why this order — chunk to all fds, then next chunk to all fds — rather than full content to fd[0], then fd[1], etc.? Crash safety. If tee dies halfway through, all output files have the same partial content — none lags behind. The 'd < p-i ? d : p-i' final-chunk dance avoids over-write at buffer end. This 8-line stash() function is broadcast write, fan-out, multicast — pick your name. Modern systems use the same pattern: syslog forwarding to multiple destinations, Kafka topic with N consumers, multicast packets to N socket subscribers, CDN replication to N edge nodes, Splunk Forwarder, fluentd. Every log shipper in production is doing what tee's nested loop has been doing since 1979."
     },
     "appraiser_note": "tee の stash() は **3 行のネストループ**で **broadcast write** を実装——同じデータを N fd に fan-out。 outer ループがバッファを d バイト chunk で walk (interactive なら 16、 file なら full)、 inner ループが各 chunk を**全出力 fd** へ write(openf[k], out+i, ...)。 **chunk-synchronized 順序**——fd[0] chunk N → fd[1] chunk N → fd[2] chunk N → fd[0] chunk N+1 → ...——で**全出力が同期して進む**。 プロセス crash 時、 全出力ファイルが**部分的だが等しく**書かれる、 どれも先行/遅延しない。 これが **broadcast / fan-out write の最小実装**——syslog (console/file/network broadcast)、 Kafka topic to N consumers、 multicast network (1 packet to N sockets)、 CDN edge cache、 Splunk Forwarder で再利用。 **`d < p-i ? d : p-i` 3 項演算子**で最終 chunk サイズを処理 (バッファ終端の over-read 防止)。 K&R C のコンパクト性——**全 fan-out が 8 行**で。 modern システムでも本質は同じ: syslog forwarding、 Kafka topic、 multicast packets、 CDN replication、 fluentd——プロダクションの log shipper は 1979 年から **tee のネストループ**を続けている。"
+  },
+  {
+    "id": "nm-001-aout-header",
+    "text": "#include <a.out.h>\n\n#define MAGIC   exp.a_magic\n#define BADMAG  MAGIC!=A_MAGIC1 && MAGIC!=A_MAGIC2  \\\n                && MAGIC!=A_MAGIC3 && MAGIC!=A_MAGIC4\n\nstruct exec exp;\n\nmain() {\n    ...\n    fread((char *)&exp, 1, sizeof(MAGIC), fi);      /* read magic only */\n    if (MAGIC == ARMAG)\n        arch_flg++;                                  /* archive */\n    else if (BADMAG) {\n        fprintf(stderr, \"nm: %s-- bad format\\n\", *argv);\n        continue;\n    }\n    fseek(fi, 0L, 0);\n    ...\n    fread((char *)&exp, 1, sizeof(struct exec), fi); /* full header */\n    o = (long)exp.a_text + exp.a_data + exp.a_trsize + exp.a_drsize;\n    fseek(fi, o, 1);                                 /* skip to symbol table */\n    n = exp.a_syms / sizeof(struct nlist);\n}\n\n/* a.out file layout (1979):\n   +----------------+\n   | struct exec    |  ← 16-byte header\n   |  a_magic       |    0407, 0410, 0411, or 0413\n   |  a_text        |    text section size\n   |  a_data        |    data section size\n   |  a_bss         |    bss size\n   |  a_syms        |    symbol table size\n   |  a_entry       |    entry point\n   |  a_trsize      |    text relocation size\n   |  a_drsize      |    data relocation size\n   +----------------+\n   | text           |\n   +----------------+\n   | data           |\n   +----------------+\n   | text reloc     |\n   +----------------+\n   | data reloc     |\n   +----------------+\n   | symbol table   |  ← nm reads from here\n   +----------------+\n*/",
+    "file_path": "usr/src/cmd/nm.c",
+    "line_number": 13,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "nm",
+      "aout-format",
+      "object-file"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 5,
+      "emotions": {
+        "concreteness": 5,
+        "abstraction": 4
+      },
+      "technical_context": "nm parses Unix a.out object files: a 16-byte struct exec header with magic number (0407 normal, 0410 separate text/data, 0411 separate I&D, 0413 demand-paged), followed by text, data, text reloc, data reloc, and symbol table sections. The symbol table starts at byte offset = a_text + a_data + a_trsize + a_drsize from end of header. Each entry is sizeof(struct nlist) = 12 bytes on PDP-11 (n_name[8] + n_type + n_other + n_desc + n_value). nm computes the offset via fseek(fi, o, 1) (whence=1 SEEK_CUR, relative to current). The 4-magic-number scheme distinguishes loading modes — modern ELF uses similar magic + version + abi fields. The a.out format originated in PDP-7 Unix (1969); Bell-32V is essentially the PDP-11 V7 a.out adapted to VAX 32-bit fields. ELF (1989) is the modern descendant; nm's reading pattern remained the canonical template for object-file inspection tools (objdump, readelf, otool).",
+      "human_story": "How does nm know where the symbols are inside hello.o? By following the a.out format spec. 1979's struct exec header is 16 bytes: magic number + sizes for text, data, bss, symbols, entry point, relocation tables. nm reads the magic first (sizeof(MAGIC) bytes) to check validity — 4 possible magics indicate different loading modes (no separation, text/data, I&D, demand-paged). Then it reads the full header, computes symbol table offset as text+data+text_reloc+data_reloc, and fseeks there. Each symbol is a fixed-size struct nlist (12 bytes on PDP-11). The a.out format itself traces back to PDP-7 Unix (1969); Bell-32V's version is the V7 a.out adapted for VAX 32-bit fields. ELF (1989) replaced a.out but inherited the magic-number + section-headers + symbol-table architecture. Every modern object inspector (objdump, readelf, otool, IDA Pro) follows the template that nm established in 239 lines."
+    },
+    "appraiser_note": "nm は Unix a.out オブジェクトファイルをパース: **16 バイト struct exec ヘッダ** (magic number = 0407 normal、 0410 text/data 分離、 0411 separate I&D、 0413 demand-paged)、 続いて text/data/text reloc/data reloc/symbol table セクション。 シンボルテーブルは **byte offset = a_text + a_data + a_trsize + a_drsize** (ヘッダ末から)。 各エントリは **sizeof(struct nlist) = 12 バイト** (PDP-11)——n_name[8] + n_type + n_other + n_desc + n_value。 nm は **fseek(fi, o, 1)** (whence=1 SEEK_CUR、 相対) で offset 計算。 **4 magic 方式**でロードモード区別——modern ELF も類似の magic + version + abi field。 a.out 形式は **PDP-7 Unix (1969)** 起源、 Bell-32V は本質的に PDP-11 V7 a.out を VAX 32-bit field に適応。 **ELF (1989) が modern 後継**、 でも nm の reading パターンが **object-file inspection ツールの canonical テンプレート** (objdump、 readelf、 otool 全部踏襲)。"
+  },
+  {
+    "id": "nm-002-symbol-type-mapping",
+    "text": "switch (c & (N_TYPE - N_EXT)) {\n\ncase N_UNDF:                /* 0x00 */\n    c = 'u';\n    if (symp[n].n_value)\n        c = 'c';            /* common (Fortran-style) */\n    break;\n\ncase N_ABS:                  /* 0x02 */\n    c = 'a';\n    break;\n\ncase N_TEXT:                 /* 0x04 */\n    c = 't';\n    break;\n\ncase N_DATA:                 /* 0x06 */\n    c = 'd';\n    break;\n\ncase N_BSS:                  /* 0x08 */\n    c = 'b';\n    break;\n\ncase N_FN:                   /* 0x1f */\n    c = 'f';\n    break;\n}\n\nif (symp[n].n_type & N_EXT)\n    c = toupper(c);         /* global symbol -> uppercase */\n\nif (c == 'u' || c == 'U')\n    printf(\"        \");      /* undefined: blank address */\nelse\n    printf(FORMAT, symp[n].n_value);\nprintf(\" %c \", c);\nprintf(\"%.8s\\n\", symp[n].n_name);",
+    "file_path": "usr/src/cmd/nm.c",
+    "line_number": 150,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "nm",
+      "symbol-type",
+      "output-format"
+    ],
+    "interesting_score": 24,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "abstraction": 4
+      },
+      "technical_context": "nm's defining contribution is the symbol type letter convention. n_type byte (masked by N_TYPE-N_EXT to ignore the external bit) is switched: N_UNDF (0x00) -> 'u', N_ABS (0x02) -> 'a', N_TEXT (0x04) -> 't', N_DATA (0x06) -> 'd', N_BSS (0x08) -> 'b', N_FN (0x1f) -> 'f'. Special case: N_UNDF with non-zero n_value becomes 'c' (common, Fortran-style). Then if N_EXT (external/global) is set, toupper() converts to uppercase: T/D/B/U/A/F/C. Output format: 8-digit hex address (blank for undefined) + single type char + symbol name truncated to 8 chars. This format became the universal standard — GNU nm, llvm-nm, Apple nm, all use the same letter convention 50 years later. Even though a.out was replaced by ELF (1989), the type letters T/D/B/U remain the lingua franca of symbol inspection. Any developer who has seen 'undefined reference to' linker errors knows to nm | grep ' U ' the object file.",
+      "human_story": "When you run `nm hello.o`, the output looks like '00000000 T main' — what do those letters mean? T = text (function code), D = data (initialized variable), B = bss (uninitialized variable), U = undefined (external reference), A = absolute, F = filename. Uppercase = global (visible to linker), lowercase = local/static (file-scoped). This convention was invented in Bell-32V nm's 1979 switch statement: 6 type values mapped to 6 letters, then toupper() for global. 50 years later, GNU nm, llvm-nm, Apple's nm — they all output the same letters. ELF replaced a.out in 1989, but the T/D/B/U letters survived because they were already the de facto language developers used to describe symbols. When a junior developer asks 'why does my code have undefined reference to foo', the senior engineer says 'run nm and grep for U'. That T/D/B/U vocabulary is encoded in 30 lines of 1979 C."
+    },
+    "appraiser_note": "nm の最大貢献は **シンボルタイプ文字規約**。 n_type バイト (N_TYPE-N_EXT でマスクして external bit を除外) を switch: **N_UNDF (0x00) → 'u'、 N_ABS (0x02) → 'a'、 N_TEXT (0x04) → 't'、 N_DATA (0x06) → 'd'、 N_BSS (0x08) → 'b'、 N_FN (0x1f) → 'f'**。 特殊: **N_UNDF + n_value != 0 → 'c'** (common、 Fortran 共通ブロック)。 N_EXT (external/global) が立っていれば **toupper()** で大文字化: T/D/B/U/A/F/C。 出力フォーマット: 8 桁 16 進アドレス (undefined は空白) + 型文字 1 + シンボル名 (最大 8 文字)。 **この出力フォーマットが universal standard 化**——GNU nm、 llvm-nm、 Apple nm、 50 年経っても同じ文字規約。 **a.out が ELF (1989) に置換されても、 T/D/B/U の文字は不変**——既に開発者の symbol 議論の lingua franca になっていた。 「undefined reference to」 リンカエラーを見た瞬間、 開発者が反射的に **nm | grep ' U '** する文化が **1979 年の 30 行 C** にエンコードされた。"
+  },
+  {
+    "id": "nm-003-ar-archive-iteration",
+    "text": "#include <ar.h>\n\nstruct ar_hdr arp;\nlong off;\n\n#define SELECT  arch_flg ? arp.ar_name : *argv\n\nmain() {\n    ...\n    fread((char *)&exp, 1, sizeof(MAGIC), fi);\n    if (MAGIC == ARMAG)\n        arch_flg++;\n    ...\n    if (arch_flg) {\n        nextel(fi);\n        if (narg > 1)\n            printf(\"\\n%s:\\n\", *argv);\n    }\n    do {\n        ...\n        /* process one archive element (or single file) */\n    } while (arch_flg && nextel(fi));\n}\n\nnextel(af)\nFILE *af;\n{\n    register r;\n\n    fseek(af, off, 0);\n    r = fread((char *)&arp, 1, sizeof(struct ar_hdr), af);\n    if (r <= 0)\n        return(0);\n    if (arp.ar_size & 1)\n        ++arp.ar_size;           /* pad to even byte */\n    off = ftell(af) + arp.ar_size;\n    return(1);\n}",
+    "file_path": "usr/src/cmd/nm.c",
+    "line_number": 226,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "nm",
+      "ar-archive",
+      "library"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 4,
+      "emotions": {
+        "abstraction": 4,
+        "elegance": 4
+      },
+      "technical_context": "nm transparently handles ar archives (.a static libraries) in addition to single object files. Detection: read magic bytes; if MAGIC == ARMAG ('!<arch>\\n' header), set arch_flg. Then nextel() reads the next ar_hdr (member name, date, size) and updates 'off' to point to the next element. Main do-while loop processes each element: read exec header, validate magic (skip non-a.out members), dump symbol table, repeat. SELECT macro picks arp.ar_name (archive member) or *argv (single file) for display. arp.ar_size is padded to even bytes (ar requires 2-byte alignment between members). The 'open archive, iterate elements' pattern is the ancestor of: JAR files, ZIP archives, .so/.dylib bundles, tarball traversal, Docker image layers. Any tool that needs to inspect 'archive of objects' (jar tf, unzip -l, tar tf, docker image inspect) follows nm's nextel() pattern. The 13-line nextel() function is the minimal expression of streaming archive iteration.",
+      "human_story": "Want to know what's inside /usr/lib/libc.a? Run `nm libc.a` — it lists every .o member's symbols, with member names as separators. How does nm know to iterate? Magic byte detection. First it reads the magic; if it's '!<arch>\\n' (ar archive marker), enter archive mode. Then nextel() reads each member's header (name + size + date), and the main loop processes them one by one. After each member, advance offset by size (rounded to even for alignment). 13 lines of nextel() implement archive iteration. This 'magic byte + header + iterate' pattern is everywhere: JAR files (zip magic + entries), Docker images (manifest + layers), Mach-O fat binaries (multi-arch + slices), even ZIP files. Anyone who has written code to walk a JAR's contents has reinvented Bell-32V nm's nextel(), 47 years later."
+    },
+    "appraiser_note": "nm は **ar archive (.a 静的ライブラリ) を透過的に処理**、 単一オブジェクトファイルと同じインターフェースで。 検出: magic バイト読み、 MAGIC == ARMAG ('!<arch>\\n') なら arch_flg。 nextel() が次の ar_hdr (メンバ名、 日付、 サイズ) を読み off を次要素へ更新。 メイン do-while ループが各要素処理: exec ヘッダ読み、 magic 検証 (non-a.out メンバはスキップ)、 シンボルテーブルダンプ、 反復。 **SELECT マクロ**が arp.ar_name (archive メンバ) または *argv (単一ファイル) を表示用に選択。 arp.ar_size は **even byte に pad** (ar の 2-byte アライン要件)。 「**archive 開いて要素 iterate**」 パターンは祖: **JAR ファイル、 ZIP archive、 .so/.dylib bundle、 tarball 走査、 Docker image レイヤー**。 「archive of objects 検査」 ツール (jar tf、 unzip -l、 tar tf、 docker image inspect) すべて nm の nextel() パターン踏襲。 **13 行 nextel() がストリーミング archive iteration の最小表現**——47 年後の JAR walker もこれを再発明。"
+  },
+  {
+    "id": "nm-004-dynamic-symbol-array",
+    "text": "struct nlist *symp = NULL;\n\nwhile (--n >= 0) {\n    fread((char *)&sym, 1, sizeof(sym), fi);\n    if (globl_flg && (sym.n_type & N_EXT) == 0)\n        continue;\n    if (symp == NULL)\n        symp = (struct nlist *)malloc(sizeof(struct nlist));\n    else {\n        symp = (struct nlist *)realloc(symp, (i+1) * sizeof(struct nlist));\n    }\n    if (symp == NULL) {\n        fprintf(stderr, \"nm: out of memory on %s\\n\", *argv);\n        exit(2);\n    }\n    symp[i++] = sym;\n}\n\nif (nosort_flg == 0)\n    qsort(symp, i, sizeof(struct nlist), compare);\n\n...\n\nif (symp)\n    free((char *)symp);\n\n/* Note: incrementally realloc'ing each symbol is O(N²) total,\n   not the modern amortized O(N) doubling pattern. But 1979 simplicity\n   wins for ~100s of symbols typical in PDP-11 / VAX programs. */",
+    "file_path": "usr/src/cmd/nm.c",
+    "line_number": 114,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "nm",
+      "malloc-realloc",
+      "qsort"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "concreteness",
+      "emotion_intensity": 3,
+      "emotions": {
+        "concreteness": 3,
+        "elegance": 3
+      },
+      "technical_context": "nm uses malloc/realloc to dynamically size the symbol array as it reads from the file. Each new symbol: if symp==NULL, malloc(1*sizeof(nlist)); else realloc(symp, (i+1)*sizeof(nlist)). This incremental realloc is O(N²) total cost (each realloc potentially copies all prior entries), not the modern amortized O(N) doubling strategy (capacity *= 2 when full). However, PDP-11 / VAX programs typically had ~100 to ~1000 symbols, so O(N²) overhead was negligible in practice. Then qsort() with a callback comparator sorts the array — K&R C had qsort in the standard library, and function pointer callbacks (high-order functions) were canonical idiom. After sort and output, free() releases the memory. The full malloc/realloc/free + qsort+callback combination is the minimal example of dynamic data structures in K&R C, used in countless utilities to handle 'unknown count of items to process'.",
+      "human_story": "How many symbols does an object file have? nm doesn't know in advance — could be 5 or 50,000. So it grows the array dynamically: start with malloc(1 entry), realloc to (i+1 entries) for each new symbol. Read, store, repeat. Then qsort() sorts the whole array with a callback comparator. After use, free() releases. This is the textbook 'unknown-size collection in C' pattern — but with a quadratic cost (each realloc may copy all prior items). Modern C uses doubling (capacity *= 2 when full) for amortized linear cost. In 1979 PDP-11 / VAX programs typically had 100-1000 symbols, so O(N²) overhead was a few milliseconds — irrelevant. The combination malloc + realloc + free + qsort + callback is the minimal example of dynamic memory + sorting in K&R C, the pattern every utility used for 'variable-size data'."
+    },
+    "appraiser_note": "nm が **malloc/realloc で動的にシンボル配列拡張**——ファイルから読みながらサイズ確定。 各新シンボル: symp==NULL なら malloc(1 entry)、 そうでなければ realloc(symp, (i+1) * sizeof(nlist))。 **インクリメンタル realloc は合計 O(N²) コスト** (各 realloc が以前の全エントリを copy する可能性)、 modern の amortized O(N) 倍々戦略 (capacity *= 2) ではない。 PDP-11/VAX プログラムは典型 100-1000 シンボル、 O(N²) オーバーヘッドは実用上無視できる (数 ms)。 その後 **qsort() + callback コンパレータ**でソート——K&R C 標準ライブラリに qsort、 関数ポインタ callback (高階関数) は canonical idiom。 ソート/出力後 free() で解放。 **malloc/realloc/free + qsort+callback の組み合わせ**は **K&R C の動的データ構造の最小例**——「件数不明のアイテム処理」 のためあらゆるユーティリティが踏襲したパターン。 modern style なら容量倍々で amortized O(N)、 でも 1979 年はシンプルさ優先。"
+  },
+  {
+    "id": "nm-005-linker-error-detective",
+    "text": "# nm as the canonical linker-error detective tool:\n\n# Step 1: undefined references\n$ cc main.c\nld: Undefined:\n_printf\n_write\n*** Error code 1\n\n# Step 2: nm shows what's missing\n$ nm main.o | grep ' U '\n         U printf\n         U write\n\n# Step 3: find which library provides them\n$ nm /usr/lib/libc.a | grep ' T printf'\nprintf.o:00000000 T printf\n\n# Step 4: add -lc to link line, problem solved\n$ cc main.c -lc\n\n# Modern equivalents (all derived from nm's T/D/B/U vocabulary):\n#   GNU nm + c++filt    : nm with C++ name demangling\n#   readelf -s          : ELF-specific, more detail\n#   objdump -t          : disassembler with symbol table\n#   otool -t            : Mach-O equivalent (macOS)\n#   ldd                 : dynamic library dependencies (nm dynamic version)\n#   IDE Symbol Browser  : GUI wrapper around nm output\n\n# Shell one-liners using nm:\n$ nm prog | awk '$2==\"U\" {print $3}' | sort -u    # all undefined refs\n$ nm libfoo.a | awk '$2==\"T\" {print $3}'           # all global functions\n$ comm -12 <(nm libfoo.a | grep ' T ' | awk '{print $3}' | sort) \\\n            <(nm prog | grep ' U ' | awk '{print $2}' | sort)\n# functions from libfoo that prog actually uses\n\n# Security audit:\n$ nm libapp.so | c++filt | grep -E 'strcpy|gets|sprintf'\n# unsafe function usage\n\n$ nm program | awk '$2 ~ /[uU]/ {print $NF}' | xargs -I{} nm /lib/* | grep '{}'\n# what shared libs provide what symbols",
+    "file_path": "usr/src/cmd/nm.c",
+    "line_number": 5,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "nm",
+      "linker-debug",
+      "binary-analysis"
+    ],
+    "interesting_score": 23,
+    "ai_analysis": {
+      "primary_emotion": "abstraction",
+      "emotion_intensity": 5,
+      "emotions": {
+        "abstraction": 5,
+        "elegance": 4
+      },
+      "technical_context": "nm is the canonical Unix linker-error-detective tool. The workflow: see 'undefined reference to foo' linker error -> nm object | grep ' U ' lists missing symbols -> nm /usr/lib/*.a | grep ' T foo' finds providing library -> link with -lfoo to resolve. This 4-step debugging dance is the foundation of C development workflow for 50 years. nm composes powerfully with Unix shell: grep filters by type letter, awk extracts the name column, sort/uniq deduplicates, comm intersects between programs, c++filt demangles C++. Combined with ldd (dynamic linker view), objdump (full disassembly), readelf (ELF detail), nm is part of the 'binary inspection toolchain' that every systems programmer uses. The same patterns work for security audit (find unsafe function usage), library dependency analysis (what does prog use from libfoo), reverse engineering (what's inside this binary). 1979's 239-line nm seeded an entire workflow culture that persists across Linux, BSD, macOS, embedded systems.",
+      "human_story": "What's the most common C developer task? Fix linker errors. 'undefined reference to printf' has frustrated every C programmer since 1972. The fix dance starts with nm: pipe through grep ' U ' to see what's missing, then nm /usr/lib/*.a | grep ' T missing_name' to find which library has it, then add -llib to your compile command. Done in 30 seconds with experience. nm + shell composition is the entire binary-inspection toolchain: grep (filter by type), awk (extract names), sort/uniq (deduplicate), comm (intersect), c++filt (demangle), ldd (dynamic libs), objdump (full disassembly). Together they form the systems-programmer's microscope. Security auditors use nm to find strcpy/gets/sprintf calls. Library maintainers use it to track ABI changes. Reverse engineers use it as first reconnaissance. All from a 239-line program written in 1979, whose output format became the de facto language for talking about binaries."
+    },
+    "appraiser_note": "nm は **canonical Unix linker-error-detective ツール**。 ワークフロー: 「undefined reference to foo」 リンカエラー → nm object | grep ' U ' で不足シンボル一覧 → nm /usr/lib/*.a | grep ' T foo' で提供ライブラリ発見 → -lfoo でリンク解決。 この **4 ステップデバッグダンス**が 50 年間 C 開発の基礎。 nm は Unix シェルと強力に合成: grep でタイプフィルタ、 awk で名前カラム抽出、 sort/uniq で重複除去、 comm でプログラム間積集合、 c++filt で C++ demangling。 ldd (動的リンカビュー)、 objdump (フルディスアセンブル)、 readelf (ELF 詳細) と組み合わせ、 nm は **「binary inspection toolchain」** の一部——全 systems プログラマが使う顕微鏡。 同パターンで **セキュリティ監査** (unsafe 関数検出)、 **ライブラリ依存分析** (prog が libfoo から何使うか)、 **reverse engineering** (binary 内部) すべて可能。 1979 年の **239 行 nm** が、 Linux/BSD/macOS/組込みシステムまで継承する**ワークフロー文化**の種。"
   }
 ]
