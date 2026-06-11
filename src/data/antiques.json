@@ -16802,5 +16802,118 @@
       "human_story": "newgrp and chgrp are a pair: one sets the group of what you are about to make, the other re-tags what already exists. Beneath both sit chown(2) and /etc/group, the bedrock of Unix group ownership."
     },
     "appraiser_note": "newgrp(#206) は setgid でプロセス(自分のシェル)のグループを変え、これから作るファイルの所属を決める。chgrp は chown で既存ファイルのグループを変える。Unix グループ所有権の両面=これから作るもの vs すでにあるもの。chgrp は SUID でなく chown(2) を素で呼びカーネルが権限判定。ls -l(#110) が表示する所有者+グループの組こそ chown が書き chgrp が片方だけ書き換える対象。"
+  },
+  {
+    "id": "dump-001-levels-ddate",
+    "text": "if(idbuf.id_incno >= incno)\t/* skip dumps at this level or higher */\n\tgoto l2;\nif(idbuf.id_ddate <= spcl.c_ddate)\t/* keep the most recent date */\n\tgoto l2;\nspcl.c_ddate = idbuf.id_ddate;\n/* putitime() writes this dump back to /etc/ddate, only if uflag (the u in \"dump 0u\") */",
+    "file_path": "usr/src/cmd/dump.c",
+    "line_number": 470,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "backup",
+      "incremental",
+      "dump-levels"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "foresight": 5
+      },
+      "technical_context": "dump takes a level 0-9 (incno). getitime() reads /etc/ddate (struct idates: fs name, level, date) and finds the most recent dump of a STRICTLY LOWER level. The rule: a level-N dump saves everything changed since the most recent dump of level < N. Level 0 has no lower level so c_ddate=0 (epoch) = full backup; higher levels are incremental. putitime() records this dump back to /etc/ddate, but only when the 'u' (update) flag is set (dump 0u). This level model underlies GNU dump/restore, xfsdump, and Towers-of-Hanoi backup schedules to this day.",
+      "human_story": "This is where incremental backup was defined. A single number picks how far back to diff, /etc/ddate remembers the past, and the famous 'forgot the u flag' footgun is born right here: no u, no recorded date, broken next increment."
+    },
+    "appraiser_note": "dump はレベル0-9(incno)を取る。getitime() が /etc/ddate(struct idates: FS名/レベル/日時)を読み、自分より厳密に低いレベルの最新ダンプ日時を探す。規則: レベルNは『level<Nの最新ダンプ以降の変更』を保存。level0は下位が無く c_ddate=0(epoch)=フル、上位は増分。putitime() が今回を /etc/ddate に書き戻すが u(update)フラグ時のみ(dump 0u の u)。このレベルモデルは GNU dump/restore・xfsdump・Towers of Hanoi スケジュールへ継承。u 付け忘れで次の増分が壊れる名物バグの出どころ。"
+  },
+  {
+    "id": "dump-002-inode-raw-scan",
+    "text": "mark(ip)\nstruct dinode *ip;\n{\n\tf = ip->di_mode & IFMT;\n\tif(f == 0) return;\t/* unused inode */\n\tBIS(ino, clrmap);\n\tif(f == IFDIR) BIS(ino, dirmap);\n\tif(ip->di_mtime >= spcl.c_ddate || ip->di_ctime >= spcl.c_ddate)\n\t\tBIS(ino, nodmap);\t/* changed since last dump */\n}",
+    "file_path": "usr/src/cmd/dump.c",
+    "line_number": 235,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "backup",
+      "filesystem",
+      "inode"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "rigor",
+      "emotion_intensity": 4,
+      "emotions": {
+        "rigor": 4,
+        "clarity": 4
+      },
+      "technical_context": "Unlike tar (#192) or cpio (#193) which open and readdir the file tree, dump reads the raw disk device, reads the superblock after sync(), and scans the inode table directly. mark() builds three bitmaps: clrmap (allocated inodes), dirmap (directories), nodmap (to-save: di_mtime/di_ctime >= c_ddate). Reading the FS structure is fast, complete (sees unlinked inodes), and consistent, but tightly coupled to the V7 FS layout mkfs (#201) created.",
+      "human_story": "dump does not walk files; it reads the filesystem itself, inode by inode, off the raw device. That is why it is fast and never misses, and why it must know the on-disk format intimately. tar is a portable box of files; dump is the physical diff of one filesystem."
+    },
+    "appraiser_note": "tar(#192)/cpio(#193) がファイル木を open/readdir するのと違い、dump は生ディスクデバイスを読み、sync() 後にスーパーブロックを読み、inode テーブルを直接走査する。mark() が3枚のビットマップを育てる: clrmap(使用中inode)/dirmap(ディレクトリ)/nodmap(保存対象=di_mtime/di_ctime>=c_ddate)。FS構造直読は速く・漏れず(孤立inodeも見える)・一貫するが、mkfs(#201)が作った V7 FS レイアウトに密結合。tar はポータブルな箱、dump は1つのFSの物理差分。"
+  },
+  {
+    "id": "dump-003-pass2-fixpoint",
+    "text": "pass(mark, NULL);\t\t/* I */\ndo {\n\tprintf(\"II\\n\");\n\tnadded = 0;\n\tpass(add, dirmap);\t/* add directories on the path to changed files */\n} while(nadded);\t\t/* fixpoint */\npass(dump, dirmap);\t\t/* III */\npass(dump, nodmap);\t\t/* IV */",
+    "file_path": "usr/src/cmd/dump.c",
+    "line_number": 190,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "backup",
+      "algorithm",
+      "reachability"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "rigor": 4
+      },
+      "technical_context": "dump runs four passes over the inode table (the iconic I/II/III/IV output), reusing one higher-order pass(fn,map) scanner. Pass I marks. Pass II is a fixpoint loop: add() / dsrch() promote any directory that contains a to-save inode into nodmap, repeated until nadded==0, because restoring /a/b/c needs directories a and b dumped to provide the name. Reachability climbs from files up to the root. Pass III dumps directories, pass IV dumps file inodes+data.",
+      "human_story": "Saving the changed files is not enough; their names live in their parent directories. So dump climbs the tree from each file to the root, one level per pass, until nothing new is added. The four single letters I II III IV that everyone has watched scroll by are four full inode scans."
+    },
+    "appraiser_note": "dump は inode テーブルを4回走査(名物の I/II/III/IV 出力)し、高階の pass(fn,map) を使い回す。I=印付け。II=不動点ループ: add()/dsrch() が保存対象inodeを含むディレクトリを nodmap に格上げし nadded==0 まで反復——/a/b/c の復元には名前を与える a,b のディレクトリも要るため。到達可能性がファイルから根へ這い上がる。III=ディレクトリ書出し、IV=ファイルinode+データ書出し。"
+  },
+  {
+    "id": "dump-004-tape-checksum-seek",
+    "text": "spcl.c_checksum = CHECKSUM - s;\t/* whole record sums to CHECKSUM = self-checking */\n...\nflusht():\nloop:\td = 0;\n\tfor(i=0; i<NTREC; i++)\n\t\tif(tdaddr[i] != 0)\n\t\tif(d == 0 || tdaddr[i] < d) { si = i; d = tdaddr[i]; }\n\tif(d != 0) { bread(d, tblock[si], BSIZE); tdaddr[si]=0; goto loop; }\n\twrite(to, tblock[0], sizeof(tblock));",
+    "file_path": "usr/src/cmd/dump.c",
+    "line_number": 360,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "backup",
+      "tape",
+      "checksum",
+      "disk-scheduling"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "craft",
+      "emotion_intensity": 4,
+      "emotions": {
+        "craft": 4,
+        "rigor": 4
+      },
+      "technical_context": "The dump tape format is self-checking: spclrec sets c_magic=MAGIC and c_checksum = CHECKSUM - s so the whole control record sums to the constant CHECKSUM; restor verifies by summing. Record types TS_TAPE/TS_INODE/TS_BITS/TS_ADDR/TS_CLRI/TS_END live in dumprestor.h, shared with restor. flusht() queues disk addresses (tapsrec) and reads them in ascending order (pick the smallest tdaddr each iteration via goto loop) -- an elevator/SCAN seek optimization to read the slow 1979 disk in one sweep. When asize>tsize it prints 'change tapes' and read(0,...) waits for the operator: multi-volume backup.",
+      "human_story": "Tape is unreliable, so every record carries a magic number and a checksum that makes the whole block sum to a constant. And to drag data off a slow disk, dump sorts the blocks it needs by address and reads them in one forward sweep of the head. Even multi-tape backups, with a pause for the operator to swap reels, are already here."
+    },
+    "appraiser_note": "dump のテープ形式は自己検査式: spclrec が c_magic=MAGIC と c_checksum=CHECKSUM-s を置き、制御レコード全体の総和が定数 CHECKSUM になる(restor は総和で検証)。レコード種別 TS_TAPE/TS_INODE/TS_BITS/TS_ADDR/TS_CLRI/TS_END は dumprestor.h で restor と共有。flusht() はディスクアドレスをキューし(tapsrec)、毎回最小の tdaddr を選んで昇順に読む(goto loop)——エレベーター法(SCAN)で遅い1979年ディスクを片方向一掃。asize>tsize で『change tapes』表示し read(0,...) でオペレーター交換待ち=マルチボリューム。"
   }
 ]

@@ -1256,6 +1256,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "208",
+    title: "鑑定書#208 dump — `pass(mark/add/dump)` の4パスとダンプレベル0-9、`/etc/ddate` で前回より新しいinodeだけを拾う増分バックアップを発明した639行、全バックアップツールの祖",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
