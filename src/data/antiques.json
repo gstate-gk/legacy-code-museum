@@ -16719,5 +16719,88 @@
       "human_story": "The error messages have personality. Not a member? 'Sorry.' Running as a uid with no passwd entry? 'You do not exist!' 1979 Unix often refused you with a wink."
     },
     "appraiser_note": "newgrp は grp->gr_mem[](/etc/group のメンバー名配列)を走査して自分のユーザー名を探す。無ければ『Sorry』で拒否——ただしグループ名が \"other\"(誰でも入れる伝統の受け皿グループ, gid 1)なら免除。そして getpwuid(getuid()) が NULL=uid に passwd エントリが無いと、有名な『You do not exist!』。login/su と同じ素っ気ない拒絶だが、1979年 Unix はしばしばユーモアで突き放した。"
+  },
+  {
+    "id": "chgrp-001-stat-chown-syscall-absence",
+    "text": "for(c=2; c<argc; c++) {\n\tstat(argv[c], &stbuf);\n\tif(chown(argv[c], stbuf.st_uid, gid) < 0) {\n\t\tperror(argv[c]);\n\t\tstatus = 1;\n\t}\n}",
+    "file_path": "usr/src/cmd/chgrp.c",
+    "line_number": 40,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "filesystem",
+      "system-call-absence",
+      "chown"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "clarity": 4
+      },
+      "technical_context": "There is no chgrp(2) syscall in 1979. chown(path, uid, gid) changes BOTH owner and group at once. To change only the group, chgrp first stat()s the file to read the current owner (stbuf.st_uid), then calls chown(path, stbuf.st_uid, gid): writing the SAME uid back and only the new gid. Same syscall-absence pattern as rm->rmdir, mkdir->mknod, mv->link. status=1 on failure but it keeps going and exit(status) at the end.",
+      "human_story": "To change one thing you must read and rewrite another unchanged. chgrp keeps the owner by explicitly handing chown the owner it just read. It is the same quiet trick the whole Bell-32V command set used to fill in a missing syscall with the primitives that did exist."
+    },
+    "appraiser_note": "1979年に chgrp(2) システムコールは無い。chown(path, uid, gid) は所有者とグループを同時に変える。グループだけ変えるため chgrp はまず stat() で現在の所有者(stbuf.st_uid)を読み、chown(path, stbuf.st_uid, gid) で同じ uid を書き戻しグループだけ新 gid に。rm→rmdir/mkdir→mknod/mv→link と同じ syscall 不在パターン。失敗で status=1 だが続行し最後に exit(status)。"
+  },
+  {
+    "id": "chgrp-002-isnumber-getgrnam",
+    "text": "if(isnumber(argv[1])) {\n\tgid = atoi(argv[1]);\n} else {\n\tif((gr=getgrnam(argv[1])) == NULL) { ... exit(4); }\n\tgid = gr->gr_gid;\n}\n...\nisnumber(s) char *s; {\n\twhile(c = *s++) if(!isdigit(c)) return(0);\n\treturn(1);\n}",
+    "file_path": "usr/src/cmd/chgrp.c",
+    "line_number": 22,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "parsing",
+      "group"
+    ],
+    "interesting_score": 15,
+    "ai_analysis": {
+      "primary_emotion": "craft",
+      "emotion_intensity": 3,
+      "emotions": {
+        "craft": 3,
+        "clarity": 3
+      },
+      "technical_context": "chgrp accepts either a numeric gid or a group name. isnumber(argv[1]) (a 7-line helper: every char must be isdigit, using the K&R while(c=*s++) idiom) decides; if numeric, atoi(); otherwise getgrnam() looks it up in /etc/group for gr_gid, or 'unknown group' + exit(4). Unlike newgrp (#206) which took only a name, chgrp takes both forms.",
+      "human_story": "A tiny hand-rolled isnumber() before reaching for atoi, the small tool sharpened by hand. chgrp meets you halfway: spell the group by number or by name, either works."
+    },
+    "appraiser_note": "chgrp は数値 gid でもグループ名でも受ける。isnumber(argv[1])(7行ヘルパー: 全文字が isdigit か、K&R の while(c=*s++) 定型)で判定し、数値なら atoi()、名前なら getgrnam() で /etc/group を引いて gr_gid、無ければ unknown group + exit(4)。名前のみだった newgrp(#206) と違い両形式を通す。atoi の前に自作 isnumber を置く小道具自前主義。"
+  },
+  {
+    "id": "chgrp-003-newgrp-vs-chgrp",
+    "text": "/*\n * chgrp gid file ...\n */\n/* newgrp: setgid on the process; chgrp: chown on the file */",
+    "file_path": "usr/src/cmd/chgrp.c",
+    "line_number": 1,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "group",
+      "chown",
+      "filesystem"
+    ],
+    "interesting_score": 16,
+    "ai_analysis": {
+      "primary_emotion": "symmetry",
+      "emotion_intensity": 4,
+      "emotions": {
+        "symmetry": 4,
+        "clarity": 3
+      },
+      "technical_context": "newgrp (#206) changes the group of the PROCESS (your shell) via setgid, deciding the group of files you will create. chgrp changes the group of an EXISTING file via chown. Two sides of Unix group ownership: future files vs existing files. chgrp is not SUID; it calls chown(2) raw and lets the kernel enforce permission. The owner+group pair that ls -l (#110) prints is exactly what chown writes and chgrp rewrites half of.",
+      "human_story": "newgrp and chgrp are a pair: one sets the group of what you are about to make, the other re-tags what already exists. Beneath both sit chown(2) and /etc/group, the bedrock of Unix group ownership."
+    },
+    "appraiser_note": "newgrp(#206) は setgid でプロセス(自分のシェル)のグループを変え、これから作るファイルの所属を決める。chgrp は chown で既存ファイルのグループを変える。Unix グループ所有権の両面=これから作るもの vs すでにあるもの。chgrp は SUID でなく chown(2) を素で呼びカーネルが権限判定。ls -l(#110) が表示する所有者+グループの組こそ chown が書き chgrp が片方だけ書き換える対象。"
   }
 ]

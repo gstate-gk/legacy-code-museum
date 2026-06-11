@@ -1249,6 +1249,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "207",
+    title: "鑑定書#207 chgrp — `chgrp(2)` がないので `stat` で uid を取り `chown(file, 同じuid, 新gid)` でグループだけ変える53行、`chown` の薄いラッパー、`newgrp` のファイル版",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
