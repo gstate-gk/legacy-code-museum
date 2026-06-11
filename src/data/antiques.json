@@ -16298,5 +16298,169 @@
       "human_story": "How does V7 store a file? The inode contains 13 'block pointers'. First 10 are direct — they point to the actual data blocks. Pointer 11 is 'single indirect' — points to a block that contains 128 more pointers (8 MB total reach). Pointer 12 is 'double indirect' — points to a block of pointers to blocks of pointers (8 MB reach). Pointer 13 is 'triple indirect' (1 GB reach). Why? Small files (5 KB or less) fit entirely in direct pointers — just 1 disk read per data block, no pointer chasing. Large files (databases, binaries) use the indirect chain, paying 2-4 reads per data block but enabling files up to 1 GB. The 'small fast, large possible' tradeoff. This design survived 25+ years: BSD FFS (12+3), ext2 (12+3), ext3 (12+3) all used direct+indirect. Only ext4 (2008) replaced it with extents (contiguous ranges) for better huge-file performance. But every C program, every config file, every email you read in the 1980s-2000s was addressed by direct+indirect block pointers from this 1979 design. That's how persistent good data structures are."
     },
     "appraiser_note": "V7 inode は **40 byte di_addr[]** フィールド (13 個の 3-byte block 番号) 保持。 **最初 10 = direct pointers** ——data block 番号直接。 **位置 10 = single-indirect** (block of pointers、 128 entries × 512 byte = 64 KB)。 **位置 11 = double-indirect** (128 × 128 × 512 = 8 MB)。 **位置 12 = triple-indirect** (128³ × 512 = 1 GB)。 **総最大ファイル ~1 GB** ——1979 年として広大。 **設計理由**: 小ファイル (1979 年 typical source code、 docs) は 10 direct で 5 KB、 **1 disk read = 1 data block** (pointer chasing なし)。 大ファイル (database、 binary) は indirect chain 使用。 **「small fast、 large possible」 trade-off**。 inode は固定 64 byte、 8 個/block——inode block I/O 効率良。 この **direct+indirect 構造**が **BSD FFS (1984, 12+3 に拡張)**、 **Linux ext2/ext3 (1993, 12+3)**、 **Minix FS** で**そのまま継承**。 **ext4 (2008)** が初めて indirect を **extent (連続 block range)** に置換 ——巨大ファイル効率向上。 **XFS/btrfs/ZFS は B-tree**。 でも **25+ 年間 (1979-2008)** のファイルシステムが基本的に **1979 年のこの design**を使用。 **「**良いデータ構造は時を超える**」 ——コンパイルした全 C プログラム、 編集した全テキスト、 実行した全バイナリが direct+indirect block pointer で addressing されてきた。"
+  },
+  {
+    "id": "rmdir-001-triple-unlink",
+    "text": "unl:\n\tunlink(name);\t/* unlink name/.. */\nunl2:\n\tname[strlen(name)-1] = '\\0';\n\tunlink(name);\t/* unlink name/. */\n\tname[strlen(name)-2] = '\\0';\n\tif (unlink(name) < 0) {\n\t\tfprintf(stderr, \"rmdir: %s not removed\\n\", name);\n\t\t++Errors;\n\t}",
+    "file_path": "usr/src/cmd/rmdir.c",
+    "line_number": 92,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "system-call-absence",
+      "filesystem",
+      "suid"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "humility": 3
+      },
+      "technical_context": "Bell-32V (1979) has no rmdir(2) syscall. The rmdir command (SUID root) deletes a directory by manually unlinking its three links in order: name/.. then name/. then the directory itself, reusing one char buffer and truncating it with '\\0' between steps. This is exactly what rm forks and execs /bin/rmdir to do. rmdir(2) arrives in 4.2BSD (1983).",
+      "human_story": "A directory is just an inode plus the links that point at it. Without rmdir(2), removing one meant performing surgery by hand, in the right order, with root privileges. /bin/rmdir was the small SUID knife that did it. When rm needed to delete a directory, it could not; it had to call this program."
+    },
+    "appraiser_note": "rmdir(2) システムコールが無い1979年、ディレクトリ削除は name/.. → name/. → 本体 の3回の unlink を正しい順序で唱える儀式だった。1つの char バッファを末尾から '\\0' で削りながら逆向きにたどる。これは rm(#141) が fork+execl で /bin/rmdir を呼んだ「呼ばれる側」そのもの。ディレクトリのリンクを unlink できるのは root だけなので rmdir は SUID root だった。"
+  },
+  {
+    "id": "rmdir-002-stat-empty-cwd",
+    "text": "if (stat(\"\", &cst) < 0) {\n\tfprintf(stderr, \"rmdir: cannot stat \\\"\\\"\");\n\t++Errors;\n\texit(1);\n}\n...\nif(st.st_ino==cst.st_ino && st.st_dev==cst.st_dev) {\n\tfprintf(stderr, \"rmdir: cannot remove current directory\\n\");\n\t++Errors;\n\treturn;\n}",
+    "file_path": "usr/src/cmd/rmdir.c",
+    "line_number": 45,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "filesystem",
+      "path-resolution"
+    ],
+    "interesting_score": 16,
+    "ai_analysis": {
+      "primary_emotion": "curiosity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "curiosity": 4,
+        "caution": 3
+      },
+      "technical_context": "stat(\"\", &cst) stats the empty string, which V6/V7-era kernels resolve to the current directory (equivalent to stat(\".\")). rmdir compares st_dev+st_ino of the target against the cwd to refuse removing the current directory. Later POSIX makes stat(\"\") return ENOENT, so this idiom stops working.",
+      "human_story": "In 1979 an empty path quietly meant 'here'. The code leans on that loose behavior to ask 'am I being told to delete the ground I stand on?' Identity of a directory is dev+inode, the same definition rm used to detect copying a file onto itself."
+    },
+    "appraiser_note": "stat(\"\") ——空文字列を stat するとカレントディレクトリ(.)が返る、V6/V7時代の緩いパス解決を利用。target と cwd の st_dev+st_ino を比べて「カレントディレクトリは消せない」を実装。後年の POSIX では stat(\"\") は ENOENT になりこの書き方は通用しなくなる。同一性の定義は dev+inode——rm の自己コピー検出と同じ。"
+  },
+  {
+    "id": "rmdir-003-raw-direct-empty",
+    "text": "while(read(fd, (char *)&dir, sizeof dir) == sizeof dir) {\n\tif(dir.d_ino == 0) continue;\n\tif(!strcmp(dir.d_name, \".\") || !strcmp(dir.d_name, \"..\"))\n\t\tcontinue;\n\tfprintf(stderr, \"rmdir: %s not empty\\n\", name);\n\t++Errors;\n\tclose(fd);\n\treturn;\n}",
+    "file_path": "usr/src/cmd/rmdir.c",
+    "line_number": 64,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "filesystem",
+      "readdir"
+    ],
+    "interesting_score": 15,
+    "ai_analysis": {
+      "primary_emotion": "clarity",
+      "emotion_intensity": 3,
+      "emotions": {
+        "clarity": 3,
+        "nostalgia": 3
+      },
+      "technical_context": "Without readdir(3), rmdir opens the directory as a plain file and reads raw 16-byte struct direct records. Emptiness check: skip d_ino==0 (deleted slot) and the . / .. entries; any other live entry means 'not empty'. Same world as rm.c reading directories with raw read(2).",
+      "human_story": "A directory was just a file full of struct direct records, and you read it with read() like anything else. The opendir/readdir abstraction came later. To know if a directory was empty you scanned its bytes and counted what was still alive."
+    },
+    "appraiser_note": "readdir(3) が無いので、ディレクトリを通常ファイルとして open し 16バイトの struct direct を生 read。空判定は d_ino==0(削除済みスロット)と ./.. を読み飛ばし、他に生きたエントリが1つでもあれば not empty。rm.c がディレクトリを生読みして再帰したのと同じ世界観——opendir/readdir の抽象は後の時代。"
+  },
+  {
+    "id": "mkdir-001-mknod-dir",
+    "text": "if ((mknod(d, 040777, 0)) < 0) {\n\tfprintf(stderr,\"mkdir: cannot make directory %s\\n\", d);\n\t++Errors;\n\treturn;\n}\nchown(d, getuid(), getgid());",
+    "file_path": "usr/src/cmd/mkdir.c",
+    "line_number": 50,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "system-call-absence",
+      "filesystem",
+      "suid"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "resourcefulness": 4
+      },
+      "technical_context": "Bell-32V has no mkdir(2). mkdir uses mknod (normally for device nodes) with mode 040777 = S_IFDIR | 0777 to create the directory inode, then chown(d, getuid(), getgid()) to hand ownership from root back to the real user. Only root can mknod, so mkdir is SUID root. The mirror of rmdir's triple unlink.",
+      "human_story": "To make a directory you reached for the device-node maker, because that was the only general way to create an inode of an arbitrary type. mknod needed root; so mkdir, like rmdir, was a small SUID program that borrowed privilege and immediately gave the result back to you."
+    },
+    "appraiser_note": "mkdir(2) が無い1979年、mknod(d, 040777, 0) でディレクトリ inode を生む。040777 = S_IFDIR(040000) | rwxrwxrwx(0777)。mknod は本来デバイスファイル用だが「任意種別の inode を作る」唯一の汎用手段だった。mknod は root 専用ゆえ mkdir も SUID root。直後に chown(d, getuid(), getgid()) で所有権を本人へ返す。rmdir の3連 unlink の鏡像。"
+  },
+  {
+    "id": "mkdir-002-link-dot-dotdot",
+    "text": "strcat(dname, \"/.\");\nif((link(d, dname)) < 0) { ... unlink(d); ... }\nstrcat(dname, \".\");\nif((link(pname, dname)) < 0) {\n\t... unlink(dname); unlink(d); ++Errors;\n}",
+    "file_path": "usr/src/cmd/mkdir.c",
+    "line_number": 58,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "filesystem",
+      "atomicity"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "symmetry": 4
+      },
+      "technical_context": "After mknod creates the bare inode, mkdir builds the directory by linking it twice: link(d, \"d/.\") makes the self reference, link(pname, \"d/..\") makes the parent reference. On failure it rolls back by unlinking what it made. Exactly inverts rmdir's unlink(d/..)/unlink(d/.)/unlink(d).",
+      "human_story": "A freshly mknod'd inode is an empty box. It becomes a directory only once . points at itself and .. points at the parent. Build is link, link; teardown is unlink, unlink, unlink. The same three links, run forwards or backwards."
+    },
+    "appraiser_note": "mknod で作った空 inode に、link を2回張ってディレクトリを完成させる。link(d, d/.)で自己参照、link(pname, d/..)で親参照。失敗時は作ったものを unlink で巻き戻す手作業ロールバック。rmdir の unlink(d/..)→unlink(d/.)→unlink(d) を正確に裏返した姿——同じ3本のリンクの組立と解体。"
+  },
+  {
+    "id": "mkdir-003-sigign-critical",
+    "text": "signal(SIGHUP, SIG_IGN);\nsignal(SIGINT, SIG_IGN);\nsignal(SIGQUIT, SIG_IGN);\nsignal(SIGPIPE, SIG_IGN);\nsignal(SIGTERM, SIG_IGN);",
+    "file_path": "usr/src/cmd/mkdir.c",
+    "line_number": 18,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "signals",
+      "atomicity"
+    ],
+    "interesting_score": 16,
+    "ai_analysis": {
+      "primary_emotion": "diligence",
+      "emotion_intensity": 4,
+      "emotions": {
+        "diligence": 4,
+        "foresight": 4
+      },
+      "technical_context": "mkdir ignores five signals at startup so the mknod -> link(.) -> link(..) sequence cannot be interrupted half-done, which would leave an inconsistent directory for fsck to find. A user-space approximation of the atomicity an atomic mkdir(2) would have provided for free.",
+      "human_story": "Making a directory was three steps, and being killed between them left a half-built thing on disk. So mkdir closed the door on every signal it could before it began. It is the ancestor of the critical section, written in 1979 with five calls to signal()."
+    },
+    "appraiser_note": "mkdir は起動時に5つのシグナルを SIG_IGN で無視する。mknod→link(.)→link(..) の途中で殺されると、半分だけできた不整合なディレクトリが残り fsck が首をかしげるため。原子的な mkdir(2) があれば不要だった原子性を、signal でユーザー空間に近似——クリティカルセクションの素朴な原型。"
   }
 ]

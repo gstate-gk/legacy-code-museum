@@ -1214,6 +1214,20 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "202",
+    title: "鑑定書#202 rmdir — `unlink` を3回(`..`→`.`→本体)唱えてディレクトリを消すSUID-root、`rm` が fork+execl で呼んでいた相手の104行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
+  {
+    number: "203",
+    title: "鑑定書#203 mkdir — `mknod` でディレクトリinodeを生み `link`×2 で `.`/`..` を張る、signal 5つ無視で不可分を守るSUID-rootの71行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
