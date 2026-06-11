@@ -16462,5 +16462,92 @@
       "human_story": "Making a directory was three steps, and being killed between them left a half-built thing on disk. So mkdir closed the door on every signal it could before it began. It is the ancestor of the critical section, written in 1979 with five calls to signal()."
     },
     "appraiser_note": "mkdir は起動時に5つのシグナルを SIG_IGN で無視する。mknod→link(.)→link(..) の途中で殺されると、半分だけできた不整合なディレクトリが残り fsck が首をかしげるため。原子的な mkdir(2) があれば不要だった原子性を、signal でユーザー空間に近似——クリティカルセクションの素朴な原型。"
+  },
+  {
+    "id": "egrep-001-dfa-table-match",
+    "text": "for (;;) {\n\tcstat = gotofn[cstat][*p&0377];\t/* all input chars made positive */\n\tif (out[cstat]) {\n\tfound:\t...\n\t}\n\t...\n}",
+    "file_path": "usr/src/cmd/egrep.y",
+    "line_number": 470,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "regex",
+      "dfa",
+      "automata",
+      "performance"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "rigor": 5
+      },
+      "technical_context": "egrep's match loop is a single DFA table lookup per input character: cstat = gotofn[cstat][c], with out[cstat] marking accepting states. No backtracking at all, so matching is strictly linear in input length. This is the opposite of grep (#65/#166), whose advance() VM backtracks on '*' and can go exponential. The &0377 mask keeps signed chars as positive table indices.",
+      "human_story": "Where Thompson's grep ran a backtracking bytecode VM, Aho's egrep compiled the regex into a deterministic automaton and then just read a table. Each input byte is examined exactly once and never revisited. Theory chose the implementation: a regular language is recognized by a finite automaton, so build the automaton and let it run."
+    },
+    "appraiser_note": "egrep のマッチは1文字につき DFA 遷移表を一発引き: cstat = gotofn[cstat][*p&0377]、out[cstat] で受理判定。バックトラッキングは皆無ゆえ入力長に厳密に線形。grep(#65/#166) の advance() が * で再帰・後戻りし最悪指数だったのと正反対。&0377 は符号付きcharを正の添字に保つマスク。RE2(Russ Cox) へ繋がる『DFAで確実に線形』の源流。"
+  },
+  {
+    "id": "egrep-002-follow-position-dfa",
+    "text": "cgotofn() {\n\t...\n\tfor (s=0; s<=n; s++)  {\t/* worklist: discover states while processing */\n\t\t...\n\t\tif (notin(n)) {\n\t\t\tadd(state, ++n);\n\t\t\tif (tmpstat[line] == 1) out[n] = 1;\n\t\t\tgotofn[s][c] = n;\n\t\t}\n\t}\n}",
+    "file_path": "usr/src/cmd/egrep.y",
+    "line_number": 210,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "regex",
+      "dfa",
+      "compiler-theory",
+      "dragon-book"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "rigor": 5
+      },
+      "technical_context": "cgotofn builds the DFA transition table directly from the regex syntax tree using the follow-position construction (cfoll/follow/cstate compute follow sets and nullability). A DFA state IS a set of leaf positions. The classic worklist loop 'for(s=0; s<=n; s++)' grows n as new states are discovered; notin() dedupes state sets, add() registers new ones. This is algorithm 3.5 of the Dragon Book (Aho, Sethi, Ullman 1986) running in 1979.",
+      "human_story": "Alfred Aho wrote the regex-to-DFA construction that would later appear in the Dragon Book, the bible of compiler courses. egrep.y is that algorithm as a living tool, seven years before the textbook. The same Aho is the 'a' in awk and the author of fgrep's Aho-Corasick automaton."
+    },
+    "appraiser_note": "cgotofn() は構文木から follow位置構成で DFA 遷移表を直接生成（cfoll/follow/cstate が follow集合と nullable を計算）。DFA の状態とは葉位置の集合。古典的ワークリスト for(s=0;s<=n;s++) が処理中に新状態を発見して n を伸ばし、notin() で状態集合の重複排除、add() で新規登録。ドラゴンブック(Aho,Sethi,Ullman 1986)のアルゴリズム3.5が1979年に既に動いていた。"
+  },
+  {
+    "id": "egrep-003-yacc-ere-grammar",
+    "text": "%left OR\n%left CHAR DOT CCL NCCL '('\n%left CAT\n%left STAR PLUS QUEST\n%%\nr:\tr OR r\t\t={ $$ = node(OR, $1, $3); }\n\t| r r %prec CAT\t={ $$ = node(CAT, $1, $2); }\n\t| r STAR\t={ $$ = unary(STAR, $1); }\nb:\t\t={ $$ = enter(DOT); $$ = unary(STAR, $$); }",
+    "file_path": "usr/src/cmd/egrep.y",
+    "line_number": 60,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "regex",
+      "yacc",
+      "grammar",
+      "parsing"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "clarity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "clarity": 4,
+        "craft": 4
+      },
+      "technical_context": "egrep expresses extended regex (| + ? and grouping) directly as a yacc grammar. %left declarations encode operator precedence (postfix STAR/PLUS/QUEST bind tightest, then CAT, then OR); 'r r %prec CAT' gives juxtaposition its precedence. Actions build a syntax tree in parallel arrays name[]/left[]/right[]/parent[] via node/unary/enter. The empty rule b prepends .* (enter(DOT)+unary(STAR)) so the search is unanchored.",
+      "human_story": "Where grep hand-coded its parser, egrep let yacc parse the regex, the same Bell Labs habit that built bc and eqn from grammars. And the quiet trick: the grammar silently prefixes .* to every pattern, turning anchored match into search-anywhere."
+    },
+    "appraiser_note": "egrep は拡張正規表現(|・+・?・グループ化)を yacc 文法で直接表現。%left が優先順位を符号化(後置STAR/PLUS/QUESTが最強→CAT→OR)、r r %prec CAT が連接に優先順位を与える。アクションは node/unary/enter で並列配列 name/left/right/parent に構文木を生やす。空規則 b が .*(enter(DOT)+unary(STAR))を前置し、アンカーなし検索(どこでも一致)を実現。grep が手書きパーサだったのに対し yacc に解析を委ねる Bell Labs 流。"
   }
 ]

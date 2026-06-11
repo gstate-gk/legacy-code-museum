@@ -1228,6 +1228,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "204",
+    title: "鑑定書#204 egrep — `cstat = gotofn[cstat][c]` で正規表現をDFAにコンパイルし1文字1テーブル引きで線形マッチ、Ahoのfollow位置構成(ドラゴンブック)、grep/fgrepに続く正規表現トリオ完成の590行",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
