@@ -1263,6 +1263,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "209",
+    title: "鑑定書#209 restor — 「Last chance before scribbling on」、dumpのテープを checksum==CHECKSUM で検証しつつ balloc/bmap で生ディスクに自前FSを書き戻す1145行、穴も復元しパス名をinode解決するdumpの対",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

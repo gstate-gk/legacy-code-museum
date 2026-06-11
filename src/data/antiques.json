@@ -16915,5 +16915,118 @@
       "human_story": "Tape is unreliable, so every record carries a magic number and a checksum that makes the whole block sum to a constant. And to drag data off a slow disk, dump sorts the blocks it needs by address and reads them in one forward sweep of the head. Even multi-tape backups, with a pause for the operator to swap reels, are already here."
     },
     "appraiser_note": "dump のテープ形式は自己検査式: spclrec が c_magic=MAGIC と c_checksum=CHECKSUM-s を置き、制御レコード全体の総和が定数 CHECKSUM になる(restor は総和で検証)。レコード種別 TS_TAPE/TS_INODE/TS_BITS/TS_ADDR/TS_CLRI/TS_END は dumprestor.h で restor と共有。flusht() はディスクアドレスをキューし(tapsrec)、毎回最小の tdaddr を選んで昇順に読む(goto loop)——エレベーター法(SCAN)で遅い1979年ディスクを片方向一掃。asize>tsize で『change tapes』表示し read(0,...) でオペレーター交換待ち=マルチボリューム。"
+  },
+  {
+    "id": "restor-001-last-chance-fs-writer",
+    "text": "printf(\"Last chance before scribbling on %s. \", *argv);\nwhile (getchar() != '\\n');\n...\ndaddr_t balloc() {\n\tif(sblock.s_nfree == 0 || (bno=sblock.s_free[--sblock.s_nfree]) == 0) { ... \"Out of space\" ... }\n\tif(sblock.s_nfree == 0) { dread(bno, fbuf.data, BSIZE); sblock.s_nfree = fbuf.df_nfree; ... }\n\tdwrite(bno, zeroes);\n\treturn(bno);\n}",
+    "file_path": "usr/src/cmd/restor.c",
+    "line_number": 289,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "restore",
+      "filesystem",
+      "raw-device"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "gravity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "gravity": 5,
+        "ingenuity": 5
+      },
+      "technical_context": "restor's r mode restores a whole dump onto a raw filesystem device, so it reimplements the kernel filesystem in userspace: balloc()/bfree() manipulate the superblock free list (s_free[]/s_nfree chain, the very structure mkfs #201 created), bmap() maps logical block numbers to physical addresses allocating direct/single/double/triple indirect blocks, getdino/putdino read/write the inode table directly, dwrite/dread do cached raw disk I/O. Before doing so it prints the famous 'Last chance before scribbling on <disk>.' and waits for a newline -- the one place 1979 Unix stops to confirm.",
+      "human_story": "rm -rf / would not stop you, but restor does: 'Last chance before scribbling.' Because what follows is not copying files, it is writing inodes and blocks straight onto the raw disk, rebuilding a filesystem by hand. restor carries a tiny filesystem driver inside it."
+    },
+    "appraiser_note": "restor の r モードは dump 全体を生ファイルシステムデバイスに復元するため、カーネルのFSをユーザー空間に再実装する: balloc()/bfree() がスーパーブロックの空きリスト(s_free[]/s_nfree チェーン=mkfs #201 が作った構造)を操作、bmap() が論理ブロック番号を物理アドレスに変換し直接/単/二重/三重間接を確保、getdino/putdino が inode テーブルを直書き、dwrite/dread がキャッシュ付き生ディスクI/O。その前に名物『Last chance before scribbling on <disk>.』を出し改行待ち——1979年Unixが唯一立ち止まって確認する場所。"
+  },
+  {
+    "id": "restor-002-checksum-tape-symmetry",
+    "text": "gethead(buf) {\n\treadtape((char *)buf);\n\tif (buf->c_magic != MAGIC || checksum((int *) buf) == 0) return(0);\n\treturn(1);\n}\nchecksum(b) {\n\ti = 0; do i += *b++; while (--j);\n\tif (i != CHECKSUM) { printf(\"Checksum error %o\\n\", i); return(0); }\n\treturn(1);\n}",
+    "file_path": "usr/src/cmd/restor.c",
+    "line_number": 918,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "backup",
+      "tape",
+      "checksum",
+      "symmetry"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "rigor": 4
+      },
+      "technical_context": "restor is the exact reading counterpart of dump (#208). dump set c_checksum = CHECKSUM - s so a control record sums to the constant CHECKSUM; restor's checksum() sums the block and verifies it equals CHECKSUM, plus c_magic == MAGIC. gethead/ishead/checktype/checkvol/readhdr/readbits mirror dump's spclrec/taprec/bitmap, all sharing the tape format via dumprestor.h. Record types TS_TAPE/TS_INODE/TS_BITS/TS_CLRI/TS_ADDR/TS_END are written by dump and read by restor.",
+      "human_story": "dump and restor are one program split across a tape, bound by a single header file. One signs each record with a checksum; the other verifies the sum is the constant they agreed on. Backup is a round trip, and the checksum is what makes the trip survivable over unreliable tape."
+    },
+    "appraiser_note": "restor は dump(#208) の正確な読み手側。dump は c_checksum=CHECKSUM-s で制御レコードの総和を定数 CHECKSUM にし、restor の checksum() は総和が CHECKSUM か(+c_magic==MAGIC)を検証。gethead/ishead/checktype/checkvol/readhdr/readbits が dump の spclrec/taprec/bitmap と対をなし、dumprestor.h でテープ形式を共有。TS_TAPE/TS_INODE/TS_BITS/TS_CLRI/TS_ADDR/TS_END を dump が書き restor が読む。バックアップは往復で、チェックサムが信頼できないテープ越しの往復を成立させる。"
+  },
+  {
+    "id": "restor-003-sparse-reconstruction",
+    "text": "for (i = 0; i < addrblock.c_count; i++) {\n\tif (addrblock.c_addr[i]) {\n\t\treadtape(buf);\n\t\t(*f1)(buf, ...);\t/* rstrfile: bmap で確保して書く */\n\t} else {\n\t\tclearbuf(buf);\n\t\t(*f2)(buf, ...);\t/* rstrskip: curbno だけ進める=穴 */\n\t}\n}\nrstrfile(b,s){ d=bmap(taddr,curbno); dwrite(d,b); curbno+=1; }\nrstrskip(b,s){ curbno+=1; }",
+    "file_path": "usr/src/cmd/restor.c",
+    "line_number": 600,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "restore",
+      "sparse-file",
+      "filesystem"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "rigor",
+      "emotion_intensity": 4,
+      "emotions": {
+        "rigor": 4,
+        "care": 4
+      },
+      "technical_context": "dump records unallocated blocks (holes) as c_addr[i]==0. restor's getfile() distinguishes them: nonzero -> readtape real data and f1 (rstrfile) bmap-allocates and writes; zero -> f2 (rstrskip) only advances curbno WITHOUT allocating, so the restored file keeps its holes. Sparse files are reconstructed faithfully rather than filled with zeros. Extract mode uses xtrfile (write) and skip (lseek over the hole, which the FS turns into a hole). One getfile() does both raw-restore and file-extract via swappable f1/f2, mirroring dump's icat.",
+      "human_story": "A hole stays a hole. If restor filled gaps with zeros, a huge sparse file would devour the disk. By advancing without allocating, it brings the file back exactly as sparse as it left. The same getfile, given different callbacks, restores to raw disk or extracts to a file, holes intact."
+    },
+    "appraiser_note": "dump は未割当ブロック(穴)を c_addr[i]==0 で記録。restor の getfile() はこれを区別: 非ゼロ→readtape で実データ+f1(rstrfile)が bmap で確保して書く、ゼロ→f2(rstrskip)が確保せず curbno だけ進める=復元後も穴のまま。スパースファイルをゼロ埋めせず忠実に再現。抽出モードは xtrfile(write)と skip(lseek で飛ばす→FSが穴にする)。1つの getfile() が f1/f2 差替で生復元とファイル抽出の両方を穴を保ったままこなす——dump の icat の鏡像。"
+  },
+  {
+    "id": "restor-004-pass1-psearch-path",
+    "text": "pass1() {\n\t... inotab[ipos].t_ino = spcl.c_inumber;\n\tinotab[ipos++].t_seekpt = seekpt;\t/* inode -> 一時ファイル内位置 */\n\tgetfile(spcl.c_inumber, putdir, null, ...);\n}\npsearch(n) {\n\tino = 2;\t\t\t/* root inode */\nnext:\tino = search(ino, cp);\t/* 各成分を inode->dir走査で解決 */\n\tif (c == '/') { cp = cp1+1; goto next; }\n\treturn(ino);\n}",
+    "file_path": "usr/src/cmd/restor.c",
+    "line_number": 480,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "restore",
+      "namei",
+      "path-resolution"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "ingenuity": 4,
+        "elegance": 4
+      },
+      "technical_context": "For 'restor x /etc/passwd' there is no live filesystem to resolve the name against -- only the tape. pass1() scans the tape, and for each directory inode writes its entries into a temp file (rstXXXXXX) via putdir/putent while recording inode->seekpt in inotab[]. This rebuilds a miniature directory structure on disk from scattered tape data. Then psearch() resolves a pathname from root inode 2, walking each component via search() (inotab lookup + getent of directory entries). restor reconstructs the kernel's namei in userspace, from tape alone.",
+      "human_story": "To pull one file out by name, restor first rebuilds a tiny filesystem's directories from the tape, then walks paths through it from the root. It recreates name resolution itself, with no live disk to ask -- the only map it has is the one it just built from the backup."
+    },
+    "appraiser_note": "restor x /etc/passwd では名前を照合する生FSが無く、あるのはテープだけ。pass1() がテープを舐め、各ディレクトリ inode の中身を一時ファイル rstXXXXXX に putdir/putent で書き、inotab[] に inode→seekpt を記録——散らばったテープのディレクトリ情報からミニチュアのディレクトリ構造をディスク上に再構築。psearch() がルート inode 2 から各成分を search()(inotab 引き+getent)でたどりパス名を解決。restor はカーネルの namei をテープだけからユーザー空間に再現する。"
   }
 ]
