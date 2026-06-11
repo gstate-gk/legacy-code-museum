@@ -1235,6 +1235,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "205",
+    title: "鑑定書#205 makekey — 「10バイト送ると13バイト返る」read/read/write だけの19行、crypt を呼ぶ鍵生成フィルタと「わざと遅い」鍵ストレッチング(bcrypt/scrypt/Argon2)の祖先",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

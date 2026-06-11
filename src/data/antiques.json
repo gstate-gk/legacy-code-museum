@@ -16549,5 +16549,89 @@
       "human_story": "Where grep hand-coded its parser, egrep let yacc parse the regex, the same Bell Labs habit that built bc and eqn from grammars. And the quiet trick: the grammar silently prefixes .* to every pattern, turning anchored match into search-anywhere."
     },
     "appraiser_note": "egrep は拡張正規表現(|・+・?・グループ化)を yacc 文法で直接表現。%left が優先順位を符号化(後置STAR/PLUS/QUESTが最強→CAT→OR)、r r %prec CAT が連接に優先順位を与える。アクションは node/unary/enter で並列配列 name/left/right/parent に構文木を生やす。空規則 b が .*(enter(DOT)+unary(STAR))を前置し、アンカーなし検索(どこでも一致)を実現。grep が手書きパーサだったのに対し yacc に解析を委ねる Bell Labs 流。"
+  },
+  {
+    "id": "makekey-001-filter-10-13",
+    "text": "main()\n{\n\tchar key[8];\n\tchar salt[2];\n\n\tread(0, key, 8);\n\tread(0, salt, 2);\n\twrite(1, crypt(key, salt), 13);\n\treturn(0);\n}",
+    "file_path": "usr/src/cmd/makekey.c",
+    "line_number": 10,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "filter",
+      "minimalism",
+      "crypto"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "minimalism",
+      "emotion_intensity": 4,
+      "emotions": {
+        "minimalism": 4,
+        "clarity": 4
+      },
+      "technical_context": "The entire program: read 8 bytes (key) + 2 bytes (salt) from stdin, call crypt(), write 13 bytes to stdout. No argument parsing, no error handling, raw read(2)/write(2). A pure byte-transform filter, composable in a pipeline, invoked by editors (ed -x / vi -x) to turn a typed password into an encryption key. read() return values are unchecked: it trusts the caller to send exactly 10 bytes.",
+      "human_story": "Nineteen lines, three of them the body. makekey is the Unix filter philosophy at its most distilled: input goes in, transformed output comes out, and the program is just a part you bolt into a pipe. It does not compute crypto itself; it shapes crypt() into a tool."
+    },
+    "appraiser_note": "プログラム全体: stdin から8バイト(key)+2バイト(salt)を読み、crypt() を呼び、13バイトを stdout に書く。引数解析もエラー処理もなく生の read(2)/write(2)。純粋なバイト変換フィルタで、ed -x / vi -x 等が打ち込まれたパスワードを暗号鍵に変えるために呼ぶ。read の戻り値は未チェック——呼ぶ側が必ず10バイト送る契約に依存。本シリーズ最短級19行(本体3行)。"
+  },
+  {
+    "id": "makekey-002-crypt-salt",
+    "text": "char\t*crypt();\n...\nread(0, key, 8);\nread(0, salt, 2);\nwrite(1, crypt(key, salt), 13);",
+    "file_path": "usr/src/cmd/makekey.c",
+    "line_number": 12,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "crypto",
+      "password",
+      "salt"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "rigor",
+      "emotion_intensity": 4,
+      "emotions": {
+        "rigor": 4,
+        "care": 4
+      },
+      "technical_context": "makekey computes nothing itself; it calls crypt(key, salt) (the one-way DES-based hash from appraisal #79). key is 8 bytes (DES 56-bit key), salt is 2 printable chars = 12 bits = 4096 variations. Salt makes identical passwords hash differently and defeats precomputed tables; the 13-byte output is 2 salt chars + 11 hash chars, embedding the salt so it can be recovered at verification. The salt-prefix format survives all the way to bcrypt's $2b$ strings.",
+      "human_story": "The 2-byte salt is the quiet hero: it hides that two users share a password and breaks rainbow tables, and by living in the output it can be read back to re-check. A small idea from 1979 that every password store still uses."
+    },
+    "appraiser_note": "makekey 自身は計算せず crypt(key, salt)(#79 の一方向DESハッシュ)を呼ぶ。key=8バイト(DES 56bit鍵)、salt=2印字文字=12ビット=4096通り。塩は同一パスワードのハッシュ衝突を隠し事前計算表(レインボーテーブル)を無力化、出力13バイト=塩2文字+ハッシュ11文字で塩を埋め込み検証時に取り出せる。この塩前置形式は bcrypt の $2b$ まで継承される発明。"
+  },
+  {
+    "id": "makekey-003-deliberate-slowness",
+    "text": "/*\n * The transformation is expensive to perform\n * (a significant part of a second).\n */",
+    "file_path": "usr/src/cmd/makekey.c",
+    "line_number": 3,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "crypto",
+      "key-stretching",
+      "security"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "foresight",
+      "emotion_intensity": 5,
+      "emotions": {
+        "foresight": 5,
+        "wisdom": 4
+      },
+      "technical_context": "The header comment proudly notes the transform is 'expensive (a significant part of a second)'. crypt ran DES 25 times on purpose. Slowness IS the brute-force defense: a legitimate login waits once, an attacker pays the cost millions of times. This is key stretching / deliberately slow hashing, the idea later formalized in bcrypt (1999), PBKDF2 (2000), scrypt (2009), Argon2 (2015). In computing 'faster is better' is the rule; password hashing is the exception where slower is better.",
+      "human_story": "On a 1979 machine, 'a significant part of a second' was enormous. Making it slow was not an apology, it was the feature. The comment declares in two lines a principle the whole security field would spend decades reinventing: for passwords, be slow on purpose."
+    },
+    "appraiser_note": "ヘッダコメントが変換は『高価(コンマ数秒)』と誇らしげに記す。当時の crypt は DES を意図的に25回反復。遅さこそがブルートフォース耐性——正規ログインは1回待つだけ、攻撃者は何百万回その代償を払う。これが鍵ストレッチング/意図的に遅いハッシュで、bcrypt(1999)/PBKDF2(2000)/scrypt(2009)/Argon2(2015)へ続く思想。『速いほど良い』が常識の計算機で、パスワードハッシュだけは『遅いほど良い』という逆説を1979年に2行で宣言。"
   }
 ]
