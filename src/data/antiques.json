@@ -17028,5 +17028,89 @@
       "human_story": "To pull one file out by name, restor first rebuilds a tiny filesystem's directories from the tape, then walks paths through it from the root. It recreates name resolution itself, with no live disk to ask -- the only map it has is the one it just built from the backup."
     },
     "appraiser_note": "restor x /etc/passwd では名前を照合する生FSが無く、あるのはテープだけ。pass1() がテープを舐め、各ディレクトリ inode の中身を一時ファイル rstXXXXXX に putdir/putent で書き、inotab[] に inode→seekpt を記録——散らばったテープのディレクトリ情報からミニチュアのディレクトリ構造をディスク上に再構築。psearch() がルート inode 2 から各成分を search()(inotab 引き+getent)でたどりパス名を解決。restor はカーネルの namei をテープだけからユーザー空間に再現する。"
+  },
+  {
+    "id": "cb-001-char-state-machine",
+    "text": "while((c = getch()) != EOF){\n\tswitch(c){\n\tcase '{': ... tabs++; ...\n\tcase '}': ... tabs--; ...\n\tcase ';': ... puts(); printf(\"\\n\"); ...\n\tcase '\"': case '\\'': /* literals copied verbatim */ ...\n\tdefault: string[j++] = c;\n\t}\n}",
+    "file_path": "usr/src/cmd/cb.c",
+    "line_number": 42,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "formatter",
+      "state-machine",
+      "pretty-printer"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "minimalism",
+      "emotion_intensity": 4,
+      "emotions": {
+        "minimalism": 4,
+        "ingenuity": 4
+      },
+      "technical_context": "cb is a C beautifier (code formatter), the ancestor of indent/gofmt/clang-format/prettier. It parses no grammar and builds no AST: it reads one char at a time and reacts in a giant switch(c). '{' does tabs++ (deeper indent), '}' does tabs--, ';' ends a statement, '(' ')' track paren depth so for(;;) semicolons are not mistaken for statement ends, and string/char/comment literals are copied verbatim. A heuristic one-pass stream formatter -- not a strict parser, but good enough for ordinary C.",
+      "human_story": "Long before gofmt, a program reformatted source code by reacting to punctuation. cb does not understand C; it just watches for braces and semicolons and indents accordingly. The whole idea that a machine should tidy your code starts here, in 357 lines that never parse a thing."
+    },
+    "appraiser_note": "cb は C beautifier(コード整形ツール)で indent/gofmt/clang-format/prettier の祖先。文法を解析せず AST も作らない: 1文字ずつ読み巨大な switch(c) で反応。'{' で tabs++(字下げ深く)、'}' で tabs--、';' で文を区切り、'(' ')' で括弧深度を追って for(;;) の ; を文末と誤認しない、文字列/文字/コメントは中身をそのままコピー。ヒューリスティックな1パスのストリーム整形——厳密なパーサではないが普通のCには実用十分。"
+  },
+  {
+    "id": "cb-002-dangling-else-stabs",
+    "text": "if(lookup(wif) == 1){\n\tstabs[clevel][iflev] = tabs;\t/* save if-context */\n\tspflg[clevel][iflev] = pflg[level];\n\tsind[clevel][iflev]  = ind[level];\n\tiflev++; ifflg = 1;\n}\n...\ngotelse(){\n\ttabs       = stabs[clevel][iflev];\t/* restore to align else with its if */\n\tpflg[level] = spflg[clevel][iflev];\n\tind[level]  = sind[clevel][iflev];\n}",
+    "file_path": "usr/src/cmd/cb.c",
+    "line_number": 240,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "formatter",
+      "dangling-else",
+      "indentation"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "perseverance": 4
+      },
+      "technical_context": "The hardest part of formatting C is brace-less control statements. 'if (x) y();' has no braces yet y() must indent one level; 'else' must dedent back to its if. cb tracks this invisible level with pflg[level] (pending indent) and ind[level], and aligns else by saving if-context (tabs/pflg/ind) into 2D arrays stabs/spflg/sind indexed by [clevel][iflev] -- a stack keyed on brace-level and if-nesting. On '(' after 'if' it pushes; gotelse() pops and restores so else lines up with its matching if. It approximates the dangling-else that a grammar resolves, by hand, with array save/restore.",
+      "human_story": "Braces are easy: just count them. The pain is when there are none -- the dangling else, the one-line if body. cb wrestles this with a two-axis stack of if-contexts, re-aligning each else to the if it belongs to. The same problem gofmt later dodged by forcing braces, and prettier solved with a real AST."
+    },
+    "appraiser_note": "Cの整形の最難所は波括弧なしの制御文。if (x) y(); は波括弧が無いのに y() を1段下げ、else は if の高さに戻す。cb はこの見えない段を pflg[level](保留インデント)と ind[level] で追い、else 整列は if 文脈(tabs/pflg/ind)を2次元配列 stabs/spflg/sind の [clevel][iflev](ブレースレベル×ifネスト深度のスタック)に退避して解く。'(' で直前が if ならpush、gotelse() でpop・復元し else を対応する if に揃える。文法解析が解く dangling else を、配列の退避と復元という手作業で近似。"
+  },
+  {
+    "id": "cb-003-lookup-for-special",
+    "text": "lookup(tab) char *tab[]; {\n\twhile(string[kk] == ' ')kk++;\n\tfor(i=0; tab[i] != 0; i++){\n\t\tfor(k=kk;(r = tab[i][l++]) == string[k] && r != '\\0';k++);\n\t\tif(r == '\\0' && (string[k] < 'a' || string[k] > 'z' || k >= j))return(1);\n\t}\n\treturn(0);\n}\n/* for( ... ) は gets() で括弧対応を取りつつ読み飛ばす */",
+    "file_path": "usr/src/cmd/cb.c",
+    "line_number": 285,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "formatter",
+      "keyword",
+      "tokenizer"
+    ],
+    "interesting_score": 17,
+    "ai_analysis": {
+      "primary_emotion": "craft",
+      "emotion_intensity": 4,
+      "emotions": {
+        "craft": 4,
+        "clarity": 3
+      },
+      "technical_context": "cb special-cases the keywords if/else/for/case/default via lookup(), which compares the accumulated string[] against keyword tables (wif/welse/wfor/wds) and checks the next char is not lowercase -- a word-boundary test so 'ifx' is not read as 'if'. The cleverest case is 'for': for(i=0;i<n;i++) has two semicolons that would falsely break the statement, so on '(' after 'for' it uses gets() to swallow the whole for(...) controlling the paren balance with ct, leaving those semicolons untouched. Literals and comments are passed through verbatim so their inner ; { } do not trigger formatting.",
+      "human_story": "cb knows just five keywords, and recognizes them with a hand-rolled word-boundary check. Its neatest trick is eating the entire for(...) header so the semicolons inside never fool it. It does not know C grammar, but it knows C tokens."
+    },
+    "appraiser_note": "cb は if/else/for/case/default の5キーワードだけ特別扱いし、lookup() が蓄積 string[] をキーワード表(wif/welse/wfor/wds)と比較、直後の文字が小文字でない(単語境界)かを確認——'ifx' を 'if' と誤認しない素朴だが正しいチェック。圧巻は for: for(i=0;i<n;i++) の2つの ; が文を誤って区切るため、'(' で直前が for なら gets() で for(...) を括弧対応(ct)を取りつつ丸ごと読み飛ばし、その ; を触らせない。文字列/コメントは中身を素通しし内部の ;{} に反応しない。文法は知らずとも字句(トークン)は押さえる。"
   }
 ]

@@ -1270,6 +1270,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "210",
+    title: "鑑定書#210 cb — パーサもASTも持たず switch(c) で `{`→tabs++ `}`→tabs-- する文字単位状態機械357行、stabs[clevel][iflev] に if 文脈を退避してぶら下がり else を整列するコード整形ツールの祖",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
