@@ -1277,6 +1277,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "211",
+    title: "鑑定書#211 number — 数字を英語の綴りに変える199行、card[]は vigintillion(10^63) まで、\"00\"詰めで3桁グループ化してconv()が再帰、tens()はp[2]=0の破壊的書き換えで「thirteen three」の二重印字を消す",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

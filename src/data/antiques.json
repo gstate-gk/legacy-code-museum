@@ -17112,5 +17112,89 @@
       "human_story": "cb knows just five keywords, and recognizes them with a hand-rolled word-boundary check. Its neatest trick is eating the entire for(...) header so the semicolons inside never fool it. It does not know C grammar, but it knows C tokens."
     },
     "appraiser_note": "cb は if/else/for/case/default の5キーワードだけ特別扱いし、lookup() が蓄積 string[] をキーワード表(wif/welse/wfor/wds)と比較、直後の文字が小文字でない(単語境界)かを確認——'ifx' を 'if' と誤認しない素朴だが正しいチェック。圧巻は for: for(i=0;i<n;i++) の2つの ; が文を誤って区切るため、'(' で直前が for なら gets() で for(...) を括弧対応(ct)を取りつつ丸ごと読み飛ばし、その ; を触らせない。文字列/コメントは中身を素通しし内部の ;{} に反応しない。文法は知らずとも字句(トークン)は押さえる。"
+  },
+  {
+    "id": "number-001-tables-vigintillion",
+    "text": "char *teen[] = { \"ten\",\"eleven\",\"twelve\",\"thirteen\", ... \"nineteen\" };\nchar *decade[] = { \"zero\",\"ten\",\"twenty\", ... \"ninety\" };\nchar *card[] = { \"hundred\",\"thousand\",\"million\", ... \"vigintillion\" };\n...\ntens(p) { switch(p[1]) { case '1': print(teen[p[2]-'0']); p[2]='0'; return; } print(decade[p[1]-'0']); }",
+    "file_path": "usr/src/cmd/number.c",
+    "line_number": 1,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "text",
+      "tables",
+      "whimsy"
+    ],
+    "interesting_score": 17,
+    "ai_analysis": {
+      "primary_emotion": "whimsy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "whimsy": 4,
+        "clarity": 3
+      },
+      "technical_context": "number converts digits to English words (123 -> 'one hundred twenty three'). English numerals are irregular, so it bakes the irregularity into four string tables: unit (one-nine), teen (ten-nineteen, a special set when the tens digit is 1), decade (twenty-ninety), and card (scale words hundred/thousand/million up to vigintillion = 10^63). ones()/tens() index them via d-'0'. The card table reaching 10^63 is gloriously excessive for any real use -- the small-tool completeness Unix loved.",
+      "human_story": "English numbers are not regular, so number does not try to compute them; it lists them. And then it lists scale words all the way to vigintillion, 10^63, a number nobody would ever spell aloud. That little excess, complete just because it could be, is the charm of a Unix toy."
+    },
+    "appraiser_note": "number は数字を英単語に変換(123→'one hundred twenty three')。英語数詞は不規則なので4つの文字列テーブルに焼き込む: unit(one-nine)、teen(ten-nineteen=10の位が1のときの特別集合)、decade(twenty-ninety)、card(規模語 hundred/thousand/million…vigintillion=10^63)。ones()/tens() が d-'0' で添字。card が 10^63 まで届くのは実用上過剰だが、Unixが愛した小道具の完全主義。不規則は規則化せず表に並べる(tr/bcd と同じ流儀)。"
+  },
+  {
+    "id": "number-002-zero-pad-recursion",
+    "text": "line[i++] = '0'; line[i++] = '0';\t/* pad two zeros in front */\nwhile(c == '0') if(!(c=getchar())) exit(1);\nwhile(digit(c)) { if(i < 98) line[i++] = c; ... }\nr = i/3;\t\t\t/* number of 3-digit groups */\nconv(line+i-3*r, r);\n...\nconv(p, c) { if(c > max) { conv(p, c-max); print(card[max]); ... } while(c > 1) { c--; conv(p,1); cprint(card[c]); p += 3; } ones(p[0]); cprint(card[0]); tens(p); ones(p[2]); }",
+    "file_path": "usr/src/cmd/number.c",
+    "line_number": 78,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "text",
+      "recursion",
+      "grouping"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "ingenuity": 4,
+        "elegance": 4
+      },
+      "technical_context": "Numbers are read in 3-digit groups, each with a scale word (million/thousand/...). number normalizes the digit count by padding two '0's in front so the top group is always 3 digits and r=i/3 gives a clean group count regardless of length. conv(p,c) builds the words recursively: for huge numbers (c>max=21) it recurses on the high part then appends the scale word; otherwise while(c>1) it converts each 3-digit group (conv(p,1)) followed by its scale word and advances p+=3. The innermost conv(p,1) does ones(hundreds) + 'hundred' + tens + ones(units). Arbitrary length, by chunking and recursion.",
+      "human_story": "People read big numbers three digits at a time. number does too, padding the front with two zeros so the math always lands on a group boundary, then recursing group by group, appending thousand, million, and on. A clean recursive spine that can spell a number of any length."
+    },
+    "appraiser_note": "数は3桁ずつ規模語付きで読む(million/thousand…)。number は先頭に '0' を2つ詰めて最上位グループを必ず3桁にし、r=i/3 で桁数によらずグループ数をきれいに出す正規化トリック。conv(p,c) が再帰で組む: 巨大数(c>max=21)は高位を conv(p,c-max) で再帰後に規模語、通常は while(c>1) で各3桁グループ conv(p,1)+規模語、p+=3 で次へ。最深 conv(p,1) が ones(百)+'hundred'+tens+ones(1の位)。チャンク化と再帰で任意桁。"
+  },
+  {
+    "id": "number-003-destructive-tens-flag",
+    "text": "case '1':\n\tprint(teen[p[2]-'0']);\n\tp[2] = '0';\t/* suppress the following ones() so \"thirteen\" is not \"thirteen three\" */\n\treturn;\n...\nprint(s)  { if(flag) printf(\" \"); printf(s); flag = 1; }\ncprint(s) { if(flag) print(s); }\t/* scale word only after something printed */\nnline()   { if(flag) printf(\".\\n\"); flag = 0; }",
+    "file_path": "usr/src/cmd/number.c",
+    "line_number": 140,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "text",
+      "mutation",
+      "state-flag"
+    ],
+    "interesting_score": 16,
+    "ai_analysis": {
+      "primary_emotion": "cleverness",
+      "emotion_intensity": 4,
+      "emotions": {
+        "cleverness": 4,
+        "caution": 3
+      },
+      "technical_context": "When the tens digit is 1, tens() prints a teen word (thirteen) for both digits at once -- but conv() then calls ones(p[2]) which would add 'three', giving 'thirteen three'. So tens() destructively writes p[2]='0' into the input buffer, making the later ones('0') print nothing. A side effect on the buffer communicates 'these two digits are already spoken'. Output spacing is handled by one global flag: print() adds a leading space when flag is set; cprint() prints a scale word only if something was already printed (skips empty 000 groups); nline() emits a '.' separator and resets flag.",
+      "human_story": "thirteen already contains the three, so number reaches into its own buffer and erases the ones digit to stop it being spoken twice. A small destructive trick, and a single flag bit that quietly handles spacing, empty groups, and separators all at once."
+    },
+    "appraiser_note": "10の位が1のとき tens() は teen語(thirteen)で2桁分をまとめて印字するが、conv() は続けて ones(p[2]) を呼び 'three' まで出て 'thirteen three' になる。そこで tens() は入力バッファに p[2]='0' を破壊的に書き込み、続く ones('0') を無印字にする。バッファへの副作用で『この2桁は綴り済み』を下流に伝える。出力間隔はグローバル flag 一つ: print() は flag 時に前スペース、cprint() は何か出した後だけ規模語(空の000グループをスキップ)、nline() は '.' 区切りで flag リセット。"
   }
 ]
