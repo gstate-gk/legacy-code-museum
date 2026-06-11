@@ -16633,5 +16633,91 @@
       "human_story": "On a 1979 machine, 'a significant part of a second' was enormous. Making it slow was not an apology, it was the feature. The comment declares in two lines a principle the whole security field would spend decades reinventing: for passwords, be slow on purpose."
     },
     "appraiser_note": "ヘッダコメントが変換は『高価(コンマ数秒)』と誇らしげに記す。当時の crypt は DES を意図的に25回反復。遅さこそがブルートフォース耐性——正規ログインは1回待つだけ、攻撃者は何百万回その代償を払う。これが鍵ストレッチング/意図的に遅いハッシュで、bcrypt(1999)/PBKDF2(2000)/scrypt(2009)/Argon2(2015)へ続く思想。『速いほど良い』が常識の計算機で、パスワードハッシュだけは『遅いほど良い』という逆説を1979年に2行で宣言。"
+  },
+  {
+    "id": "newgrp-001-setgid-exec-shell",
+    "text": "if(setgid(grp->gr_gid) < 0)\n\tperror(\"setgid\");\ndone();\n...\ndone()\n{\n\tsetuid(getuid());\n\tfor (i=3; i<15; i++)\n\t\tclose(i);\n\texecl(\"/bin/sh\", \"sh\", 0);\n}",
+    "file_path": "usr/src/cmd/newgrp.c",
+    "line_number": 45,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "auth",
+      "setgid",
+      "suid",
+      "shell"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "rigor",
+      "emotion_intensity": 4,
+      "emotions": {
+        "rigor": 4,
+        "care": 4
+      },
+      "technical_context": "newgrp changes the process group with setgid(grp->gr_gid), then done() drops privilege with setuid(getuid()) (newgrp is SUID root so it must drop priv before handing the user a shell), closes fds 3..14, and execl(\"/bin/sh\",...) replaces itself with a fresh shell. exec preserves the gid, so the new shell runs with the new group. This is the gid-changing mirror of su (#104), which changed uid the same way.",
+      "human_story": "newgrp does not return; it becomes a new shell with a new group and disappears. The same login/su/newgrp pattern: do the privileged change, carefully drop root, then exec /bin/sh so the change persists in the shell that lives on."
+    },
+    "appraiser_note": "newgrp は setgid(grp->gr_gid) でプロセスのグループを変え、done() で setuid(getuid()) して特権を捨て(newgrp は SUID root ゆえシェルを渡す前に必ず権限放棄)、fd 3..14 を閉じ、execl(\"/bin/sh\") で自分を新シェルに置換。exec は gid を引き継ぐので新シェルは新グループで動く。uid を変える su(#104) の gid 版の鏡像。login/su/newgrp 共通の『シェルになって去る』パターン。"
+  },
+  {
+    "id": "newgrp-002-group-password",
+    "text": "if(grp->gr_passwd[0] != '\\0' && pwd->pw_passwd[0] == '\\0') {\n\tif(strcmp(grp->gr_passwd, crypt(getpass(\"Password:\"),grp->gr_passwd)) != 0) {\n\t\tprintf(\"Sorry\\n\");\n\t\tdone();\n\t}\n}",
+    "file_path": "usr/src/cmd/newgrp.c",
+    "line_number": 33,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "auth",
+      "crypt",
+      "group-password",
+      "forgotten-feature"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "curiosity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "curiosity": 4,
+        "nostalgia": 3
+      },
+      "technical_context": "A nearly forgotten Unix feature: groups in /etc/group could have their own password (gr_passwd). newgrp verifies it the same way as passwd(#103) and makekey(#205): getpass() reads it without echo, crypt(input, gr_passwd) hashes it using the salt extracted from the stored hash. Quirky trigger: only prompted when the group has a password AND the user has no personal password of their own. Group passwords were rarely used and faded away; the second field of /etc/group is usually x or empty today.",
+      "human_story": "Almost nobody remembers that groups once had passwords. The mechanism was real in 1979, guarding a narrow path for members who had no password of their own. The empty second field of /etc/group today is the fossil of that forgotten gate."
+    },
+    "appraiser_note": "ほぼ忘れられた Unix の機能——/etc/group の各グループはパスワード(gr_passwd)を持てた。検証は passwd(#103)/makekey(#205) と同作法: getpass() がエコー無しで読み、crypt(入力, gr_passwd) が保存ハッシュから塩を取り出して照合。発動条件が独特で『グループにパスワードがあり、かつ自分には個人パスワードが無い』ユーザーだけが問われる。グループパスワードはほぼ使われず消え、今日 /etc/group の2番目フィールドが x か空なのはその忘却の化石。"
+  },
+  {
+    "id": "newgrp-003-membership-other",
+    "text": "for(i=0;grp->gr_mem[i];i++)\n\tif(strcmp(grp->gr_mem[i], pwd->pw_name) == 0)\n\t\tbreak;\nif(grp->gr_mem[i] == 0 && strcmp(grp->gr_name,\"other\")) {\n\tprintf(\"Sorry\\n\");\n\tdone();\n}\n/* ... getpwuid(getuid())==NULL => */ \"You do not exist!\"",
+    "file_path": "usr/src/cmd/newgrp.c",
+    "line_number": 24,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "auth",
+      "group",
+      "humor"
+    ],
+    "interesting_score": 16,
+    "ai_analysis": {
+      "primary_emotion": "wit",
+      "emotion_intensity": 3,
+      "emotions": {
+        "wit": 3,
+        "clarity": 3
+      },
+      "technical_context": "newgrp scans grp->gr_mem[] (the member list from /etc/group) for the user's name. If absent it refuses with 'Sorry' -- unless the group name is \"other\", which anyone may join (the traditional catch-all group, gid 1). And if getpwuid(getuid()) returns NULL -- the uid has no /etc/passwd entry -- it prints the famous 'You do not exist!'. Same terse refusals as login and su.",
+      "human_story": "The error messages have personality. Not a member? 'Sorry.' Running as a uid with no passwd entry? 'You do not exist!' 1979 Unix often refused you with a wink."
+    },
+    "appraiser_note": "newgrp は grp->gr_mem[](/etc/group のメンバー名配列)を走査して自分のユーザー名を探す。無ければ『Sorry』で拒否——ただしグループ名が \"other\"(誰でも入れる伝統の受け皿グループ, gid 1)なら免除。そして getpwuid(getuid()) が NULL=uid に passwd エントリが無いと、有名な『You do not exist!』。login/su と同じ素っ気ない拒絶だが、1979年 Unix はしばしばユーモアで突き放した。"
   }
 ]

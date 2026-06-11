@@ -1242,6 +1242,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "206",
+    title: "鑑定書#206 newgrp — `setgid` してから `execl(\"/bin/sh\")` で新グループのシェルになる55行、`su` の gid 版、`/etc/group` のグループパスワードを `crypt` で検証する認証一族",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
