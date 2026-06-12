@@ -1284,6 +1284,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "212",
+    title: "鑑定書#212 sum — 1バイトごとに16ビット和を右ローテートしてから足す48行、単純加算では見逃す「バイト転置」を捕まえる、cksum/md5/sha の祖先",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

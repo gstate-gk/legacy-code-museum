@@ -17196,5 +17196,90 @@
       "human_story": "thirteen already contains the three, so number reaches into its own buffer and erases the ones digit to stop it being spoken twice. A small destructive trick, and a single flag bit that quietly handles spacing, empty groups, and separators all at once."
     },
     "appraiser_note": "10の位が1のとき tens() は teen語(thirteen)で2桁分をまとめて印字するが、conv() は続けて ones(p[2]) を呼び 'three' まで出て 'thirteen three' になる。そこで tens() は入力バッファに p[2]='0' を破壊的に書き込み、続く ones('0') を無印字にする。バッファへの副作用で『この2桁は綴り済み』を下流に伝える。出力間隔はグローバル flag 一つ: print() は flag 時に前スペース、cprint() は何か出した後だけ規模語(空の000グループをスキップ)、nline() は '.' 区切りで flag リセット。"
+  },
+  {
+    "id": "sum-001-rotate-add",
+    "text": "while ((c = getc(f)) != EOF) {\n\tnbytes++;\n\tif (sum&01)\n\t\tsum = (sum>>1) + 0x8000;\t/* rotate bit0 into bit15 */\n\telse\n\t\tsum >>= 1;\n\tsum += c;\n\tsum &= 0xFFFF;\n}",
+    "file_path": "usr/src/cmd/sum.c",
+    "line_number": 28,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "checksum",
+      "integrity",
+      "bit-manipulation"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "elegance": 4
+      },
+      "technical_context": "sum computes a 16-bit checksum, but before adding each byte it rotates the running sum right by one bit (sum&01 carried into bit15 via +0x8000). Why: a plain additive sum is order-independent (A+B+C == C+A+B), so it cannot detect byte transposition -- the most common transfer corruption. Rotating before each add makes a byte's contribution depend on its position, turning an order-blind total into a position-sensitive fingerprint. The rotate (not a plain >>1 which would lose the bit) keeps all information while stirring it. Five lines are the essence; the rest is scaffolding.",
+      "human_story": "Addition does not care about order, so a naive checksum cannot tell ABC from CBA -- exactly the transposition that tape and modems produce. One bit of rotation before each add fixes it: now position matters, and the sum becomes a fingerprint instead of a total."
+    },
+    "appraiser_note": "sum は16ビットチェックサムを計算するが、各バイトを足す前に走行和を1ビット右回転(sum&01 を +0x8000 で bit15 へ)。理由: 単純加算和は順序非依存(A+B+C==C+A+B)でバイト転置(転送で最頻の化け)を検出できない。足す前に回すとバイトの寄与が位置に依存し、順序を見ない『合計』が位置依存の『指紋』に変わる。単なる >>1 ではビットが消えるが、回転なら情報を保ったまま撹拌。5行が本質、残りは足場。"
+  },
+  {
+    "id": "sum-002-checksum-blocks-output",
+    "text": "printf(\"%05u%6ld\", sum, (nbytes+BUFSIZ-1)/BUFSIZ);\nif(argc > 2)\n\tprintf(\" %s\", argv[i]);\nprintf(\"\\n\");\n/* errflg += 10 (open fail) / errflg++ (read err) -> exit(errflg) */",
+    "file_path": "usr/src/cmd/sum.c",
+    "line_number": 38,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "checksum",
+      "output",
+      "exit-code"
+    ],
+    "interesting_score": 16,
+    "ai_analysis": {
+      "primary_emotion": "clarity",
+      "emotion_intensity": 3,
+      "emotions": {
+        "clarity": 3,
+        "craft": 3
+      },
+      "technical_context": "sum prints two numbers: a 5-digit zero-padded checksum (%05u) and a block count (%6ld), computed as the ceiling division (nbytes+BUFSIZ-1)/BUFSIZ -- the same round-up idiom dump (#208) used. Both matter for integrity: the checksum verifies content, the block count verifies length (a truncated file may collide on checksum but differ in size). It handles multiple files and stdin, names the file when argc>2, and accumulates errors into errflg (+10 open, +1 read) returned via exit(errflg).",
+      "human_story": "Content and length, side by side. A checksum alone can be fooled by a truncated transfer, so sum also prints how many blocks it saw. You compared the two numbers at each end of the tape or modem link and trusted the copy only if both matched."
+    },
+    "appraiser_note": "sum は2つの数を印字: 5桁ゼロ詰めチェックサム(%05u)とブロック数(%6ld=(nbytes+BUFSIZ-1)/BUFSIZ の切り上げ除算、dump #208 と同じ定番)。両方が整合性に効く: チェックサムは中身、ブロック数は長さを検証(切れたファイルは偶然衝突しても長さが違う)。複数ファイル/stdin対応、argc>2 で名前を付け、エラーを errflg(+10 open/+1 read)に集約し exit(errflg)。"
+  },
+  {
+    "id": "sum-003-checksum-lineage",
+    "text": "/*\n * Sum bytes in file mod 2^16\n */\n/* sum(rotate) -> SysV sum(別アルゴリズム) -> cksum(CRC-32) -> md5sum/sha256sum */",
+    "file_path": "usr/src/cmd/sum.c",
+    "line_number": 1,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "checksum",
+      "crc",
+      "cryptographic-hash",
+      "lineage"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "reverence",
+      "emotion_intensity": 4,
+      "emotions": {
+        "reverence": 4,
+        "insight": 4
+      },
+      "technical_context": "sum is the root of file-integrity verification. Its 16-bit rotate-sum has limits: only 65536 values so collisions happen, and it gives no protection against deliberate tampering. Integrity checking then split two ways: stronger error detection -- BSD sum (this rotate version) vs System V sum (a different algorithm) caused incompatibility, later standardized by POSIX cksum (CRC-32); and tamper detection -- one-way cryptographic hashes md5sum/sha1sum/sha256sum (the lineage of #79 crypt, #205 makekey). Contrast dump/restor's checksum (#208/#209), a plain additive sum to a constant CHECKSUM for tape-record corruption; sum's rotate also catches order.",
+      "human_story": "From one little rotating sum grew CRC and then the cryptographic hashes that sign every download. The same 1979 Unix already held several checksums for different jobs; sum was the simplest, and the seed of all of them."
+    },
+    "appraiser_note": "sum はファイル整合性検証の根。16ビット回転和には限界(65536通りで衝突、改竄耐性なし)。整合性検証はここから二方向に進化: 誤り検出強化=BSD sum(この回転版) vs SysV sum(別アルゴリズム)の非互換→POSIX cksum(CRC-32)で標準化、改竄検出=一方向暗号ハッシュ md5sum/sha256sum(#79 crypt/#205 makekey の系譜)。dump/restor の checksum(#208/#209、定数 CHECKSUM への加算和でテープ破損検出)との対比——sum の回転は順序まで見る。"
   }
 ]
