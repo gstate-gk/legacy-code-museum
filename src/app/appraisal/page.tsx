@@ -1298,6 +1298,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "214",
+    title: "鑑定書#214 deroff — #define C で全入力を1マクロに集約し troff/eqn/tbl 命令を「剥がして」素のテキストを残す494行、組版一族の唯一の「逆」、spell と wc への橋渡し",
+    url: null,
+    language: "C",
+    year: 1978,
+  },
 ];
 
 export default function AppraisalPage() {

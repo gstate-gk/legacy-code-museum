@@ -17393,5 +17393,117 @@
       "human_story": "ptx splits 'make an index' into rotate, sort, format, each blind to the others. That is not incidental: KWIC is the very example Parnas chose to define information hiding. McIlroy's tool is that software-engineering principle as running code."
     },
     "appraiser_note": "ソート後、getsort が TILDE を見つけ回転を読みやすい索引行に組み直す: 固定幅行の中央にキーワード、前後の文脈を rtrim()/ltrim()(語境界を壊さず半行幅に切り詰め、溢れたら '/' で truncation 表示)で左右に振り分け、troff の .xx \"..\" マクロとして出力——最終組版は troff(#82) に委譲(tbl/eqn/pic と同じ)。全体(回転/ソート/整形/ハッシュ)がモジュール化され、TILDE と一時ファイルという最小の契約だけで繋がる。KWIC索引は David Parnas 1972年の名論文『On the Criteria To Be Used in Decomposing Systems into Modules』で情報隠蔽を説いた題材そのもの。ptx はその Unix流の答え=プロセスとパイプとファイルで分解する。"
+  },
+  {
+    "id": "deroff-001-reverse-troff-family",
+    "text": "if(c1=='E' && c2=='Q') eqn();\t\t/* .EQ -> skip equation */\nelse if(c1=='T' && (c2=='S'||c2=='C'||c2=='&')) tbl();\t/* .TS -> skip table */\nelse if(!inmacro && c1=='d' && c2=='e') macro();\t/* .de -> skip macro def */\nelse if(c1=='s' && c2=='o') { getfname(); ... }\t/* .so -> include */",
+    "file_path": "usr/src/cmd/deroff.c",
+    "line_number": 320,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1978,
+    "tags": [
+      "unix",
+      "troff",
+      "text-processing",
+      "inverse"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "elegance": 4
+      },
+      "technical_context": "deroff strips troff/eqn/tbl formatting to leave plain prose -- the only 'reverse' tool in the troff family. Where troff (#82), eqn (#81), tbl (#83), pic (#84) GENERATE troff commands, deroff REMOVES them, so 'deroff file | spell' or 'deroff | wc' work on the text without formatting noise. comline() dispatches on the two request letters: .EQ->eqn() (skip to .EN), .TS->tbl() (skip to .TE), .de/.ig/.am->macro() (skip the body), .so->include. It knows the troff family's grammar inside out, in reverse.",
+      "human_story": "The whole troff family builds formatting up; deroff is the one tool that tears it back down. To strip .EQ equations and .TS tables correctly it must know exactly how eqn and tbl wrote them -- the generator's mirror image."
+    },
+    "appraiser_note": "deroff は troff/eqn/tbl の組版を剥がして素の文章を残す——組版一族で唯一の『逆』ツール。troff(#82)/eqn(#81)/tbl(#83)/pic(#84) が troff 命令を生成するのに対し deroff は除去し、deroff file | spell や deroff | wc が組版ノイズ無しで効く。comline() がコマンド2文字でディスパッチ: .EQ→eqn()(.ENまで飛ばす)、.TS→tbl()(.TEまで)、.de/.ig/.am→macro()(本体を飛ばす)、.so→インクルード。troff一族の文法を逆から知り尽くしている。"
+  },
+  {
+    "id": "deroff-002-C-macro",
+    "text": "/* All input is through the C macro; the most recently read character is in c. */\n#define C ( (c=getc(infile)) == EOF ? eof() : ((c==ldelim)&&(filesp==files) ? skeqn() : c) )",
+    "file_path": "usr/src/cmd/deroff.c",
+    "line_number": 16,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1978,
+    "tags": [
+      "unix",
+      "macro",
+      "abstraction",
+      "io"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "craft": 4
+      },
+      "technical_context": "Every read in deroff goes through one macro C, not raw getc. C does three jobs at once: getc one char; on EOF call eof() (close current file, pop the .so file stack filesp, or open the next argument file); and if the char is the inline-equation left delimiter ldelim ($), call skeqn() to skip the $...$ math. So 'read a character' silently handles file boundaries and inline equations; callers just write C. Centralizing the read policy in one macro keeps every getc-site from repeating EOF and equation checks -- Kernighan using the C preprocessor as a container for policy, like troff's PAIR macro.",
+      "human_story": "deroff reads the whole world through a single macro. File switches and inline math vanish into the act of reading, so the rest of the code never has to think about them. One #define carries the entire input policy."
+    },
+    "appraiser_note": "deroff の全入力は生 getc でなく1つのマクロ C を通る。C は3仕事を同時に: getc で1文字読む、EOF なら eof()(現ファイルを閉じ .so スタック filesp を戻すか次の引数ファイルを開く)、文字がインライン数式の左デリミタ ldelim($)なら skeqn() で $...$ を飛ばす。『1文字読む』にファイル境界とインライン数式の処理が織り込まれ、呼ぶ側は C と書くだけ。読み取りポリシーを1マクロに集約し、各 getc 箇所が EOF・数式判定を繰り返さずに済む——troff の PAIR マクロと同じ、Cプリプロセッサをポリシーの容れ物に使う Kernighan 流。"
+  },
+  {
+    "id": "deroff-003-so-nx-loop-detection",
+    "text": "getfname() {\n\t/* see if this name has already been used */\n\tfor(q = namechain ; q; q = q->nextp)\n\t\tif( ! strcmp(fname, q->datap)) { fname[0] = '\\0'; return; }\n\tq = calloc(1, sizeof(*chainblock));\n\tq->nextp = namechain; q->datap = copys(fname); namechain = q;\n}",
+    "file_path": "usr/src/cmd/deroff.c",
+    "line_number": 200,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1978,
+    "tags": [
+      "unix",
+      "include",
+      "loop-detection",
+      "linked-list"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "foresight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "foresight": 4,
+        "care": 3
+      },
+      "technical_context": "troff documents split across files via .so (source/include) and .nx (next file). deroff follows them faithfully: .so pushes the current file on files[] (up to 15 deep) and opens the target; eof() pops back. The clever guard is loop detection: getfname() records each opened filename in a linked list namechain and strcmp-checks it; a file seen before is set to '' and never reopened, preventing infinite .so a -> .so a recursion. Same 'remember what you have seen' structure as refer's hash (#86) and ptx's inotab (#213).",
+      "human_story": "Following includes is easy; not looping forever is the hard part. deroff keeps a linked list of every file it has opened and refuses to open one twice -- expanding the document like real troff, but smarter about the trap troff itself can fall into."
+    },
+    "appraiser_note": "troff 文書は .so(source/include)と .nx(next file)で複数ファイルに分かれる。deroff は忠実に辿る: .so は現ファイルを files[] に積み(最大15段)対象を開き、eof() が戻る。巧妙なのはループ検出: getfname() が開いたファイル名を連結リスト namechain に記録し strcmp 照合、既読なら '' にして二度と開かず .so a→.so a の無限再帰を防ぐ。refer のハッシュ(#86)や ptx の inotab(#213)と同じ『見たものを覚える』構造。"
+  },
+  {
+    "id": "deroff-004-backsl-spell-bridge",
+    "text": "backsl() {\nsw:  switch(C) {\n\tcase '\"': SKIP; return;\t\t/* \\\" comment -> to EOL */\n\tcase 'f': case 'n': case '*':\tif(C != '(') return;\t/* \\fB \\nx \\*s */\n\tcase 'h': case 'v': case 'w':\t/* \\h'..' delimited motions */\n\t\tif((bdelim=C)=='\\n') return;\n\t\twhile(C!='\\n' && c!=bdelim) if(c=='\\\\') backsl();  /* recurse on nesting */\n\t}\n}",
+    "file_path": "usr/src/cmd/deroff.c",
+    "line_number": 430,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1978,
+    "tags": [
+      "unix",
+      "troff",
+      "escape",
+      "spell"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "craft",
+      "emotion_intensity": 4,
+      "emotions": {
+        "craft": 4,
+        "clarity": 3
+      },
+      "technical_context": "backsl() strips troff backslash constructs one by one: \\\" (comment to EOL), \\f/\\n/\\* (two-char font/register/string), \\(xx (special char), \\h/\\v/\\w/\\l (delimiter-bracketed motions), recursing on nested backslashes. Each construct has its own skip rule, inverting troff's interpretation. After all formatting is removed, -w runs putwords() to emit one word per line, classifying chars via chars[] (LETTER/DIGIT/APOS/SPECIAL) and accepting runs with >=2 letters (comment: 'MDM definition of word'), trimming trailing ' and &. The point: 'deroff doc | spell' (#85) checks only pure words, undisturbed by formatting. That bridge is deroff's reason to exist.",
+      "human_story": "Troff hides format commands inside the prose as backslash escapes; deroff dismantles each one, recursing into nested ones. Strip the formatting, split into words, hand the bare text to spell and wc. deroff exists to turn a typeset document back into mere language."
+    },
+    "appraiser_note": "backsl() は troff のバックスラッシュ構文を1つずつ剥がす: \\\"(行末までのコメント)、\\f/\\n/\\*(2文字フォント/レジスタ/文字列)、\\(xx(特殊文字)、\\h/\\v/\\w/\\l(デリミタ付きモーション)、入れ子は再帰。各構文に固有の除去規則=troff 解釈の逆。組版を剥がし終えると -w が putwords() で1行1語に分解、chars[] で文字分類(LETTER/DIGIT/APOS/SPECIAL)し2字以上の英字連なりを語と認め(コメント 'MDM definition of word')末尾の '・& を落とす。狙いは deroff doc | spell(#85) が組版に邪魔されず純粋な単語だけ検査すること。この橋渡しが deroff の存在理由。"
   }
 ]
