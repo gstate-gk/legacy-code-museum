@@ -1319,6 +1319,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "217",
+    title: "鑑定書#217 quiz — a{eroplane}|airplane のような「ありうる答え方」を一つの文法で許す472行、解答照合・列名照合・正答表示を同じパターン言語で兼ね、正解すると出題範囲が広がる適応学習を1979年に実装したCAIゲーム",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

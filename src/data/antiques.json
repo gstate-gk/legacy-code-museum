@@ -17673,5 +17673,90 @@
       "human_story": "Every terminal spoke its own dialect, so tabs hardcodes a function per machine and, lacking a name, sniffs baud and flags to guess which beast it is talking to. It is the rough draft of termcap, taming the terminal zoo by hand."
     },
     "appraiser_note": "tabs の大半は機種ごとの方言: DASI 300/300S/450、Teletype 37、Terminet/TN300、HP 2645 にそれぞれ専用関数があり、その機種固有のエスケープ・遅延・マージン・癖を知る(tty37 は SI 後に40 DEL、dasi450 は bs(16)+ESCマージン、hp2645 は ESC '3')。自動判別は泥臭く、$TERM を見て無ければ gtty(0)(旧 sgtty)でボーレートとフラグから機種推測——CRMOD で300ボーなら Terminet、CRMOD/LCASE 無しで150ボーなら Model 37。このハードコード機種テーブルは termcap/terminfo の素朴な原型で、非互換端末の動物園を一機種ずつ飼い慣らす。"
+  },
+  {
+    "id": "quiz-001-answer-pattern-language",
+    "text": "cmp(u,v) { eu=u; ev=v; x=disj(1); if(x!=1) return(x); return(eat(1,0)); }\nstring(s) {\n\tcase '[': ev++; x=disj(s); ...\t/* required group, | inside */\n\tcase '{': ev++; x=disj(s); ...\t/* optional group */\n\tcase '\\\\': ev++; ...\t\t/* literal escape */\n}\nfold(c) { if(c<'A'||c>'Z') return(c); return(c|040); }\t/* case-insensitive */",
+    "file_path": "usr/src/cmd/quiz.c",
+    "line_number": 40,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "cai",
+      "education",
+      "recursive-descent",
+      "pattern"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "empathy": 4
+      },
+      "technical_context": "quiz is a Computer-Aided Instruction game; its heart is a flexible answer-pattern language so grading is not exact-match. Answers in the data files are patterns: | (alternatives, airplane|aeroplane), [...] (required group with alternations), {...} (optional, a{eroplane} accepts 'a' or 'aeroplane'), \\ (literal). cmp/disj/string/eat are a mutually-recursive descent matcher; fold() folds case. Return convention 0=no match, 1=match, >=2=syntax error propagates through the recursion. A distant cousin of regex (grep #65, egrep #204), but aimed at tolerating the variation in a human's answer rather than searching.",
+      "human_story": "Grading a quiz by exact string match is useless: people spell aeroplane or airplane, say York or New York. So quiz answers are little patterns, and a recursive-descent matcher accepts any reasonable phrasing, case and all. Regex technique pointed at human forgiveness."
+    },
+    "appraiser_note": "quiz は CAI(教育)ゲームで、心臓は柔軟な解答パターン言語(完全一致でない採点)。データの答えはパターン: |(選択肢 airplane|aeroplane)、[...](選択を含む必須グループ)、{...}(省略可 a{eroplane} は 'a' でも 'aeroplane' でも通る)、\\(リテラル)。cmp/disj/string/eat が相互再帰下降マッチャ、fold() で大小無視。返り値規約 0=不一致/1=一致/2以上=構文エラーを再帰で伝播。grep(#65)/egrep(#204) の正規表現の遠い親戚だが、目的は検索でなく『人間の答えの揺れを許す』こと。"
+  },
+  {
+    "id": "quiz-002-one-grammar-three-roles",
+    "text": "publish(t) { ev=t; pub1(1); }\npub1(s) { case '|': s=0; continue;  case '[': case '{': ev++; pub1(s); ...  default: if(s) putchar(*ev); }\n/* perm(): cmp(u[i], v[j]) も列名照合に使う */\nx = cmp(u[i], v[j]);",
+    "file_path": "usr/src/cmd/quiz.c",
+    "line_number": 170,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "cai",
+      "reuse",
+      "grammar"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "craft": 4
+      },
+      "technical_context": "The same pattern language serves three roles in quiz. (1) Answer matching via cmp (the recursive matcher). (2) Display via publish/pub1: print the CANONICAL form of a pattern -- take the first | alternative, include {...} contents -- to show the question and the correct answer. (3) Column-name matching via perm: 'quiz africa capitals' resolves 'capitals' against the data file's column definitions using cmp again, so column names can also be flexible (capital{s}). Each colon-separated fact column is written in this language; 'quiz X Y' shows column X and asks for column Y (reverse for the other direction). One small grammar drives input parsing, output generation, and argument resolution -- the Bell Labs habit of one representation, many uses.",
+      "human_story": "quiz writes one little grammar and uses it three ways: to grade answers, to print the right answer, and to match the column names you typed. The same pattern, read forward to match and forward again to display."
+    },
+    "appraiser_note": "同じパターン言語が quiz の三役を担う。(1)解答照合=cmp(再帰マッチャ)。(2)表示=publish/pub1: パターンの正準形を印字(| の最初の選択肢を採り {...} の中身も含める)し出題と正答を見せる。(3)列名照合=perm: 'quiz africa capitals' の 'capitals' をデータの列定義に cmp で対応づけ、列名も柔軟に書ける(capital{s})。コロン区切りの各事実列がこの言語で書かれ、'quiz X Y' は X列を見せ Y列を答えさせる(逆順で双方向)。一つの小さな文法が入力解釈・出力生成・引数解決を担う——Bell Labs の『一つの表現を多目的に』。"
+  },
+  {
+    "id": "quiz-003-adaptive-learning",
+    "text": "if(x==1) { printf(\"Right!\\n\"); if(++score[i]>=1 && na<nl) na++; break; }\t/* correct -> widen range */\nnext() {\n\tinc = inc*3125&077777;\t/* LCG */\n\tptr = (inc>>2)%na;\n\twhile(score[ptr]>0)\t/* skip mastered items */\n\t\tif(++ptr>=na) { ptr = 0; ... }\n\treturn(ptr);\n}",
+    "file_path": "usr/src/cmd/quiz.c",
+    "line_number": 360,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "cai",
+      "spaced-repetition",
+      "adaptive-learning"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "foresight",
+      "emotion_intensity": 5,
+      "emotions": {
+        "foresight": 5,
+        "insight": 5
+      },
+      "technical_context": "quiz adapts to the learner. na (number active) starts below the total; next() picks randomly within na via a linear congruential generator (inc*3125 & 077777, time-seeded) but SKIPS items with score>0 (already answered correctly). Each correct answer increments score[i] and does na++ to widen the active range. So mastered items retire and new ones enter; missed items stay and recur. Correct -> retire, wrong -> re-ask, mastery -> grow the pool: this is exactly modern spaced repetition / adaptive learning (Anki, Duolingo, Khan Academy), implemented in 1979 with just a score[] array and na++. -t (test) flips scoring; SIGINT shows 'Rights X, wrongs Y, score Z%'.",
+      "human_story": "A 472-line game already knew how people learn: show a few items, retire the ones you get right, keep the ones you miss, and add more as you master them. The core of every spaced-repetition app today, written with one array and one increment in 1979."
+    },
+    "appraiser_note": "quiz は学習者に適応する。na(出題対象数)は全項目より小さく始まり、next() が線形合同法(inc*3125&077777, 時刻シード)で na 内をランダム選択するが score>0(正解済み)はスキップ。正解ごとに score[i] を増やし na++ で範囲を広げる。習得済みは退役し新項目が加わり、間違えた項目は残り再出題。正解→退役/不正解→再出題/習熟→範囲拡大、これは現代の間隔反復学習/適応学習(Anki/Duolingo/Khan)そのもので、1979年に score[] 配列と na++ だけで実装。-t(test)で採点モード、SIGINT で『Rights X, wrongs Y, score Z%』。"
   }
 ]
