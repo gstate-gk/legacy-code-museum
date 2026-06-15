@@ -1333,6 +1333,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "219",
+    title: "鑑定書#219 spline — 140行の数学的導出をコメントに刻みHammingの教科書を出典に三重対角系を解く333行、「後ろ向きの再計算は野放図に不安定」と記録された三次スプライン補間、コードは数式の忠実な転写",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

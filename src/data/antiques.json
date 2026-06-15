@@ -17842,5 +17842,89 @@
       "human_story": "arithmetic even shapes its randomness: operations uniform, but operands drawn from a triangle so the questions sit at a comfortable middle. And it reduces ranges by multiply-and-shift, dodging modulo bias decades before it had a name -- with a programmer's initials left in the comment."
     },
     "appraiser_note": "乱数2戦略。演算選択(+ - x /)は random()=一様。だが数字選択は skrand()=三角分布: 2つの一様乱数を足し中央値(017777)で折り返す、中くらいの数字が出やすく退屈な端(0+0,10+10)は稀——分布で難易度調整。hmul は乱数を [0,range) に (rand*8*range)>>16=乗算して上位ビットで縮小し、rand()%range の剰余バイアスを回避。今日 multiply-shift / Lemire の手法として知られる範囲縮小を1979年に使用。コメントに署名: 『古いPDP-11アセンブリのサブルーチンを置換 -- dks.』"
+  },
+  {
+    "id": "spline-001-math-as-comment",
+    "text": "/* Spline fit technique ... (R W Hamming, Numerical Methods for Engineers and Scientists, 2nd Ed, p349ff)\n   h[i]y\"[i-1] + 2(h[i]+h[i+1])y\"[i] + h[i+1]y\"[i+1] = 6[...]   symmetric tridiagonal system */\n...\nd = a - hi*hi/d;\t\t/* d[i] = a[i] - h[i]^2/d[i-1] */\nr[i] = rhs(i) - hi*r[i-1]/d;\t/* r[i] = b[i] - h[i]r[i-1]/d[i-1] */",
+    "file_path": "usr/src/cmd/spline.c",
+    "line_number": 16,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "numerical-analysis",
+      "spline",
+      "mathematics"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "reverence",
+      "emotion_intensity": 5,
+      "emotions": {
+        "reverence": 5,
+        "rigor": 5
+      },
+      "technical_context": "spline is a cubic-spline interpolation tool (part of the graph/plot family: spline data | graph | plot). Of its 333 lines, ~140 are a comment containing the FULL mathematical derivation -- setting up the symmetric tridiagonal system for the second derivatives, the triangularization recurrence, back substitution, boundary conditions, the periodic case -- citing R. W. Hamming's textbook (the Bell Labs giant of Hamming codes/distance/window). The code is a one-to-one transcription of that math: comment 'd[i]=a[i]-h[i]^2/d[i-1]' becomes d=a-hi*hi/d. The programmer's work is not inventing the algorithm but faithfully translating established mathematics into floating-point recurrences.",
+      "human_story": "Before you read the code you must read the mathematics: 140 lines deriving the cubic spline from Hamming's textbook, then a few dozen lines transcribing it. The code is the shadow of the math, as close as software and mathematics ever get."
+    },
+    "appraiser_note": "spline は三次スプライン補間ツール(graph/plot 一族: spline data | graph | plot)。333行中 ~140行が、完全な数学的導出のコメント——二階微分の対称三重対角系の立て方、三角化の漸化式、後退代入、境界条件、周期の場合——を R.W.Hamming の教科書(ハミング符号/距離/窓の Bell Labs の巨人)を引用して記す。コードはその数式の一対一の転写: コメント 'd[i]=a[i]-h[i]^2/d[i-1]' が d=a-hi*hi/d に。プログラマの仕事はアルゴリズムの発明でなく、確立された数学を浮動小数点の漸化式に忠実に翻訳すること。"
+  },
+  {
+    "id": "spline-002-backward-unstable",
+    "text": "/* superficially, d[i] and r[i] don't have to be stored for they can be\n   recalculated backward ...\n   unhappily it turns out that the recursion forward for d\n   is quite strongly geometrically convergent--and is wildly\n   unstable going backward.\n   ... so the intermediate results must be kept. */\ndiag = (float *)malloc(...); r = (float *)malloc(...);",
+    "file_path": "usr/src/cmd/spline.c",
+    "line_number": 60,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "numerical-analysis",
+      "stability",
+      "comment"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 5,
+      "emotions": {
+        "insight": 5,
+        "honesty": 4
+      },
+      "technical_context": "spline stores the triangularization intermediates d[i] and r[i] in malloc'd arrays. A comment explains a rejected optimization: you COULD avoid storing them by recomputing d backward via d[i-1]=h[i]^2/(a[i]-d[i]), saving memory. But 'unhappily it turns out' the forward recursion for d is strongly geometrically convergent, so running it backward is 'wildly unstable' -- floating-point rounding error explodes. So the intermediates must be kept. This is a comment documenting WHY a memory optimization was NOT taken, recording the forward-stable/backward-unstable asymmetry as a warning to future readers.",
+      "human_story": "There is an obvious way to save memory here -- recompute the values backward instead of storing them. The comment says they tried, and it was wildly unstable. So they kept the arrays, and wrote down why, so no one would 'optimize' it back into breakage."
+    },
+    "appraiser_note": "spline は三角化の中間結果 d[i]/r[i] を malloc 配列に保存する。コメントが却下した最適化を説明: d を後ろ向きに d[i-1]=h[i]^2/(a[i]-d[i]) で再計算すれば保存せずメモリ節約できる(superficially)。だが『unhappily it turns out』前進の d の漸化式は強く幾何級数的に収束するため逆向きは『wildly unstable(野放図に不安定)』——浮動小数点の丸め誤差が爆発。だから中間結果を保存せねばならない。メモリ最適化を『なぜ採らなかったか』を記録し、前進安定/後退不安定の非対称性を未来の読者への警告として刻むコメント。"
+  },
+  {
+    "id": "spline-003-boundary-periodic",
+    "text": "/* k = 0 fits straight lines at the ends; k = 1 fits parabolas;\n   k = 1/2 has been recommended as somehow pleasant. */\ncase 'k': numb(&konst,&argc,&argv); break;\ncase 'p': periodic = 1; break;\t/* periodic spline: corner corrections s/t/u/v */",
+    "file_path": "usr/src/cmd/spline.c",
+    "line_number": 100,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "spline",
+      "boundary",
+      "aesthetics"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "whimsy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "whimsy": 4,
+        "craft": 4
+      },
+      "technical_context": "spline's end behaviour is set by konst (the math k) via y\"[0]=k*y\"[1]: k=0 (natural, straight lines at ends), k=1 (parabolas), and k=1/2 'has been recommended as somehow pleasant' -- a strikingly subjective note after 140 lines of rigorous derivation. Curve beauty is not settled by a theorem; where theory ends, the human eye decides. -p enables periodic (closed-curve) splines, adding corner elements to the tridiagonal matrix with s/t/u/v correction terms, also fully derived in the comment. These are part of the Bell Labs graphics pipeline graph/plot/tplot, composed like the troff family.",
+      "human_story": "After 140 lines of exact mathematics, the choice of boundary condition comes down to: k=1/2 is 'somehow pleasant'. The rigor of the theorem and the vagueness of an aesthetic judgment, side by side in one comment."
+    },
+    "appraiser_note": "spline の端の振る舞いは konst(数学の k)で y\"[0]=k*y\"[1]: k=0(自然、端で直線)、k=1(放物線)、k=1/2 は『somehow pleasant(なんとなく感じが良い)として推奨』——140行の厳密な導出の後の、極めて主観的な一言。曲線の美しさは定理で決まらず、理論が尽きたところで人間の目が決める。-p は周期(閉曲線)スプラインで、三重対角行列の隅に s/t/u/v 補正項を加える(これもコメントで完全導出)。graph/plot/tplot の Bell Labs グラフィックパイプラインの一部で、troff 一族と同じく合成される。"
   }
 ]
