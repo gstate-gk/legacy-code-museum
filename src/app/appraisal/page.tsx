@@ -1347,6 +1347,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "221",
+    title: "鑑定書#221 icheck — bmap[n] |= m でデータブロック1個を1ビットに刻み二重割り当て(dup)と迷子(missing)を暴く475行(inode check)、small/large/huge/garg の4段indirect走査・回転遅延ぶんずらす -s 自由リスト再構築・OSが起動せずとも動く STANDALONE 構成、fsck の祖",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

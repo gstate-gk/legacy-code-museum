@@ -18039,5 +18039,121 @@
       "human_story": "Two processes, one each way: a child shows you what arrives, a parent sends what you type. That is why you can type over a remote that is still talking. The lag of remote echo, the RAW mode, all of it is here -- the shape every terminal program took after."
     },
     "appraiser_note": "cu は2プロセスで全二重を実現: main が fork し、子が rd()(回線を読み画面 fd 1 に出す)、親が wr()(キーボード fd 0 を読み回線に書く)。方向ごとに1プロセスで、相手が送信中でも打てる——後の対話端末(telnet/screen)がみな継ぐパターン。wr() 終了(~. を打った)で親が子を kill。mode() が端末を切替: mode(1)=RAW(1文字ずつ素通し・ローカルエコー無し=相手がエコー、遅い回線の遅延の正体)、mode(2)=no-echo(ファイル送信)、mode(0)=cooked。sg_kill/sg_erase を先に取得し ~ エスケープ行ではローカル行編集を効かせる。fork + ioctl がローカルとリモートの境界を織る。"
+  },
+  {
+    "id": "icheck-001-block-bitmap",
+    "text": "duped(bno) daddr_t bno; {\n\td = bno - sblock.s_isize;\n\tm = 1 << (d%BITS);\t/* one bit for this block */\n\tn = (d/BITS);\n\tif(bmap[n] & m) return(1);\t/* seen before = duplicate */\n\tbmap[n] |= m; return(0);\n}\n/* if malloc fails: */\nprintf(\"Not enough core; duplicates unchecked\\n\"); dflg++; sflg = 0;",
+    "line_number": 315,
+    "tags": [
+      "unix",
+      "filesystem",
+      "fsck",
+      "bitmap",
+      "memory"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "legacy": 4
+      },
+      "technical_context": "icheck (inode check) is the direct ancestor of fsck. It walks every inode, follows each file's data blocks, and detects two corruptions: dup (a block claimed by two files = cross-link) and missing (a block in no file and not on the free list = lost). The core data structure is one bit per data block: bmap is a bit array, block d sets bit d%8 of byte d/8. Tens of thousands of blocks cost only 1/8 byte each. duped() tests-and-sets the bit. The most telling line is the malloc-failure path: 'Not enough core; duplicates unchecked' -- it gives up dup detection (dflg++) and salvage (sflg=0) but keeps running the checks that need no bitmap. A filesystem checker that cannot fully trust even its own runtime environment, degrading gracefully instead of dying.",
+      "human_story": "How do you remember whether you have seen each of tens of thousands of disk blocks? One bit apiece. And if there is not even enough memory for that, icheck says so and checks what it still can, rather than giving up."
+    },
+    "appraiser_note": "icheck(inode check)は fsck の直接の祖。全 inode を舐め各ファイルのデータブロックを辿り、dup(2つのファイルが同一ブロックを共有=クロスリンク)と missing(どのファイルにも自由リストにも属さない迷子)を検出する。心臓部は『1ブロック=1ビット』: bmap はビット配列で、ブロック d は d/8 バイト目の d%8 ビット目。何万ブロックでも1個あたり1/8バイト。duped() がテスト&セット。最も雄弁なのは malloc 失敗時の『Not enough core; duplicates unchecked』——dup 検出(dflg++)と救済(sflg=0)は諦めるが、ビットマップ不要の検査は続行する。検査ツールが自分の動く環境すら信用しきれず、落ちずに優雅に劣化する。",
+    "file_path": "usr/src/cmd/icheck.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "icheck-002-indirect-small-large-huge-garg",
+    "text": "if(i < NADDR-3) { ndirect++; chk(iaddr[i], \"data (small)\"); continue; }   /* direct */\n...\n  if(i == NADDR-3) { chk(ind1[j], \"data (large)\"); continue; }   /* single indirect */\n  ...\n    if(i == NADDR-2) { chk(ind2[k], \"data (huge)\"); continue; }  /* double indirect */\n    ...\n      if(ind3[l]) chk(ind3[l], \"data (garg)\");                   /* triple indirect */",
+    "line_number": 248,
+    "tags": [
+      "unix",
+      "filesystem",
+      "inode",
+      "addressing",
+      "humor"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "humanity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "humanity": 4,
+        "elegance": 4
+      },
+      "technical_context": "A Unix inode holds NADDR=13 block addresses: the first 10 are direct, then one single, one double, and one triple indirect block (each indirect block holds NINDIR=128 addresses). pass1 descends this whole staircase with a 4-deep nested loop, calling chk() on every block. The author named the data classes at each depth: 'small' (direct), 'large' (single indirect), 'huge' (double), and -- at the bottom of triple indirection -- 'garg' (gargantuan). A corruption report says 'inode=42, class=data (garg)', telling you how deep in the file's addressing the bad block lived. l3tol() first expands the 3-byte on-disk addresses to long, a reminder of how tightly the on-disk inode packed its bits.",
+      "human_story": "The addressing staircase of a Unix file -- direct, single, double, triple indirect -- got named small, large, huge, and garg (gargantuan). A diagnostic tool that still found room for a joke about how enormous a file could get."
+    },
+    "appraiser_note": "Unix の inode は NADDR=13 個のブロックアドレスを持つ: 最初の10個が直接、続いて単/二重/三重間接が各1個(間接ブロックは NINDIR=128 アドレス)。pass1 はこの階段を4重ネストループで降り、各ブロックを chk() に渡す。作者は深さごとのデータ class を命名: 'small'(直接)、'large'(単間接)、'huge'(二重)、そして三重間接の果てが 'garg'(gargantuan=とてつもなく巨大)。破損報告は 'inode=42, class=data (garg)' のように、悪いブロックがファイルのどの深さに居たかを告げる。l3tol() が3バイトのディスク表現を long に展開してから辿るのも、ディスク上 inode のビット節約の証拠。乾いた診断ツールに『どこまでファイルが巨大になりうるか』のユーモアが残る。",
+    "file_path": "usr/src/cmd/icheck.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "icheck-003-freelist-interleave",
+    "text": "for(j=0; j<n; j++) {\n\twhile(flg[i]) i = (i+1)%n;   /* find an unused slot */\n\tadr[j] = i+1; flg[i]++;\n\ti = (i+m)%n;                 /* step m ahead (interleave) */\n}\n...\nfor(; d > 0; d -= sblock.s_n)\n\tfor(i=0; i<sblock.s_n; i++) {\n\t\tf = d - adr[i];\n\t\tif(f<sblock.s_fsize && f>=sblock.s_isize && !duped(f)) bfree(f);\n\t}",
+    "line_number": 419,
+    "tags": [
+      "unix",
+      "filesystem",
+      "disk",
+      "interleave",
+      "performance"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "ingenuity": 4,
+        "history": 4
+      },
+      "technical_context": "icheck -s does not just check -- it rebuilds the free list (salvage). After pass1 has marked every block used by a file, any block whose bitmap bit is clear is free, and gets relinked via bfree(). But icheck does not chain them in numeric order. It first builds a permutation adr[] by stepping m (default 3) slots at a time -- i=(i+m)%n -- so consecutive free-list blocks are spaced apart on the platter. This is interleaving for rotational latency: while the program processes one block the disk keeps spinning, so the next wanted block must sit a little ahead (m sectors of rotation) to be under the head exactly when needed. s_n is the blocks per group, s_m the skip factor. The free-list order itself is tuned to the disk's RPM -- software meeting the physics of a spinning iron disk.",
+      "human_story": "Rebuilding the free list, icheck does not lay blocks down in order. It spaces them out by an interleave factor, because while you finish one block the disk has already spun past its neighbour. The order of free blocks tuned to the speed the platter turns."
+    },
+    "appraiser_note": "icheck -s は検査だけでなく自由リストを丸ごと作り直す(salvage)。pass1 が全ファイルの使用ブロックに印を付けた後、ビットの立っていないブロック=未使用を bfree() で繋ぎ直す。だが番号順には繋がない。まず m(既定3)ずつインデックスを進めて未使用スロットを拾う順列 adr[] を作る——i=(i+m)%n——ので、自由リストに並ぶブロックは円盤上で飛び飛びになる。これは回転遅延(rotational latency)対策のインターリーブ: 1ブロックを処理する間もディスクは回り続けるので、次に欲しいブロックは少し先(m セクタ回った位置)に置いておけば、丁度欲しい時にヘッドの下に来る。s_n=1グループのブロック数、s_m=飛ばし幅。自由リストの並び順そのものをディスクの回転速度に合わせてチューニングしている——ソフトウェアが回る鉄の円盤の物理と地続きだった時代の痕跡。",
+    "file_path": "usr/src/cmd/icheck.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "icheck-004-standalone",
+    "text": "#ifndef STANDALONE\n\twhile (--argc) { ... check(*argv); }     /* normal: run as a command */\n#else\n\t{ static char fname[0];\n\t  printf(\"File: \"); gets(fname);         /* standalone: no OS, ask for target */\n\t  check(fname); }\n#endif",
+    "line_number": 89,
+    "tags": [
+      "unix",
+      "filesystem",
+      "boot",
+      "fsck",
+      "bootstrap"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 5,
+        "legacy": 4
+      },
+      "technical_context": "icheck.c is laced with #ifdef STANDALONE. In standalone mode it skips malloc (bmap=NULL, no dup check), skips sync(), changes output formats, and main() does not parse argv -- it prints 'File: ' and gets() the target. Why would a filesystem checker need to run without an OS? Chicken and egg: if the root filesystem is corrupt, Unix will not boot, and if it will not boot you cannot run icheck -- the very tool meant to repair the disk cannot run because of the disk it would repair. So icheck had a build that runs on bare hardware from boot media, reading the disk as raw bytes via lseek/read/write. This is the origin of the fsck philosophy: verify (and if needed repair) the filesystem before it is mounted, before the system comes up. A program that checks the filesystem must not itself depend on the filesystem.",
+      "human_story": "The tool that repairs a broken disk lives on that disk -- so when the disk breaks badly enough, it cannot run. icheck's answer was a version that boots on bare metal and asks 'File:' with no operating system underneath it at all."
+    },
+    "appraiser_note": "icheck.c は全編 #ifdef STANDALONE で編まれている。スタンドアロン時は malloc を諦め(bmap=NULL、dup チェック無し)、sync() を呼ばず、出力形式を変え、main() は argv を解析せず『File: 』とプロンプトを出して gets() で対象を尋ねる。なぜファイルシステム検査ツールに OS なしモードが要るのか。鶏と卵だ: ルートファイルシステムが壊れると Unix は起動できず、起動できなければ icheck も実行できない——ディスクを直すはずのツールが、そのディスクのせいで動かせない。だから icheck はカーネルも FS も介さずブートメディアから素のハードウェア上で動く版を持ち、lseek/read/write でディスクを生のバイト列として舐めた。これは fsck の思想の原点: マウントされる前・システムが立ち上がる前に FS の健全性を確かめ必要なら直す。ファイルシステムを検査するプログラムは、ファイルシステムに依存してはならない。",
+    "file_path": "usr/src/cmd/icheck.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]
