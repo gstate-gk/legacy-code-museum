@@ -17281,5 +17281,117 @@
       "human_story": "From one little rotating sum grew CRC and then the cryptographic hashes that sign every download. The same 1979 Unix already held several checksums for different jobs; sum was the simplest, and the seed of all of them."
     },
     "appraiser_note": "sum はファイル整合性検証の根。16ビット回転和には限界(65536通りで衝突、改竄耐性なし)。整合性検証はここから二方向に進化: 誤り検出強化=BSD sum(この回転版) vs SysV sum(別アルゴリズム)の非互換→POSIX cksum(CRC-32)で標準化、改竄検出=一方向暗号ハッシュ md5sum/sha256sum(#79 crypt/#205 makekey の系譜)。dump/restor の checksum(#208/#209、定数 CHECKSUM への加算和でテープ破損検出)との対比——sum の回転は順序まで見る。"
+  },
+  {
+    "id": "ptx-001-tilde-rotation",
+    "text": "putc(' ',sortptr);\nputc(TILDE,sortptr);\t/* 0177 = rotation pivot */\nfor (cp=line; cp<strt; cp++)\t/* wrap the pre-keyword part to the end */\n\tputc(*cp,sortptr);",
+    "file_path": "usr/src/cmd/ptx.c",
+    "line_number": 330,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "kwic",
+      "index",
+      "text"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "ingenuity": 4
+      },
+      "technical_context": "ptx builds a KWIC (Key Word In Context) permuted index. Its core trick: for each line, rotate it so the keyword leads -- write 'keyword-onward TILDE pre-keyword-part'. TILDE (0177, the byte just below printable range) is the pivot: when the rotated lines are sorted, the keyword-onward part is at the front and sorts alphabetically, while the wrapped-around prefix hides after TILDE and does not affect the key. One delimiter byte makes 'sort by keyword while keeping surrounding context' work. A 2D index becomes a set of rotated 1D lines.",
+      "human_story": "An index is the same line repeated once per keyword, each rotated to lead with a different word. ptx encodes that as a rotation around a single TILDE: sort puts the keywords in order, and the context simply wraps around behind the pivot."
+    },
+    "appraiser_note": "ptx は KWIC(Key Word In Context)順列索引を作る。核心: 各行をキーワードが先頭に来るよう回転し『キーワード以降 TILDE キーワード前』と書く。TILDE(0177=印字可能直前のバイト)が折り返し点で、回転後の行をソートすると『キーワード以降』が行頭でアルファベット順に並び、回り込んだ前半は TILDE の後ろに隠れソートキーに影響しない。1文字の区切りで『キーワードで並べつつ文脈を保持』を両立。二次元の索引を回転した一次元の行の集合に変換。"
+  },
+  {
+    "id": "ptx-002-eign-stopwords-hash",
+    "text": "#define DEFLTX \"/usr/lib/eign\"\n...\nhash(strtp,endp) { i=i*j; ... j=k*j; k = (i ^ (j>>2)) & MASK; return(k); }\nstoreh(num,strtp) {\n\tfor(i=num; i<MAXT; i++) if(hasht[i]==0){ hasht[i]=strtp; return(0); }\n\tfor(i=0; i<num; i++)    if(hasht[i]==0){ hasht[i]=strtp; return(0); }\n\treturn(1);\n}",
+    "file_path": "usr/src/cmd/ptx.c",
+    "line_number": 500,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "hash-table",
+      "stopwords",
+      "data-structure"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "rigor",
+      "emotion_intensity": 4,
+      "emotions": {
+        "rigor": 4,
+        "craft": 4
+      },
+      "technical_context": "A good index omits common words (the, and, of). ptx reads a stop-word file, default /usr/lib/eign (McIlroy's list of the most frequent English words). It matches words against a self-built hash table: hash() multiplies the first two and last two letters, shifts and XORs into MASK (2047); storeh() is open-addressing with linear probing that wraps from end to start. One hash lookup decides if a word is a stop word, leaving only meaningful terms as index entries. Same 'match many words fast' instinct McIlroy used with a Bloom filter in spell (#85).",
+      "human_story": "An index of every 'the' is useless, so ptx hashes a list of the commonest English words and skips them. The hash table is hand-built, multiplicative, open-addressed -- McIlroy's signature move: pick the data structure that makes the lookup disappear."
+    },
+    "appraiser_note": "良い索引は the/and/of を載せない。ptx はストップワードファイル(既定 /usr/lib/eign=McIlroy がまとめた英語頻出語リスト)を読む。語の照合は自作ハッシュ表: hash() が先頭2文字と末尾2文字を掛けシフト+XORで MASK(2047)に収め、storeh() は末尾から先頭へ巡回する線形探査のオープンアドレス法。ハッシュ1回でストップワード判定し、意味語だけを索引語に残す。spell(#85) で Bloom filter を使ったのと同じ『大量の語を高速照合する』McIlroy の十八番。"
+  },
+  {
+    "id": "ptx-003-sort-delegation",
+    "text": "switch (pid = fork()){\ncase 0:\t/* child */\n\texecl(SORT, SORT, sortopt, \"+0\", \"-1\", \"+1\", sortfile, \"-o\", sortfile, 0);\ndefault:\t/* parent */\n\twhile(wait(&status) != pid);\n}",
+    "file_path": "usr/src/cmd/ptx.c",
+    "line_number": 235,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "composition",
+      "fork-exec",
+      "sort"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "humility": 4
+      },
+      "technical_context": "ptx contains no sort code. It writes the rotated lines to a temp file /tmp/ptxsXXXXX, fork()s, and execl()s /usr/bin/sort (#87) to do the sorting (+0 -1 +1 select the key, -o writes back). This is the Unix philosophy: one program does one thing and calls another when needed, like rm->rmdir (#202), bc->dc (#71). Sorting is hard (external merge sort, memory), but that is sort's specialty; ptx avoids reinventing it and inherits sort's 50 years of improvement. The -f (fold) flag even switches the sortopt passed to the child.",
+      "human_story": "ptx does not sort; it asks sort to. A few lines of fork+exec let it skip the hardest part of the job and lean on a tool already perfected for it. Compose, do not duplicate -- the whole point of Unix."
+    },
+    "appraiser_note": "ptx はソートコードを1行も持たない。回転した行を一時ファイル /tmp/ptxsXXXXX に書き、fork()して /usr/bin/sort(#87) を execl で呼びソートを丸投げ(+0 -1 +1 でキー指定、-o で書き戻し)。Unix哲学そのもの: 一つのプログラムは一つをうまくやり必要なら他を呼ぶ(rm→rmdir #202、bc→dc #71)。ソートは難問(外部マージ・メモリ管理)だが sort の専門であり、ptx は再発明を避け sort の50年の進化を享受。-f(fold)フラグは子へ渡す sortopt も切り替える。"
+  },
+  {
+    "id": "ptx-004-getsort-parnas",
+    "text": "p3b = rtrim(p3a=line, tilde, halflen-1);\np2a = ltrim(ref, p2b=linep, halflen-1);\n...\nfprintf(outptr,\".xx \\\"\"); putout(p1a,p1b); ...\n/* KWIC index = David Parnas 1972 information-hiding paper の題材 */",
+    "file_path": "usr/src/cmd/ptx.c",
+    "line_number": 400,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "formatting",
+      "software-engineering",
+      "troff"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "depth",
+      "emotion_intensity": 4,
+      "emotions": {
+        "depth": 4,
+        "reverence": 4
+      },
+      "technical_context": "After sort, getsort finds the TILDE and reassembles the rotation into a readable index line: keyword centered in a fixed-width line, context split left/right via rtrim()/ltrim() (trim to half-width without breaking word boundaries, append '/' to mark truncation), emitted as a troff '.xx \"..\" \"..\" \"..\" \"..\"' macro -- final typesetting left to troff (#82), like tbl/eqn/pic. The whole design (rotate / sort / format / hash) is modular with minimal contracts (TILDE, temp file). KWIC is exactly the example David Parnas used in his 1972 paper 'On the Criteria To Be Used in Decomposing Systems into Modules' to teach information hiding; ptx is the Unix answer: decompose with processes, pipes, and files.",
+      "human_story": "ptx splits 'make an index' into rotate, sort, format, each blind to the others. That is not incidental: KWIC is the very example Parnas chose to define information hiding. McIlroy's tool is that software-engineering principle as running code."
+    },
+    "appraiser_note": "ソート後、getsort が TILDE を見つけ回転を読みやすい索引行に組み直す: 固定幅行の中央にキーワード、前後の文脈を rtrim()/ltrim()(語境界を壊さず半行幅に切り詰め、溢れたら '/' で truncation 表示)で左右に振り分け、troff の .xx \"..\" マクロとして出力——最終組版は troff(#82) に委譲(tbl/eqn/pic と同じ)。全体(回転/ソート/整形/ハッシュ)がモジュール化され、TILDE と一時ファイルという最小の契約だけで繋がる。KWIC索引は David Parnas 1972年の名論文『On the Criteria To Be Used in Decomposing Systems into Modules』で情報隠蔽を説いた題材そのもの。ptx はその Unix流の答え=プロセスとパイプとファイルで分解する。"
   }
 ]

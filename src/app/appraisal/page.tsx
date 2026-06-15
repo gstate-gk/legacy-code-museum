@@ -1291,6 +1291,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "213",
+    title: "鑑定書#213 ptx — putc(TILDE)で行を「回転」させ /usr/bin/sort に丸投げする551行、各キーワードを文脈ごと並べるKWIC索引、/usr/lib/eign のストップワードを自作ハッシュ表で弾く、McIlroyの索引機械でありParnas論文の題材",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
