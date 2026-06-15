@@ -17926,5 +17926,118 @@
       "human_story": "After 140 lines of exact mathematics, the choice of boundary condition comes down to: k=1/2 is 'somehow pleasant'. The rigor of the theorem and the vagueness of an aesthetic judgment, side by side in one comment."
     },
     "appraiser_note": "spline の端の振る舞いは konst(数学の k)で y\"[0]=k*y\"[1]: k=0(自然、端で直線)、k=1(放物線)、k=1/2 は『somehow pleasant(なんとなく感じが良い)として推奨』——140行の厳密な導出の後の、極めて主観的な一言。曲線の美しさは定理で決まらず、理論が尽きたところで人間の目が決める。-p は周期(閉曲線)スプラインで、三重対角行列の隅に s/t/u/v 補正項を加える(これもコメントで完全導出)。graph/plot/tplot の Bell Labs グラフィックパイプラインの一部で、troff 一族と同じく合成される。"
+  },
+  {
+    "id": "cu-001-tilde-escape",
+    "text": "switch (b[1]) {\ncase '.': case '\\004': return;\t\t/* ~.  disconnect */\ncase '!': case '$': fk = fork(); ...\t/* ~! local shell / ~$ local cmd -> line */\ncase '<': ds=open(b+2,0); ...\t\t/* ~<file  send a file */\ncase '%': dopercen(&b[2]); break;\t/* ~%put / ~%take */\ndefault: prf(\"Use `~~' to start line with `~'\");\n}",
+    "file_path": "usr/src/cmd/cu.c",
+    "line_number": 285,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "communication",
+      "ssh",
+      "escape",
+      "interface"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 5,
+      "emotions": {
+        "legacy": 5,
+        "insight": 4
+      },
+      "technical_context": "cu (call Unix) is a modem dialer / remote-terminal program, the ancestor of telnet/ssh. While connected, everything you type flows to the line, so to give a LOCAL command cu intercepts any line that begins with '~' (tilde): ~. disconnect, ~<file send a file, ~! local shell, ~$ run local cmd piping output to the line, ~%put/~%take file transfer, ~~ a literal ~. wr() tests p==b && c=='~' to detect a local line. This beginning-of-line tilde-escape convention passed from cu to tip to OpenSSH: '~.' still force-disconnects an ssh session today. The command dies; the interface convention it invented lives 45+ years.",
+      "human_story": "Typing into a remote session, everything goes down the line -- so how do you tell cu 'this is for you'? Put a ~ at the start of the line. That tiny convention, ~. to hang up, is still how you kill a stuck ssh session in 2024."
+    },
+    "appraiser_note": "cu(call Unix)はモデムダイヤラ/リモート端末プログラムで telnet/ssh の祖。接続中は打った文字が全部回線へ流れるので、ローカルへの命令には行頭 '~'(チルダ)を横取り: ~.切断、~<file送信、~!ローカルシェル、~$ローカル実行→回線、~%put/take転送、~~でリテラル~。wr() が p==b && c=='~' でローカル行を判定。この行頭チルダエスケープは cu→tip→OpenSSH へ継承され、'~.' は今も ssh セッションを強制切断する。コマンドは消えても発明したインターフェース慣習は45年以上生きる。"
+  },
+  {
+    "id": "cu-002-filetransfer-on-stream",
+    "text": "/* ~%take: send shell into remote, wrap output in ~> markers */\nwrln(\"echo '~>:'\"); wrln(args[2]);\nwrln(\";tee /dev/null <\"); wrln(args[1]); wrln(\";echo '~>'\\n\");\n/* ~%put: have remote cat into a file, then stream our file */\nwrln(\"stty -echo;cat >\"); wrln(args[2]); wrln(\";stty echo\\n\");\nwhile(!intr && rdc(f) == 1) { ... wrc(ln) ... }",
+    "file_path": "usr/src/cmd/cu.c",
+    "line_number": 355,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "file-transfer",
+      "composition",
+      "shell"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "elegance": 5
+      },
+      "technical_context": "cu has no file-transfer protocol -- only the terminal character stream. put/take build transfer on top of it via composition. ~%take sends shell commands INTO the remote ('echo ~>:; tee /dev/null < file; echo ~>') so the remote cats the file wrapped in ~> markers; cu's own rd() side recognizes ~> as an output-diversion start/end and writes the body to a local file. ~%put sends 'stty -echo; cat > file; stty echo' then streams the local file byte by byte, escaping kill/erase chars and retrying on write failure. No new protocol: just the shell, cat, tee, the terminal stream, and cu's own ~> escape -- the Unix compose-don't-invent ethos, like ptx delegating to sort.",
+      "human_story": "cu invents no transfer protocol. To pull a file it literally types shell commands to the remote that cat the file wrapped in ~> markers, then catches those markers on its own receive side. File transfer as a terminal magic trick, built from cat, tee, and an escape it already had."
+    },
+    "appraiser_note": "cu に専用のファイル転送プロトコルは無く、あるのは端末文字ストリームだけ。put/take はその上に合成で転送を載せる。~%take は相手にシェルコマンドを送り込み('echo ~>:; tee /dev/null < file; echo ~>')、相手が ~> で包んでファイルを吐き、cu 自身の rd() 側が ~> を出力横取りの開始/終了と認識しローカルファイルに書く。~%put は 'stty -echo; cat > file; stty echo' を送りローカルファイルを1バイトずつ流す(kill/erase 文字をエスケープ、書込失敗で再試行)。新プロトコル無し: シェル/cat/tee/端末ストリーム/自前の ~> エスケープの組合せ——ptx が sort に委譲したのと同じ Unix の合成哲学。"
+  },
+  {
+    "id": "cu-003-modem-dial-reality",
+    "text": "if (*(p-1)!='<') { if (*(p-1)!='-') *p++='-'; *p++='<'; }\t/* phone#: - pause, < End-Of-Number */\nxalarm(5*t); t=write(dn,b,t);\t/* write number to the ACU (dialer) */\n...\nxalarm(40);\t/* was 5; sometimes missed carrier */\ndh = open(dev,2);\t/* wait for carrier, open the line */",
+    "file_path": "usr/src/cmd/cu.c",
+    "line_number": 220,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "modem",
+      "timeout",
+      "comment"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "humanity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "humanity": 4,
+        "history": 4
+      },
+      "technical_context": "conn() actually dials the phone. It opens the ACU (Automatic Calling Unit / modem dialer, /dev/cua0), writes the number string terminated by '<' (End-Of-Number) with '-' for dial pauses, then waits for carrier. Everything is wrapped in SIGALRM timeouts (xalarm/xsleep/sig14) because a modem can block forever on busy/no-carrier/dead lines; connmsg[] lists 'line busy','no carrier','acu access'. The most human comment in the program: 'xalarm(40); /* was 5; sometimes missed carrier */' -- the carrier-wait timeout was 5 seconds, but the remote modem sometimes answered later, so it was bumped to 40. A trace of fighting the flaky physical handshake, recorded in one line.",
+      "human_story": "Dialing a modem in 1979 was a physical gamble. The carrier-wait was 5 seconds until it 'sometimes missed carrier', so someone bumped it to 40 and wrote down why. The whole act wrapped in alarms because a phone line will block you forever."
+    },
+    "appraiser_note": "conn() が実際に電話をかける。ACU(自動発信装置/モデムのダイヤル部 /dev/cua0)を開き、'<'(番号終端)で終わる番号文字列を書く('-' はダイヤル一時停止)、そしてキャリアを待つ。全体が SIGALRM タイムアウト(xalarm/xsleep/sig14)で包まれる——モデムは話中/キャリアなし/回線切れで永遠にブロックしうるため(connmsg[] に 'line busy'/'no carrier'/'acu access')。最も人間味あるコメント: 'xalarm(40); /* was 5; sometimes missed carrier */'——キャリア待ちが5秒だったが相手モデムが遅れて応答することがあり40秒に延ばした。気まぐれな物理ハンドシェイクとの格闘の跡が1行に。"
+  },
+  {
+    "id": "cu-004-fork-fullduplex",
+    "text": "if (dout) fk = -1; else fk = fork();\nif (fk == 0) { rd(); exit(3); }\t/* child: line -> screen (fd 1) */\nmode(1); wr();\t\t\t/* parent: keyboard (fd 0) -> line */\n...\nmode(f) { if (f==1) stbuf.sg_flags |= RAW; if (f==2) ...&= ~(ECHO|CRMOD); }",
+    "file_path": "usr/src/cmd/cu.c",
+    "line_number": 165,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "fork",
+      "full-duplex",
+      "terminal"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "craft": 4
+      },
+      "technical_context": "cu achieves full-duplex with two processes: main forks; the child runs rd() (read line, write your screen fd 1), the parent runs wr() (read keyboard fd 0, write line). One process per direction lets you type while the remote is sending -- the pattern every later interactive terminal (telnet, screen) inherits. When wr() ends (you typed ~.), the parent kills the child. mode() switches your terminal: mode(1)=RAW (chars pass one at a time, no local echo -- the remote echoes, hence the lag of slow links), mode(2)=no-echo (file send), mode(0)=cooked. It captures sg_kill/sg_erase first so the ~ escape line keeps local line editing. fork + ioctl weave the boundary between local and remote.",
+      "human_story": "Two processes, one each way: a child shows you what arrives, a parent sends what you type. That is why you can type over a remote that is still talking. The lag of remote echo, the RAW mode, all of it is here -- the shape every terminal program took after."
+    },
+    "appraiser_note": "cu は2プロセスで全二重を実現: main が fork し、子が rd()(回線を読み画面 fd 1 に出す)、親が wr()(キーボード fd 0 を読み回線に書く)。方向ごとに1プロセスで、相手が送信中でも打てる——後の対話端末(telnet/screen)がみな継ぐパターン。wr() 終了(~. を打った)で親が子を kill。mode() が端末を切替: mode(1)=RAW(1文字ずつ素通し・ローカルエコー無し=相手がエコー、遅い回線の遅延の正体)、mode(2)=no-echo(ファイル送信)、mode(0)=cooked。sg_kill/sg_erase を先に取得し ~ エスケープ行ではローカル行編集を効かせる。fork + ioctl がローカルとリモートの境界を織る。"
   }
 ]

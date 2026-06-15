@@ -1340,6 +1340,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "220",
+    title: "鑑定書#220 cu — 行頭の ~. で切断・~< でファイル送信、fork で全二重を作り端末ストリームの上にシェルコマンドでファイル転送を載せる539行(call Unix)、ssh の ~. がいまも受け継ぐモデムダイヤラの祖",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
