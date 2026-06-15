@@ -1305,6 +1305,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1978,
   },
+  {
+    number: "215",
+    title: "鑑定書#215 col — ESC-7/8/9 の「上向きの紙送り」を page[256] のスライディングウィンドウで平坦化する309行、前にしか進めない装置のために troff の逆行出力を組み直すデバイス適応器",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

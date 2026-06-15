@@ -17505,5 +17505,89 @@
       "human_story": "Troff hides format commands inside the prose as backslash escapes; deroff dismantles each one, recursing into nested ones. Strip the formatting, split into words, hand the bare text to spell and wc. deroff exists to turn a typeset document back into mere language."
     },
     "appraiser_note": "backsl() は troff のバックスラッシュ構文を1つずつ剥がす: \\\"(行末までのコメント)、\\f/\\n/\\*(2文字フォント/レジスタ/文字列)、\\(xx(特殊文字)、\\h/\\v/\\w/\\l(デリミタ付きモーション)、入れ子は再帰。各構文に固有の除去規則=troff 解釈の逆。組版を剥がし終えると -w が putwords() で1行1語に分解、chars[] で文字分類(LETTER/DIGIT/APOS/SPECIAL)し2字以上の英字連なりを語と認め(コメント 'MDM definition of word')末尾の '・& を落とす。狙いは deroff doc | spell(#85) が組版に邪魔されず純粋な単語だけ検査すること。この橋渡しが deroff の存在理由。"
+  },
+  {
+    "id": "col-001-reverse-motion-flatten",
+    "text": "case '8':\t/* reverse half line feed */\n\tif (fflag) decr();\n\telse { if (--half < -1) { decr(); decr(); half += 2; } }\n\tbreak;\ncase '9':\t/* forward half line feed */ ...\ncase RLF:\tdecr(); decr();\t/* \\013 reverse line feed */",
+    "file_path": "usr/src/cmd/col.c",
+    "line_number": 90,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "troff",
+      "text-processing",
+      "device-adapter"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "ingenuity": 4,
+        "clarity": 4
+      },
+      "technical_context": "col flattens the up-and-down head motion in nroff/troff output for forward-only devices (line printers, dumb terminals). tbl aligns columns, eqn places super/subscripts, .2C does multi-column -- all emit reverse feeds: ESC-7 (reverse full line), ESC-8 (reverse half), ESC-9 (forward half), RLF (\\013). col's line counter ll runs in HALF-lines (\\n = incr twice); the 'half' variable accumulates half-line shifts and only triggers a real line move when it exceeds +-1, positioning superscripts precisely in an integer line model. -f keeps half-line motions for capable devices; otherwise rounds to full lines.",
+      "human_story": "Typesetters move the paper up to stack exponents and align tables. A cheap printer cannot go back. col reads those reverse feeds and rebuilds the page so it can flow strictly downward, even tracking half-lines so x squared lands where it should."
+    },
+    "appraiser_note": "col は nroff/troff 出力の上下ヘッド移動を前進専用装置(ラインプリンタ/単純端末)向けに平坦化する。tbl の桁揃え、eqn の上付き下付き、.2C の多段組みが逆送りを出す: ESC-7(全行逆)/ESC-8(半行逆)/ESC-9(半行前)/RLF(\\013)。col の行カウンタ ll は半行単位(\\n で incr 2回)、half 変数が半行ずれを溜め±1超で実際の行移動を起こし整数行モデルで上付きを正確に位置づける。-f は半行モーションを残し、無ければ全行に丸める。"
+  },
+  {
+    "id": "col-002-sliding-window-page",
+    "text": "char *page[PL];\t/* PL = 256 half-lines */\nincr() {\n\tstore (ll++);\n\tif (ll >= mustwr && page[ll%PL]) {\n\t\temit (page[ll%PL], ll - PL);\t/* flush a line that slid out of the window */\n\t\tmustwr++; free (page[ll%PL]); page[ll%PL] = 0;\n\t}\n\tfetch (ll);\n}",
+    "file_path": "usr/src/cmd/col.c",
+    "line_number": 250,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "sliding-window",
+      "streaming",
+      "memory"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "rigor",
+      "emotion_intensity": 4,
+      "emotions": {
+        "rigor": 4,
+        "craft": 4
+      },
+      "technical_context": "Because reverse motion writes onto past lines, col must keep several lines in memory, not just the current one: page[256] (256 half-lines = 128 lines), used as a ring via ll % PL. When a line scrolls above the window (older than mustwr), reverse feeds can no longer reach it, so col emit()s and free()s it. store/fetch swap the current line buffer lbuff with page[]. This lets col handle documents of any height with only a 128-line window -- reverse motion only reaches the near past (table alignment, exponents span a few lines), so a fixed sliding window streams the whole document.",
+      "human_story": "Reverse feeds only ever reach back a few lines, so col keeps a 128-line window and slides it forward, flushing lines once nothing can move back to them. A document of any height fits through a fixed-size buffer."
+    },
+    "appraiser_note": "逆行モーションは過去の行に書き込むため、col は現在行だけでなく近傍数行をメモリ保持: page[256](256半行=128行)を ll % PL でリング使用。窓より上に出た行(mustwr より古い)は逆送りで戻れないので emit() して free()。store/fetch が現在行 lbuff と page[] を出し入れ。これで任意の高さの文書を128行ぶんの窓だけで処理——逆行は近い過去(桁揃え・指数は数行)にしか戻らないので固定窓を滑らせストリーム処理。sort の N-way マージや dump のリングバッファと同じ節約術。"
+  },
+  {
+    "id": "col-003-overstrike-backspace",
+    "text": "outc (c) register char c; {\n\t...\n\tif (bflag || *line == '\\0' || *line == ' ')\n\t\t*line = c;\t\t/* empty -> place */\n\telse {\t\t\t/* already a char here -> overstrike */\n\t\tc1 = *++line; *line++ = '\\b';\t/* weave in a backspace */\n\t\tc2 = *line; *line++ = c;\n\t\twhile (c1) { ... }\n\t}\n}",
+    "file_path": "usr/src/cmd/col.c",
+    "line_number": 180,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "troff",
+      "overstrike",
+      "backspace"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "craft",
+      "emotion_intensity": 4,
+      "emotions": {
+        "craft": 4,
+        "clarity": 3
+      },
+      "technical_context": "When two characters land on the same line and column -- underline (_ over a letter), bold (same char twice), accents -- troff expresses it as char/reverse/char overstrike. col's outc() weaves a literal '\\b' (backspace) into the line buffer (a\\bc), encoding 'these two characters overlap' inside a 1D line; on emit the backspace is sent so the head returns and the overstrike is reproduced. -b drops overstriking and keeps only the last char (for devices that cannot backspace). A 2D overlap folded into 1D via one delimiter byte, like ptx's TILDE (#213).",
+      "human_story": "Bold and underline are two characters in the same spot. col records that by literally inserting a backspace between them, so the line stays one-dimensional yet the printer's head goes back and strikes twice. One byte carries the overlap."
+    },
+    "appraiser_note": "同じ行・同じ桁に2文字が来るとき(下線=_を文字に重ねる、太字=同字2回、アクセント)、troff は 文字/逆送り/文字 の重ね打ちで表す。col の outc() は行バッファに '\\b'(backspace) を物理的に織り込み(a\\bc)、『この2文字は重なる』を一次元の行に保存、emit 時に backspace が送られヘッドが戻り重ね打ちを再現。-b は重ね打ちを諦め最後の文字だけ残す(backspace 不可装置向け)。二次元の重なりを区切り1文字で一次元に畳む、ptx の TILDE(#213) と同じ流儀。"
   }
 ]
