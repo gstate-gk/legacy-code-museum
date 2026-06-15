@@ -17758,5 +17758,89 @@
       "human_story": "A 472-line game already knew how people learn: show a few items, retire the ones you get right, keep the ones you miss, and add more as you master them. The core of every spaced-repetition app today, written with one array and one increment in 1979."
     },
     "appraiser_note": "quiz は学習者に適応する。na(出題対象数)は全項目より小さく始まり、next() が線形合同法(inc*3125&077777, 時刻シード)で na 内をランダム選択するが score>0(正解済み)はスキップ。正解ごとに score[i] を増やし na++ で範囲を広げる。習得済みは退役し新項目が加わり、間違えた項目は残り再出題。正解→退役/不正解→再出題/習熟→範囲拡大、これは現代の間隔反復学習/適応学習(Anki/Duolingo/Khan)そのもので、1979年に score[] 配列と na++ だけで実装。-t(test)で採点モード、SIGINT で『Rights X, wrongs Y, score Z%』。"
+  },
+  {
+    "id": "arithmetic-001-adaptive-drill",
+    "text": "for(i=0;i<range;i++) left[i] = right[i] = i;\t/* each number once */\n...\ni = skrand(range); j = skrand(range);\t/* pick from the arrays */\n...\n/* on wrong answer: */\nleft[range] = left[i];\nright[range++] = right[j];\t/* add the missed numbers, raising their odds */",
+    "file_path": "usr/src/cmd/arithmetic.c",
+    "line_number": 140,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "education",
+      "adaptive-learning",
+      "probability"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "empathy": 4
+      },
+      "technical_context": "arithmetic is a four-function drill game. Its adaptation is wonderfully simple: the operand arrays left[]/right[] double as a weighted lottery box. Initially each number 0..range appears once (equal odds). On a WRONG answer it appends the missed operands (left[range]=left[i]; right[range++]=right[j]), increasing that number's multiplicity, so it is selected more often. The numbers you miss get drilled more. Same adaptive-learning idea as quiz (#217) from the other side: quiz retires mastered items, arithmetic multiplies the numbers you struggle with. No special data structure -- just multiplicity in the existing array (capped at MAX=100).",
+      "human_story": "Miss 7x8 and soon 7s and 8s keep coming back. arithmetic does this by dropping an extra copy of the numbers you missed into the same box it draws problems from -- weighting the lottery by hand, one array slot at a time."
+    },
+    "appraiser_note": "arithmetic は四則のドリルゲーム。適応が見事に素朴: 出題配列 left[]/right[] が重み付き抽選箱を兼ねる。初期は各数字 0..range が1回ずつ(等確率)。不正解で間違えた数字を末尾に追加(left[range]=left[i]; right[range++]=right[j])し多重度を上げ、選ばれやすくする。間違えた数字ほどドリルされる。quiz(#217)の適応学習を別角度から: quiz は習得済みを退役、arithmetic は苦手な数字を増やす。専用データ構造なし——既存配列の多重度だけ(MAX=100で打止)。"
+  },
+  {
+    "id": "arithmetic-002-whole-number-construction",
+    "text": "case '-':\n\tt = left[i] + right[j]; ans = left[i];\n\tprintf(\"%d - %d =   \", t, right[j]);\t/* t - right[j], answer = left[i] >= 0 */\ncase '/':\n\twhile(right[j] == 0) j = random(range);\t/* avoid divide-by-zero */\n\tt = left[i] * right[j] + random(right[j]); ans = left[i];\n\tprintf(\"%d / %d =   \", t, right[j]);\t/* t / right[j] = left[i] exactly */",
+    "file_path": "usr/src/cmd/arithmetic.c",
+    "line_number": 95,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "education",
+      "construction",
+      "quality"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "care",
+      "emotion_intensity": 4,
+      "emotions": {
+        "care": 4,
+        "craft": 4
+      },
+      "technical_context": "To avoid confusing beginners with negatives or fractions, arithmetic constructs problems backwards from a chosen answer. Subtraction: pick answer left[i], form t = left[i]+right[j], ask t - right[j] (answer is non-negative by construction). Division: form t = left[i]*right[j] + random(right[j]) (a remainder below the divisor), ask t / right[j], whose integer quotient is exactly left[i] -- always evenly divisible. A while-loop reselects to avoid divide-by-zero. Building only well-formed problems from the answer, rather than retrying random ones, is the same 'assemble correct output up front' care as number (#211).",
+      "human_story": "A kid's drill must never show 3 - 8 = -5 or 7 / 3. So arithmetic picks the answer first and builds the question around it, guaranteeing non-negative subtractions and clean divisions by construction."
+    },
+    "appraiser_note": "初学者を負数や分数で混乱させないため、arithmetic は答えから逆算して問題を作る。引き算: 答え left[i] を決め t=left[i]+right[j] を作り t - right[j] を問う(構成上、答えは非負)。割り算: t=left[i]*right[j]+random(right[j])(除数未満の余り)を作り t/right[j] を問えば整数商はちょうど left[i]=割り切れる。while ループで0除算回避。ランダムな問題を引き直すのでなく最初から整った問題だけ構成する——number(#211)と同じ『正しい出力を最初から組み立てる』几帳面さ。"
+  },
+  {
+    "id": "arithmetic-003-distribution-craft",
+    "text": "random(range) { return(hmul(rand(), 8*range)); }\t/* uniform */\nskrand(range) {\t/* triangular: sum of two uniforms */\n\ttemp = rand() + rand();\n\tif(temp >017777) temp = 040000 - temp;\n\treturn(hmul(temp, 8*range));\n}\n/* hmul: upper 16 bits of product; replaces an old PDP-11 assembler subroutine. -- dks. */\nhmul(a,b) { return(a*b >> 16); }",
+    "file_path": "usr/src/cmd/arithmetic.c",
+    "line_number": 175,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "random",
+      "distribution",
+      "pdp-11"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "rigor",
+      "emotion_intensity": 4,
+      "emotions": {
+        "rigor": 4,
+        "craft": 4
+      },
+      "technical_context": "Two RNG strategies. Operation choice (+ - x /) uses random() = uniform. But operand choice uses skrand() = a TRIANGULAR distribution: sum two uniforms and fold at the midpoint (017777), so mid-sized numbers are more likely and the dull extremes (0+0, 10+10) are rare -- tuning difficulty via distribution. And hmul reduces a random to [0,range) via (rand * 8*range) >> 16 -- multiply then take the high bits -- which avoids the modulo bias of rand()%range. This is the multiply-shift / Lemire range-reduction technique, used here in 1979. The comment is signed: 'replaces an old PDP-11 assembler language subroutine. -- dks.'",
+      "human_story": "arithmetic even shapes its randomness: operations uniform, but operands drawn from a triangle so the questions sit at a comfortable middle. And it reduces ranges by multiply-and-shift, dodging modulo bias decades before it had a name -- with a programmer's initials left in the comment."
+    },
+    "appraiser_note": "乱数2戦略。演算選択(+ - x /)は random()=一様。だが数字選択は skrand()=三角分布: 2つの一様乱数を足し中央値(017777)で折り返す、中くらいの数字が出やすく退屈な端(0+0,10+10)は稀——分布で難易度調整。hmul は乱数を [0,range) に (rand*8*range)>>16=乗算して上位ビットで縮小し、rand()%range の剰余バイアスを回避。今日 multiply-shift / Lemire の手法として知られる範囲縮小を1979年に使用。コメントに署名: 『古いPDP-11アセンブリのサブルーチンを置換 -- dks.』"
   }
 ]

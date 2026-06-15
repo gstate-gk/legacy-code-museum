@@ -1326,6 +1326,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "218",
+    title: "鑑定書#218 arithmetic — 間違えた問題の数字を出題プールに増殖させ苦手な数ほど頻繁に出す215行、答えが必ず整数になる出題構成、三角分布と乗算シフト(剰余バイアス無し)の乱数の職人技",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
