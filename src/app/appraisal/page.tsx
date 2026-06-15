@@ -1312,6 +1312,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "216",
+    title: "鑑定書#216 tabs — 8スペース打って ESC '1' で停止位置を「物理的に」刻み、DEL を連打して機械の動作完了を待つ197行、タブストップが機械の歯車だった時代の端末調律師",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

@@ -17589,5 +17589,89 @@
       "human_story": "Bold and underline are two characters in the same spot. col records that by literally inserting a backspace between them, so the line stays one-dimensional yet the printer's head goes back and strikes twice. One byte carries the overlap."
     },
     "appraiser_note": "同じ行・同じ桁に2文字が来るとき(下線=_を文字に重ねる、太字=同字2回、アクセント)、troff は 文字/逆送り/文字 の重ね打ちで表す。col の outc() は行バッファに '\\b'(backspace) を物理的に織り込み(a\\bc)、『この2文字は重なる』を一次元の行に保存、emit 時に backspace が送られヘッドが戻り重ね打ちを再現。-b は重ね打ちを諦め最後の文字だけ残す(backspace 不可装置向け)。二次元の重なりを区切り1文字で一次元に畳む、ptx の TILDE(#213) と同じ流儀。"
+  },
+  {
+    "id": "tabs-001-physical-tab-stops",
+    "text": "tabs(n) {\n\tif(margset) n--;\n\tfor( i=0; i<n; ++i ){\n\t\tfor( j=0; j<8; ++j ) putchar(SP);\t/* walk the carriage 8 columns */\n\t\tescape(SET);\t\t\t\t/* drive a tab stop here: ESC '1' */\n\t}\n}",
+    "file_path": "usr/src/cmd/tabs.c",
+    "line_number": 100,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "terminal",
+      "hardcopy",
+      "typewriter"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "nostalgia",
+      "emotion_intensity": 4,
+      "emotions": {
+        "nostalgia": 4,
+        "insight": 4
+      },
+      "technical_context": "tabs sets a hardcopy terminal's PHYSICAL tab stops, the way you would on a typewriter. On 1970s daisy-wheel printers (DASI 300/450), Teletype 37, HP 2645, a tab stop was a physical position. ESC '1' (SET) drops a stop at the carriage's current position, so tabs(n) prints 8 spaces to move the head 8 columns, then SET, repeated n times -- walking the carriage and driving a peg every 8 columns. margset/margin handle the physical left-margin offset. Tab stops were mechanical positions, not a numeric setting.",
+      "human_story": "Setting a tab was a physical act: move the carriage to the column and press 'set tab', exactly like a typewriter. tabs reproduces that by printing eight spaces and then an escape, again and again, walking the print head across the paper."
+    },
+    "appraiser_note": "tabs はハードコピー端末の物理的なタブストップを、タイプライターのように設定する。1970年代のデイジーホイール(DASI 300/450)/Teletype 37/HP 2645 では、タブストップは物理的な停止位置。ESC '1'(SET) がキャリッジの現在位置に停止を刻むので、tabs(n) は8スペースを打ってヘッドを8マス進め SET、を n 回——キャリッジを歩かせ8マスごとに杭を打つ。margset/margin が物理的な左マージンを扱う。タブストップは数値設定でなく機械上の位置だった。"
+  },
+  {
+    "id": "tabs-002-del-fill-delay",
+    "text": "clear(n) { escape(CLR); delay(n); putchar(CR); nl(); }\ndelay(n) { while (n--) putchar(DEL); }\n/* tty37: clear(40) = 40 DELs; dasi450: clear(8) */",
+    "file_path": "usr/src/cmd/tabs.c",
+    "line_number": 120,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "terminal",
+      "timing",
+      "fill-character"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "ingenuity": 4,
+        "resourcefulness": 4
+      },
+      "technical_context": "delay(n) sends n DEL (0177) characters, which most terminals treat as no-ops. tabs uses them purely as a timing pad: a mechanical operation like 'clear all tabs' takes real physical time as gears and solenoids move, and sending the next byte too soon makes the terminal drop it. So DELs are sent to wait -- each DEL's transmission time is the delay. The slower the terminal, the more DELs: tty37 uses clear(40), dasi450 uses clear(8). The classic fill-character technique: software pacing itself to the machine's physical speed, like troff vs the CAT phototypesetter and getty vs baud rate.",
+      "human_story": "The terminal is a machine, and clearing tabs takes time the gears need. So tabs sends a string of do-nothing DEL bytes just to wait, counting them out to match how slow the machine is. Code pacing itself to hardware, one filler byte at a time."
+    },
+    "appraiser_note": "delay(n) は DEL(0177) を n 個送る——多くの端末で no-op の文字。tabs はこれを純粋な時間稼ぎに使う: 『全タブ消去』のような機械動作は歯車やソレノイドが動く物理時間がかかり、次のバイトを早く送ると端末が取りこぼす。だから DEL を送って待つ——DEL 1個の送信時間がそのまま遅延。遅い端末ほど多く: tty37 は clear(40)、dasi450 は clear(8)。古典のフィル文字技法で、ソフトが機械の物理速度に合わせる(troff と CAT 写植機、getty とボーレートと同じ)。"
+  },
+  {
+    "id": "tabs-003-terminal-zoo",
+    "text": "struct sysnod tty[] = { {\"dasi300\",DASI300}, {\"dasi450\",DASI450}, {\"37\",TTY37}, {\"tn300\",TN300}, {\"hp\",HP}, {0,0} };\n...\nif (argc>=2) type=syslook(argv[1]); else type=syslook(getenv(\"TERM\"));\n/* fallback: gtty() sniff baud (B300/B150) + flags (CRMOD/LCASE) to guess model */",
+    "file_path": "usr/src/cmd/tabs.c",
+    "line_number": 60,
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979,
+    "tags": [
+      "unix",
+      "terminal",
+      "termcap",
+      "sgtty"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "craft",
+      "emotion_intensity": 4,
+      "emotions": {
+        "craft": 4,
+        "history": 4
+      },
+      "technical_context": "Most of tabs is per-model dialect: DASI 300/300S/450, Teletype 37, Terminet/TN300, HP 2645 each get a function knowing that model's escape sequences, delays, margins, and quirks (tty37 sends SI then 40 DELs; dasi450 does bs(16) + ESC margin; hp2645 uses ESC '3'). Auto-detection is grimy: read $TERM, else gtty(0) (the old sgtty interface) and guess the model from baud rate and flags -- CRMOD at 300 baud => Terminet, no CRMOD/LCASE at 150 baud => Model 37. This hardcoded model table is the rough ancestor of termcap/terminfo, taming the exploding zoo of incompatible terminals one model at a time.",
+      "human_story": "Every terminal spoke its own dialect, so tabs hardcodes a function per machine and, lacking a name, sniffs baud and flags to guess which beast it is talking to. It is the rough draft of termcap, taming the terminal zoo by hand."
+    },
+    "appraiser_note": "tabs の大半は機種ごとの方言: DASI 300/300S/450、Teletype 37、Terminet/TN300、HP 2645 にそれぞれ専用関数があり、その機種固有のエスケープ・遅延・マージン・癖を知る(tty37 は SI 後に40 DEL、dasi450 は bs(16)+ESCマージン、hp2645 は ESC '3')。自動判別は泥臭く、$TERM を見て無ければ gtty(0)(旧 sgtty)でボーレートとフラグから機種推測——CRMOD で300ボーなら Terminet、CRMOD/LCASE 無しで150ボーなら Model 37。このハードコード機種テーブルは termcap/terminfo の素朴な原型で、非互換端末の動物園を一機種ずつ飼い慣らす。"
   }
 ]
