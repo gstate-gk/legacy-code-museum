@@ -19663,5 +19663,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "ac-001-wtmp-login-ledger",
+    "text": "#include <utmp.h>\nstruct utmp ibuf;   /* one wtmp record: ut_name / ut_line / ut_time */\nwf = fopen(\"/usr/adm/wtmp\", \"r\");\nfor(;;) { if (fread(&ibuf, sizeof(ibuf), 1, wf) != 1) break;\n\t... /* check ut_name is alnum + NUL-padded; skip garbage */\n\tloop();\n}\nibuf.ut_name[0]='\\0'; ibuf.ut_line[0]='~'; time(&ibuf.ut_time); loop();  /* pseudo-logout 'now' */",
+    "line_number": 42,
+    "tags": [
+      "unix",
+      "accounting",
+      "ac",
+      "wtmp",
+      "login"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 4
+      },
+      "technical_context": "ac answers one question: how long was each user logged in. Where sa totals CPU time (process accounting), ac totals connect time (login accounting) -- the two faces of time-sharing billing. Its source is /usr/adm/wtmp, the login ledger: every login and logout appends a struct utmp (ut_name, ut_line=tty, ut_time) -- written by login as users come in and by init as terminals open and close. Like sa's /usr/adm/acct, it is a ledger piling up in /usr/adm. ac reads it record by record, validating ut_name (alnum + NUL-padded) and skipping garbage left by crashes. A refined touch: after reading the file, ac appends one synthetic record of its own -- empty name, line '~' (logout), time now -- so any session still open at the end of wtmp is closed off as 'logged out now'. The books must balance, so it pencils a closing entry.",
+      "human_story": "ac reads the login ledger -- wtmp, where every login and logout is stamped. To balance the books it even writes a fake 'logged out now' at the end, closing any session that was still open when the log ran out."
+    },
+    "appraiser_note": "ac は一つの問いに答える: 各ユーザがどれだけログインしていたか。sa が CPU 時間(プロセス会計)を集計するのに対し、ac は接続時間(ログイン会計)を集計する——タイムシェアリング課金の表と裏。元は /usr/adm/wtmp、ログインの台帳: ログイン/ログアウトのたびに struct utmp(ut_name/ut_line=tty/ut_time)が追記される——login がユーザを通すたび、init が端末を開け閉めするたびに書く。sa の /usr/adm/acct と同じ、/usr/adm に積もる会計台帳の一つ。ac は1件ずつ読み、ut_name(英数字+NUL詰め)を検証しクラッシュ由来のゴミを skip する。洗練された一手: ファイルを読み終えた後、ac は自分で擬似レコード(名前空・行 '~'(ログアウト)・時刻 now)を追加し、wtmp 末尾でまだ開いていたセッションを『今ログアウトした』ことにして締める。帳尻を合わせるため、締めの一筆を入れる。",
+    "file_path": "usr/src/cmd/ac.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "ac-002-pairing-login-logout",
+    "text": "struct tbuf { struct ubuf *userp; long ttime; } tbuf[TSIZE];  /* per terminal: who, since when */\nstruct ubuf { char uname[8]; long utime; } ubuf[USIZE];       /* per user: accumulated connect time */\n/* loop(): */\nif (ibuf.ut_line[0]=='t')                       /* \"ttyNN\": extract terminal number NN */\n\ti = (ibuf.ut_line[3]-'0')*10 + (ibuf.ut_line[4]-'0');\nelse i = TSIZE-1;\ntp = &tbuf[i]; update(tp, 0);                   /* update that terminal's session */\n/* update(): t1 = now - tp->ttime; if (t1>0 && t1<1.5*day) tp->userp->utime += t1; */",
+    "line_number": 92,
+    "tags": [
+      "unix",
+      "accounting",
+      "ac",
+      "session",
+      "pairing"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "insight": 4
+      },
+      "technical_context": "Connect time needs login matched to logout: a user logs into tty03 at 14:00 and out at 16:00 -- pair those two records and you get 2 hours. ac's key is pairing per terminal. It keeps tbuf[] indexed by terminal (tty), each entry holding who is logged in (userp) and since when (ttime), taken from ut_line 'ttyNN' via (ut_line[3]-'0')*10+(ut_line[4]-'0'). On a login record it stamps that terminal with user+start; on the next record for the same terminal, update() adds now-start to that user's total. It is like matching open and close brackets: login '(' and logout ')'. But wtmp interleaves events from many terminals, so the terminal number is the bracket type -- one open bracket held per terminal -- letting ac stitch the tangled stream back into individual sessions. A logout (line '~', empty name) clears the terminal's userp: bracket closed.",
+      "human_story": "Login is an open bracket, logout a close. But many terminals' events are tangled together in wtmp, so ac uses the terminal number as the bracket type, keeping one open bracket per terminal, and pairs each login to its logout to measure the session."
+    },
+    "appraiser_note": "接続時間はログインとログアウトの対応づけが要る: ユーザが tty03 に14時にログインし16時にログアウト——この2件を対にして2時間が出る。ac の鍵は端末ごとの対応づけ。tbuf[] を端末(tty)で索引し、各エントリが『今誰がログイン中か(userp)』『いつから(ttime)』を持つ。端末番号は ut_line 'ttyNN' から (ut_line[3]-'0')*10+(ut_line[4]-'0') で取り出す。ログインレコードでその端末にユーザ+開始時刻を刻み、同じ端末の次のレコードで update() が now-start をそのユーザの合計に足す。これは開き括弧と閉じ括弧の対応づけに似る: ログイン '('、ログアウト ')'。だが wtmp は複数端末のイベントが入り混じって流れるので、端末番号を括弧の種類として使い、端末ごとに1つの開き括弧を保持して、もつれた流れを個々のセッションに縫い合わせる。ログアウト(行 '~'、名前空)で端末の userp を空に——括弧が閉じた。",
+    "file_path": "usr/src/cmd/ac.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "ac-003-clock-change-correction",
+    "text": "if(ibuf.ut_line[0] == '|') { dtime = ibuf.ut_time; return; }   /* time BEFORE a clock change */\nif(ibuf.ut_line[0] == '}') {                                  /* time AFTER a clock change */\n\tif(dtime == 0) return;\n\tfor(tp = tbuf; tp < &tbuf[TSIZE]; tp++)\n\t\ttp->ttime += ibuf.ut_time - dtime;   /* shift every session start by the clock jump */\n\tdtime = 0; return;\n}\nif (lastime>ibuf.ut_time || lastime+(1.5*day)<ibuf.ut_time) midnight = 0;   /* time went backwards/jumped */",
+    "line_number": 98,
+    "tags": [
+      "unix",
+      "accounting",
+      "ac",
+      "clock",
+      "robustness"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "craft",
+      "emotion_intensity": 4,
+      "emotions": {
+        "craft": 4,
+        "ingenuity": 4
+      },
+      "technical_context": "Connect time is just now - start, but that assumes the clock advances correctly and monotonically -- which breaks when someone runs date to reset it, jumping or rewinding time and wrecking the subtraction. ac guards against the unreliable clock twice. First, the | and } records: when the clock is changed, wtmp records the time just before (|) and just after (}); ac adds their difference (the jump amount) to every terminal's session start ttime, so each start follows the shift and now-start stays correct -- absorbing the discontinuity by moving the reference point. Second, the sanity guard: if a record's time goes backwards or jumps more than 1.5 days it resets the day calc, and update()'s if (t1>0 && t1 < 1.5*day) simply discards any computed session longer than 1.5 days or negative -- no one is logged in over a day straight, let alone for negative time. Like uucp expecting line noise and icheck expecting disk corruption, ac is built expecting the clock to lie, and keeps the books right anyway.",
+      "human_story": "Someone runs date and the clock jumps -- now every session length is wrong. ac watches for the before/after pair wtmp records around a clock change and shifts all the session starts to match, and it throws away any session that comes out negative or longer than a day and a half."
+    },
+    "appraiser_note": "接続時間は now - start の引き算だが、それは時刻が正しく単調に進む前提に立つ——誰かが date で時計を直すと時刻が飛んだり巻き戻ったりして引き算が壊れる。ac は狂う時計に二重に備える。一つめが | と } のレコード: 時計が変更されると wtmp に変更直前の時刻(|)と直後の時刻(})が記録され、ac はその差(ジャンプ量)を全端末のセッション開始ttime に足す。こうして各開始時刻がずれに追随し now-start が正しさを保つ——基準点を動かして不連続を吸収する。二つめが妥当性の番人: レコードの時刻が逆行 or 1.5日超飛躍したら日付計算をリセットし、update() の if (t1>0 && t1 < 1.5*day) が1.5日超や負の計算結果を捨てる——誰も24時間以上ぶっ続けで(まして負の時間)繋がない。uucp が回線ノイズを、icheck がディスク破損を前提にしたように、ac は時計が嘘をつく前提で作られ、それでも帳尻を合わせる。",
+    "file_path": "usr/src/cmd/ac.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "ac-004-connect-time-billing",
+    "text": "print() {\n\tfor (i=0; i<USIZE; i++) {\n\t\tif(!among(i)) continue;                       /* filter to named users if given */\n\t\tif (ubuf[i].utime > 0) ttime += ubuf[i].utime;\n\t\tif (pflag && ubuf[i].utime > 0)               /* -p: per-user connect hours */\n\t\t\tprintf(\"\\t%-8.8s%6.2f\\n\", ubuf[i].uname, ubuf[i].utime/3600.);\n\t}\n\tif (ttime > 0) { pdate(); printf(\"\\ttotal%9.2f\\n\", ttime/3600.); }   /* grand total in hours */\n}",
+    "line_number": 137,
+    "tags": [
+      "unix",
+      "accounting",
+      "ac",
+      "connect-time",
+      "billing"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 5,
+      "emotions": {
+        "legacy": 5,
+        "history": 4
+      },
+      "technical_context": "ac prints each user's connect time in hours and a grand total: -p per user, -d per day (newday/midnight compute the midnight boundary with timezone and DST), people args filter via among(). Seconds in utime become hours via /3600. Here ac and sa pair up. Time-sharing billing had two axes: CPU time -- how long a process actually used the machine (sa from /usr/adm/acct) -- and connect time -- how long a user was logged in (ac from /usr/adm/wtmp). Even with little CPU, holding a terminal ties up a line and memory, a real cost; so computing centers measured and billed both. sa counts work done, ac counts time present -- two ledgers, two programs, two lines on one user's bill. The connect-time idea is everywhere now: a cloud VM is billed for uptime regardless of CPU (connect time itself), SaaS sells monthly access, web analytics measure session duration, and last(1) reads the same wtmp to show who was logged in when. Not just how much you used, but how long you were attached -- ac is the prototype of that metering.",
+      "human_story": "sa measures the work you did; ac measures the time you were there. Two ledgers, two bills. And the 'time you were attached' is exactly what your cloud VM is billed for by uptime, what web analytics call session duration, what last still reads from wtmp."
+    },
+    "appraiser_note": "ac は各ユーザの接続時間(時間単位)と合計を出す: -p でユーザ別、-d で日別(newday/midnight がタイムゾーン・DST考慮で真夜中境界を計算)、people 引数で among() による絞り込み。秒の utime を /3600. で時間に直す。ここで ac と sa が対をなす。タイムシェアリング課金には二軸あった: CPU 時間——プロセスが実際に計算機を使った時間(sa が /usr/adm/acct から)——と接続時間——ユーザがログインしていた時間(ac が /usr/adm/wtmp から)。CPU をほとんど使わなくても端末を占有すれば回線とメモリを押さえ、立派なコスト。だから計算センターは両方を測って課金した。sa が働いた分を、ac が居た分を数える——二つの台帳、二つのプログラム、一人の請求書の別々の行。接続時間の発想は今や至る所に: クラウドVMは CPU 使用率に関わらず起動時間(=接続時間そのもの)で課金され、SaaS は月額でアクセス期間を売り、Web 解析はセッション時間を測り、last(1) は同じ wtmp を読んで誰がいつログインしていたかを見せる。何を使ったかだけでなく、どれだけ繋がっていたか——ac はその計測の祖型。",
+    "file_path": "usr/src/cmd/ac.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]

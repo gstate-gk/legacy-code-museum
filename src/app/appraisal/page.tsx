@@ -1445,6 +1445,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "237",
+    title: "鑑定書#237 ac — 端末ごとにログインの開始時刻を覚え、ログアウトのたびに接続時間をユーザに足し込む。/usr/adm/wtmp のログイン台帳を集計し、時計の巻き戻しを |/} レコードで補正する249行の接続時間会計。sa と対をなす課金のもう半分、クラウドのインスタンス起動時間課金・last の祖",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
