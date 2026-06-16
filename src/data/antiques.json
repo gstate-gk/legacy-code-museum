@@ -18155,5 +18155,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "ncheck-001-pname-recursion",
+    "text": "pname(i, lev) ino_t i; {\n\tif (i==ROOTINO) return;\t\t/* hit the root: base case */\n\tif ((hp = lookup(i, 0)) == 0) { printf(\"???\"); return; }\t/* parent gone = broken */\n\tif (lev > 10) { printf(\"...\"); return; }\t/* too deep / cycle guard */\n\tpname(hp->h_pino, ++lev);\t/* print parent first, then */\n\tprintf(\"/%.14s\", hp->h_name);\t/* append my own name */\n}",
+    "line_number": 253,
+    "tags": [
+      "unix",
+      "filesystem",
+      "recursion",
+      "pathname",
+      "fsck"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "insight": 4
+      },
+      "technical_context": "ncheck (name check) reconstructs a full pathname from an inode number. A Unix inode does not store its own name or parent -- names live only inside directories as name->inode entries, and the reverse lookup is indexed nowhere. pname() rebuilds a path bottom-up: to print inode i it first recurses to i's parent (h_pino) and only then appends i's own name, so the stack unwinds as / -> /usr -> /usr/src -> /usr/src/cmd, in correct order. The base case is ROOTINO. Two guards make it survive a damaged disk: lookup()==0 prints '???' for an orphan whose parent is missing, and lev>10 prints '...' to stop infinite recursion if the directory graph has a cycle (A's parent is B, B's parent is A). ncheck does not assume the tree it reads is actually a tree.",
+      "human_story": "A file does not know its own name. To print a path, ncheck climbs from a directory up to its parent, to its parent's parent, all the way to the root, then writes the names back down on the way out. Recursion turns 'walk up to the root' into 'print the path top to bottom'."
+    },
+    "appraiser_note": "ncheck(name check)は inode 番号からフルパスを逆構築する。Unix の inode は自分の名前も親も持たない——名前はディレクトリの中の『名前→inode』エントリにしか無く、その逆引きはどこにも索引化されていない。pname() はパスを下から組み上げる: inode i を印字するにはまず i の親(h_pino)へ再帰し、それから i 自身の名前を継ぐので、スタックが巻き戻るにつれ / → /usr → /usr/src → /usr/src/cmd と正しい順に出る。底は ROOTINO。2つの防壁で壊れたディスクに耐える: lookup()==0 は親を失った孤児に '???'、lev>10 はディレクトリ構造が循環(Aの親がB、Bの親がA)していたときの無限再帰を '...' で止める。ncheck は読んでいる木が本当に木である(循環しない)とは仮定しない。",
+    "file_path": "usr/src/cmd/ncheck.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "ncheck-002-dir-hashtable",
+    "text": "#define HSIZE 2503\t/* prime */\nstruct htab { ino_t h_ino; ino_t h_pino; char h_name[DIRSIZ]; } htab[HSIZE];\nlookup(i, ef) ino_t i; {\n\tfor (hp = &htab[i%HSIZE]; hp->h_ino;) {\t/* open addressing */\n\t\tif (hp->h_ino==i) return(hp);\n\t\tif (++hp >= &htab[HSIZE]) hp = htab;\t/* wrap around */\n\t}\n\tif (ef==0) return(0);\n\tif (++nhent >= HSIZE) { fprintf(stderr,\"ncheck: out of core-- increase HSIZE\\n\"); exit(1); }\n\thp->h_ino = i; return(hp);\n}",
+    "line_number": 272,
+    "tags": [
+      "unix",
+      "filesystem",
+      "hashtable",
+      "prime",
+      "open-addressing"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "craft",
+      "emotion_intensity": 4,
+      "emotions": {
+        "craft": 4,
+        "legacy": 3
+      },
+      "technical_context": "To rebuild paths, ncheck keeps only DIRECTORY inodes -- a directory appears in the middle of many files' paths, while a plain file is a leaf printed once. htab stores each directory's inode, its parent inode (h_pino), and its name. lookup() is open addressing with linear probing from i%HSIZE, wrapping at the end of the array -- no chaining, no malloc, all inside one fixed array. HSIZE is 2503, a prime, so i%HSIZE spreads inode numbers evenly and avoids clustering -- the same 'hash with primes' habit as spell's bloom filter. When the table fills it prints 'increase HSIZE', asking you to recompile: filesystem scale pinned by one constant.",
+      "human_story": "Only directories get remembered, because only directories sit in the middle of other files' paths. The table is a prime-sized array probed linearly, and if it overflows the program tells you to recompile with a bigger number."
+    },
+    "appraiser_note": "パスを組み直すため ncheck が覚えるのはディレクトリ inode だけ——ディレクトリは多くのファイルのパスの途中に現れるが、普通のファイルは1度印字すれば済む葉。htab は各ディレクトリの inode・親 inode(h_pino)・名前を持つ。lookup() は i%HSIZE 起点の線形探索によるオープンアドレス法で、配列末尾で先頭へ回り込む——チェイン無し・malloc 無し、固定長配列の中だけ。HSIZE は素数 2503 で、i%HSIZE の分布を均し偏りを避ける(spell のブルームフィルタと同じ『ハッシュには素数』の手癖)。表が溢れると 'increase HSIZE' と再コンパイルを促す: ファイルシステムの規模が定数ひとつで決め打ちだった時代。",
+    "file_path": "usr/src/cmd/ncheck.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "ncheck-003-three-passes",
+    "text": "for(...) pass1(&itab[j]);  /* 1: register every directory in the table */\nfor(...) pass2(&itab[j]);  /* 2: give each dir its parent + name */\nfor(...) pass3(&itab[j]);  /* 3: print every entry with its full path */\n/* pass2: */ hp = lookup(kno, 0);\nif(hp==0 || dotname(dp)) continue;\nhp->h_pino = ino;\t\t/* this child's parent is the current dir */\nfor(k=0;k<DIRSIZ;k++) hp->h_name[k] = dp->d_name[k];",
+    "line_number": 99,
+    "tags": [
+      "unix",
+      "filesystem",
+      "multipass",
+      "directory",
+      "tree"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "elegance": 4
+      },
+      "technical_context": "ncheck scans the inode table three times. A directory's name lives in its PARENT's entry, but in inode-number order the parent and child may appear in either order, so you cannot write names until all directories are registered. pass1 enters every directory inode (name and parent still blank). pass2 reads each directory's entries; when an entry points at a known directory it sets that child's parent (h_pino = current dir) and copies its name -- building the directory tree backwards as child->parent pointers. pass3 prints every entry as inode-number + full path. Only directories go in the tree because plain files are leaves; pass3 hangs each leaf under its parent and prints. Separating the register phase from the write phase is the whole reason for multiple passes.",
+      "human_story": "You cannot name a directory until you have seen every directory, because its name is written in a parent you might not have reached yet. So ncheck registers them all first, then wires up parents and names, then prints. The name space rebuilt in three sweeps."
+    },
+    "appraiser_note": "ncheck は inode テーブルを3回舐める。ディレクトリの名前は親のエントリに書かれるが、inode 番号順では親と子のどちらが先に出るか決まっていないので、全ディレクトリを登録し終えるまで名前を書けない。pass1 は全ディレクトリ inode を登録(名前も親も空)。pass2 は各ディレクトリのエントリを読み、エントリが既知のディレクトリを指すならその子に親(h_pino=今いるディレクトリ)と名前を書き込む——子→親ポインタとして木を逆向きに組む。pass3 は全エントリを inode番号＋フルパスで印字。表に入れるのはディレクトリだけ(普通のファイルは葉)で、pass3 がその葉を親の木にぶら下げて印字する。登録フェーズと書込フェーズの分離が、複数パスの理由そのもの。",
+    "file_path": "usr/src/cmd/ncheck.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "ncheck-004-reverse-lookup-find-ancestor",
+    "text": "case 's': sflg++; continue;\n/* pass1, for a non-directory: */\nif (sflg==0 || nxfile>=NB) return;\nif ((ip->di_mode&IFMT)==IFBLK || (ip->di_mode&IFMT)==IFCHR\n  || ip->di_mode&(ISUID|ISGID))\t/* device / setuid / setgid */\n\tilist[nxfile++] = ino;",
+    "line_number": 137,
+    "tags": [
+      "unix",
+      "filesystem",
+      "security",
+      "find",
+      "lost+found"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 5,
+      "emotions": {
+        "legacy": 5,
+        "insight": 4
+      },
+      "technical_context": "ncheck embodies the asymmetry of a Unix filesystem: directories map name->inode, but the reverse is indexed nowhere, so the only way to know a file's current path is to read every directory and match. ncheck does that reverse lookup on the raw disk, without mounting or the kernel. This has two descendants. find: walking the tree to print paths matching conditions is ncheck made interactive and conditional -- and ncheck -s, which lists setuid/setgid and device files, is the ancestor of 'find / -perm -4000', the classic security audit for privilege-escalation files. And fsck's lost+found: when fsck finds an inode that no directory references (it lost its name) but whose data is alive, it relinks it as lost+found/#<inode>, giving the nameless inode its own number as a name -- exactly the inode<->name domain ncheck opened up.",
+      "human_story": "A filesystem can map a name to a file but not a file back to its name -- that index simply does not exist. ncheck builds it by brute force, reading every directory. Out of that grew find, the setuid-file security audit, and fsck rescuing nameless inodes into lost+found."
+    },
+    "appraiser_note": "ncheck は Unix ファイルシステムの非対称性を体現する: ディレクトリは『名前→inode』を引けるが逆はどこにも索引化されておらず、ファイルの現在のパスを知る唯一の方法は全ディレクトリを読んで突き合わせること。ncheck はその逆引きをマウントもカーネルも介さず生ディスク上でやる。子孫は2つ。find: 木を歩いて条件に合うパスを出すのは ncheck を対話的・条件付きにしたもので、とりわけ ncheck -s が setuid/setgid とデバイスファイルを列挙する機能は『find / -perm -4000』=権限昇格に使える危険ファイルを洗い出すセキュリティ監査の祖先。そして fsck の lost+found: どのディレクトリからも参照されない(名前を失った)が中身は生きている inode を fsck は lost+found/#<inode番号> に繋ぎ直す——名前なき inode に番号そのものを仮の名前として与える、まさに ncheck が切り拓いた『inode と名前の対応』の領域。",
+    "file_path": "usr/src/cmd/ncheck.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]

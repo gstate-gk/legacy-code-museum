@@ -1354,6 +1354,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "222",
+    title: "鑑定書#222 ncheck — inode は自分の名前を知らない。全ディレクトリを生ディスクから読み素数2503サイズのハッシュ表でディレクトリだけを集め、3パスで親ポインタの木を組み直し pname() の再帰でパス名を逆算する322行(name check)、find と fsck の lost+found の祖",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
