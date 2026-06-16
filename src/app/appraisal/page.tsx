@@ -1452,6 +1452,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "238",
+    title: "鑑定書#238 iostat — カーネルが毎クロックtickに「CPU状態×どのディスクが稼働か」を32ビンのhistogramに刻む。それを nlist(/unix)+/dev/kmem で読み、二度のスナップショットの差で I/O・CPU の率を出し、ディスクの物理定数でシーク/転送時間に分離する286行。iostat/vmstat/sar/top の祖",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

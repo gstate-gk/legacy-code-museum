@@ -19779,5 +19779,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "iostat-001-nlist-devkmem",
+    "text": "struct { char name[8]; int type; unsigned value; } nl[] = {\n\t\"_dk_busy\", \"_dk_time\", \"_dk_numb\", \"_dk_wds\",   /* disk activity counters */\n\t\"_tk_nin\", \"_tk_nout\", \"_io_info\",                /* tty + buffer cache */\n};\nnlist(\"/unix\", nl);                 /* symbol name -> memory address */\nmf = open(\"/dev/kmem\", 0);\nlseek(mf, (long)nl[0].value, 0); read(mf, &s.busy, sizeof s.busy);",
+    "line_number": 44,
+    "tags": [
+      "unix",
+      "monitoring",
+      "iostat",
+      "dev-kmem",
+      "kernel-counters"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 4
+      },
+      "technical_context": "iostat measures I/O performance -- transfers per minute, ms per transfer, ms per seek, and the CPU's user/nice/system/idle split. But CPU usage and disk activity change moment to moment inside the kernel; how does an outside program know them? Same idiom as dmesg: read the kernel's own counters through /dev/kmem. _dk_busy/_dk_time (disk histogram), _dk_numb (transfers), _dk_wds (words), _tk_nin/_tk_nout (tty chars), _io_info (buffer cache) are plain global variables the kernel keeps updating, exposed through no API. iostat resolves their addresses with nlist(/unix) -- the running kernel's symbol table -- then lseeks and reads them from /dev/kmem, the kernel's virtual memory as a file (dmesg used /dev/mem, physical). This nlist + /dev/kmem combo is how ps, pstat, vmstat and adb all peeked into the live kernel: no dedicated monitoring interface, just a transparent kernel whose every counter is readable from outside -- until /proc and sysctl gave it a tidy window later.",
+      "human_story": "How do you watch a running kernel from outside? You ask its symbol table where each counter lives and read that address straight out of /dev/kmem. The kernel kept no monitoring API -- it just let you read its memory."
+    },
+    "appraiser_note": "iostat は I/O 性能を測る——毎分転送数・1転送あたりミリ秒・シーク ミリ秒、CPU の user/nice/system/idle 内訳。だが CPU 使用率もディスク稼働もカーネルの中で刻一刻変わる。外のプログラムがどう知るか? dmesg と同じ手: カーネルのカウンタを /dev/kmem 越しに読む。_dk_busy/_dk_time(ディスクhistogram)、_dk_numb(転送回数)、_dk_wds(ワード数)、_tk_nin/_tk_nout(端末文字数)、_io_info(バッファキャッシュ)はカーネルが更新し続けるただのグローバル変数で、API 公開はされない。iostat は nlist(/unix)＝動作カーネルのシンボル表で番地を解決し、/dev/kmem(カーネル仮想メモリをファイルに見せたもの。dmesg は物理の /dev/mem)を lseek+read する。この nlist + /dev/kmem は ps/pstat/vmstat/adb が動作カーネルを覗くのに使った手。専用の監視IFはなく、全カウンタが外から読める透明なカーネル——後に /proc や sysctl が整理した窓口を作るまで。",
+    "file_path": "usr/src/cmd/iostat.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "iostat-002-joint-histogram",
+    "text": "long etime[32];   /* one tick increments ONE bin: CPU-state x disk-busy */\n/* bin index: low 3 bits = disks busy (bit0 RF, bit1 RK, bit2 RP),\n             high part = CPU state (0-7 user, 8-15 nice, 16-23 system, 24-31 idle) */\nstats(dn) {                          /* time disk dn was active */\n\tfor(i=0;i<32;i++) if(i & (1<<dn)) t += s.etime[i];\n}\nstat1(o) {                           /* percent of time in CPU state o */\n\tfor(i=0;i<8;i++) t += s.etime[o+i];\n}",
+    "line_number": 164,
+    "tags": [
+      "unix",
+      "monitoring",
+      "iostat",
+      "histogram",
+      "sampling"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "insight": 5
+      },
+      "technical_context": "iostat's cleverest move is how etime[32] packs information into the bin index. Each clock tick the kernel increments exactly one bin, and that bin number encodes two things at once. Read the 0-31 index as five bits: the low three bits are which disks are spinning (bit0 RF, bit1 RK, bit2 RP); the high part (in groups of 8) is what the CPU is doing (0-7 user, 8-15 nice, 16-23 system, 24-31 idle). So 'CPU in system mode while RP spins' increments bin 16+4=20. One bin = one CPU-state x disk-busy combination. The encoding pays off because reads are bit operations: how busy was disk dn? sum bins where if(i & (1<<dn)); how much time in user? sum bins 0-7. A single 32-element array folds the joint distribution of 4 CPU states x 8 disk combinations, and any cross-section is a bitmask away. Same spirit as prof's PC sampling -- sample the state once per tick and count it -- but iostat folds two axes into one bin, capturing even the correlation (was the CPU in system busy while disks spun -- I/O wait or compute?) in just 32 counters.",
+      "human_story": "Thirty-two numbers hold everything: each clock tick the kernel bumps one bin whose number says both what the CPU was doing and which disks were turning. Want disk RP's busy time? Add the bins with that bit set. Two dimensions folded into one index, read back with a bitmask."
+    },
+    "appraiser_note": "iostat の最も巧妙な点は etime[32] のビン番号への情報の詰め方だ。クロック1tickごとにカーネルはちょうど1ビンを増やし、そのビン番号に二つの情報が同時に符号化される。0-31 を5ビットと見ると、下位3ビットがどのディスクが回っているか(bit0 RF/bit1 RK/bit2 RP)、上位(8単位)が CPU が何をしているか(0-7 user/8-15 nice/16-23 system/24-31 idle)。だから『CPU が system モードで RP が回る』なら 16+4=20 を増やす。一つのビン=CPU状態×ディスク稼働の組合せ。読み出しがビット演算なのが効く: ディスク dn の稼働は if(i & (1<<dn)) のビンを合計、user の割合はビン0-7を合計。32要素の配列に CPU状態4種×ディスク稼働2³=8通りの同時分布が畳まれ、任意の断面がビットマスク一つで切り出せる。prof の PC サンプリングと同思想——tickごとに状態を1回サンプリングして数える——だが iostat は二軸を一つのビンに畳み、相関(CPU が system で忙しい間ディスクは回っていたか＝I/O待ちか計算か)まで32カウンタで捉える。",
+    "file_path": "usr/src/cmd/iostat.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "iostat-003-sample-and-subtract",
+    "text": "for(i=0; i<40; i++) {\n\tt = s.etime[i];\n\ts.etime[i] -= s1.etime[i];   /* this read - last read = activity in the interval */\n\ts1.etime[i] = t;             /* save this read for next time */\n}\n...\nsleep(atoi(argv[1]));            /* wait the given seconds... */\ngoto loop;                       /* ...and sample again */",
+    "line_number": 106,
+    "tags": [
+      "unix",
+      "monitoring",
+      "iostat",
+      "rate",
+      "vmstat"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "craft": 4
+      },
+      "technical_context": "Kernel counters are totals since boot. Reading _dk_numb once gives only the lifetime count; you want the rate -- how fast it is going now. iostat's answer is the universal one: sample twice and subtract. It computes current minus previous (s.etime[i] -= s1.etime[i]), which is the activity between the two reads, saves the current value in s1, sleeps the requested seconds, and loops. iostat 5 prints the I/O rate over each 5-second window. The first read is the since-boot total, so it is the second read onward that gives the true recent rate. This 'sample a cumulative counter twice and diff for the interval rate' is the basic pattern of system monitoring -- vmstat 1, iostat 5, sar, mpstat, and top/htop reading /proc/stat twice all do exactly this. The kernel never computes rates (expensive, and who needs which?); it just honestly increments totals, and the viewer derives the rate by subtraction. Record and interpret kept separate, like sa and dmesg.",
+      "human_story": "The kernel only counts totals. To see a rate, iostat reads the counter, waits, reads again, and subtracts -- the gap is what happened in between. Every monitor since, from vmstat to top, is this same read-wait-read-subtract loop."
+    },
+    "appraiser_note": "カーネルのカウンタは起動からの累積値だ。_dk_numb を一度読んでも総数しか分からない。欲しいのは率——今どれくらいの速さで進んでいるか。iostat の答えは普遍的: 二度測って差を取る。現在値−前回値(s.etime[i] -= s1.etime[i])が二回の読みの間の活動で、現在値を s1 に保存し、指定秒 sleep してループする。iostat 5 なら5秒窓ごとに I/O 率を出す。最初の読みは起動からの累積なので、二回目以降が本当の直近の率になる。この『累積カウンタを二度サンプリングして区間の率を差分で出す』はシステム監視の基本パターン——vmstat 1/iostat 5/sar/mpstat、/proc/stat を二度読む top/htop もまさにこれ。カーネルは率を計算しない(高価で誰が要るか不明)。ただ累積を正直に増やし、見る側が引き算で率を導く。記録と解釈の分離——sa や dmesg と同じ。",
+    "file_path": "usr/src/cmd/iostat.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "iostat-004-ticks-to-physical",
+    "text": "double xf[] = { 16.0, 11.1, 2.48 };   /* RF, RK, RP06: microseconds per word */\nstats(dn) {\n\tf3 = s.wds[dn] * 32.;\n\tf4 = xf[2] * 1.0e-6;              /* RP06 seconds per word */\n\tf5 = f1 - f4*f3;                  /* total busy - pure transfer = seek time */\n\tf6 = f1 - f5;                     /* transfer time */\n\tprintf(\"%6.0f\", f2*60./etime);   /* tpm: transfers per minute */\n\tprintf(\"%6.1f\", f5*1000./f2);    /* msps: ms per seek */\n\tprintf(\"%6.1f\", f6*1000./f2);    /* mspt: ms per transfer */\n}",
+    "line_number": 158,
+    "tags": [
+      "unix",
+      "monitoring",
+      "iostat",
+      "disk",
+      "performance"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 4
+      },
+      "technical_context": "Raw tick counts mean nothing to a human; iostat's last job is to translate them into physical quantities -- milliseconds, transfers per minute. The key is xf[], a table of disk physical constants: RF takes 16.0us per word, RK 11.1us, RP06 2.48us, the hardware transfer speeds baked into code. From the histogram iostat gets total busy time f1, subtracts the pure transfer time (words x seconds-per-word) to leave seek time f5 -- the time the head spent moving rather than reading. So a disk's busy time splits into transfer (mspt) and seek (msps). Long seek time means scattered, random access; transfer-dominated means big sequential I/O. With -b, biostats() prints buffer-cache stats (reads, read-aheads, cache hits, writes) so you see the cache's effectiveness too. Turning raw counts into meaningful metrics via hardware physics is the essence of performance monitoring -- today's iostat %util, await, r/s and w/s, and top's CPU breakdown are all the descendants of this 1979 reading of 32 bins and disk constants.",
+      "human_story": "Busy is not enough: was the disk reading data or just moving its head? iostat subtracts the pure transfer time (words times the disk's microseconds-per-word) from the total busy time, and what is left is seek. Counts become milliseconds, the way every performance tool since reports them."
+    },
+    "appraiser_note": "生のtick数は人間に意味をなさない。iostat の最後の仕事はそれを物理量——ミリ秒・毎分転送数——に翻訳することだ。鍵は xf[]、ディスクの物理定数表: RF はワードあたり16.0µ秒、RK 11.1µ秒、RP06 2.48µ秒、ハードの転送速度がコードに焼き込まれている。histogram から得た総稼働時間 f1 から、純転送時間(ワード数×ワードあたり秒)を引いて残りがシーク時間 f5——ヘッドが読み書きでなく移動に費やした時間。だからディスクの稼働時間が転送(mspt)とシーク(msps)に分かれる。シーク時間が長ければ散らばったランダムアクセス、転送支配なら大きな連続I/O。-b では biostats() がバッファキャッシュ統計(読み/先読み/キャッシュヒット/書き)を出しキャッシュの効きも分かる。生の数をハードの物理で意味ある指標に変えるのが性能監視の本質——今日の iostat %util/await/r/s/w/s、top の CPU 内訳はすべて、この1979年の32ビンとディスク定数の読み取りの子孫だ。",
+    "file_path": "usr/src/cmd/iostat.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]
