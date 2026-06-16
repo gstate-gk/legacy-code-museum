@@ -19199,5 +19199,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "sa-001-kernel-ledger",
+    "text": "#include <sys/acct.h>   /* the record the kernel writes per process exit */\nwhile (fread((char *)&fbuf, sizeof(fbuf), 1, ff) == 1) {\n\tif (fbuf.ac_comm[0]==0) fbuf.ac_comm[0] = '?';          /* no command name */\n\tif (c && (c < ' ' || c >= 0200)) *cp = '?';             /* clean control/non-ASCII */\n\tif (fbuf.ac_flag&AFORK) ... *cp = '*';                  /* forked but never exec'd */\n\tc = fbuf.ac_uid&0377; user[c].ncomm++;                  /* tally by user */\n\ti = enter(fbuf.ac_comm); tab[i].count++;                /* tally by command */\n}",
+    "line_number": 272,
+    "tags": [
+      "unix",
+      "accounting",
+      "sa",
+      "audit",
+      "metering"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 5,
+      "emotions": {
+        "insight": 5,
+        "legacy": 4
+      },
+      "technical_context": "sa is process accounting -- it interprets /usr/adm/acct, the file the kernel appends to every time a process exits. Each struct acct (sys/acct.h) records who (ac_uid), what command (ac_comm, first 8 chars), and how long (elapsed ac_etime, user CPU ac_utime, system CPU ac_stime), plus flags. This is the prototype of an OS-level audit log: the application does not log itself; the OS records every process that runs, so the trail is complete. doacct cleans the raw records -- empty name to '?', control/non-ASCII to '?' -- and marks with '*' a process that forked but died before exec (its name is still the parent's). Then it tallies per user (user[uid]) and per command (tab[] via enter()). Why keep such a ledger? In 1979 computers were expensive and shared by time-sharing; who used how much resource was the basis for billing, health checks, and abuse detection.",
+      "human_story": "Every process that ever ran left a line in a ledger the kernel kept. sa reads that ledger -- who ran what, for how long -- and adds it up. The OS, not the program, did the bookkeeping, so nothing escaped the record."
+    },
+    "appraiser_note": "sa はプロセス会計——カーネルがプロセス終了ごとに追記する /usr/adm/acct を解釈する。各 struct acct(sys/acct.h)が、誰が(ac_uid)・何のコマンドを(ac_comm 先頭8文字)・どれだけ(経過 ac_etime/ユーザCPU ac_utime/システムCPU ac_stime)使ったか、＋フラグを記録する。これは OS レベル監査ログの原型: アプリが自分でログを書くのでなく OS が走った全プロセスを記録するので台帳は完全。doacct は生レコードを掃除し(空名→'?'、制御/非ASCII→'?')、fork したが exec せず死んだプロセス(名前は親のまま)に '*' を付ける。そしてユーザ別(user[uid])とコマンド別(tab[]、enter())に集計する。なぜそんな台帳が要るか: 1979年コンピュータは高価でタイムシェアリングで共有され、誰がどれだけ資源を使ったかが課金・健康診断・不正検知の根拠だった。",
+    "file_path": "usr/src/cmd/sa.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "sa-002-comp_t-compression",
+    "text": "time_t expand(t) unsigned t; {\n\tregister time_t nt;\n\tnt = t & 017777;   /* low 13 bits = mantissa */\n\tt >>= 13;          /* high 3 bits = exponent */\n\twhile (t != 0) { t--; nt <<= 3; }   /* shift left 3 bits per exponent unit */\n\treturn(nt);        /* value = mantissa * 8^exponent */\n}",
+    "line_number": 474,
+    "tags": [
+      "unix",
+      "accounting",
+      "sa",
+      "compression",
+      "pseudo-float"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "craft",
+      "emotion_intensity": 4,
+      "emotions": {
+        "craft": 4,
+        "ingenuity": 4
+      },
+      "technical_context": "An accounting record is written once per process that runs -- tens or hundreds of thousands a day on a busy system -- so each record must be tiny. The kernel packs each time (clock ticks) into 16 bits as comp_t, a pseudo-float, and expand() decodes it: take the low 13 bits as the mantissa (t & 017777, octal = 0x1FFF), the high 3 bits as the exponent (t >> 13), and shift the mantissa left 3 bits per exponent unit -- so value = mantissa * 8^exponent (each <<3 multiplies by 8). Exponent 0 keeps small values exact; a larger exponent shifts big values up, coarsely. No floating-point hardware -- integer shifts alone span a huge range of times in 16 bits at 13-bit precision. Shrinking one record by two bytes matters across hundreds of thousands -- the same motive behind modern log compression and time-series databases bit-packing timestamps and values.",
+      "human_story": "One accounting record per process, hundreds of thousands a day -- so each must be small. Times are squeezed into 16 bits as a tiny pseudo-float (13-bit mantissa, 3-bit exponent), expanded by shifting. The eternal logging problem -- write a lot, write each one small -- answered in 1979."
+    },
+    "appraiser_note": "会計レコードは走ったプロセスの数だけ書かれる——混雑したシステムなら1日に何万〜何十万件——ので1件は極小でなければならない。カーネルは各時間(クロックティック)を 16ビットの comp_t(疑似浮動小数)に詰め、expand() が復号する: 下位13ビットを仮数(t & 017777、8進=0x1FFF)、上位3ビットを指数(t >> 13)とし、指数のぶん仮数を3ビットずつ左シフトする——つまり 値＝仮数 × 8^指数(各 <<3 が×8)。指数0なら小さな値は精密に、指数が大きければ大きな値を粗く左シフト。浮動小数点ハードウェアなしで、整数シフトだけで13ビット精度を保ち桁違いに広い時間範囲を16ビットに収める。1件を2バイト縮めることが何十万件では効く——現代のログ圧縮や時系列DBがタイムスタンプ/値をビットパッキングするのと同じ動機。",
+    "file_path": "usr/src/cmd/sa.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "sa-003-hash-rollup",
+    "text": "enter(np) char *np; {\n\tfor (i=j=0; j<NC; j++) i = i*7 + np[j];   /* polynomial hash of the command name */\n\tfor (i%=size; tab[i].name[0]; i=(i+1)%size) { ...linear probe... }\n}\ninit() {   /* roll over yesterday's totals */\n\tf = fopen(\"/usr/adm/savacct\",\"r\");   /* per-command running totals */\n\tf = fopen(\"/usr/adm/usracct\",\"r\");   /* per-user running totals */\n}\nstrip() { j = enter(\"**junk**\"); ...fold commands with count<=thres into junk... }",
+    "line_number": 424,
+    "tags": [
+      "unix",
+      "accounting",
+      "sa",
+      "hashtable",
+      "rollup"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "craft",
+      "emotion_intensity": 4,
+      "emotions": {
+        "craft": 4,
+        "insight": 4
+      },
+      "technical_context": "To fold tens of thousands of records by command, sa needs a table keyed by command name. enter() hashes the name with a polynomial (i = i*7 + char) and resolves collisions by open-addressing linear probe -- the same Bell Labs hash seen in ncheck and as. All records of one command land in one tab[] row, accumulating count and time. sa also rolls totals forward: init() reads prior totals from /usr/adm/savacct (per command) and /usr/adm/usracct (per user) and adds them in; run sa -s nightly (cron) and it merges the day's raw acct into the totals and truncates the raw log -- the rollup pattern of metrics aggregation, so the raw log never bloats but the totals survive. strip() reduces noise: rare commands (count <= thres) are folded interactively into one **junk** line. Output sorts by count (ncmp), time (tcmp), or average (bcmp) -- the same data shown from whatever angle you need.",
+      "human_story": "sa buckets records by command name in a hash table, carries yesterday's totals forward so the raw log can be wiped without losing history, and folds rare commands into a junk line. Roll up, trim noise, sort by what you care about -- exactly what a metrics tool still does."
+    },
+    "appraiser_note": "何万件ものレコードをコマンド別に畳むには、コマンド名で引ける表が要る。enter() は名前を多項式ハッシュ(i = i*7 + 文字)し、オープンアドレス法の線形探索で衝突を解く——ncheck や as で見た Bell Labs 定番のハッシュ。同じコマンドの全レコードが同じ tab[] 行に集まり回数と時間が積み上がる。sa は総計も繰り越す: init() が前回までの累計を /usr/adm/savacct(コマンド別)と /usr/adm/usracct(ユーザ別)から読み足し込む。sa -s を日次(cron)で走らせると生 acct を累計にマージし生ログを切り詰める——メトリクス集計のロールアップパターンで、生ログは肥大しないが総計は残る。strip() はノイズ削減: 珍しいコマンド(count <= thres)を対話的に1行の **junk** にまとめる。出力は回数順(ncmp)/時間順(tcmp)/平均順(bcmp)——同じデータを知りたい切り口で見せる。",
+    "file_path": "usr/src/cmd/sa.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "sa-004-printmoney-billing",
+    "text": "printmoney() {   /* per-user usage = the basis for charging */\n\tfor (i=0; i<256; i++) if (user[i].ncomm) {\n\t\tif (getpw(i, buf)!=0) printf(\"%-8d\", i);     /* uid -> username (/etc/passwd) */\n\t\telse { ...name from passwd... printf(\"%-8s\", buf); }\n\t\tprintf(\"%5u %7.2f\\n\", user[i].ncomm, user[i].fctime/60);  /* #commands, CPU minutes */\n\t}\n}",
+    "line_number": 213,
+    "tags": [
+      "unix",
+      "accounting",
+      "sa",
+      "billing",
+      "observability"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 5,
+      "emotions": {
+        "legacy": 5,
+        "history": 4
+      },
+      "technical_context": "sa's function name says it all: printmoney. It maps each uid to a username via getpw(/etc/passwd) and prints how many commands the user ran and how much CPU time they used -- the basis for billing. In the time-sharing era compute was a product: a computing center charged users or departments by CPU time consumed, and printmoney's 'user smith: 12.5 CPU minutes' became a line on the invoice. This idea has returned with force: cloud pay-as-you-go -- AWS charging by the CPU-second, the GB -- is exactly sa's 'measure usage and charge', done at planetary scale. Beyond billing, sa is audit: which command eats the most time (a performance lead), who launched abnormally many processes (abuse/runaway). An OS recording every process and a tool summarizing it to find anomalies is the oldest form of observability and security audit. Where prof measured inside one program, sa measures the whole running system.",
+      "human_story": "The function is literally called printmoney: it turns CPU minutes per user into a bill. That is time-sharing accounting -- and it is exactly what your cloud invoice does today, CPU-seconds times a rate. The same ledger also tells you who is hogging the machine."
+    },
+    "appraiser_note": "sa の関数名が目的を露わにする: printmoney。getpw(/etc/passwd)で uid をユーザ名に変え、各ユーザが実行したコマンド数と使ったCPU時間を出す——課金の基礎だ。タイムシェアリング時代、計算資源は売り物で、計算センターはユーザや部門に使ったCPU時間で課金し、printmoney の『ユーザ smith：CPU 12.5分』がそのまま請求書の一行になった。この発想は強烈に回帰している: クラウドの従量課金——AWS が秒単位でCPUを、GB単位でストレージを課金するのは、sa の『使用量を測り課金する』を地球規模でやっているにほかならない。課金だけでなく sa は監査でもある: どのコマンドが最も時間を食うか(性能問題の手がかり)、誰が異常に多くのプロセスを起動したか(不正/暴走)。OS が全プロセスを記録しツールが集計して異常を見つける——現代のオブザーバビリティとセキュリティ監査の最も古い形。prof がプログラム1本の中を測ったなら、sa は走り続けるシステム全体を測る。",
+    "file_path": "usr/src/cmd/sa.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]

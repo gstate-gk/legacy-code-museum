@@ -1417,6 +1417,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "233",
+    title: "鑑定書#233 sa — カーネルが全プロセスの終了ごとに刻む会計レコードを読み、13bit仮数+3bit指数の comp_t で圧縮された時間を展開し、コマンド名でハッシュ集計してユーザ別使用量を出す487行のプロセス会計。タイムシェアリングの課金(printmoney)、クラウド従量課金と監査ログの祖",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
