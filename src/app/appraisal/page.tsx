@@ -1368,6 +1368,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "224",
+    title: "鑑定書#224 adb — 子が ptrace(SETTRC) で「私を追跡してくれ」と名乗り出てから自分を exec し、命令を BPT で上書きしてブレークポイントを置き、addr,count?format の簡潔な言語でメモリ・実行ファイル・コアダンプを同じ文法で覗く約3,400行(19ファイル)、sdb→dbx→gdb と続くデバッガの祖",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

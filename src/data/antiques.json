@@ -18387,5 +18387,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "adb-001-ptrace-fork-model",
+    "text": "setup() {\n\tIF (pid = fork()) == 0\n\tTHEN ptrace(SETTRC,0,0,0);   /* child: \"please trace me\" */\n\t     signal(SIGINT,sigint); signal(SIGQUIT,sigqit);\n\t     doexec(); exit(0);       /* then exec the target onto itself */\n\tELSE bpwait(); readregs();    /* parent (debugger): wait for the child */\n\tFI\n}",
+    "line_number": 116,
+    "tags": [
+      "unix",
+      "debugger",
+      "ptrace",
+      "fork",
+      "gdb"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 5,
+      "emotions": {
+        "insight": 5,
+        "legacy": 5
+      },
+      "technical_context": "adb is the UNIX debugger, ancestor of sdb -> dbx -> gdb -> lldb. To control another program a debugger must reach inside an isolated process -- stop it, read its memory, change its registers. setup() shows how: adb forks; the child calls ptrace(SETTRC,0,0,0) -- 'set trace', i.e. it volunteers to be traced -- then doexec()s the target onto itself. Now the parent (adb) controls the child (target) through ptrace. The child asking to be traced is the strange-looking handshake that still underlies gdb's run today: fork + PTRACE_TRACEME + exec.",
+      "human_story": "How do you get inside another running program? adb forks a child, and the child says to the kernel 'please trace me', then becomes the program you want to debug. The same odd ritual runs every time gdb launches a program, 46 years later."
+    },
+    "appraiser_note": "adb は UNIX のデバッガで、sdb→dbx→gdb→lldb の祖。他プログラムを操るにはデバッガが隔離された別プロセスの内部に立ち入る——止め、メモリを読み、レジスタを書き換える——必要がある。setup() がその方法を示す: adb はfork し、子が ptrace(SETTRC,0,0,0)＝『set trace（私を追跡してください）』と自ら名乗り出てから、対象を自分にdoexec する。こうして親(adb)が子(対象)を ptrace で操る。子が自ら追跡を志願するこの一見奇妙な握手は、今も gdb の run の土台＝fork + PTRACE_TRACEME + exec として生きている。",
+    "file_path": "usr/src/cmd/adb/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "adb-002-breakpoint-bpt-patch",
+    "text": "setbp() {  /* plant a breakpoint */\n\tbkptr->ins = ptrace(RIUSER, pid, a, 0);                  /* save original instruction */\n\tptrace(WIUSER, pid, a, BPT | (bkptr->ins&~0xFF));        /* overwrite with BPT (03) */\n}\ndelbp() {  /* remove it: write the saved instruction back */\n\tptrace(WIUSER,pid,a, (bkptr->ins&0xFF)|(ptrace(RIUSER,pid,a,0)&~0xFF));\n}\n/* execbkpt: delbp(); ptrace(SINGLE,...); then setbp() again */",
+    "line_number": 206,
+    "tags": [
+      "unix",
+      "debugger",
+      "breakpoint",
+      "ptrace",
+      "gdb"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "legacy": 4
+      },
+      "technical_context": "How does a breakpoint work? No special hardware -- adb rewrites the target's own code. setbp() reads the instruction at the breakpoint address with ptrace(RIUSER), saves it, and overwrites it with BPT (03, the breakpoint-trap instruction) via ptrace(WIUSER). When the target reaches that spot it executes BPT, traps, and stops; the parent wakes from wait(). adb then restores the saved instruction with delbp(). Continuing is the hard part ('continuing from a breakpoint is hard'): restore the real instruction, single-step it once with ptrace(SINGLE) (execbkpt), then re-plant BPT. This exact trick -- overwrite, restore, single-step, re-plant -- is how every software breakpoint still works; gdb's break main rewrites the first byte to int3 (x86 breakpoint) the same way. adb breakpoints can even carry an adb command string and a count, the ancestor of conditional/command breakpoints.",
+      "human_story": "A breakpoint is a forgery: adb overwrites one instruction of your program with a trap, catches the trap, puts the real instruction back, steps once, and forges the trap again. gdb still does exactly this, swapping a byte for int3."
+    },
+    "appraiser_note": "ブレークポイントはどう動くか。専用ハードも使わず、adb は対象自身のコードを書き換える。setbp() はブレークポイント地点の命令を ptrace(RIUSER) で読んで保存し、BPT(03、ブレークポイント・トラップ命令)で ptrace(WIUSER) 上書きする。対象がそこに達すると BPT を実行してトラップし停止、親が wait から目覚める。adb は delbp() で保存命令を書き戻す。続行が難所('continuing from a breakpoint is hard'): 本物の命令に戻し、ptrace(SINGLE) で1命令だけ実行(execbkpt)、それから BPT を埋め直す。この『上書き→復元→1命令→再設定』は現代の全ソフトウェアブレークポイントの仕組みそのもので、gdb の break main も先頭1バイトを int3(x86のブレークポイント命令)に書き換える。adb のブレークポイントは adb コマンド文字列と回数も結べ、条件付き/コマンド付きブレークポイントの原型。",
+    "file_path": "usr/src/cmd/adb/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "adb-003-command-language",
+    "text": "switch(lastcom&STRIP) {\n\tcase '/': itype=DSP; ptype=DSYM; goto trystar;  /* / examine data space */\n\tcase '=': itype=NSP; ptype=0;    goto trypr;    /* = value of the expression */\n\tcase '?': itype=ISP; ptype=ISYM; goto trystar;  /* ? examine instruction space */\n\tcase '$': printtrace(nextchar()); break;        /* $c=stack  $r=registers */\n\tcase ':': subpcs(nextchar());    break;         /* :r=run  :s=step  :c=cont */\n\tcase '>': /* assign dot to a register/variable */\n\tcase '!': shell(); break;                       /* shell escape */\n}",
+    "line_number": 83,
+    "tags": [
+      "unix",
+      "debugger",
+      "language",
+      "terse",
+      "gdb"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "craft": 4
+      },
+      "technical_context": "adb's command language is maximally terse: addr,count command format. '0x1000,5?i' means 'from 0x1000, 5 items, show as instructions' -- adb disassembles five. At the center is '.' (dot), the current address held in command(), advanced after each command, so you just hit return to continue. Three sigils switch the target: '?' reads the a.out instruction space, '/' the data/live-process space, '=' the value of the address expression itself. '$' is diagnostics ($c stack backtrace via print.c, $r registers), ':' is process control (:r run, :s step, :c cont, via pcs.c subpcs). This addr,count?format with dot and the x/i format letters lives on almost unchanged in gdb's x/5i $pc. And it is all written in mac.h's Bourne-shell-style Algol68 macro dialect (IF/THEN/FI/REP/PER/WHILE/DO/OD) -- the same C-as-Algol68 idiom Steve Bourne used in sh.",
+      "human_story": "An address, a one-letter command, a one-letter format. adb says nothing it does not have to. That terseness, and the '.' you advance by hitting return, is still in your fingers when you type x/5i $pc into gdb."
+    },
+    "appraiser_note": "adb のコマンド言語は極限まで簡潔: addr,count コマンド 書式。'0x1000,5?i' は『0x1000 から5個、命令として表示』＝5命令を逆アセンブル。中心は '.'(ドット)＝現在アドレスで command() が保持しコマンドごとに進めるので、改行を叩くだけで続きが出る。3つの記号が覗く先を切替: '?' は a.out の命令空間、'/' はデータ/生プロセス空間、'=' はアドレス式の値。'$' は診断($c スタック・$r レジスタ、print.c)、':' はプロセス制御(:r 実行 :s ステップ :c 継続、pcs.c の subpcs)。この addr,count?format と dot、x/i の書式文字は gdb の x/5i $pc にほぼそのまま生きている。そして全編が mac.h の Bourne シェル流 Algol68 マクロ方言(IF/THEN/FI/REP/PER/WHILE/DO/OD)＝Steve Bourne が sh で使った『C を Algol68 に見せる』流儀で書かれている。",
+    "file_path": "usr/src/cmd/adb/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "adb-004-one-grammar-three-targets",
+    "text": "main(argc, argv) {\n\tIF argc>1 THEN symfil = argv[1]; FI   /* adb a.out core */\n\tIF argc>2 THEN corfil = argv[2]; FI\n\tsetsym(); setcor();                    /* open symbols (a.out) and core */\n\t/* txtmap/datmap absorb whether reads hit the file, the live process, or the core */\n}",
+    "line_number": 87,
+    "tags": [
+      "unix",
+      "debugger",
+      "core-dump",
+      "postmortem",
+      "symbols"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 5,
+        "insight": 4
+      },
+      "technical_context": "adb a.out core: arg1 symfil is the executable (with the symbol table), arg2 corfil is a core dump. adb's most beautiful design is that the SAME command language examines three targets -- the executable file, the live process, and the core dump -- transparently. The trick is the maps (txtmap/datmap): '?' reads instruction space and '/' data space, but whether the read lands in the a.out file, a ptrace'd live process, or a core file is absorbed by the map's file descriptor (set to fsym for '?', fcor for '/'). So adb is also a postmortem tool: after a crash adb a.out core lets you $c the stack, $r the registers, ? the faulting instruction -- the target is dead, examined with the same grammar it had alive. adb /vmunix /dev/mem even examines the live kernel (the EDDT standalone build is a built-in kernel debugger). sym.c maps main+0x10 names to addresses; expr.c evaluates address expressions -- binding number to name for program symbols as ncheck did for files.",
+      "human_story": "One grammar, four targets: the binary on disk, the process running now, the core of a process that crashed, and the live kernel itself. adb skewers them all with addr,count?format, so a dead program is read exactly as a living one was."
+    },
+    "appraiser_note": "adb a.out core: 第1引数 symfil は実行ファイル(シンボル表入り)、第2引数 corfil はコアダンプ。adb 最美の設計は、同じコマンド言語で3つの対象——実行ファイル・生プロセス・コアダンプ——を透過的に覗けること。仕掛けはマップ(txtmap/datmap): '?' は命令空間、'/' はデータ空間を読むが、読み先が a.out ファイルか ptrace 越しの生プロセスかコアファイルかはマップの fd(? なら fsym、/ なら fcor)が吸収する。だから adb は事後解析の道具でもある: クラッシュ後 adb a.out core で $c のスタック、$r のレジスタ、? の障害命令を、死んだ対象を生きていたときと同じ文法で調べられる。adb /vmunix /dev/mem なら動くカーネルもライブで覗ける(EDDT スタンドアロン版はカーネル組込デバッガ)。sym.c が main+0x10 のような名前とアドレスを相互変換し expr.c が式を評価——番号と名前を結ぶ仕事を、ncheck がファイルでやったように adb はプログラムのシンボルでやる。",
+    "file_path": "usr/src/cmd/adb/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]
