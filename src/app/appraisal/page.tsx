@@ -1410,6 +1410,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "232",
+    title: "鑑定書#232 plot — 同じ図形コマンド解釈器(driver.o)をデバイスごとのライブラリにリンクし分けるだけで Tektronix にも DASI にも描く。plot(5) の抽象命令(m/l/c/a)と Bresenham 整数ラスタ化・メモリより大きいビットマップのブロックページングを分けたデバイス非依存グラフィックス（Mike Lesk、ditroff/PostScript/SVG の祖）",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

@@ -19083,5 +19083,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "plot-001-device-independent-format",
+    "text": "fplt(fin) FILE *fin; {\n\topenpl();\n\twhile((c=getc(fin)) != EOF) switch(c){\n\t\tcase 'm': move(getsi(fin),getsi(fin)); break;          /* move */\n\t\tcase 'l': line(getsi,getsi,getsi,getsi); break;       /* line */\n\t\tcase 'c': circle(getsi,getsi,getsi); break;           /* circle */\n\t\tcase 'a': arc(...); case 't': label(s); case 'p': point(...); case 's': space(...);\n\t}\n\tclosepl();\n}\ngetsi(fin){ b=getc(fin); a=getc(fin); a=a<<8; return(a|b); }  /* 2-byte int */",
+    "line_number": 37,
+    "tags": [
+      "unix",
+      "graphics",
+      "plot",
+      "device-independent",
+      "intermediate-language"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 5,
+      "emotions": {
+        "insight": 5,
+        "elegance": 4
+      },
+      "technical_context": "plot is device-independent graphics, by Mike Lesk. In 1979 there were Tektronix vector terminals, DASI dot terminals, Versatec raster plotters -- each with different commands and resolution. Rather than write per-device code in every program, plot defines plot(5): a compact binary command stream -- m (move), l (line), c (circle), a (arc), t (text), p (point), s (space), f (linemod) -- with 2-byte little-endian coordinates read by getsi(). driver.c's fplt() reads it one char at a time and calls a drawing primitive. The intent ('a circle at 100,100 radius 50') is the same on any device. Like troff's intermediate output and as's a.out, plot(5) separates WHAT to draw from HOW: a program emits plot(5), a device filter renders it -- graphics made a stream of bytes that flows through a pipe.",
+      "human_story": "Every plotter and terminal spoke a different language. plot invents one in between -- m, l, c for move, line, circle -- so a program says 'draw a circle' once, as bytes in a pipe, and any device can render it."
+    },
+    "appraiser_note": "plot は Mike Lesk によるデバイス非依存グラフィックス。1979年、Tektronix のベクタ端末・DASI のドット端末・Versatec のラスタプロッタが乱立し、命令も解像度も違った。プログラムごとに機械別のコードを書く代わりに、plot は plot(5)＝コンパクトなバイナリのコマンド列を定義する: m(move)/l(line)/c(circle)/a(arc)/t(text)/p(point)/s(space)/f(linemod)、座標は getsi() が2バイトのリトルエンディアンで読む。driver.c の fplt() がそれを1文字ずつ読み描画プリミティブを呼ぶ。『中心(100,100)半径50の円』という意図はどの機械でも同じ。troff の中間出力や as の a.out と同じく、plot(5) は『何を描くか』を『どう描くか』から分ける: プログラムが plot(5) を吐きデバイスフィルタが描く——図形さえパイプを流れるバイト列になる。",
+    "file_path": "usr/src/cmd/plot/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "plot-002-one-driver-many-devices",
+    "text": "# Makefile: same driver.o, relinked per device\ntek:   driver.o ; cc -o tek  driver.o -l4014 -lm   # Tektronix 4014\nt300:  driver.o ; cc -o t300 driver.o -l300  -lm   # DASI 300\nt450:  driver.o ; cc -o t450 driver.o -l450  -lm   # DASI 450\nvplot: chrtab.o vplot.o ; cc -o vplot vplot.o chrtab.o   # Versatec raster\n# plot.sh dispatches by $TERM: -T4014->tek  -Tver->vplot  -T450->t450",
+    "line_number": 1,
+    "tags": [
+      "unix",
+      "graphics",
+      "plot",
+      "device-driver",
+      "polymorphism"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "craft": 4
+      },
+      "technical_context": "With plot(5) as the common language, you just need a way to render it per device -- and plot's trick is in the linking. driver.c CALLS move/line/circle/label but does not define them; the bodies live in per-device libraries (libplot): -l4014 defines Tektronix's line/circle, -l450 DASI's. So the SAME driver.o, relinked against a different library, becomes tek (draws on Tektronix) or t450 (draws on DASI). Versatec differs enough (raster) to be its own program, but the primitives called are the same names. plot.sh dispatches: it reads $TERM or -T and exec's tek for -T4014, vplot for -Tver. Swapping device implementations behind an abstract interface is what we now call plugins, device drivers, polymorphism -- plot did it by the humblest means, link-time library substitution. One call line(x0,y0,x1,y1) becomes a Tektronix vector command or a Versatec bit, depending only on what was linked.",
+      "human_story": "How do you support five plotters with one program? Write the interpreter once, and link it against a different drawing library for each device. The same line() becomes Tektronix vectors or Versatec dots, decided at link time. Polymorphism via the linker."
+    },
+    "appraiser_note": "plot(5) という共通言語があれば、あとは機械ごとに描き方を用意すればいい——plot の妙はリンクにある。driver.c は move/line/circle/label を呼ぶが実体を持たず、実体はデバイスごとのライブラリ(libplot)側にある: -l4014 は Tektronix のline/circle を、-l450 は DASI のそれを定義する。だから同じ driver.o を別ライブラリにリンクし直すだけで、Tektronix に描く tek、DASI に描く t450 が生まれる。Versatec はラスタで描き方が大きく違うので独立プログラムだが、呼ばれるプリミティブ名は同じ。plot.sh が振り分け役で、$TERM や -T を見て -T4014 なら tek、-Tver なら vplot を exec する。抽象インターフェースの背後でデバイス実装を差し替えるのは、今でいうプラグイン/デバイスドライバ/ポリモーフィズム——plot はそれを最も素朴な手段=リンク時のライブラリ差し替えで実現した。同じ line(x0,y0,x1,y1) が、リンク次第でTektronix のベクタ命令にも Versatec のビットにもなる。",
+    "file_path": "usr/src/cmd/plot/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "plot-003-bresenham-rasterization",
+    "text": "line(x0, y0, x1, y1) {\n\txinc=1; yinc=1;\n\tif ((dx=x1-x0)<0){ xinc=-1; dx=-dx; }   /* pick direction */\n\tif ((dy=y1-y0)<0){ yinc=-1; dy=-dy; }\n\tres1=0; res2=0;\n\tif (dx>=dy) while (x0!=x1) {            /* step along the long axis */\n\t\tif((x0+slope*y0)&linmod) ...point...; /* linmod = dash pattern mask */\n\t\tif (res1>res2){ res2 += dx-res1; res1=0; y0+=yinc; }  /* error -> step short axis */\n\t\tres1 += dy; x0 += xinc;\n\t} else while (y0!=y1) { ... }\n}",
+    "line_number": 271,
+    "tags": [
+      "unix",
+      "graphics",
+      "plot",
+      "bresenham",
+      "rasterization"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "craft",
+      "emotion_intensity": 4,
+      "emotions": {
+        "craft": 4,
+        "elegance": 4
+      },
+      "technical_context": "vplot (the Versatec raster implementation) turns the abstract 'line' into actual dots. A raster plotter can only set dots on a 200-dot/inch grid; which dots best approximate a slanted line is rasterization. vplot's line() is a Bresenham-style integer algorithm -- no floating point. It steps one dot at a time along the longer axis (x if dx>=dy), accumulating an error term (res1/res2), and when it crosses the threshold steps the shorter axis: res1 += dy (add the slope's numerator), and if (res1>res2) { ...; y0 += yinc; } (when it builds up, bump y). No multiply, no divide -- just adds and compares draw the dots nearest the ideal line, fast on a tiny 1979 machine. Line style (solid/dashed) is the linmod bitmask: if((x0+slope*y0)&linmod) decides whether to set a dot, so DOTTED=014 / SHORTDASHED=034 patterns emerge. Integer adds draw the line; a bitmask cuts the dashes.",
+      "human_story": "A diagonal line on a dot grid: which dots? vplot answers with adds and compares only -- Bresenham's trick -- stepping the long axis and nudging the short one as error builds. Dashes fall out of ANDing the coordinate with a bit pattern."
+    },
+    "appraiser_note": "vplot(Versatec のラスタ実装)は抽象的な『直線』を実際のドット列に変える。ラスタプロッタは 200 dot/inch の格子に点を打つことしかできず、斜め線をどの点で近似するかがラスタ化だ。vplot の line() は Bresenham 系の整数アルゴリズム——浮動小数点なし。長い軸(dx>=dy なら x)に沿って1ドットずつ進み、誤差項(res1/res2)を累積し、閾値を超えたら短い軸を進める: res1 += dy(傾きの分子を足す)、if(res1>res2){...; y0+=yinc;}(溜まったら y を上げる)。掛け算も割り算もなく足し算と比較だけで理想の線に最も近いドット列を描く——1979年の小さな計算機で速い。線種(実線/破線)は linmod のビットマスク: if((x0+slope*y0)&linmod) で点を打つか決め、DOTTED=014/SHORTDASHED=034 のパターンになる。整数の足し算で線を引き、ビットマスクで破線を刻む。",
+    "file_path": "usr/src/cmd/plot/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "plot-004-bitmap-bigger-than-core",
+    "text": "char *picture = \"/usr/tmp/raster\";   /* the bitmap is a temp file (~1000 blocks) */\npoint(x, y) {\n\tbno = ((x&03700)>>6) + ((y&03700)>>1);   /* which block this dot belongs to */\n\tif (bno != bufs[0].bno) {\n\t\tif (bno < 0 || bno >= 1024) return;\n\t\tgetblk(bno);                            /* page that block into memory */\n\t}\n\tbufs[0].block[((y&077)<<3)+((x>>3)&07)] |= 1 << (7-(x&07));   /* set the bit */\n}",
+    "line_number": 327,
+    "tags": [
+      "unix",
+      "graphics",
+      "plot",
+      "paging",
+      "bitmap"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "legacy": 4,
+        "craft": 4
+      },
+      "technical_context": "The Versatec is 11 inches wide at 200 dot/inch; the whole bitmap is huge -- ~1000 blocks (about 500KB) in /usr/tmp/raster, far more than 1979 core. vplot handles this image-bigger-than-memory by block paging: the bitmap lives in a temp file and only some blocks (up to NB=88) are held in memory. point(x,y) first computes which block the dot belongs to (bno); if that differs from the block in memory, getblk() reads it in (writing back an old block if needed), then sets the right bit in the right byte. This is the same problem early Unix kept solving -- icheck managing every block with one bit, ed spilling a file out of core -- handling data too big for memory with secondary storage and block transfer, by hand, before virtual memory was capable. When drawing finishes, the giant paged bitmap is streamed to the Versatec: vector intent -> integer rasterization -> paged bitmap -> physical ink.",
+      "human_story": "The full plotter bitmap was half a megabyte -- it could not fit in 1979 memory. So vplot keeps it in a temp file and pages blocks in and out by hand, setting one bit per dot, then streams the whole thing to the plotter. An image too big to hold, drawn a block at a time."
+    },
+    "appraiser_note": "Versatec は 11インチ幅・200 dot/inch で、ビットマップ全体は巨大——/usr/tmp/raster に約1000ブロック(約500KB)、1979年のメモリには到底収まらない。vplot はこの『メモリより大きい絵』をブロックページングで扱う: ビットマップを一時ファイルに置き、メモリには一部のブロック(最大 NB=88)だけ持つ。point(x,y) はまず点がどのブロックに属するか(bno)を計算し、メモリ内のブロックと違えば getblk() で読み込み(必要なら古いブロックを書き戻し)、正しいバイトの正しいビットを立てる。これは初期 Unix が繰り返し解いた問題——icheck がビットマップで全ブロックを1ビット管理し、ed がファイルをメモリ外に退避したのと同じ、メモリに収まらないデータを二次記憶とブロック転送で手作業で扱う、仮想記憶が貧弱だった時代の技。描画が終わると巨大なページングビットマップを Versatec へ流し込む: ベクタの意図→整数ラスタ化→ページングビットマップ→物理的なインク。",
+    "file_path": "usr/src/cmd/plot/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]
