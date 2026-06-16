@@ -18851,5 +18851,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "lex-001-parser-is-yacc",
+    "text": "/* parser.y -- lex's OWN regex parser, written in yacc */\n%token CHAR CCL NCCL STR DELIM SCON ITER NEWE NULLS\n%left '|'\n%left CAT          /* concatenation */\n%left '*' '+' '?'  /* iteration: binds tightest */\n%{\n# include \"ldefs.c\"\n%}",
+    "line_number": 1,
+    "tags": [
+      "unix",
+      "lex",
+      "yacc",
+      "bootstrap",
+      "compiler"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "insight": 4
+      },
+      "technical_context": "lex generates a lexical analyzer (yylex) from regular expressions, the companion to yacc which generates a parser from a grammar. The beautiful interdependence: the part of lex that reads regular expressions is itself a yacc grammar (parser.y), and the token stream yacc parses is often produced by a lexer that lex made. lex feeds tokens to yacc; yacc builds lex's own parser -- two generators using each other to make themselves. parser.y's %left declarations give the regex operators precedence: iteration (*+?) binds tightest, then CAT (concatenation), then | (alternation), so ab* means a(b*) and ab|c means (ab)|c -- the same operator-precedence machinery as a calculator or an assembler's expression grammar.",
+      "human_story": "lex turns regular expressions into a scanner. But the part of lex that reads regular expressions is built by yacc -- and yacc's input usually comes from a scanner lex made. The two tools bootstrap each other into existence."
+    },
+    "appraiser_note": "lex は正規表現から字句解析器(yylex)を生成する——文法からパーサを生成する yacc の相棒。美しい相互依存: lex の中で正規表現を読む部分自身が yacc の文法(parser.y)で書かれ、yacc が処理するトークン列はしばしば lex が作った字句解析器から供給される。lex が yacc にトークンを渡し、yacc が lex のパーサを生む——二つの生成器が互いを使って自分を作る。parser.y の %left 宣言が正規表現演算子の優先順位を与える: 反復(*+?)が最も強く結合、次が CAT(連接)、その次が |(選択)。だから ab* は a(b*)、ab|c は (ab)|c と解釈される——電卓やアセンブラの式文法と同じ演算子優先順位の仕組み。",
+    "file_path": "usr/src/cmd/lex/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "lex-002-follow-position-dfa",
+    "text": "follow(v)   /* set of positions that can come right after position v */\nfirst(v)    /* positions that can be active first under v */\ncgoto(){    /* build DFA states: for each state, each char, the next state */\n\tfor( ...each char... ){\n\t\tnextstate(s,i);           /* position-set reached from state s on char i */\n\t\txstate = notin(stnum);    /* is that position-set an existing state? */\n\t\tif(xstate == -1){ add(state,++stnum); ... }   /* new state */\n\t\telse tst[n++] = xstate;                       /* existing state */\n\t}\n\tif(n>0) packtrans(s,tch,tst,n,tryit);\n}",
+    "line_number": 194,
+    "tags": [
+      "unix",
+      "lex",
+      "dfa",
+      "automata",
+      "regex"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 5,
+      "emotions": {
+        "insight": 5,
+        "elegance": 4
+      },
+      "technical_context": "The textbook route from regex to DFA is two-step (build an NFA, then subset-construct a DFA), but lex builds the DFA directly from position follow-sets, skipping the NFA -- the McNaughton-Yamada / Aho method, the same as egrep. Each leaf of the regex gets a position; first(v) (positions a subexpression can start with) and follow(v) (positions that can come right after a position) are computed. A DFA state is a set of active positions; cgoto() computes, for a state and a char, the next position-set (nextstate); if that set already exists as a state (notin returns its number) it links there, else it makes a new state -- the subset construction itself. egrep built this DFA at each search; lex builds it once at generation time and bakes the transition table into C. At runtime there is no regex left, only a fast table-driven machine reading chars and changing state.",
+      "human_story": "egrep built its DFA every time it searched; lex builds it once and freezes the table into C code. By the time the generated scanner runs, the regular expression is gone -- only a table of states and a character to read remain."
+    },
+    "appraiser_note": "正規表現から DFA への教科書的経路は二段(NFA を作り部分集合構成で DFA に)だが、lex は位置の follow 集合から NFA を経ずに直接 DFA を構成する——McNaughton-Yamada / Aho の方法で、egrep と同じ。正規表現の各葉に位置を振り、first(v)(部分式が最初に取りうる位置)と follow(v)(ある位置の直後に来られる位置)を計算する。DFA 状態は活性な位置の集合で、cgoto() は状態と文字から次の位置集合(nextstate)を計算し、それが既存状態なら(notin が番号を返す)繋ぎ、新しければ新状態を作る——これが部分集合構成。egrep は検索のたびにこの DFA を組んだが、lex は生成時に一度だけ組み、遷移表を C に焼き込む。実行時にはもう正規表現は無く、文字を読んで状態遷移する高速な表駆動機械だけ。",
+    "file_path": "usr/src/cmd/lex/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "lex-003-table-compression",
+    "text": "packtrans(st,tch,tst,cnt,tryit) {\n\t/* compress by char: fold equivalent characters together */\n\tc = match[tch[i]];\n\tif(go[c] != tst[i] || c == tch[i]) temp[tch[i]] = tst[i];\n\t/* compress by state: find the most similar existing state */\n\tfor(i=0; i<st; i++){ ... diff = (#transitions differing from state i) ... }\n\tsfall[st] = similar;   /* fall back to similar; store only the differing transitions */\n}",
+    "line_number": 364,
+    "tags": [
+      "unix",
+      "lex",
+      "compression",
+      "table",
+      "dfa"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "craft",
+      "emotion_intensity": 4,
+      "emotions": {
+        "craft": 4,
+        "ingenuity": 4
+      },
+      "technical_context": "A naive DFA table is states x 128 chars -- mostly the same destination (often the error state), i.e. sparse. lex compresses it twice. First, character equivalence classes: characters that behave identically in a state (e.g. all of a-z) map through match[] to one class, so the table holds one column per class, not per char. Second, state fallback: packtrans compares the state's transitions against every existing state and picks the one with the fewest differences (diff minimal) as its fallback (sfall); the state then stores only its differing transitions, and at runtime a missing entry is looked up in the fallback's table -- difference-based representation, like inheritance. This 'fold a sparse transition table by equivalence class and by difference' is the same lineage of compression yacc uses for its parse tables (next/check/default). It is why generated scanners are small and fast.",
+      "human_story": "The transition table is huge and mostly empty. lex folds it twice: characters that act alike share a column, and a state that resembles another keeps only its differences and falls back for the rest -- like inheriting from the most similar state."
+    },
+    "appraiser_note": "素朴な DFA 表は状態×128文字で、大半が同じ行き先(多くはエラー状態)＝疎だ。lex はこれを二重に圧縮する。一つは文字の等価クラス: ある状態で同じ振る舞いをする文字(例えば a-z 全部)は match[] で1クラスに写像され、表はクラスごとに1列だけ持つ。もう一つは状態のフォールバック: packtrans は状態の遷移を既存の全状態と突き合わせ、最も違いの少ない(diff 最小)状態をフォールバック先(sfall)にし、違う遷移だけを自分で持つ。実行時、表に無いエントリはフォールバック先の表を引く——継承に似た差分表現。この『疎な遷移表を等価クラスと差分で畳む』は yacc が構文解析表で使う圧縮(next/check/default)と同系譜。生成されたスキャナが小さく速い理由。",
+    "file_path": "usr/src/cmd/lex/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "lex-004-skeleton-longest-match",
+    "text": "/* ncform skeleton: yylook drives the DFA and backs up to the longest match */\nyylook(){\n\tyyt = yyr + YYU(yymatch[yych]);    /* index the table by equivalence class */\n\twhile (lsp-- > yylstate){          /* scan back to the last accepting state */\n\t\t... yyback((*lsp)->yystops, -*yyfnd) ...\n\t\tyyleng = yylastch-yytext+1;      /* length of the match */\n\t\tyytext[yyleng] = 0;              /* the matched text */\n\t}\n}",
+    "line_number": 11,
+    "tags": [
+      "unix",
+      "lex",
+      "longest-match",
+      "skeleton",
+      "scanner"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "legacy": 4
+      },
+      "technical_context": "lex emits ncform (a skeleton) with the DFA table and the user's actions filled in -- complete C, whose heart is yylook(). It reads input a char at a time, indexes the table by yymatch[] (equivalence class), and advances the DFA, remembering every accepting state it passes. When no transition is possible (dead end), it backs up (yyback) to the last accepting state and takes that as the match -- longest match (maximal munch). Why back up? '<' could already match the '<' operator, but one more char gives '<='; so it reads greedily and on a dead end at '<==' returns to the accepted '<='. The matched text lands in yytext[], its length in yyleng, and the rule's action runs (e.g. return NUMBER;). The skeleton split keeps the generation logic (regex -> DFA -> packed table) separate from the run logic (table-driven longest match) -- swap the table and the same engine scans any rule set. The generated yylex() hands tokens to a yacc-built parser.",
+      "human_story": "Why does a scanner read past '<' to find '<='? It greedily follows the DFA, remembers the last place it could have stopped with a valid token, and when it hits a dead end, backs up to that longest match. The text goes in yytext, and your action runs."
+    },
+    "appraiser_note": "lex は ncform(雛形)に DFA 表とユーザのアクションを埋めた完全な C を吐く。中核が yylook()。入力を1文字ずつ読み、yymatch[](等価クラス)で表を引いて DFA を進め、通過した受理状態を覚えておく。どの遷移もできなくなったら(行き止まり)、最後の受理状態まで後戻り(yyback)し、そこまでを一致とする——最長一致(maximal munch)。なぜ後戻りするか: '<' でも『<演算子』に一致しうるが、もう1文字読めば '<=' になる。だから貪欲に読み '<==' で行き止まったら受理済みの '<=' まで戻る。一致文字列は yytext[]、長さは yyleng に入り、規則のアクション(return NUMBER; 等)が実行される。雛形分離が生成論理(正規表現→DFA→圧縮表)と実行論理(表駆動の最長一致)を分け、表を差し替えれば同じエンジンがどんな規則集合にも動く。生成された yylex() が yacc 製パーサにトークンを渡す。",
+    "file_path": "usr/src/cmd/lex/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]

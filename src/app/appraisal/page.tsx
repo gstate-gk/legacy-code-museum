@@ -1396,6 +1396,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "228",
+    title: "鑑定書#228 lex — 正規表現を follow 位置から直接 DFA に変え、最類似状態を fallback にして疎な遷移表を文字等価クラスと差分で二重圧縮し、最長一致でトークンを切り出す C を吐く字句解析器生成系。自身のパーサは yacc 製＝lex と yacc が互いを生む（Lesk/Schmidt）",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
