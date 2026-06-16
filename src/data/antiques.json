@@ -18271,5 +18271,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "c2-001-fixpoint-peephole",
+    "text": "do {\n\tinput();          /* read assembly into a linked list */\n\tbmove();\n\tdo {\n\t\tdo { iterate(); clearreg(); } while (nchange);   /* keep going while anything changed */\n\t\tcomjump(); rmove();\n\t} while (nchange || jumpsw());\n\taddsob(); output();\n} while (isend);",
+    "line_number": 66,
+    "tags": [
+      "unix",
+      "compiler",
+      "optimization",
+      "peephole",
+      "fixpoint"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 5,
+      "emotions": {
+        "insight": 5,
+        "elegance": 4
+      },
+      "technical_context": "c2 is the 'object code improver' -- the peephole optimizer invoked by cc -O. It reads the assembly the compiler emitted as text and rewrites it into faster/smaller assembly. The engine is a nested do-while: iterate() slides a small window (peephole) over the instruction stream applying local rewrites and sets nchange whenever it changes something; the loop repeats while anything changed. Why iterate? Because one optimization exposes another -- delete a redundant jump and its target label becomes unreferenced, so the label can go too, which makes the following code contiguous with the previous block, exposing new rewrites. c2 runs to a fixpoint: keep sweeping until nothing more changes. This is the canonical Unix peephole optimizer, descendant in spirit of GCC's and LLVM's peephole passes.",
+      "human_story": "The compiler emits dumb, literal code. c2 reads that code back and polishes it -- and because fixing one thing reveals the next thing to fix, it keeps sweeping over the instructions until a full pass changes nothing at all."
+    },
+    "appraiser_note": "c2 は『object code improver』——cc -O が呼び出すピープホール最適化器。コンパイラが吐いたアセンブリをテキストとして読み、より速く小さいアセンブリに書き直す。エンジンは入れ子の do-while: iterate() が命令列の上を小さな窓(peephole)で滑らせ局所変換を当て、何か変える度に nchange を立てる。変わる限りループは回る。なぜ反復するか——ひとつの最適化が次を生むから。冗長なジャンプを消すとその飛び先ラベルが無参照になりラベルも消せ、すると後続コードが前の基本ブロックと地続きになり新たな書き換えが見える。c2 は不動点(もう何も変わらない)まで掃き続ける。Unix におけるピープホール最適化の規範実装で、GCC/LLVM のpeephole パスの精神的祖先。",
+    "file_path": "usr/src/cmd/c2/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "c2-002-asm-as-linked-list",
+    "text": "struct node {\n\tchar op;       /* opcode (JBR, MOV, ADD ...) */\n\tchar subop;    /* operand type / branch cond */\n\tshort refc;    /* reference count of this label */\n\tstruct node *forw, *back;  /* doubly linked */\n\tstruct node *ref;          /* branch -> its target label */\n\tchar *code; struct optab *pop; short labno, seq;\n};",
+    "line_number": 96,
+    "tags": [
+      "unix",
+      "compiler",
+      "data-structure",
+      "linked-list",
+      "assembly"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "craft",
+      "emotion_intensity": 4,
+      "emotions": {
+        "craft": 4,
+        "elegance": 4
+      },
+      "technical_context": "Before optimizing, c2 turns the text assembly into a doubly-linked list of struct node. input() reads each line, looks the mnemonic up in optab, and links nodes via forw/back. A branch's ref points directly at its target label node; refc counts how many places reference that label. This representation is what makes every optimization cheap: p->ref reaches the target in one hop, p->ref->refc tells you if a label is dead, and inserting/deleting an instruction is just pointer surgery. Turning assembly text into an operable graph is the move that makes the rest possible. Memory is grown by hand with sbrk(2000) and carved by alloc(), reset to firstr after each function -- arena allocation, no malloc.",
+      "human_story": "Assembly as flat text is hard to reason about. c2 first rebuilds it as a linked graph where a jump points straight at its destination and you can count who still uses a label. Only then do the optimizations become easy pointer moves."
+    },
+    "appraiser_note": "最適化の前に c2 はテキストのアセンブリを struct node の双方向連結リストに組み直す。input() が1行ずつ読み、命令名を optab で引き、forw/back で繋ぐ。分岐の ref は飛び先ラベルノードを直接指し、refc はそのラベルが何箇所から参照されるかの数。この表現こそ全最適化を安くする: p->ref で飛び先に一足、p->ref->refc でラベルが死んでいるか即判定、命令の挿入削除はポインタの繋ぎ替えだけ。アセンブリを操作可能なグラフに変える——これが残りを可能にする一手。メモリは sbrk(2000) で自前に伸ばし alloc() で切り出し、関数ごとに firstr へ巻き戻す。malloc 不使用のアリーナ管理。",
+    "file_path": "usr/src/cmd/c2/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "c2-003-jump-and-crossjump",
+    "text": "/* jump-to-jump: retarget to final destination */\nif (rp->op==JBR && rp->labno && p->labno!=rp->labno) { nbrbr++; p->ref=rp->ref; nchange++; }\n/* dead code right after an unconditional jump -> delete */\nwhile (p->forw && p->forw->op!=LABEL && ...) { iaftbr++; p->forw=p->forw->forw; }\n/* cross-jump: walk two paths back while instrs match, merge the common tail */\nxjump(p1) { p2=p1->ref;\n\tfor(;;){ p1=p1->back; p2=p2->back;\n\t\tif(!equop(p1,p2)||p1==p2) return;\n\t\tp3=insertl(p2); p1->combop=JBR; p1->ref=p3; nxjump++; } }",
+    "line_number": 432,
+    "tags": [
+      "unix",
+      "compiler",
+      "optimization",
+      "jump",
+      "tail-merging"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "elegance": 4
+      },
+      "technical_context": "iterate() is a textbook of peephole transforms on jumps: jump-to-jump (nbrbr) retargets a jump whose destination is itself an unconditional jump straight to the final target; unreachable code right after an unconditional jump (iaftbr) is deleted; a jump to the very next label (njp1) is removed; and a conditional branch over an unconditional jump is collapsed by reversing the condition via revbr[] (nskip). The cleverest is xjump -- cross-jumping (tail merging): when two control paths converge, it walks both backwards instruction by instruction while equop() says they match, inserts a label at the divergence point, and replaces one copy with a JBR to it -- duplicated tails fused into one. A structural size optimization, done with nothing but matching instructions back to front. The same spirit drives rmove(), which tracks what is in each register and drops a MOV whose value is already there (redunm) and a TST whose condition codes are already set (nrtst).",
+      "human_story": "Jump to a jump? Go straight to the end. Code after an unconditional jump? Dead, delete it. Two paths ending in the same instructions? Fuse the shared tail and jump into it. c2 knew every one of these little patterns and applied them by the thousand."
+    },
+    "appraiser_note": "iterate() はジャンプに関するピープホール最適化の教科書: jump-to-jump(nbrbr)は飛び先がまた無条件ジャンプなら最終目的地へ直接繋ぎ替える。無条件ジャンプ直後の到達不能コード(iaftbr)は削除。すぐ次のラベルへ飛ぶだけのジャンプ(njp1)も削除。条件分岐が無条件ジャンプを飛び越す形は revbr[] で条件反転して畳む(nskip)。最も賢いのが xjump——クロスジャンプ(末尾併合): 2つの制御経路が合流するとき、両方を後ろ向きに1命令ずつ equop() が一致する限り辿り、分岐点にラベルを挿し片方をそこへの JBR に置き換える——重複した末尾が1つに融合される。命令を後ろから突き合わせるだけで実現する構造的なサイズ最適化。同じ精神がrmove() にも: 各レジスタの中身を追跡し、もう入っている値の MOV(redunm)や、もう立っている条件コードの TST(nrtst)を捨てる。",
+    "file_path": "usr/src/cmd/c2/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "c2-004-optimization-catalog",
+    "text": "if (nflag) {\n\tfprintf(stderr,\"%d jumps to jumps\\n\", nbrbr);\n\tfprintf(stderr,\"%d inst. after jumps\\n\", iaftbr);\n\tfprintf(stderr,\"%d cross-jumps\\n\", nxjump);\n\tfprintf(stderr,\"%d branches reversed\\n\", nrevbr);\n\tfprintf(stderr,\"%d redundant moves\\n\", redunm);\n\tfprintf(stderr,\"%d sob's added\\n\", nsob);\n\tfprintf(stderr,\"%d redundant tst's\\n\", nrtst);\n\t... /* 17 kinds in all */\n}",
+    "line_number": 86,
+    "tags": [
+      "unix",
+      "compiler",
+      "statistics",
+      "self-reporting",
+      "humanity"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "legacy": 4,
+        "insight": 4
+      },
+      "technical_context": "c2 -n prints a ledger of exactly what it did: jumps to jumps, instructions after jumps, jumps to .+1, redundant labels, cross-jumps, code motions, branches reversed, redundant moves, simplified addresses, loops inverted, redundant jumps, common seqs before jumps, skips over jumps, sob's added, redundant tst's, jump on bit, field operations -- exactly 17 kinds of optimization, each a counter. The catalog is the best definition of what peephole optimization is: not deep global analysis, just small mechanical equivalences applied to a fixpoint -- 3-address to 2-address (redun3), DEC+branch folded into the VAX sob instruction (addsob), a branch reversed to fit a short displacement (jumpsw). An optimizer that counts and reports its own work, the same 'count and tell' temperament as wc and icheck.",
+      "human_story": "Run it with -n and c2 hands you an honest invoice of its work: so many jumps to jumps, so many redundant moves, so many loops folded into one instruction. Even the optimizer files a statistical report on itself."
+    },
+    "appraiser_note": "c2 -n は自分が何をしたかの帳簿を吐く: jumps to jumps、inst. after jumps、jumps to .+1、redundant labels、cross-jumps、code motions、branches reversed、redundant moves、simplified addresses、loops inverted、redundant jumps、common seqs before jmp's、skips over jumps、sob's added、redundant tst's、jump on bit、field operations——ちょうど17種の最適化が各々カウンタとして並ぶ。このカタログはピープホール最適化の最良の定義になる: 難しい大域解析ではなく、小さな機械的等価変換を不動点まで当てるだけ——3アドレス→2アドレス(redun3)、DEC+分岐を VAX の sob 1命令に畳む(addsob)、短い変位に収める分岐反転(jumpsw)。自分の成果を数えて報告する最適化器、wc や icheck と同じ『数えて告げる』気質。",
+    "file_path": "usr/src/cmd/c2/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]

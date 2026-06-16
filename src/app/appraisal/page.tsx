@@ -1361,6 +1361,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "223",
+    title: "鑑定書#223 c2 — コンパイラが吐いたアセンブリを命令の連結リストに変え、覗き窓で滑りながら jump-to-jump・到達不能削除・分岐反転・クロスジャンプ(末尾併合)・冗長move除去など17種の局所変換を不動点まで反復する2,071行(object code improver)、cc の -O＝ピープホール最適化の祖",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
