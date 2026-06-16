@@ -19315,5 +19315,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "pcat-001-machine-as-language",
+    "text": "while((i = getc(ibuf)) >= 0){\n\tif(i & 0200){ esc += (~i) & 0177; continue; }   /* high-bit byte = horizontal escape */\n\tif(esc){ if(escd)esc=-esc; xx += (esc*mpy+rx)/div; rx=(esc*mpy+rx)%div; sendpt(); esc=0; }\n\tif((i & 0340) == 0140){                          /* leading = vertical motion */\n\t\tlead = (~i) & 037; if(verd)lead = -lead;\n\t\tif((leadtot += lead) > pl){ flusho(); ... init(); }   /* past page length -> new page */\n\t\telse if((yy -= (lead<<1)) >= 0) sendpt();\n\t}\n}",
+    "line_number": 102,
+    "tags": [
+      "unix",
+      "typesetting",
+      "pcat",
+      "cat",
+      "troff"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "history",
+      "emotion_intensity": 4,
+      "emotions": {
+        "history": 4,
+        "legacy": 4
+      },
+      "technical_context": "pcat interprets the Graphic Systems C/A/T phototypesetter's command stream -- the device-DEPENDENT output troff emitted to drive that one physical machine -- and re-creates on a plot(5) surface what the typesetter would have printed (a simulator; main opens with openpl/space). The C/A/T's output is not a human language: it is the machine's physical motions coded as bytes. A byte with the high bit set is an escape (horizontal carriage motion); it accumulates in esc and advances xx, with rx carrying the remainder for integer precision. A 0140-pattern byte is leading (vertical paper feed, the word from hot-metal spacing); it accumulates in leadtot and, when it exceeds the page length pl, flushes the page and starts another. This is the opposite of plot's abstract m/l (move/line): not 'draw from here to there' but 'feed the head 7 units, feed the paper 3' -- the output of typesetting software fused with the drive signals of one machine, just before device independence was invented.",
+      "human_story": "The C/A/T's language was its own motion: a byte to nudge the head sideways, a byte to feed the paper down. troff spoke it to one specific machine. pcat reads that motion back and replays what the typesetter would have set."
+    },
+    "appraiser_note": "pcat は Graphic Systems C/A/T 写植機のコマンド列——troff がその1台の物理機械を駆動するために吐いたデバイス依存出力——を解釈し、写植機が印画したであろう結果を plot(5) 面に再現する(シミュレータ。main は openpl/space で始まる)。C/A/T の出力は人間の言語ではなく、機械の物理的動作をコード化したバイト列だ。最上位ビットが立つバイトは escape(横方向の送り)で esc に積み上がり xx を進める(rx が端数を持ち越し整数精度を保つ)。0140 系のバイトは leading(紙の縦送り、活版の込め物に由来する語)で leadtot に累積し、ページ長 pl を超えるとページを吐いて次を始める。これは plot の抽象的な m/l(move/line)の対極だ: 『ここからここへ線を引け』でなく『ヘッドを7単位送れ、紙を3単位送れ』——組版ソフトの出力が1台の機械の駆動信号と一体だった、デバイス非依存が発明される直前の世界。",
+    "file_path": "usr/src/cmd/pcat.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "pcat-002-railmag-font-wheel",
+    "text": "case 0101: railmag &= ~01; continue;   /* lower rail */\ncase 0102: railmag |= 01;  continue;   /* upper rail */\ncase 0103: railmag |= 02;  continue;   /* upper mag */\ncase 0104: railmag &= ~02; continue;   /* lower mag */\n...\ni = (i & 077) | mcase;                  /* char: low 6 bits + case half */\nif(railmag != 03) j = asctab[i];        /* normal font */\nelse              j = spectab[i];       /* special font when railmag==3 */",
+    "line_number": 128,
+    "tags": [
+      "unix",
+      "typesetting",
+      "pcat",
+      "font",
+      "hardware"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 5,
+      "emotions": {
+        "insight": 5,
+        "history": 4
+      },
+      "technical_context": "C/A/T characters came from a spinning photographic font disk: a transparent film engraved with glyphs spun fast, and a flash exposed photo paper the instant the wanted glyph passed the light. But a disk holds only so many glyphs, so the C/A/T solved it physically: the disk had two rails, each with two magnification lenses -- four font positions. pcat's railmag holds that physical state in two bits: lower/upper rail toggles bit 01, upper/lower mag toggles bit 02. troff's 'switch to italic' became the machine command 'raise the rail'. railmag==03 selects the special font (spectab, math symbols), else the normal font (asctab); mcase (lower/upper case) picks the top or bottom half of the 64-char set. This is hardware constraint becoming software model: early troff could use only four fonts at once because the disk physically had four positions. A typeface was not abstract data -- it was a fixed place on a spinning wheel.",
+      "human_story": "Why could early troff use only four fonts at once? Because the C/A/T's spinning font disk had exactly four positions -- two rails times two lenses. 'Switch to italic' meant physically moving the wheel. A font was a slot on a spinning disk."
+    },
+    "appraiser_note": "C/A/T の文字は回転する写真フォント盤から来た: 文字を刻んだ透明フィルムの円盤が高速回転し、目的の文字が光源を通った一瞬に閃光が印画紙に焼く。だが円盤に刻める文字数には限りがあり、C/A/T は物理的に解いた: 盤に2本の rail(溝)があり各々に2段の magnification(倍率)レンズ——計4つのフォント位置。pcat の railmag が1変数2ビットでその物理状態を映す: lower/upper rail が 01 ビット、upper/lower mag が 02 ビット。troff の『イタリックに切替』は機械命令『rail を上げよ』になった。railmag==03 は特殊フォント(spectab、数式記号)、それ以外は通常フォント(asctab)、mcase(大文字/小文字)が64文字集合の上半分/下半分を選ぶ。ハードウェア制約がソフトウェアのモデルになった例: 初期 troff が同時に4フォントまでだったのは、盤に物理的に4位置しかなかったから。書体は抽象データでなく、回る円盤上の決まった場所だった。",
+    "file_path": "usr/src/cmd/pcat.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "pcat-003-fixed-sizes-432",
+    "text": "int rtab[] = {6,7,8,9,10,11,12,14,16,18,20,22,24,28,26,18};  /* the only point sizes the machine had */\nif((i & 0360) == 0120){                /* size-change code */\n\tfor(j=0; i!=(stab[j]&017); j++);     /* map code to size table */\n\tsize = stab[j]; psize = rtab[j];\n\tif(!(osize&DBL) && (size&DBL)) i = -55;   /* adjust escape for double size */\n}\ncase 'i': j = 432;   /* 1 inch = 432 units */   case 'P': j = 72; /*pica*/   case 'p': j = 6; /*point*/",
+    "line_number": 51,
+    "tags": [
+      "unix",
+      "typesetting",
+      "pcat",
+      "resolution",
+      "troff"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "legacy": 4,
+        "history": 4
+      },
+      "technical_context": "The C/A/T offered only the type sizes it physically had. rtab[] lists them: 6,7,8,9,10,11,12,14,16,18,20,22,24,28,26,18 points -- no arbitrary size. A .ps 13 in troff has no 13-point on the C/A/T; the size-change code (0120-family) maps through stab[] to a real rtab[] size. The DBL bit means double size, and switching to it nudges the escape by +-55 to fix the baseline shift when the lens changes -- a physical fudge. And the C/A/T's coordinate unit is 1/432 inch: case 'i' = 432 units, a pica 72, a point 6 (432/72). That INCH=432 recurs through the troff family source -- troff, tbl, pic all computed lengths in the C/A/T's 1/432 inch. The very numeric sense of the typesetting software was built around one machine's resolution. Sizes by physical lens, resolution by one device -- the opposite of today's infinite scaling.",
+      "human_story": "Ask the C/A/T for 13-point and there is none -- only the 16 sizes its lenses could make. And its world was measured in 1/432 of an inch, a number that runs all through troff's source. The software's sense of size and distance was one machine's body."
+    },
+    "appraiser_note": "C/A/T で使える文字サイズは機械が物理的に持つものだけ。rtab[] がその一覧: 6,7,8,9,10,11,12,14,16,18,20,22,24,28,26,18 ポイント——任意の大きさには出来ない。troff の .ps 13(13ポイント)は C/A/T に無く、サイズ変更コード(0120 系)が stab[] を引いて rtab[] の実在サイズに丸める。DBL ビットは倍角で、切替時に送りを ±55 補正する——レンズが変わると基準位置がずれる物理的辻褄合わせ。そして C/A/T の座標単位は 1/432 インチ: case 'i' が 432単位、パイカ 72、ポイント 6(432/72)。この INCH=432 は troff 一族のソースに繰り返し現れ、troff/tbl/pic は長さを C/A/T の 1/432 インチで計算した。組版ソフトの数値感覚そのものが1台の機械の解像度で作られていた。サイズは物理レンズで、解像度は1機種で——デジタル時代の無段階拡大の対極。",
+    "file_path": "usr/src/cmd/pcat.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "pcat-004-place-or-draw-simulator",
+    "text": "openpl(); space(0,0,4095,3071);          /* render onto a plot(5) surface */\n...\nif (j==0){ trace(railmag==03 ? drawtab[i] : moretab[i]); continue; }  /* not in table: draw it */\nelse if(j){ oput(j); alpha++; }          /* in table: place it (oput -> label()) */\n# define SCL(x) (psize*x/10)             /* scale strokes by point size */\ntrace(p){ while(*p) switch(*p){ case 'l': line(PT(p[1],p[2]),PT(p[3],p[4])); p+=5; ... } }",
+    "line_number": 205,
+    "tags": [
+      "unix",
+      "typesetting",
+      "pcat",
+      "simulator",
+      "device-independence"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "legacy": 4,
+        "insight": 4
+      },
+      "technical_context": "pcat does not drive a real C/A/T; main opens a plot(5) surface (openpl; space) and re-creates what the typesetter would have printed -- a simulator (the source calls itself a C version of tcatsim). Real C/A/T output was expensive and slow to develop on photo paper; pcat lets you see how troff would set a page right now. Characters come out two ways: those mapped in asctab/spectab are placed by oput() via plot's label() (asctab/spectab map C/A/T codes to ASCII glyphs); characters not in the table (j==0) are drawn from stroke lists in drawtab/moretab via trace()'s line() calls, scaled to the current point size by SCL. pcat is the end of the troff pipeline -- eqn/tbl/pic prepare, troff sets to C/A/T codes, pcat makes it visible. But typesetting was still bound to one machine; the later arc -- ditroff's device independence, then PostScript -- freed it. pcat is the moment just before that freedom, when troff was still tied to the Graphic Systems C/A/T's spinning disk and 1/432 inch.",
+      "human_story": "No real typesetter, no wet photo paper: pcat opens a plot surface and shows you what the C/A/T would have set. Known glyphs are placed as labels, exotic ones drawn stroke by stroke. The last stage of troff -- and the last era when typesetting belonged to one machine."
+    },
+    "appraiser_note": "pcat は本物の C/A/T を駆動しない。main は plot(5) 面を開き(openpl; space)、写植機が印画したであろう結果を再現する——シミュレータ(ソース自身が tcatsim の C 版と名乗る)。本物の C/A/T 出力は高価で印画紙の現像が遅く、pcat があれば troff がページをどう組むか即座に見られる。文字は二通りで出る: asctab/spectab に対応がある文字は oput() が plot の label() で置く(asctab/spectab は C/A/T コードを ASCII 文字へ写す表)。表に無い文字(j==0)は drawtab/moretab のストローク列から trace() の line() で描き、SCL で現在の級数にスケールする。pcat は troff パイプラインの末端——eqn/tbl/pic が整え、troff が C/A/T コードに組み、pcat が見える形にする。だが組版はまだ1台の機械に縛られていた。その後の弧——ditroff の device-independence、そして PostScript——が解放した。pcat はその自由の直前、troff がまだ Graphic Systems C/A/T の回る円盤と 1/432 インチに結びついていた瞬間だ。",
+    "file_path": "usr/src/cmd/pcat.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]

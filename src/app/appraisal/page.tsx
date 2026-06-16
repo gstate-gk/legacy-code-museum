@@ -1424,6 +1424,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "234",
+    title: "鑑定書#234 pcat — Graphic Systems C/A/T 写植機の制御コード(escape/lead/railmag)を解釈し、回転フォント盤の4位置・機械が持つ16の型サイズ・432分の1インチに縛られた troff 出力を plot(5) 上に再現する924行のシミュレータ。troff 一族の末端、組版が機械から自由になる前夜（ditroff/PostScript の対極）",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
