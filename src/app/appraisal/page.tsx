@@ -1375,6 +1375,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "225",
+    title: "鑑定書#225 as — yacc 文法で書かれた1,888行の VAX アセンブラ。jeql は近ければ短い分岐・遠ければ条件反転して jmp を跨ぐ合成命令(jxxx)で、距離と長さの鶏と卵を jxxxfix の「lazy topological sort」不動点反復で解く。2パス＋複数位置カウンタ、magic 0410 の a.out を吐くツールチェーンの底",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

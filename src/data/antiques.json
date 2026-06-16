@@ -18503,5 +18503,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "as-001-yacc-grammar-assembler",
+    "text": "%token IBYTE IWORD IINT ILONG IDATA IGLOBAL ISET ITEXT ICOMM IALIGN\n%left PLUS MINUS\n%left IOR XOR AND\n%left MUL DIV LSH RSH TILDE\n%%\nfile: /* empty */\n\t| file linstruction NL = { lineno++; goto reset; }\n\t;\nlabels: /* empty */\n\t| labels NAME COLON = { ... $2->value = dotp->xvalue; ... }  /* define a label */",
+    "line_number": 1,
+    "tags": [
+      "unix",
+      "assembler",
+      "yacc",
+      "grammar",
+      "compiler"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "insight": 4
+      },
+      "technical_context": "Most assemblers are ad-hoc line parsers. Bell-32V's as is a yacc grammar (as0.y). It declares assembly language itself in BNF: a file is a sequence of lines, a line is labels plus an instruction, an operand is an expression with operators given precedence by %left. The pseudo-ops (.byte/.word/.text/.data/.globl/.align/.set) are grammar tokens (IBYTE/IWORD/...). A beautiful recursion: yacc (Stephen Johnson's compiler-compiler) generates a parser; here it is used to generate the parser for assembly language. %left PLUS MINUS / %left MUL DIV gives operands a full expression evaluator from the grammar alone. The Bell Labs habit of expressing the problem as a grammar -- as in bc, eqn, pic -- reaches all the way down to the assembler.",
+      "human_story": "An assembler written as a grammar. yacc, the tool that turns a grammar into a parser, is used to give assembly language itself a grammar -- operator precedence and all -- so even the lowest-level tool in the toolchain is a little language."
+    },
+    "appraiser_note": "多くのアセンブラは行を手で切るアドホックなパーサだが、Bell-32V の as は yacc 文法(as0.y)。アセンブリ言語そのものを BNF で宣言する: ファイルは行の並び、行はラベル群＋命令、オペランドは %left で優先順位を与えた式。擬似命令(.byte/.word/.text/.data/.globl/.align/.set)はすべて文法トークン(IBYTE/IWORD/…)。美しい再帰だ: yacc(Stephen Johnson のコンパイラ生成ツール)が構文解析器を生成する——それを使って今度はアセンブリ言語の構文解析器を生成する。%left PLUS MINUS / %left MUL DIV でオペランドに電卓並みの式評価器が文法ひとつで備わる。問題を文法として表現する Bell Labs の流儀(bc/eqn/pic と同じ)が、最下層のアセンブラにまで貫かれている。",
+    "file_path": "usr/src/cmd/as/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "as-002-span-dependent-jxxx",
+    "text": "/* synthetic branches: as3.c */\n{\"jbr\",0x11,IJXXX-256}, {\"jeql\",0x13,IJXXX-256}, {\"jgtr\",0x14,IJXXX-256}, ...\n/* jxxxfix: pass 1.5, lazy topological sort */\nfor (;;) { nchange=0;\n\tfor (sp1=symtab; sp1<nextsym; sp1++) {\n\t\tdispl = sp2->value - sp1->value;\n\t\tif (displ<-128 || displ>127) { jxxxbump(sp1,displ); ++nchange; }  /* too far: grow it */\n\t\telse sp1->tsflag=0xFE; /* win! short branch fits */\n\t}\n\tif (nchange==0) break; }",
+    "line_number": 33,
+    "tags": [
+      "unix",
+      "assembler",
+      "branch",
+      "span-dependent",
+      "fixpoint"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "insight": 5
+      },
+      "technical_context": "The jbr/jeql/jneq/jgtr in as3.c are not real VAX instructions -- they are synthetic branches (jxxx) as provides. A real VAX conditional branch reaches its target with only a one-byte displacement, so it cannot jump far. as lets you write 'jeql target' and decides: if near, a short branch (beql); if far, reverse the condition and branch over a real jmp (bneq .+N; jmp target). This is the classic span-dependent instruction problem -- an instruction's length depends on the distance to its target, but the distance depends on the lengths of intervening instructions, which depend on their distances. jxxxfix solves it optimistically: assume all short, grow (jxxxbump) the ones that overflow a byte, set nchange, sweep again, until nothing more grows -- a fixpoint the comment calls a 'lazy topological sort'. The same fixpoint shape as c2's optimizer; the source even cheers 'win!' and laments 'immediate lose'.",
+      "human_story": "Write jeql and let the assembler worry about distance. If the target is near it stays a short branch; if far it grows into a reversed branch over a jump. But growing one branch shifts everything after it, so as keeps re-deciding until nothing more changes -- printing 'win!' each time a branch fits."
+    },
+    "appraiser_note": "as3.c の jbr/jeql/jneq/jgtr は VAX の実在命令ではなく、as が提供する合成分岐(jxxx)。VAX の本物の条件分岐は飛び先を1バイト変位でしか表せず遠くへ飛べない。as は『jeql target と書け』と言い、距離を見て決める: 近ければ短い分岐(beql)、遠ければ条件を反転して本物の jmp を跨ぐ(bneq .+N; jmp target)。これは古典的な span 依存命令問題——命令の長さが飛び先までの距離に依存するが、距離は間に挟まる命令の長さに依存し、それもまた距離に依存する。jxxxfix は楽観的に解く: 全部短いと仮定し、1バイトを溢れるものだけ jxxxbump で膨らまし、nchange を立てて再周、もう膨らまなくなるまで——コメントいわく『lazy topological sort』の不動点。c2 の最適化と同じ不動点の形。ソースは収まれば『win!』、溢れれば『immediate lose』と呟く。",
+    "file_path": "usr/src/cmd/as/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "as-003-two-pass-loc-counters",
+    "text": "passno = 1; yyparse();        /* pass 1: build symbols, size each segment */\njxxxfix(); stabfix();          /* pass 1.5: fix branch lengths */\n/* assign segment origins, final symbol values, write a.out header */\npassno = 2; yyparse();        /* pass 2: emit machine code + relocation */\nfor (c=0; c<NLOC; c++) {       /* NLOC=4 location counters */\n\tusedot[c].xtype = XTEXT;       /* .text */\n\tusedot[c+NLOC].xtype = XDATA;  /* .data */\n}",
+    "line_number": 129,
+    "tags": [
+      "unix",
+      "assembler",
+      "two-pass",
+      "forward-reference",
+      "segments"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "craft",
+      "emotion_intensity": 4,
+      "emotions": {
+        "craft": 4,
+        "insight": 4
+      },
+      "technical_context": "as reads the source twice because of forward references: you can use a label (jeql forward) before it is defined. Pass 1 (passno=1) collects all symbols and sizes each segment; jxxxfix then fixes branch lengths; segment origins and final symbol addresses are assigned; pass 2 (passno=2) emits the actual machine code and relocation. Symbols forward-referenced while undefined carry the XFORW flag, resolved later. as also keeps multiple location counters (NLOC=4): .text, .data, .bss end up in separate a.out segments, but the source may interleave .text and .data freely -- so as keeps a separate 'how far have I written' counter (usedot[]) per segment and gathers like with like regardless of source order, dotp pointing at the active one. Symbols are up to NCPS=8 chars, looked up in a hash table.",
+      "human_story": "Read it once to learn where every label lands, read it again to emit the code. And because a function can drop a data table mid-stream and return to code, the assembler keeps a separate ruler for text and for data, gathering each at the end."
+    },
+    "appraiser_note": "as がソースを2回読むのは前方参照のため: まだ定義されていないラベルを先に使える(jeql forward)。pass1(passno=1)で全シンボルを集め各セグメントの大きさを測り、jxxxfix が分岐長を確定、セグメント原点とシンボルの最終アドレスを割り当て、pass2(passno=2)で実際の機械語と再配置を吐く。未定義のまま前方参照されたシンボルには XFORW フラグが立ち後で解決。as は位置カウンタを複数持つ(NLOC=4): .text/.data/.bss は a.out では別セグメントに集まるが、ソースでは .text と .data を交互に書ける——so as はセグメントごとに『今どこまで書いたか』のカウンタ(usedot[])を別々に保ち、出現順と無関係に同種をまとめる(dotp が現在の位置を指す)。シンボルは NCPS=8 文字まで、ハッシュ表で引く。",
+    "file_path": "usr/src/cmd/as/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "as-004-aout-bottom-of-toolchain",
+    "text": "struct hdr hdr = { 0410, 0,0,0,0,0,0,0 };  /* a.out magic 0410 */\nstruct hdr { long magic, tsize, dsize, bsize, ssize, entry, trsize, drsize; };\nwritel(&hdr,8,txtfil);  /* write the 8-word header at the front of a.out */\n#ifndef vax\nwritel(p,n,f) { while(n--){ fwrite(&(*p).loword,2,1,f); fwrite(&(*p).hiword,2,1,f); p++; } }\n#endif  /* stupid fp-11: swap word order when host isn't a VAX */",
+    "line_number": 14,
+    "tags": [
+      "unix",
+      "assembler",
+      "a.out",
+      "toolchain",
+      "bootstrap"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "legacy": 4,
+        "history": 4
+      },
+      "technical_context": "What as finally emits is the a.out file. Its head is struct hdr -- magic 0410, text size, data size, bss size, symbol-table size, entry point, relocation sizes -- eight words. That header is the same layout adb's defs.h diagrams as 'Layout of a.out file'. as writes it; ld and adb read it. The whole toolchain meets on the a.out contract, and as is its issuer. The most telling part is #ifndef vax: writel() writes a long, but on a non-VAX host (comment: 'stupid fp-11' = PDP-11) it swaps the word halves. Why? Because this VAX assembler itself had to be compiled and run on a non-VAX machine -- generating a.out for the new VAX on the old PDP-11. Cross-assembly: building the new architecture's binaries on a machine with a different byte order. as was the keel of the ship carrying Unix to the VAX.",
+      "human_story": "as writes the a.out that ld links and adb dissects -- it issues the contract the whole toolchain meets on. And it could run on an old PDP-11 to build binaries for the new VAX, swapping byte order as it went: the assembler that carried Unix to a new machine."
+    },
+    "appraiser_note": "as が最後に吐くのは a.out。先頭は struct hdr——マジック 0410、テキスト/データ/bss/シンボル表サイズ、エントリポイント、再配置サイズ——の8ワード。このヘッダは adb の defs.h が『Layout of a.out file』として図示したレイアウトと同じ。as が書く側、ld と adb が読む側。ツールチェーン全体が a.out という契約で出会い、as はその発行元だ。最も味わい深いのが #ifndef vax: writel() は long を書くが、VAX でないホスト(コメントいわく 'stupid fp-11'=PDP-11)ではワードの上下を入れ替える。なぜか——この VAX アセンブラ自身が、まだ VAX 以外のマシンでコンパイル・実行される必要があったから。新しい VAX 用 a.out を古い PDP-11 上で生成する。バイトオーダーの違うマシンで目的のマシンのバイナリを組むクロスアセンブル——as は Unix を VAX へ運ぶ船の竜骨だった。",
+    "file_path": "usr/src/cmd/as/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]
