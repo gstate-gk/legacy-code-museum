@@ -1431,6 +1431,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "235",
+    title: "鑑定書#235 calendar — 日付を「今日に当たる正規表現」に変え、ただの ~/calendar テキストを egrep して mail で配る約70行のリマインダ。switch のフォールスルー(break無し)で金曜は土日月を先読み、/etc/passwd を巡って全ユーザに配達。リマインダサービスの祖型、Unix 哲学の小さな結晶",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

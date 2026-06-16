@@ -19431,5 +19431,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "calendar-001-switch-fallthrough-weekend",
+    "text": "main() {\n\ttime(&t); tprint(t);                  /* today's date pattern */\n\tswitch(localtime(&t)->tm_wday) {\n\tcase 5: t += DAY; tprint(t);          /* Fri: add Sat, fall through */\n\tcase 6: t += DAY; tprint(t);          /* Sat: add Sun, fall through */\n\tdefault: t += DAY; tprint(t);         /* add next day (Mon if chained) */\n\t}\n}",
+    "line_number": 41,
+    "tags": [
+      "unix",
+      "reminder",
+      "calendar",
+      "switch",
+      "fallthrough"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "elegance": 5
+      },
+      "technical_context": "calendar is a reminder service in ~70 lines (calendar.c + calendar.sh): each user keeps a plain ~/calendar file of lines like 'Jan 15  dentist', and cron (typically on weekdays) mails them the lines matching today and tomorrow. The gem is main's switch with NO break. C falls through to the next case when break is omitted -- usually a bug, here deliberate design. On Friday (case 5) it prints today, then Saturday, falls through to case 6 for Sunday, falls through to default for Monday -- so Friday's reminder covers Sat+Sun+Mon. Why? calendar runs only on weekdays, so Friday must look ahead over the weekend. Rather than write 'if Friday look 3 days else if Saturday 2 else 1', calendar stacks the cases and omits break: the physical order of the cases IS the look-ahead count. The ABSENCE of break is the logic -- the kind of intentional fallthrough later languages (Go, Rust, Swift) made you opt into.",
+      "human_story": "Run on Friday, calendar quietly reminds you of Saturday, Sunday AND Monday -- because no one runs it on the weekend. It does this not with extra logic but by leaving out the break, letting the cases fall into each other. Code that works by what it does not write."
+    },
+    "appraiser_note": "calendar は約70行(calendar.c + calendar.sh)のリマインダサービス: 各ユーザが ~/calendar に 'Jan 15  歯医者' のような平文を置き、cron が(典型的には平日に)今日と明日に当たる行をメールで届ける。白眉は main の switch に break が無いこと。C は break を省くと次の case へ流れ落ちる——普通はバグだが、ここでは意図的な設計。金曜(case 5)は今日を出し土曜を足し、case 6 へ流れ落ちて日曜、default へ流れ落ちて月曜——つまり金曜のリマインダは土+日+月を覆う。なぜか: calendar は平日しか走らないので金曜に週末を先読みする必要がある。『if 金曜なら3日先 else if 土曜なら2日 else 1日』と書く代わりに、case を積み重ね break を省く: case の物理的な並び順が先読み日数になる。break の不在がロジック——後の言語(Go/Rust/Swift)が opt-in にした意図的フォールスルー。",
+    "file_path": "usr/src/cmd/calendar/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "calendar-002-date-as-regex",
+    "text": "char *month[] = { \"[Jj]an\", \"[Ff]eb\", ... \"[Dd]ec\" };   /* either case */\ntprint(t) long t; {\n\ttm = localtime(&t);\n\tprintf(\"(^|[ (,;])((%s[^ ]* *|%d/)0*%d)([^0123456789]|$)\\n\",\n\t\tmonth[tm->tm_mon], tm->tm_mon + 1, tm->tm_mday);\n}",
+    "line_number": 23,
+    "tags": [
+      "unix",
+      "reminder",
+      "calendar",
+      "regex",
+      "metaprogramming"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "insight": 4
+      },
+      "technical_context": "The C program /usr/lib/calendar does one thing: emit a regular expression that matches today's (or tomorrow's) date. tprint() turns a date into an egrep pattern that absorbs how people actually write dates: Jan 15, jan 15, January 15, 1/15, 1/5 all match. Month names use a case-class first letter ([Jj]an), %s[^ ]* catches the 'uary' of January, %d/ allows the numeric form, 0*%d absorbs day zero-padding (1/05 and 1/5), and the surrounds (^|[ (,;]) ... ([^0123456789]|$) keep word boundaries so 15 does not match inside 150 or 1500. calendar writes no date-matching logic of its own; it builds 'the regex for today' and hands the actual matching to egrep -- the same compose-and-delegate seen when ptx hands sorting to sort or bc hands arithmetic to dc. A program generating input (a pattern) for another tool to run: Unix metaprogramming.",
+      "human_story": "calendar never parses a date. It writes a regular expression that means 'today' -- matching Jan 15 or January 15 or 1/15 -- and lets egrep do the matching. The program's job is to describe what to find, not to find it."
+    },
+    "appraiser_note": "C プログラム /usr/lib/calendar の仕事はただ一つ: 今日(や明日)の日付に当たる正規表現を吐くこと。tprint() は日付を、人が予定を書くときの自然な揺れを吸収する egrep パターンに変える: Jan 15/jan 15/January 15/1/15/1/5 すべてに当たる。月名は先頭を大小文字クラス([Jj]an)、%s[^ ]* で January の uary を拾い、%d/ で数字形式、0*%d で日のゼロ詰め(1/05 も 1/5 も)、前後の (^|[ (,;]) … ([^0123456789]|$) で語境界を守り 15 が 150/1500 に誤マッチしないようにする。calendar は日付照合の専用ロジックを書かず、『今日の正規表現』を組み立てて照合は egrep に委ねる——ptx がソートを sort に、bc が計算を dc に委ねたのと同じ合成と委譲。プログラムが別ツールのための入力(パターン)を生成する Unix のメタプログラミング。",
+    "file_path": "usr/src/cmd/calendar/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "calendar-003-text-and-grep",
+    "text": "/usr/lib/calendar >$tmp      # generate the egrep pattern for today/tomorrow\ncase $# in\n0)  egrep -f $tmp calendar;; # no args: match the local ./calendar file\n*)  ... per-user (see next) ...\nesac",
+    "line_number": 1,
+    "tags": [
+      "unix",
+      "reminder",
+      "calendar",
+      "pipeline",
+      "unix-philosophy"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "craft": 4
+      },
+      "technical_context": "calendar.sh assembles the whole thing. It runs /usr/lib/calendar (the C program) to emit today/tomorrow's egrep pattern to a temp file, then egrep -f matches that pattern against the user's calendar file -- plain text. Matching lines, the day's events, print out. This is the Unix philosophy distilled: a reminder feature with no dedicated data structure or engine. The schedule is not a record but a line a user typed in an editor; the matching is not a parser but egrep applied to a generated pattern; the scheduling is not a daemon but cron starting calendar daily; the delivery is not a notification system but mail. calendar's own code is ~70 lines; the rest is egrep, cron, mail, sed, pipes, and a text file -- existing tools composed. Small tools, each doing one thing, joined by pipes -- rarely shown this purely.",
+      "human_story": "No database, no engine. Your schedule is a text file, the matching is grep, the clock is cron, the delivery is mail. calendar is barely 70 lines of glue. You can read your reminders, fix them, and check them by hand -- the opposite of a giant calendar app."
+    },
+    "appraiser_note": "calendar.sh が全体を組み上げる。/usr/lib/calendar(C プログラム)を走らせ今日/明日の egrep パターンを一時ファイルに吐き、egrep -f でそれをユーザの calendar ファイル(平文)に照合する。マッチ行=その日の予定が出る。Unix 哲学の蒸留だ: 専用のデータ構造もエンジンも持たないリマインダ。予定はレコードでなくユーザがエディタで書いた行、照合はパーサでなく生成パターンへの egrep 適用、スケジュールはデーモンでなく cron の日次起動、配達は通知システムでなく mail。calendar 自身のコードは約70行で、残りは egrep/cron/mail/sed/パイプ/テキストファイルという既存の道具の組み合わせ。小さな道具が一つのことに徹しパイプで繋がる——これほど純粋に現れた例は少ない。",
+    "file_path": "usr/src/cmd/calendar/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "calendar-004-multiuser-reminder-ancestor",
+    "text": "*)  sed 's/\\([^:]*\\):.*:\\(.*\\):[^:]*$/y=\\2 z=\\1/' /etc/passwd \\\n    | while read x; do\n        eval $x                       # y=home  z=username\n        if test -r $y/calendar; then\n            egrep -f $tmp $y/calendar 2>/dev/null | mail $z   # mail the user\n        fi\n    done\nesac",
+    "line_number": 8,
+    "tags": [
+      "unix",
+      "reminder",
+      "calendar",
+      "passwd",
+      "notification"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "legacy": 4,
+        "history": 4
+      },
+      "technical_context": "Called with an argument (typically by cron as root), calendar becomes the whole system's reminder courier. It carves /etc/passwd with sed to extract each user's home (y) and name (z), turning each passwd line into a shell assignment 'y=... z=...' that eval runs -- sed generating code that the shell evaluates, the same metaprogramming as the regex generation, but here truly executable. For each user with a readable ~/calendar it matches today's pattern and mails the hits. What these ~70 lines defined is the concept of a reminder service: a user records dated notes, the system checks them daily, and actively delivers the day's items. Your phone's 'today's agenda', a calendar app's pre-meeting alert -- all are the extension of the type calendar set in 1979. The implementation went from text+grep+mail to databases and push notifications, but the skeleton -- a dated note announced when its day arrives -- was first drawn here.",
+      "human_story": "Run for everyone, calendar walks /etc/passwd, finds each person's calendar file, and mails them their day. That is the reminder service in embryo: record a dated note, and have the machine tell you when the day comes. Your phone still does exactly this."
+    },
+    "appraiser_note": "引数つきで(典型的には cron から root 権限で)呼ばれると calendar はシステム全員のリマインダ配達人になる。/etc/passwd を sed で削り各ユーザのホーム(y)とユーザ名(z)を取り出す——各 passwd 行を 'y=... z=...' というシェル代入文に変形し eval で実行する。sed が生成したコードをシェルが評価する、正規表現生成と同じメタプログラミングだが、こちらは真に実行可能。読める ~/calendar を持つ各ユーザに今日のパターンで照合しマッチを mail する。この約70行が定義したのはリマインダサービスという概念そのものだ: ユーザが日付つきの覚え書きを記録し、システムが毎日確認し、その日の項目を能動的に届ける。あなたのスマホの『今日の予定』、カレンダーアプリの会議前通知——すべて 1979年に calendar が確立した型の延長。実装はテキスト+grep+mail からDB+プッシュ通知へ変わったが、骨格——日付に紐づく覚え書きを、その日が来たら知らせる——はここで最初に描かれた。",
+    "file_path": "usr/src/cmd/calendar/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]
