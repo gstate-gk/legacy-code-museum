@@ -1403,6 +1403,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "231",
+    title: "鑑定書#231 prof — プログラムを定期的に叩き起こして「今どの番地か」を数えた PC ヒストグラムを a.out のシンボル表で関数名に按分し、サンプリングで時間・計数で回数を測って ms/call を出す321行の実行プロファイラ。gprof→perf と続くプロファイリングの祖、「推測するな計測せよ」",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

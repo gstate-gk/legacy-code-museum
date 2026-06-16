@@ -18967,5 +18967,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "prof-001-pc-histogram-attribution",
+    "text": "/* spread each PC-histogram bucket's time over the overlapping function */\nfor (j=0; j<nname; j++) {\n\tif (pch < nl[j].value)     break;\n\tif (pcl >= nl[j+1].value)  continue;\n\toverlap = (min(pch,nl[j+1].value) - max(pcl,nl[j].value));\n\tif (overlap>0)\n\t\tnl[j].time += overlap*time/scale;   /* give that slice of time to function j */\n}",
+    "line_number": 171,
+    "tags": [
+      "unix",
+      "profiler",
+      "prof",
+      "sampling",
+      "gprof"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 5,
+      "emotions": {
+        "insight": 5,
+        "legacy": 4
+      },
+      "technical_context": "prof is the execution profiler: after a run it tells you what fraction of time each function spent. You cannot learn that by reading the source -- you must measure. prof's method is statistical sampling: while the program runs, a profiling clock interrupts it periodically and records which address (PC) was executing; over thousands of samples, hot addresses get more hits. But samples accumulate by address, while humans want functions. This loop is the finish: prof knows each function's address range from the a.out symbol table, and distributes each histogram bucket's time to the function(s) whose range overlaps it (overlap), pro-rated when a bucket straddles two functions. A hill of addresses becomes time-per-function: 'strcmp 37%, malloc 22%'. Measure, attribute, show -- that is a profiler.",
+      "human_story": "How do you find where a program spends its time? Wake it up thousands of times and write down where it is each time. The addresses that come up most are the slow spots -- and this loop turns that pile of addresses back into function names."
+    },
+    "appraiser_note": "prof は実行プロファイラ: 走らせた後、各関数が実行時間の何%を使ったかを教える。それはソースを読んでも分からない——測るしかない。prof の方法は統計的サンプリング: 実行中、プロファイリングクロックが一定間隔で割り込み、その瞬間に実行中の番地(PC)を記録する。何千サンプルも取れば、よく実行される番地ほど多く当たる。だがサンプルは番地で集まり、人間が欲しいのは関数だ。このループが仕上げ: prof は a.out のシンボル表から各関数の番地範囲を知り、ヒストグラムの各バケツの時間を、それと重なる関数に按分する(overlap、バケツが二つの関数にまたがれば比例配分)。番地の山が関数ごとの時間に変わる——『strcmp 37%、malloc 22%』。測って、振り分けて、見せる——それがプロファイラ。",
+    "file_path": "usr/src/cmd/prof/prof.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "prof-002-two-measurements",
+    "text": "fread(&h, sizeof(struct hdr), 1, pfile);            /* mon.out header: lowpc/highpc/ncount */\nfread(cbuf, sizeof(struct cnt), h.ncount, pfile);   /* call-count table (from mcount) */\n...\nfor(i=0;;i++) {                                     /* the rest: the PC-sample histogram */\n\tunsigned UNIT ccnt;\n\tfread(&ccnt, sizeof(ccnt), 1, pfile);            /* samples that hit this bucket */\n\ttime = ccnt; totime += time;\n}",
+    "line_number": 119,
+    "tags": [
+      "unix",
+      "profiler",
+      "prof",
+      "mon.out",
+      "statistical"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "craft",
+      "emotion_intensity": 4,
+      "emotions": {
+        "craft": 4,
+        "insight": 4
+      },
+      "technical_context": "prof reads mon.out, written by the profiled program at runtime once it calls monitor(). The runtime gathers two kinds of data. First, the PC-sample histogram: a profiling clock interrupts periodically and bumps the bucket (a UNIT=short) for the current address; most of mon.out is this big array. A high bucket means that address range was executing often -- this is statistical (sample occasionally, infer where time goes), so it is cheap: the program runs near full speed, just one increment per interrupt. Second, the call-count table (cbuf, struct cnt = address + cncall): counting code (mcount) planted at each function's entry bumps a counter on every call -- exact counting. Time (sampled, approximate) plus calls (counted, exact): combining the two is prof's trick. The mon.out header (lowpc/highpc/ncount) gives the profiled range and the boundary between the two datasets.",
+      "human_story": "Two rulers. One samples: a clock pokes the program now and then and tallies where it is -- approximate but cheap. The other counts: a tick at every function's door, exact. prof reads both out of mon.out and plays them against each other."
+    },
+    "appraiser_note": "prof は mon.out を読む——プロファイル対象が実行中、monitor() を呼んで書き残したファイルだ。ランタイムは二種類のデータを集める。ひとつめが PC サンプルのヒストグラム: プロファイリングクロックが一定間隔で割り込み、現在の番地のバケツ(UNIT=short)を1つ増やす。mon.out の大半はこの巨大配列で、値の大きいバケツ＝そのアドレス範囲が頻繁に実行されていた。これは統計的(ときどき覗いて時間の所在を推し量る)なので速い: プログラムはほぼ通常速度で走り割り込みごとに1つ数えるだけ。ふたつめが呼び出し回数の表(cbuf、struct cnt＝アドレス＋cncall):各関数の入口に仕込まれた計数コード(mcount)が呼ばれるたびにカウンタを増やす——正確な計数。時間(サンプリング、近似)＋回数(計数、正確)。この二つを組み合わせるのが prof の妙。mon.out のヘッダ(lowpc/highpc/ncount)がプロファイル範囲と二データの境界を告げる。",
+    "file_path": "usr/src/cmd/prof/prof.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "prof-003-symbols-and-ms-per-call",
+    "text": "/* read a.out symbol table: keep N_TEXT (function) symbols, sort by address */\nif (nbuf.n_type!=N_TEXT && nbuf.n_type!=N_TEXT+N_EXT) continue;\nnpe->value = nbuf.n_value/sizeof(UNIT);  /* function address */\n... qsort(nl, nname, sizeof(struct nl), valcmp);\n/* output, sorted by time */\nprintf(\"    name %%time  cumsecs  #call  ms/call\\n\");\nprintf(\"%8.8s%6.1f%9.2f\", np->name, 100*time, actime/60);\nprintf(\" %8.2f\\n\", np->time/(np->ncall*.06));   /* ms per call = time / calls */",
+    "line_number": 256,
+    "tags": [
+      "unix",
+      "profiler",
+      "prof",
+      "symbols",
+      "optimization"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "insight": 4
+      },
+      "technical_context": "Samples and counts accumulate by address; to show them, addresses must become names. prof reads the a.out symbol table, keeps the N_TEXT (function) symbols with their value and name, and sorts by address -- the same symbol table adb, sdb and ld read, used here to bind time to a location. The output is an optimization map: per function, %time (and cumsecs) from sampling, #call from counting, and ms/call = time / calls -- the two measurements divided. Sorted by time, the worst offender sits on top. ms/call distinguishes a light function called 100k times (called too much) from one called twice but heavy each time (bad algorithm). This is Kernighan's discipline 'Measure. Don't tune for speed until you've measured': do not guess where it is slow -- profile, and fix only the few functions at the top. Where c2 polished code mechanically, prof tells you WHICH code to polish.",
+      "human_story": "prof binds time to names using the same a.out symbol table the debugger and linker read, then prints %time, #call and ms/call sorted worst-first. ms/call tells the function called too often from the one that is simply slow. Don't guess what is slow -- measure."
+    },
+    "appraiser_note": "サンプルも回数も番地で集まる。見せるには番地を名前に変えねばならない。prof は a.out のシンボル表を読み、N_TEXT(関数)シンボルを value と name つきで拾い、番地順にソートする——adb/sdb/ld が読むのと同じシンボル表を、ここでは時間を場所に紐づけるのに使う。出力は最適化の地図: 各関数について %time(と cumsecs)はサンプリング由来、#call は計数由来、ms/call＝時間÷回数は両者の割り算。時間順にソートされ、一番重い犯人が上に来る。ms/call は、10万回呼ばれて時間を食う軽い関数(呼びすぎ)と、数回だが1回が重い関数(アルゴリズムが悪い)を見分けさせる。これはKernighan の規律『Measure. Don't tune for speed until you've measured(測れ、計測するまで速度に手を入れるな)』。どこが遅いか推測せず、プロファイルして上位の数関数だけ直す。c2 が機械的に磨いたのに対し、prof はどこを磨くべきかを教える。",
+    "file_path": "usr/src/cmd/prof/prof.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "prof-004-lineage-gprof-perf",
+    "text": "#ifdef plot   /* -v: draw the profile as a graph */\n\topenpl(); erase(); space(-2048,-2048,2048,2048);\n\tfor(np = nl; np<npe; np++) {        /* each function as a bar of its time */\n\t\tline(0,(int)lasty,50,(int)lasty);\n\t\tlabel(bufl);                     /* with its name */\n\t}\n#endif\n/* prof -> gprof (call graph) -> cc -pg -> perf : sampling + symbol attribution endures */",
+    "line_number": 187,
+    "tags": [
+      "unix",
+      "profiler",
+      "prof",
+      "perf",
+      "lineage"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "legacy": 4,
+        "history": 4
+      },
+      "technical_context": "With -v (#ifdef plot) prof also draws the profile: each function a bar proportional to its time, labeled by name, via plot's graphics (openpl/line/label) -- table and graph, two ways to show where the weight is. The method prof established -- statistical PC sampling plus symbol-table attribution to functions -- is still the basic shape of profiling. Its direct successor gprof adds the call graph (who called whom, how time propagates to callers); cc -pg plants the monitor()/mcount instrumentation in prof's direct line; and modern perf and samplers are the same at root: wake the program periodically, tally the PC, attribute by symbol. Faster sample rates, full call stacks, flame graphs -- but the 1979 skeleton, 'sample to measure, name by symbol', is unchanged. In the toolchain prof's role is distinct: c2/as/ld make the program, adb/sdb examine it, prof measures how it ran -- closing the make/fix/measure loop that feeds back into optimization.",
+      "human_story": "Every profiler since works prof's way: poke the program, note where it is, name it by symbol. gprof added the call graph, perf made it fast and drew flame graphs, but the 1979 idea -- sample to measure, symbols to name -- never changed."
+    },
+    "appraiser_note": "-v(#ifdef plot)をつければ prof はプロファイルを図にも描く: 各関数を時間に比例した棒として並べ名前を添える(plot の openpl/line/label)——表とグラフ、二つの見せ方。prof が確立した方式——統計的 PC サンプリング＋シンボル表による関数への按分——はプロファイリングの基本形として今に続く。直接の後継 gprof は呼び出しグラフ(誰が誰を呼び時間が呼び出し元へどう伝播するか)を足し、cc -pg は monitor()/mcount の計測を prof の直系として埋め込み、現代の perf やサンプラーも根は同じ: プログラムを定期的に叩き起こし PC を数えシンボルで関数に振り分ける。サンプル周期が速くなりコールスタック全体を取れ可視化が華やかになっても、1979年の骨格『サンプリングで測りシンボルで名づける』は変わらない。ツールチェーンの中で prof の役回りは独特: c2/as/ld が作り、adb/sdb が調べ、prof がどう動いたかを測る——作って直して測るループを閉じ、最適化へ還す。",
+    "file_path": "usr/src/cmd/prof/prof.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]
