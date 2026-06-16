@@ -1382,6 +1382,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "226",
+    title: "鑑定書#226 uucp — ノイズだらけの電話線の上にシーケンス番号・スライディングウィンドウ・チェックサム・再送の信頼転送(g プロトコル)を載せ、cico が深夜にダイヤルしてファイルを運ぶ store-and-forward。Usenet と電子メールを育てた Unix-to-Unix copy、インターネット前夜の世界網",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

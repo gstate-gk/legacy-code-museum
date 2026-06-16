@@ -18619,5 +18619,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "uucp-001-sliding-window",
+    "text": "char next[8] = { 1,2,3,4,5,6,7,0 };   /* sequence numbers, mod 8 */\n/* pkwrite: send ahead by the window, sleep when it is full */\nwhile (pk->p_xcount >= pk->p_swindow) {  /* window full of unacked packets */\n\tpkoutput(pk); PKGETPKT(pk); SLEEP(&pk->p_ps, PKOPRI);  /* wait for an ACK */\n}\nx = next[pk->p_pscopy]; pk->p_xcount++;  /* next seq, one more in flight */\npk->p_osum[x] = chksum(pk->p_ob[x], pk->p_xsize);",
+    "line_number": 309,
+    "tags": [
+      "unix",
+      "networking",
+      "uucp",
+      "sliding-window",
+      "protocol"
+    ],
+    "interesting_score": 22,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "insight": 5
+      },
+      "technical_context": "uucp (Unix-to-Unix copy) moves files between machines -- but in 1979 the link is a phone line and a modem. The g protocol (pk0.c/pk1.c) builds reliable transfer over that dirty medium with a sliding window. Waiting for an ACK after every packet would be ruinously slow over phone-line round trips, so the sender transmits up to a window (p_swindow) of packets ahead without waiting; each is counted as unacked (p_xcount), and an RR (receiver ready) for sequence N slides the window forward. Sequence numbers cycle mod 8 (next[8]) -- three bits to pair packets with acks. When p_xcount hits the window, the sender SLEEPs: flow control, so a fast sender never floods a slow receiver. Send ahead by the window, slide on ACK -- the same skeleton as TCP's sliding window, done over a phone line with 3-bit sequence numbers.",
+      "human_story": "Waiting for an ack after every packet would crawl over a phone line. So uucp sends a whole window of packets ahead, and only sleeps when the window fills -- the same trick TCP uses, running in 1979 over a modem."
+    },
+    "appraiser_note": "uucp(Unix-to-Unix copy)はマシン間でファイルを運ぶ——だが1979年、回線は電話線とモデムだ。g プロトコル(pk0.c/pk1.c)はその汚い媒体の上にスライディングウィンドウで信頼転送を築く。1パケットごとに ACK を待つと電話線の往復で遅すぎるので、送信側はウィンドウ(p_swindow)の分だけ確認を待たず先行送信する。各々を未確認(p_xcount)として数え、シーケンス N への RR(receiver ready)で窓が前へ滑る。シーケンス番号は mod 8 で巡回(next[8])——3ビットでパケットと ACK を対応づける。p_xcount が窓に達すると送信側は SLEEP: フロー制御で、速い送信側が遅い受信側を溢れさせない。窓の分だけ先行送信し ACK で滑らせる——TCP のスライディングウィンドウと同じ骨格を、電話線の上で3ビットのシーケンス番号で。",
+    "file_path": "usr/src/cmd/uucp/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "uucp-002-handshake-checksum",
+    "text": "/* three-way init handshake: negotiate window and packet size */\ncase INITA: pk->p_swindow = val; pk->p_msg |= M_INITB; break;   /* propose window */\ncase INITB: pk->p_xsize = pksizes[val]; break;                  /* set packet size */\ncase INITC: if ((pk->p_state&INITab)==INITab) pk->p_state = LIVE; /* connection up */\n/* checksum: rotate-left-with-carry, then add */\nchksum(s,n){ sum=-1; do { if(sum<0){sum<<=1;sum++;} else sum<<=1;\n\tsum += *s++ & 0377; } while(--n>0); return(sum); }\n/* verify: if (sum==CHECK) accept;  else RJ -> RXMIT (retransmit) */",
+    "line_number": 22,
+    "tags": [
+      "unix",
+      "networking",
+      "uucp",
+      "handshake",
+      "checksum"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "craft",
+      "emotion_intensity": 4,
+      "emotions": {
+        "craft": 4,
+        "insight": 4
+      },
+      "technical_context": "When the line opens, both ends handshake: INITA/INITB/INITC negotiate window size and packet size, and on agreement the state becomes LIVE -- the role TCP's three-way handshake plays, establishing the connection and agreeing parameters before data flows. Corruption is caught by a checksum: chksum() rotates the running sum left one bit (carrying the top bit back in) and adds each byte -- a rotate-add checksum of the same lineage as sum's. The receiver recomputes and compares (sum==CHECK); a mismatch means the line flipped a bit, so the packet is rejected (RJ) and retransmitted (RXMIT). The g protocol assumes corruption, loss, and delay as the normal case -- the same flaky phone-line world cu fought with 'sometimes missed carrier', tamed here at the protocol layer.",
+      "human_story": "Before sending data, the two ends agree on window and packet size; then every packet carries a rotate-and-add checksum. A flipped bit on the noisy line fails the check, and the packet is sent again. The protocol expects the line to be bad."
+    },
+    "appraiser_note": "回線が開くと両端は握手する: INITA/INITB/INITC が窓サイズとパケット長を交渉し、合意できたら状態を LIVE にする——TCP の3ウェイハンドシェイクが接続を確立しパラメータを交渉するのと同じ役割。化けはチェックサムが捕らえる: chksum() は累算値を左1ビット回転(最上位ビットを下から戻す)してから各バイトを加える——sum と同じ系譜の回転加算チェックサム。受信側は計算し直して比較し(sum==CHECK)、不一致は回線がビットを化けさせた証拠なのでパケットを拒否(RJ)し再送(RXMIT)する。g プロトコルは化け・欠け・遅れを通常の事態として設計されている——cu が『sometimes missed carrier』と格闘した同じ気まぐれな電話線の世界を、ここではプロトコルの層で飼い慣らす。",
+    "file_path": "usr/src/cmd/uucp/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "uucp-003-store-and-forward",
+    "text": "/* cico: place a call to a remote machine, login, and copy files */\nchar *Stattext[] = {\n\t\"\", \"BAD SYSTEM\", \"WRONG TIME\", \"SYSTEM LOCKED\",\n\t\"NO DEVICE\", \"DIAL FAILED\", \"LOGIN FAILED\", \"BAD SEQUENCE\" };\n/* uucp command: write a work file to the spool, transfer happens later */\n/* address: host1!host2!host3!user  (a bang path, hop by hop) */",
+    "line_number": 1,
+    "tags": [
+      "unix",
+      "networking",
+      "uucp",
+      "store-and-forward",
+      "bang-path"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "history",
+      "emotion_intensity": 4,
+      "emotions": {
+        "history": 4,
+        "insight": 4
+      },
+      "technical_context": "uucp foo remote!path does not transfer on the spot. The uucp command's job is to write the request as a work file into the spool (it also kicks off uucico by default, but that runs async). The actual dialing and copying is a separate program, cico (copy-in/copy-out), run later -- often at night when calls are cheap. This is store-and-forward: the two machines need not be up at the same time. Your file sits in the local spool until cico next reaches the remote; if that machine relays further, it pools again and moves on at the next call. The bang path host1!host2!host3!user is exactly that hop-by-hop route written by hand. Stattext[] -- DIAL FAILED, LOGIN FAILED, WRONG TIME, SYSTEM LOCKED -- shows how earthy the calls were over the real phone network: if it does not connect, try again later.",
+      "human_story": "uucp does not send your file now; it drops it in a spool, and a separate program dials the other machine later -- maybe at 3am when calls are cheap. The two computers never have to be awake together. That is how files crossed the world before always-on networks."
+    },
+    "appraiser_note": "uucp foo remote!path はその場で転送しない。uucp コマンドの仕事は依頼をスプールに作業ファイルとして書くこと(既定では uucico も起動するが非同期に走る)。実際のダイヤルとコピーは別プログラム cico(copy-in/copy-out)が後で——しばしば通話料の安い深夜に——行う。これが store-and-forward: 両方のマシンが同時に起きている必要がない。ファイルはローカルのスプールに溜まり、cico が次に相手と繋がったときに運ばれる。相手がさらに中継するならそこでまた溜まり次の通話で先へ進む。バン・パス host1!host2!host3!user はまさにその一跳びずつの経路を手で書いたもの。Stattext[]——DIAL FAILED/LOGIN FAILED/WRONG TIME/SYSTEM LOCKED——が、現実の電話網の上の通話がいかに泥臭かったかを物語る: 繋がらなければ後で掛け直す。",
+    "file_path": "usr/src/cmd/uucp/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "uucp-004-prehistoric-internet",
+    "text": "int Role = 0;   /* MASTER (placed the call) or SLAVE (answered it) */\n/* on uucp grew: */\n/*   email:  user reached as host1!host2!user, hop by hop          */\n/*   Usenet: articles copied machine to machine each night         */\n/* a peer-to-peer phone-line network -- no central server, no fixed IP */",
+    "line_number": 19,
+    "tags": [
+      "unix",
+      "networking",
+      "uucp",
+      "usenet",
+      "email"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 5,
+      "emotions": {
+        "legacy": 5,
+        "history": 5
+      },
+      "technical_context": "uucp carried more than files: it was the network that connected the world before the Internet. Two giants grew on it. Email -- before user@host, mail was delivered along the bang path host1!host2!user, riding uucp calls hop by hop. And Usenet -- the vast distributed bulletin board was built on uucp's store-and-forward: articles copied machine to machine over nightly phone calls, rippling out to the world. Universities, companies, and labs connected not with expensive leased lines but with an ordinary phone line and uucp -- the poor man's network, open to anyone who already had a phone. cico's Role (MASTER = called, SLAVE = answered) shows it was peer-to-peer: no central server, no fixed IP, just machines that knew each other's phone numbers calling nightly. That loose web actually connected the world's Unix machines until TCP/IP spread in the 1990s.",
+      "human_story": "Before the Internet, the world's Unix machines were tied together by phone calls. Email and Usenet both rode uucp -- articles and messages copied from one machine to the next, night after night, until they had crossed the planet. A network anyone with a phone line could join."
+    },
+    "appraiser_note": "uucp が運んだのはファイルだけではない: インターネット以前に世界を繋いだネットワークそのものだった。二つの巨大なものが育った。電子メール——user@host 以前、メールはバン・パス host1!host2!user で uucp の通話を乗り継いで配達された。そして Usenet——巨大な分散掲示板網は uucp の store-and-forward の上に築かれ、記事は夜ごとの電話通話でマシンからマシンへ複製され世界へ広がった。大学も企業も研究所も、高価な専用線でなくただの電話線と uucp で繋がった——誰もが既に持つ電話だけで参加できる貧者のネットワーク。cico の Role(MASTER=掛けた側/SLAVE=受けた側)が示すようピアツーピアだった: 中央サーバも固定IPもなく、互いの電話番号を知るマシンが夜ごと掛け合う。その緩やかな網が、TCP/IP が普及する1990年代まで、世界中の Unix マシンを実際に繋いでいた。",
+    "file_path": "usr/src/cmd/uucp/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]
