@@ -1403,6 +1403,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "229",
+    title: "鑑定書#229 sdb — アドレスでなく関数名・引数・ファイル:行でスタックを語り、コンパイラが埋めた stab 記号から変数の型と番地を知りソース行で止まる。adb の ptrace/BPT 機構の上にソースの層を載せた約2,340行のソースレベルデバッガ、adb→sdb→dbx→gdb の架け橋",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

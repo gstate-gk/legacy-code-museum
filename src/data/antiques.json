@@ -18967,5 +18967,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "sdb-001-source-backtrace",
+    "text": "prframe() {   /* print the call stack = backtrace */\n\tdo {\n\t\tprintf(\"%.8s(\", procp->pname);          /* function name */\n\t\twhile (narg) { printf(\"%d\", get(argp+=4,DSP)); ... }  /* arguments */\n\t\tprintf(\")\");\n\t\tif (procp->sfptr != badfile)\n\t\t\tprintf(\"   [%s:%d]\", adrtofilep(callpc-1)->sfilename,   /* file */\n\t\t\t\tadrtolineno(callpc-1));                              /* line */\n\t} while ((procp = nextframe()) != badproc);\n}",
+    "line_number": 30,
+    "tags": [
+      "unix",
+      "debugger",
+      "sdb",
+      "backtrace",
+      "gdb"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 5,
+      "emotions": {
+        "insight": 5,
+        "legacy": 4
+      },
+      "technical_context": "sdb is the source-level debugger. adb spoke in addresses (0x1000,5?i); sdb speaks in the programmer's own source -- function names, variables, file:line. Its emblem is prframe(): a backtrace. Where adb gave a list of addresses, prframe walks each stack frame and prints it as function(args)   [file:line], e.g. main(1,2) [foo.c:42]. This is exactly the bt output you get from gdb today. What makes it possible is adrtofilep (address->source file) and adrtolineno (address->line) -- the reverse mapping from a raw machine address to a position in the source. sdb built a translation layer between the machine's addresses and the human's source.",
+      "human_story": "Crash, and adb hands you a column of numbers. sdb hands you 'foo.c:42, inside bar, called from main' -- the stack told as a story of function calls. That is the bt you still type into gdb."
+    },
+    "appraiser_note": "sdb はソースレベルデバッガ。adb はアドレスで語った(0x1000,5?i)が、sdb はプログラマ自身のソース——関数名・変数名・ファイル:行——で語る。その象徴が prframe()＝バックトレース。adb が番地の羅列を返したところを、prframe は各スタックフレームを遡り 関数名(引数) [ファイル:行] の形で表示する(例: main(1,2) [foo.c:42])。今 gdb で bt を打つと出るあれそのもの。可能にするのが adrtofilep(アドレス→ソースファイル)と adrtolineno(アドレス→行)＝生の機械番地をソース上の位置へ逆写像する仕掛け。sdb は機械の番地と人間のソースの間に翻訳の層を架けた。",
+    "file_path": "usr/src/cmd/sdb/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "sdb-002-name-based-commands",
+    "text": "decode() {   /* decode a command line item by item */\n\tif (*q == '(') { scallf=1; cpname(proc,p); }   /* proc(...)  procedure call */\n\tif (*q == ':') { cpname(proc,p); }             /* proc:      function name */\n\tif (*q == '$') { cpname(var,p); }              /* var$       variable name */\n\tif (number(*p)) { integ = readint(&p); }       /* 42         line number */\n}\n/* docomm: t=trace  p=print  b=break  s=step  n=next  c=cont  d=delete */",
+    "line_number": 5,
+    "tags": [
+      "unix",
+      "debugger",
+      "sdb",
+      "commands",
+      "source-level"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "craft": 4
+      },
+      "technical_context": "adb's command was addr,count?format -- address, count, format. sdb's commands are the names of source things. decode() parses a function name (proc:), a variable name (var$), a procedure call (proc(...)), a decimal line number (42), and single-letter commands. So debugging uses the same vocabulary as reading the code: main:b breaks at main, 42b at line 42, x$/ prints variable x. docomm.c's command set (t=trace, p=print, b=break, s=step, n=next, c=continue, d=delete) maps almost one-to-one onto today's gdb (bt/print/break/step/next/continue/delete). The debugger command vocabulary was essentially finished at this moment: adb spoke the machine's language, sdb speaks the programmer's.",
+      "human_story": "Where adb made you compute 'this variable is so many bytes off the frame pointer', sdb lets you say 'show me x'. break at main, step a line, print a variable -- the words you still type into gdb were set here."
+    },
+    "appraiser_note": "adb のコマンドは addr,count?format——アドレス・個数・書式。sdb のコマンドはソースの構成要素の名前だ。decode() は関数名(proc:)、変数名(var$)、関数呼び出し(proc(...))、10進の行番号(42)、単一文字コマンドを切り分ける。だからデバッグはソースを読むのと同じ語彙でできる: main:b で main にブレーク、42b で42行目、x$/ で変数 x を表示。docomm.c のコマンド(t=トレース p=表示 b=ブレーク s=ステップ n=ネクスト c=継続 d=削除)は今日の gdb(bt/print/break/step/next/continue/delete)とほぼ一対一に対応する。デバッガの操作語彙はこの瞬間にほぼ完成した:adb が機械の言葉を話したなら、sdb はプログラマの言葉を話す。",
+    "file_path": "usr/src/cmd/sdb/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "sdb-003-stab-typed-variables",
+    "text": "formaddr(proc, class, addr) {   /* find a variable's core address from its storage class */\n\tswitch(class & STABMASK) {\n\tcase N_RSYM:                    /* register variable */\n\t\tif (getframe(proc) < 0) return(-1);\n\tcase N_GSYM:                    /* global */\n\tcase N_SSYM:                    /* struct member */\n\tcase N_STSYM:                   /* static */\n\t\treturn(addr);\n\t}\n}",
+    "line_number": 83,
+    "tags": [
+      "unix",
+      "debugger",
+      "sdb",
+      "stab",
+      "types"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "craft",
+      "emotion_intensity": 4,
+      "emotions": {
+        "craft": 4,
+        "insight": 4
+      },
+      "technical_context": "sdb can answer 'show me x' because it knows the variable's type and where it lives -- from stab (symbol table debugging) entries the compiler plants in the symbol table for debugging. A C variable's home depends on its storage class: a global (N_GSYM) sits at a fixed address, a static (N_STSYM) likewise, a local is at an offset in the stack frame, and a register variable (N_RSYM) is not even in memory but in a register. formaddr() reads the stab's class and computes where the variable is now -- a register var from the current frame's saved-register area (getframe), a global from its fixed address. The stab also carries the type (int vs char* vs struct), so sdb interprets the raw bytes accordingly: where adb could only say 'these 4 bytes in hex', sdb says 'x is an int, value 42'. And the s command uses stab line info to run to the next SOURCE line, not the next machine instruction.",
+      "human_story": "How does sdb know x is an int in a register and not just four bytes somewhere? The compiler left notes -- stab entries -- saying each variable's type and where it lives. sdb reads the notes and shows you 'x = 42', and steps a source line at a time."
+    },
+    "appraiser_note": "sdb が『変数 x を見せて』に応えられるのは、変数の型と居場所を——コンパイラがデバッグのためシンボル表へ埋め込む stab(symbol table debugging)記号から——知っているから。C 変数の居場所は格納クラスで違う: グローバル(N_GSYM)は固定番地、静的(N_STSYM)も同様、ローカルはスタックフレーム上の相対位置、レジスタ変数(N_RSYM)はメモリですらなくレジスタの中。formaddr() は stab の格納クラスを見て変数が今どこにあるか計算する——レジスタ変数なら現在フレームのレジスタ退避域(getframe)から、グローバルなら固定番地から。stab は型(int か char* か struct か)も運ぶので、sdb は生バイト列を型に従って解釈する: adb が『この4バイトを16進で』としか言えなかったところを sdb は『x は int で値は42』と言える。s コマンドは stab の行情報で次のソース行まで実行する(機械語1命令でなくソース1行単位)。",
+    "file_path": "usr/src/cmd/sdb/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "sdb-004-two-layer-debugger",
+    "text": "/* runpcs.c: breakpoints work exactly as in adb -- overwrite the instruction with BPT */\nsetbp() {\n\t... ptrace(WIUSER, pid, a, BPT | (bkptr->ins&~0xFF));   /* same mechanism as adb */\n\tIF errno\n\tTHEN error(\"cannot set breakpoint: \");\n\t     printf(\"%s:%d @ %d\\n\", adrtoprocp(dot)->pname,   /* but the error speaks proc:line */\n\t\tadrtolineno(dot), dot);\n\tFI\n}",
+    "line_number": 230,
+    "tags": [
+      "unix",
+      "debugger",
+      "sdb",
+      "ptrace",
+      "architecture"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 5,
+      "emotions": {
+        "elegance": 5,
+        "legacy": 5
+      },
+      "technical_context": "sdb's design is two-layer. The lower layer is the mechanism inherited from adb: fork + ptrace(SETTRC) to seize the child, overwrite an instruction with BPT to set a breakpoint, read/write registers and memory via ptrace, wait for stops -- runpcs.c is nearly identical to adb's. The upper layer is the meaning sdb adds: reading stab entries to translate addresses into functions, files, lines, types. So the same BPT sets a breakpoint, but adb reports a failure as an address while sdb reports it as proc:line. Below it works in addresses; above it speaks in names. This split -- low-level process control vs high-level source correspondence -- is the universal debugger architecture sdb established, and it stands on a contract: the compiler must emit debug symbols (stab, later -g) or sdb cannot know types or line<->address maps. Compiler writes the notes, debugger reads them -- the contract dbx, then gdb and DWARF, refined.",
+      "human_story": "sdb is adb with a translator bolted on top. The same BPT breakpoint, the same ptrace -- but where adb says 'failed at 0x1000', sdb says 'failed at main:42'. The trick is that the compiler leaves notes in the binary, and the debugger reads them. That handshake is why gdb knows your source."
+    },
+    "appraiser_note": "sdb の設計は二層だ。下層は adb から受け継いだ機構: fork+ptrace(SETTRC) で子を捕まえ、命令を BPT で上書きしてブレークポイントを置き、ptrace でレジスタ/メモリを読み書きし、wait で停止を待つ——runpcs.c は adb のそれとほぼ同じ。上層が sdb の足した意味: stab 記号を読みアドレスを関数・ファイル・行・型へ翻訳する層。だから同じ BPT でブレークを置きながら、その失敗を adb は番地で、sdb は proc:line で告げる。下では番地で動き上では名前で語る。この分離(低レベルのプロセス制御 vs 高レベルのソース対応)が sdb の確立したデバッガの普遍アーキテクチャで、それは契約の上に立つ: コンパイラが stab(後の -g)デバッグ記号を吐かねば sdb は型も行↔番地対応も知れない。コンパイラが注釈を書きデバッガが読む——この契約を dbx、そして gdb と DWARF が精緻化した。",
+    "file_path": "usr/src/cmd/sdb/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]
