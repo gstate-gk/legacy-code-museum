@@ -19895,5 +19895,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "pstat-001-dump-whole-tables",
+    "text": "struct setup { char name[8]; int type; unsigned value; } setup[] = {\n\t\"_inode\", \"_text\", \"_proc\", ... \"_file\",   /* each kernel table's symbol */\n};\nnlist(fnlist, setup);          /* resolve table addresses from /unix */\nfc = open(fcore, 0);           /* /dev/kmem */\nif (inof) doinode();  if (prcf) doproc();  if (filf) dofil();   /* -i / -p / -f */\nif (kflg) for (sp=setup; sp->value; sp++) sp->value &= 0x7fffffff;  /* -k: kernel addr mask */",
+    "line_number": 60,
+    "tags": [
+      "unix",
+      "kernel",
+      "pstat",
+      "dev-kmem",
+      "tables"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 5,
+      "emotions": {
+        "insight": 5,
+        "legacy": 4
+      },
+      "technical_context": "pstat is named process/system status but really dumps the kernel's internal tables -- inode table (files in use), process table, text table (shared code), tty table, open-file table. Where iostat and dmesg read kernel COUNTERS (numbers), pstat reads the DATA STRUCTURES themselves -- whole arrays of structs. setup[] lists each table's symbol (_inode, _text, _proc, _file), nlist(/unix) resolves their addresses at once, and flags (-i inode, -x text, -p proc, -t tty, -f file, -a all) pick which do* function runs. Each lseeks to the table address and reads the entire fixed-size array (struct inode[NINODE], etc.) in one read. Counters say how much happened; tables say what is here now -- a snapshot of system state in its own structure. With -k each address is masked with 0x7fffffff, dropping the top bit of the kernel virtual address to get the right /dev/kmem offset.",
+      "human_story": "iostat reads the kernel's numbers; pstat reads its tables. It asks /unix where the process table and inode table live, then pulls each whole table straight out of /dev/kmem -- the OS's own ledgers, row by row."
+    },
+    "appraiser_note": "pstat は process/system status の名だが、実態はカーネルの内部テーブルをダンプする——inode 表(使用中ファイル)、プロセス表、テキスト表(共有コード)、tty 表、open file 表。iostat や dmesg がカーネルのカウンタ(数値)を読んだのに対し、pstat はデータ構造そのもの——構造体の配列を丸ごと読む。setup[] が各テーブルのシンボル(_inode/_text/_proc/_file)を並べ、nlist(/unix) で一括して番地を解決、フラグ(-i inode/-x text/-p proc/-t tty/-f file/-a 全部)で do* を呼び分ける。各関数はテーブル番地へ lseek し固定長配列(struct inode[NINODE]等)を一度の read で吸い出す。カウンタはどれだけ起きたかを、テーブルはいま何が在るかを語る——システム状態のスナップショットを構造のまま。-k では各番地に 0x7fffffff のマスクをかけ、カーネル仮想アドレスの最上位ビットを落として /dev/kmem の正しいオフセットに直す。",
+    "file_path": "usr/src/cmd/pstat.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "pstat-002-share-kernel-structs",
+    "text": "doinode() {\n#include <sys/inode.h>            /* the kernel's OWN struct inode definition */\n\tstruct inode xinode[NINODE];    /* same layout & size as the kernel's inode table */\n\tread(fc, xinode, sizeof(xinode));   /* pour raw /dev/kmem bytes into the struct */\n\tfor (ip=xinode; ip<&xinode[NINODE]; ip++) {\n\t\tif (ip->i_count == 0) continue;     /* fields line up exactly */\n\t\tputf(ip->i_flag&ILOCK, 'L'); putf(ip->i_flag&IMOUNT, 'M');\n\t}\n}",
+    "line_number": 147,
+    "tags": [
+      "unix",
+      "kernel",
+      "pstat",
+      "struct",
+      "coupling"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "ingenuity": 4,
+        "insight": 4
+      },
+      "technical_context": "What pstat reads from /dev/kmem is just bytes; to make them meaningful it needs a map saying 'this byte is the lock flag, the next four are the inode number'. pstat shares that map with the kernel. Each do* function opens with #include <sys/inode.h> / <sys/proc.h> / <sys/text.h> -- the very headers the kernel uses to define those tables. So pstat's struct inode has exactly the kernel's layout, and reading raw kmem bytes into struct inode xinode[] makes i_count, i_flag, i_dev point at exactly the kernel's fields. The array sizes (NINODE, NPROC, NTEXT) come from the same headers -- the kernel's static table sizes -- so pstat reads each whole table at once. Powerful but brittle: add a field to struct proc and pstat must be recompiled against the same header or its reads shift and break. pstat is tied to one kernel version through the struct definitions -- the same coupling ps, adb and iostat had, and the very fragility that later drove the stable /proc and sysctl interfaces.",
+      "human_story": "How does pstat know which byte means what? It #includes the kernel's own headers, so its structs match the kernel's bit for bit. Read the raw memory into them and the fields line up. Change the kernel and pstat breaks -- which is why /proc was eventually invented."
+    },
+    "appraiser_note": "pstat が /dev/kmem から読んだのはただのバイト列で、意味あるものにするには『このバイトはロックフラグ、次の4バイトは inode 番号』という解釈の地図が要る。その地図を pstat はカーネルと共有する。各 do* 関数の冒頭の #include <sys/inode.h>/<sys/proc.h>/<sys/text.h> は、カーネルがそのテーブルを定義するのに使うのとまったく同じヘッダだ。だから pstat の struct inode はカーネルと同一レイアウトになり、生 kmem バイトを struct inode xinode[] に read すれば i_count/i_flag/i_dev がカーネルのフィールドをぴたり指す。配列サイズ(NINODE/NPROC/NTEXT)も同じヘッダ＝カーネルの静的テーブルサイズから来るので、テーブル全体を一度に読める。強力だが脆い: struct proc にフィールドを足せば、同じヘッダで再コンパイルしない限り読み取りがずれて壊れる。pstat は構造体定義を通じて特定バージョンのカーネルと固く結びつく——ps/adb/iostat と同じ密結合で、この脆さこそ後の安定インターフェース /proc・sysctl を生んだ。",
+    "file_path": "usr/src/cmd/pstat.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "pstat-003-organs-of-the-system",
+    "text": "/* doproc: the process table, ps in the raw */\nprintf(\"%2d\", pp->p_stat);     /* state: runnable/sleeping/stopped/zombie */\nprintf(\"%7o\", pp->p_sig);      /* pending signals */\nprintf(\"%9x\", pp->p_wchan);    /* what address it sleeps on (wait channel) */\nprintf(\"%9x\", pp->p_textp);    /* pointer to its shared text */\n/* dotext: shared code segments */\nfor (xp=xtext; xp<&xtext[NTEXT]; xp++) if (xp->x_iptr!=NULL) ntx++;",
+    "line_number": 231,
+    "tags": [
+      "unix",
+      "kernel",
+      "pstat",
+      "process-table",
+      "shared-text"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "legacy": 4,
+        "insight": 4
+      },
+      "technical_context": "pstat shows the system's organs, each table a different aspect. The process table (doproc) shows every live process as the kernel sees it: p_stat (runnable, sleeping, zombie), priority, pending signals (p_sig), uid, pid/ppid, and p_wchan -- the wait channel, the kernel address a blocked process is sleeping on, so you can tell a stuck process is waiting on disk vs terminal input by the struct address it waits at. This is ps's output in raw internal form. The inode table (doinode) shows open/referenced files and their lock state (L locked, M mount point, T text). The text table (dotext) is of its era: when many processes run the same program (ten shells), the code (text) is loaded once and shared; the text table is the ledger of those shared code images and their reference counts -- visualizing the shared-text memory saving. The file table (dofil) shows system-wide open files: pstat -f is a primitive lsof. Cross the proc, inode and file tables and you get the whole picture of who has what open.",
+      "human_story": "pstat is the system's X-ray: the process table with each task's state and what it sleeps on, the inode table of busy files, the text table of programs shared in memory, the file table of everything open. ps, top and lsof all show slices of what pstat dumped whole."
+    },
+    "appraiser_note": "pstat は OS の内臓を映し、各テーブルが異なる側面を語る。プロセス表(doproc)は生きている全プロセスをカーネルの目で見せる: p_stat(実行可能/睡眠/ゾンビ)、優先度、保留シグナル(p_sig)、uid、pid/ppid、そして p_wchan——wait channel＝ブロック中のプロセスが眠っているカーネル番地で、固まったプロセスがディスク待ちか端末入力待ちかが待っている構造体の番地で分かる。これは ps の出力の生・内部表現版。inode 表(doinode)は開かれた/参照中ファイルとロック状態(L ロック/M マウント点/T テキスト)を見せる。テキスト表(dotext)は当時ならでは: 複数プロセスが同じプログラム(10個の sh)を走らせるとき、コード(テキスト)は1つだけ載せて共有する——テキスト表はその共有コードイメージと参照数の台帳で、共有テキストというメモリ節約の可視化。file 表(dofil)はシステム全体の open file を見せ、pstat -f は原始的な lsof。proc/inode/file を突き合わせれば誰が何をどう開いているかの全体像が描ける。",
+    "file_path": "usr/src/cmd/pstat.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "pstat-004-static-tables-transparent-kernel",
+    "text": "struct proc xproc[NPROC];   /* NPROC = the kernel's fixed table limit, set at boot */\nfor (pp=xproc; pp<&xproc[NPROC]; pp++) if (pp->p_stat) np++;\nprintf(\"%d processes\\n\", np);   /* how many of NPROC slots are in use */",
+    "line_number": 234,
+    "tags": [
+      "unix",
+      "kernel",
+      "pstat",
+      "static-tables",
+      "proc-fs"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "history",
+      "emotion_intensity": 4,
+      "emotions": {
+        "history": 4,
+        "legacy": 4
+      },
+      "technical_context": "pstat can read tables as fixed-size arrays (NPROC, NINODE, NTEXT) because the kernel's tables were static -- allocated at boot and never grown. That reflects the era's reality: when a table filled, you got 'process table full' or 'inode table overflow' -- no new process, no opening a file. So pstat was a real diagnostic: pstat -p showed how full the process table was, and nearing NPROC you raised the constant and rebuilt the kernel. It was the system's gauge of how tight the fixed quotas were. pstat is also the fullest expression of the transparent-kernel idea of early Unix: the kernel hides nothing -- every table is readable through /dev/kmem, its meaning decodable from shared struct headers. But that transparency was brittle (the tool must know the kernel's exact structs), and that fragility is what drove the /proc filesystem and sysctl -- stable interfaces that decouple tool from kernel. Today's ps, lsof, top, sar and /proc are pstat's descendants: observing a running system in (close to) its internal form.",
+      "human_story": "Back when the process table was a fixed array, it could fill up -- 'process table full' -- and pstat told you how close you were so you could rebuild the kernel with a bigger limit. It read the kernel's tables straight, which made it powerful and fragile, and that fragility is why /proc exists."
+    },
+    "appraiser_note": "pstat が固定長配列(NPROC/NINODE/NTEXT)でテーブルを読めるのは、当時のカーネルのテーブルが静的＝起動時確保で増えなかったから。これは当時の現実を物語る: テーブルが満杯になると『process table full』『inode table overflow』——新しいプロセスを起動できず、ファイルを開けない。だから pstat は実用診断だった: pstat -p でプロセス表が NPROC のうちどれだけ埋まっているか見て、上限に近ければカーネルの NPROC を増やして再ビルドする。固定枠の逼迫を見せる体温計だった。pstat は初期 Unix の透明なカーネルという思想の最も徹底した姿でもある: カーネルは何も隠さず、全テーブルが /dev/kmem で読め、意味は共有 struct ヘッダで解ける。だがその透明性は脆く(ツールがカーネルの正確な構造を知る必要がある)、その脆さがツールとカーネルを切り離す安定インターフェース——/proc ファイルシステムや sysctl——を生んだ。今日の ps/lsof/top/sar/proc は pstat の子孫で、走るシステムを(ほぼ)内部表現のまま観測する。",
+    "file_path": "usr/src/cmd/pstat.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]

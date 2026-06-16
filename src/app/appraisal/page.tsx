@@ -1459,6 +1459,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "239",
+    title: "鑑定書#239 pstat — カーネルと同じ構造体ヘッダ(#include <sys/proc.h> 等)を共有し、/dev/kmem からプロセス表・inode 表・テキスト表を丸ごと読んで OS の内部データ構造をそのまま映し出す543行。走るカーネルの X 線写真、ps/top/lsof/sar・/proc/sysctl の祖",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
