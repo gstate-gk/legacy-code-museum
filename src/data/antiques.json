@@ -18735,5 +18735,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "ld-001-symbol-resolution",
+    "text": "/* load1: name external symbols in a hash table */\nsymreloc();\nif (enter(lookup())) continue;            /* new name: register; else return existing */\nif ((sp = lastsym)->stype != EXTERN+UNDEF) continue;  /* already defined */\nif (cursym.stype == EXTERN+UNDEF) {       /* both undefined ... */\n\tif (cursym.svalue > sp->svalue) sp->svalue = cursym.svalue;  /* keep larger (common) */\n\tcontinue;\n}\nndef++;  sp->stype = cursym.stype;  sp->svalue = cursym.svalue;  /* finally defined */",
+    "line_number": 570,
+    "tags": [
+      "unix",
+      "linker",
+      "ld",
+      "symbols",
+      "toolchain"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 5,
+      "emotions": {
+        "insight": 5,
+        "legacy": 4
+      },
+      "technical_context": "ld (link editor) is the last stage of the toolchain. as emits relocatable object files (.o), but a .o is still a fragment: main.o calls printf, yet printf's body lives in another file. ld's whole reason to exist is symbol resolution: in main.o printf is an external undefined symbol (EXTERN+UNDEF) -- 'I want to call this name, I don't know where it is' -- while in printf.o it is external defined (EXTERN+TEXT). ld reads every .o's symbol table and matches each undefined to a definition through a hash table (lookup/enter). An undefined left unmatched after all files is the most familiar linker error: 'undefined symbol'. This is also what makes separate compilation possible: compile each file to .o independently, refer to each other by name, and let ld tie the names together at the end.",
+      "human_story": "A .o file is a fragment that calls names it does not contain. ld is the matchmaker: it reads every fragment's symbols and weds each 'I need printf' to the one file that says 'here is printf'. The name left unwed is the undefined-symbol error you still see."
+    },
+    "appraiser_note": "ld(link editor)はツールチェーンの最終段。as は再配置可能なオブジェクトファイル(.o)を吐くが、.o はまだ断片だ: main.o が printf を呼んでも printf 本体は別ファイルにある。ld の存在理由はシンボル解決: main.o では printf は外部未定義(EXTERN+UNDEF)＝『この名前を呼びたいがどこにあるか知らない』、printf.o では外部定義済み(EXTERN+TEXT)。ld は全 .o のシンボル表を読み、ハッシュ表(lookup/enter)で未定義と定義を出会わせる。全ファイルを舐めても未定義が残れば、それが最も見慣れたリンカエラー『undefined symbol』。これが分割コンパイルを可能にする: ファイルごとに別々に .o へコンパイルし互いを名前で参照し、最後に ld が名前で繋ぐ。",
+    "file_path": "usr/src/cmd/ld.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "ld-002-library-member-selection",
+    "text": "load1(libflg, loc) {\n\tsavnext = nextsym;             /* remember position before reading this member */\n\twhile (text.size > 0) { symget(&cursym,&text); ... ndef++; ... }\n\tif (libflg==0 || ndef) { ...take it...; return(1); }\n\t/* No symbols defined by this library member. */\n\twhile (nextsym>savnext) hshtab[(--nextsym)->symhash]=0;  /* rip it out, rewind */\n\treturn(0);\n}",
+    "line_number": 625,
+    "tags": [
+      "unix",
+      "linker",
+      "ld",
+      "library",
+      "archive-order"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "craft": 4
+      },
+      "technical_context": "Given -lc, ld walks the members of libc.a. But a library holds hundreds of functions; if your program uses three, dragging in the rest would bloat the executable. So ld tries before it takes: load1 records the symbol-table position (savnext) before reading a member, reads its symbols, and counts how many currently-undefined names this member can define (ndef). If any, the member is needed -- keep it. If none, rewind nextsym to savnext and rip the just-entered hash entries out with hshtab[...]=0 -- as if the member were never read. This 'pull in only what defines something needed' is the classic Unix linker behavior, and the cause of the archive-order problem beginners still hit: ld scans a library roughly front-to-back, so a member is pulled only if its symbols are already undefined at that point -- which is why -lm must come after the objects that use it. That rule was written into this rewind loop in 1979.",
+      "human_story": "A library has hundreds of functions; you use three. ld reads each member, asks 'does this define anything I still need?', and if not, rewinds and pretends it never read it. That is why -lm goes at the end of the command line."
+    },
+    "appraiser_note": "-lc を指定すると ld は libc.a のメンバを順に見る。だがライブラリには何百もの関数があり、3つしか使わないなら残り全部を繋ぐのは無駄で実行ファイルが肥大する。だから ld は取り込む前に試す: load1 はメンバを読む前のシンボル表位置(savnext)を覚え、メンバのシンボルを読み、今まで未定義だったものをこのメンバが幾つ定義できたか(ndef)を数える。一つでもあれば必要なので取り込む。一つもなければ nextsym を savnext まで巻き戻し、登録したばかりのハッシュエントリを hshtab[...]=0 で引き抜く——読まなかったことにする。この『定義するものだけ引き込む』が Unix リンカの古典的振る舞いで、初学者がいまも引っかかる『アーカイブ順序問題』の正体: ld はライブラリをほぼ前から後ろへ走査するので、その時点で未定義のシンボルを定義するメンバだけ引き込む——だから -lm は使う側のオブジェクトより後ろに置く。その規則は1979年、この巻き戻しループに書かれていた。",
+    "file_path": "usr/src/cmd/ld.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "ld-003-common-and-end-symbols",
+    "text": "/* middle: place common blocks (tentative defs) into bss */\nif ((s=sp->stype)==EXTERN+UNDEF && (t=sp->svalue)!=0) {  /* undefined but has a size = common */\n\tcsize = round(csize, rnd);  sp->svalue = csize;  sp->stype = EXTERN+COMM;  csize += t;\n}\n/* symbols ld defines itself: the boundaries a program relies on */\nldrsym(p_etext, tsize, EXTERN+TEXT);   /* _etext: end of text */\nldrsym(p_edata, dsize, EXTERN+DATA);   /* _edata: end of data */\nldrsym(p_end,   bsize, EXTERN+BSS);    /* _end: end of bss = start of heap */",
+    "line_number": 634,
+    "tags": [
+      "unix",
+      "linker",
+      "ld",
+      "common",
+      "symbols"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "insight": 4
+      },
+      "technical_context": "middle() does two interesting jobs. One is placing common blocks: a C tentative definition (or FORTRAN COMMON) appears in several .o as the same name 'undefined but with a size'. ld takes the largest size seen (that is what load1's 'keep larger svalue' was for), allocates exactly one slot in bss, and points every reference there -- shared storage many files can name. The other job: ld defines symbols itself. _etext (end of text), _edata (end of data), _end (end of bss) appear in no .o; ld writes their addresses after it has decided the final layout. The C runtime reads _end to know where the heap begins and grows it with sbrk/brk for malloc. So the linker not only joins fragments -- it hands the program facts about the joined result, as symbols.",
+      "human_story": "Two files declaring the same global array do not collide: ld gives the common block one home in bss, big enough for the largest. And ld invents _end -- the symbol that tells a program where its memory ends and the heap may grow."
+    },
+    "appraiser_note": "middle() は二つの面白い仕事をする。一つは common(共通ブロック)の配置: C の暫定定義(や FORTRAN の COMMON)は同じ名前が複数の .o に『未定義だがサイズを持つ』形で現れる。ld は見た中で最大のサイズを採り(load1 の『大きいsvalue を保持』がこれ)、bss にただ一つ場所を確保し全参照をそこへ向ける——複数ファイルが名乗れる共有記憶。もう一つ: ld 自身がシンボルを定義する。_etext(テキスト終端)/_edata(データ終端)/_end(bss 終端)はどの .o にもなく、ld が最終配置を決めた後に番地を書き込む。C ランタイムは _end を見てヒープの始まりを知り sbrk/brk でmalloc 用に伸ばす。リンカは断片を繋ぐだけでなく、繋いだ結果についての事実をシンボルとしてプログラムに手渡す。",
+    "file_path": "usr/src/cmd/ld.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "ld-004-relocation",
+    "text": "load2td(lp, creloc, b1, b2) {        /* relocation: rewrite each word to its final address */\n\tif (r2&REXT) { sp=lookloc(lp,r1);  /* external ref: */\n\t\t... tw += sp->svalue - database;   /* add the symbol's final address */\n\t} else switch (r1&TYMASK) {         /* in-segment ref: shift by segment origin */\n\t\tcase RTEXT: tw += ctrel; break;\n\t\tcase RDATA: tw += cdrel; break;\n\t\tcase RBSS:  tw += cbrel; break;\n\t}\n\tif (r2&PCREL) tw -= creloc;          /* PC-relative */\n\tif (tw<l || u<tw) error(0,\"Displacement overflow\");\n}",
+    "line_number": 897,
+    "tags": [
+      "unix",
+      "linker",
+      "ld",
+      "relocation",
+      "a.out"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "craft",
+      "emotion_intensity": 4,
+      "emotions": {
+        "craft": 4,
+        "legacy": 4
+      },
+      "technical_context": "When as assembled each .o, its addresses were relative to that file's start; a .o alone does not know where in memory it will end up. Only when ld lays several .o in order do the final origins of each file's text and data get fixed -- and then every address reference must be patched to that final layout. That is relocation. as left relocation bits in the .o marking what to fix; ld's second pass (load2td) walks them: an external reference (REXT) gets the resolved symbol's final address; an in-segment reference is shifted by this file's text/data/bss origin (ctrel/cdrel/cbrel); a PC-relative ref subtracts the current location; and a value that overflows its field is 'Displacement overflow'. ld reads twice -- pass 1 (load1+middle) resolves symbols and fixes sizes and origins, pass 2 (load2) reads the actual text and data, patches every address, and writes one a.out. With -r the relocation bits are kept so the output can be re-linked later (partial/incremental linking).",
+      "human_story": "Each .o thinks it starts at zero. ld stacks them, decides where each really lands, and then goes back and rewrites every address to match -- adding segment origins, resolving externals, checking nothing overflows. Out comes one a.out the kernel can run."
+    },
+    "appraiser_note": "as が各 .o を組んだとき、その中のアドレスはファイル先頭からの相対値で、.o 単体では自分がメモリのどこに置かれるか知らない。ld が複数の .o を並べて初めて各ファイルのテキスト/データの最終原点が決まり、すべてのアドレス参照をその最終配置へ貼り直す——これが再配置。as は直すべき場所を再配置ビットとして .o に残してあり、ld の2パス目(load2td)がそれを辿る: 外部参照(REXT)は解決済みシンボルの最終番地を足し、セグメント内参照はこのファイルのtext/data/bss 原点(ctrel/cdrel/cbrel)ぶんずらし、PC相対は現在位置を引き、表現範囲を超えれば『Displacement overflow』。ld は2回読む——1パス目(load1+middle)でシンボル解決・サイズ・原点を確定、2パス目(load2)で実際のテキスト/データを読み全アドレスを貼り直し一個の a.out を書く。-r なら再配置ビットを残し後で再リンクできる(部分・段階リンク)。",
+    "file_path": "usr/src/cmd/ld.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]

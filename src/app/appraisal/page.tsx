@@ -1389,6 +1389,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "227",
+    title: "鑑定書#227 ld — ライブラリの .o を必要なシンボルを定義するものだけ取り込み要らなければハッシュ表ごと巻き戻す。バラバラの .o の相互参照を解決し、全アドレスを最終配置へ貼り直して一個の a.out を組む1,376行(link editor)、c2→as→ld と続くツールチェーンの最終段",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
