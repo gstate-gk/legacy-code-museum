@@ -1390,20 +1390,6 @@ const PUBLISHED_ARTICLES = [
     year: 1979,
   },
   {
-    number: "227",
-    title: "鑑定書#227 ld — ライブラリの .o を必要なシンボルを定義するものだけ取り込み要らなければハッシュ表ごと巻き戻す。バラバラの .o の相互参照を解決し、全アドレスを最終配置へ貼り直して一個の a.out を組む1,376行(link editor)、c2→as→ld と続くツールチェーンの最終段",
-    url: null,
-    language: "C",
-    year: 1979,
-  },
-  {
-    number: "228",
-    title: "鑑定書#228 lex — 正規表現を follow 位置から直接 DFA に変え、最類似状態を fallback にして疎な遷移表を文字等価クラスと差分で二重圧縮し、最長一致でトークンを切り出す C を吐く字句解析器生成系。自身のパーサは yacc 製＝lex と yacc が互いを生む（Lesk/Schmidt）",
-    url: null,
-    language: "C",
-    year: 1979,
-  },
-  {
     number: "229",
     title: "鑑定書#229 sdb — アドレスでなく関数名・引数・ファイル:行でスタックを語り、コンパイラが埋めた stab 記号から変数の型と番地を知りソース行で止まる。adb の ptrace/BPT 機構の上にソースの層を載せた約2,340行のソースレベルデバッガ、adb→sdb→dbx→gdb の架け橋",
     url: null,
