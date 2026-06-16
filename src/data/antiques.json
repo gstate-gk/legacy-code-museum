@@ -19083,5 +19083,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "learn-001-do-and-grade",
+    "text": "dounit() {\n\tstart(todo);            /* set up the lesson's workspace */\n\tscrin = fopen(...);     /* open the lesson script */\n\tcopy(0, scrin);         /* show the lesson text to the student */\n\tcopy(1, stdin);         /* let the student actually do it */\n\tcopy(0, scrin);         /* run the script's grading command */\n\twait(&didok); didok = (status == 0);   /* exit status 0 == correct */\n\tif (!didok) { ... \"Sorry, that's not right. try again?\" ... }\n}",
+    "line_number": 4,
+    "tags": [
+      "unix",
+      "education",
+      "learn",
+      "cai",
+      "auto-grading"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 5,
+      "emotions": {
+        "insight": 5,
+        "legacy": 4
+      },
+      "technical_context": "learn is a CAI (computer-aided instruction) system whose subject is Unix itself -- files, the ed editor, eqn, C. Its lessons live as scripts in /usr/lib/learn, by Brian Kernighan and Mike Lesk. dounit() runs one lesson and shows the heart of its method: it does not just display text. copy(0,scrin) shows the lesson, copy(1,stdin) lets the student actually do the task, and then a grading command embedded in the lesson script is run; wait(&didok) waits for it and status==0 means correct. Wrong, and it asks: try again, skip, or bye. This -- make the learner actually perform the task, then auto-grade by a checker's exit status -- is the oldest prototype of modern interactive coding lessons. Not read; do, and let the machine judge.",
+      "human_story": "learn does not show you how to use Unix and quiz you on it. It tells you to do the thing, lets you do it for real, then runs a hidden check and grades you by whether it exited cleanly. The interactive 'now you try' lesson, in 1979."
+    },
+    "appraiser_note": "learn は CAI(計算機支援教育)システムで、教える対象は Unix そのもの——ファイル操作・ed エディタ・eqn・C。レッスンは /usr/lib/learn に台本として置かれ、作者は Brian Kernighan と Mike Lesk。dounit() は1レッスンを実行し、その教え方の核心を見せる: 説明文を見せて終わりにしない。copy(0,scrin) で説明を表示、copy(1,stdin) で生徒に実際にやらせ、レッスン台本に仕込まれた採点コマンドを実行する。wait(&didok) でそれを待ち status==0 なら正解。間違えば try again/skip/bye を尋ねる。これ——学習者に実際に課題をやらせ、採点プログラムの終了ステータスで自動採点する——が現代のインタラクティブなコード学習の最も古い原型。読むのでなく、やる。そして機械が判定する。",
+    "file_path": "usr/src/cmd/learn/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "learn-002-real-shell-and-tee",
+    "text": "makpipe() {   /* fork a REAL interactive shell, pipe to it */\n\tpipe(f); if (fork()==0) { close(0); dup(f[0]); execl(\"/bin/sh\",\"sh\",\"-i\",0); }\n\tsleep(2); return(f[1]);   /* learn feeds commands into this mouth */\n}\nmaktee() {    /* splice a tee between learn and the screen */\n\tpipe(fpip); if (fork()==0) { close(0); dup(in); execl(tee,\"lrntee\",0); }\n\toldout = dup(1); close(1); dup(out);   /* stdout now runs through tee */\n}",
+    "line_number": 3,
+    "tags": [
+      "unix",
+      "education",
+      "learn",
+      "shell",
+      "pipe"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "elegance": 4
+      },
+      "technical_context": "learn's teaching is real because it does not simulate. To teach 'type ls', makpipe() forks a REAL interactive shell (/bin/sh -i) and pipes to it; the student's commands run for real against the real filesystem -- learn ed launches the real ed. The student works in a protected playpen (.../lib/play), a writable sandbox set up per lesson by start(), so rm and mv only touch the sandbox. Then: how to grade real work? maktee() splices a dedicated tee between learn and the screen, so it can keep a copy of everything the student's session printed; the lesson's checker inspects that transcript and the files made. makpipe (real shell) + maktee (watch the output) put learn in the teacher's seat: let the student work freely, but see everything. mysys() even sorts commands into EASY (direct fork+execv: mv/cp/rm/ls), MEDIUM (exec: */>/$), HARD (full shell: |;&) to avoid needless shell launches.",
+      "human_story": "learn teaches the real ed, the real shell -- inside a sandbox where your rm can do no harm. And it tees your whole session so a hidden checker can read over your shoulder and decide whether you got it right."
+    },
+    "appraiser_note": "learn の教育が本物なのは、模擬しないから。『ls と打って』を教えるのに、makpipe() は本物の対話シェル(/bin/sh -i)を fork してパイプで繋ぐ。生徒のコマンドは本物のファイルシステムに本当に実行される——learn で ed を学べば起動するのは本物の ed。生徒は保護された作業場(.../lib/play)＝レッスンごとに start() が整える書込み自由の砂場で操作するので、rm も mv も砂場の中だけ。では本物の操作をどう採点するか? maktee() が learn と画面の間に専用 tee を挟み、生徒のセッションが表示した一部始終の控えを取る。レッスンの採点コマンドはその控えや作ったファイルを調べる。makpipe(本物のシェル)＋maktee(出力の盗み見)が learn を教師の立ち位置に置く: 自由に操作させ、しかし全て把握する。mysys() はコマンドを EASY(直接fork+execv: mv/cp/rm/ls)/MEDIUM(exec: */>/$)/HARD(本物のシェル: |;&)に選り分け、無駄なシェル起動を避ける。",
+    "file_path": "usr/src/cmd/learn/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "learn-003-adaptive-curriculum",
+    "text": "selunit() {   /* pick the next lesson to match the student's ability */\n\twhile (fgets(zb,200,f)) if (strcmp(zb,\"#next\")==0) break;   /* the script's #next block */\n\tfor(i=0; fgets(s,50,f); i++) sscanf(s,\"%s %d\", posslev[i], &diff[i]);  /* candidates + difficulty */\n\tn = grand()%i;                          /* from a random start */\n\tfor(k=0; k<i; k++) { m=(n+k)%i;\n\t\tif (already(posslev[m],0)) continue;  /* skip done lessons */\n\t\tif (abs(diff[m]-speed) < abs(diff[best]-speed)) best=m;  /* difficulty nearest to speed */\n\t}\n}",
+    "line_number": 6,
+    "tags": [
+      "unix",
+      "education",
+      "learn",
+      "adaptive",
+      "curriculum"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 5,
+      "emotions": {
+        "insight": 5,
+        "elegance": 4
+      },
+      "technical_context": "learn's lessons are not a single track. Each lesson script ends with a #next block listing the lessons that may follow, each with a difficulty number -- the lessons form a branching graph. selunit() chooses the next lesson by the student's speed (skill level): among the candidates it picks the one whose difficulty is closest to speed (abs(diff[m]-speed) minimal). A fast student (high speed) gets harder lessons, a struggling one easier; after each lesson whatnow() raises speed on success and lowers it on error, and the next selunit() branches on the new speed. already() skips finished lessons; a dead end backs up one level (nsave, once). This is adaptive learning -- the same 'watch the learner and adjust difficulty' as quiz (widen on right) and arithmetic (drill the missed numbers), now applied to the path through a whole curriculum. Not one fixed order for everyone; a path chosen per student by the machine.",
+      "human_story": "learn's lessons branch like a tree, each marked with a difficulty. It steers you to the next lesson whose difficulty best matches how you have been doing -- harder if you breeze through, easier if you stumble. A curriculum that finds each student's own path."
+    },
+    "appraiser_note": "learn のレッスンは一本道ではない。各台本の末尾の #next 節に、次に来られるレッスン候補が難度つきで並ぶ——レッスンは枝分かれするグラフを成す。selunit() は次のレッスンを生徒の speed(習熟度)で選ぶ: 候補のうち難度が speed に最も近いもの(abs(diff[m]-speed) 最小)を選ぶ。すらすら正解する生徒(speed 高)には難しいレッスンを、つまずく生徒には易しいものを。1レッスンごとに whatnow() が正解で speed を上げ不正解で下げ、次の selunit() が新しい speed で枝を選ぶ。already() で既習を飛ばし、行き止まりなら一段戻る(nsave、一度だけ)。これは適応学習——quiz(正解で範囲拡大)/arithmetic(間違えた数を集中ドリル)と同じ『学習者を見て難度を調整する』をカリキュラム全体の経路選択に及ぼしたもの。全員一律の固定順序でなく、一人ひとりの道を機械が選ぶ。",
+    "file_path": "usr/src/cmd/learn/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "learn-004-engine-and-reflexivity",
+    "text": "main() {\n\tselsub(argc, argv);   /* choose a course (files / editor / eqn / ...) */\n\twhile (more) {\n\t\tselunit();   /* pick the next lesson  */\n\t\tdounit();    /* run it and grade it   */\n\t\twhatnow();   /* adjust speed to the result */\n\t}\n\twrapup(0);\n}\n/* the 657 lines are just the engine; the lessons are scripts in /usr/lib/learn */",
+    "line_number": 1,
+    "tags": [
+      "unix",
+      "education",
+      "learn",
+      "engine",
+      "reflexive"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "legacy": 4
+      },
+      "technical_context": "learn's C is tiny -- just an engine. The teaching content (what to teach, how to grade, where to branch) all lives in course scripts under /usr/lib/learn. main() merely loops: choose a course (selsub), pick a lesson (selunit), run and grade (dounit), adjust speed (whatnow). Like lex separating its ncform skeleton from the tables, learn separates engine from content: a script is text + tasks + a grading command + a #next branch table -- a 'program of instruction' the engine interprets. Add scripts and you teach a new course. Most learn of all is its reflexivity: to teach Unix it uses Unix -- a real shell inside, tee for the transcript, fork/exec/pipe/wait to drive lessons. The very tools the student is learning are the tools learn uses to teach them. The README asks admins to keep logs so lessons can be improved: the courseware grows as it is used. Kernighan and Lesk taught the system with the system.",
+      "human_story": "learn is barely there: 657 lines that just run scripts. The teaching is content, not code. And it teaches Unix using Unix -- piping into a real shell, teeing your output, forking processes. The tool teaches its own use by using itself."
+    },
+    "appraiser_note": "learn の C は驚くほど小さく、エンジンでしかない。教育の中身(何をどう教え採点し分岐するか)はすべて /usr/lib/learn のコース台本にある。main() はループするだけ: コースを選び(selsub)、レッスンを選び(selunit)、実行・採点し(dounit)、できに応じ speed を調整する(whatnow)。lex が ncform 雛形と表を分けたのと同じ、エンジンとコンテンツの分離: 台本は説明文＋課題＋採点コマンド＋#next 分岐表からなる『教育のプログラム』で、エンジンはそれを解釈するインタプリタ。台本を書き足せば新コースを教えられる。最も learn らしいのは反射性: Unix を教えるのに Unix を使う——本物のシェルを内に飼い、tee で控えを取り、fork/exec/pipe/wait でレッスンを駆動する。生徒が学んでいる道具をlearn 自身が教えるために使う。README はログを取りレッスンを改善するよう求める: 教材が使われながら育つ。Kernighan と Lesk は、システムをシステムで教えた。",
+    "file_path": "usr/src/cmd/learn/",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]

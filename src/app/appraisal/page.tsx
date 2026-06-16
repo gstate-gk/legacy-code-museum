@@ -1410,6 +1410,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "230",
+    title: "鑑定書#230 learn — 本物のシェルで実際に操作させ、tee で生徒の操作を盗み見て採点コマンドの終了ステータスで正誤を判定し、できの良し悪しで次の課題の難度を選ぶ。Unix を Unix で教える657行の CAI（Kernighan/Lesk、インタラクティブ学習の原型）",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
