@@ -1438,6 +1438,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "236",
+    title: "鑑定書#236 dmesg — カーネルは画面にもファイルにも書けないので自分のメモリの固定リングバッファ _msgbuf に診断を書き溜める。その番地を /unix のシンボル表(nlist)で引き /dev/mem を直読みして円環を一周展開し、前回との差分だけを永続ログに累積する113行。カーネルリングバッファと syslog の祖",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

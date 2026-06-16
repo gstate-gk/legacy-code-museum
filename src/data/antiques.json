@@ -19547,5 +19547,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "dmesg-001-kernel-ring-buffer",
+    "text": "#include <sys/param.h>      /* MSGBUFS = size of the ring */\nchar  msgbuf[MSGBUFS];      /* a place to copy the kernel's ring into */\nchar *msgbufp;              /* copy of the kernel's write pointer */\nstruct nlist nl[3] = {\n\t{\"_msgbuf\"},             /* address of the ring buffer in the kernel */\n\t{\"_msgbufp\"}             /* address of the write pointer */\n};",
+    "line_number": 6,
+    "tags": [
+      "unix",
+      "kernel",
+      "dmesg",
+      "ring-buffer",
+      "logging"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 5,
+      "emotions": {
+        "insight": 5,
+        "legacy": 4
+      },
+      "technical_context": "dmesg sucks up system messages -- the kernel's diagnostics (device probes at boot, disk errors, the cry of panic). But where can a kernel write a message? A normal program printfs to the screen or a file, but the kernel IS the OS: 'screen' and 'file' are abstractions it provides, not ones it can rely on -- mid-boot or mid-error the filesystem may be unmounted, the terminal driver not yet up. The kernel's answer is a fixed-size ring buffer in its own memory: _msgbuf, MSGBUFS bytes, with _msgbufp as the write head that wraps to the front when full, overwriting the oldest. It just writes to memory -- no file, no device, a record that cannot fail. Showing it is left to someone else, later: dmesg. This 'kernel writes a fixed ring, another program drains it' design lives on 47 years later -- Linux's kernel ring buffer (/dev/kmsg, where printk writes) is the direct descendant, and even the command name dmesg is unchanged.",
+      "human_story": "Where does the operating system itself write an error, when the screen and the filesystem are the very things that might be broken? Into a fixed ring of memory it always owns. dmesg is the program that comes along later and reads that ring out."
+    },
+    "appraiser_note": "dmesg はシステムメッセージを吸い上げる——カーネルの診断(起動時のデバイス認識、ディスクエラー、panic の悲鳴)。だがカーネルはどこにメッセージを書けるのか。普通のプログラムは printf で画面やファイルに書くが、カーネルは OS そのもの: 『画面』も『ファイル』もカーネルが提供する抽象で、自身が頼れるものではない——起動の途中やエラーの最中、ファイルシステムは未マウントかも、端末ドライバはまだ動いていないかも。カーネルの答えは自分のメモリ内の固定リングバッファ: _msgbuf(MSGBUFS バイト)、_msgbufp が書込ヘッドで一杯なら先頭へ巻き戻り最古を上書きする。ただメモリに書くだけ——ファイルもデバイスも要らない、決して失敗しない記録。見せるのは後で別の誰か(dmesg)に任せる。この『カーネルが固定リングに書き別プログラムが吸い上げる』設計は47年後も生きている——Linux のカーネルリングバッファ(/dev/kmsg、printk の書込先)は直系の子孫で、dmesg というコマンド名すら不変。",
+    "file_path": "usr/src/cmd/dmesg.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "dmesg-002-nlist-devmem",
+    "text": "nlist(argc>2? argv[2]:\"/unix\", nl);       /* resolve symbol addresses from the kernel a.out */\nmem = open(\"/dev/mem\", 0);                /* open physical memory itself */\nlseek(mem, (long)nl[0].n_value, 0);        /* seek to _msgbuf's address */\nread(mem, msgbuf, MSGBUFS);                /* read the live kernel memory */\nif (msgbufp < (char *)nl[0].n_value || msgbufp >= (char *)nl[0].n_value+MSGBUFS)\n\tdone(\"Namelist mismatch\\n\");            /* out of range = /unix doesn't match the running kernel */",
+    "line_number": 41,
+    "tags": [
+      "unix",
+      "kernel",
+      "dmesg",
+      "nlist",
+      "dev-mem"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "craft",
+      "emotion_intensity": 4,
+      "emotions": {
+        "craft": 4,
+        "insight": 4
+      },
+      "technical_context": "To peek into kernel memory you need two tools: knowing an address and reading it. nlist() supplies the address: given /unix -- the running kernel's own executable -- it reads that a.out's symbol table and resolves where _msgbuf and _msgbufp sit in memory, the same trick adb and prof used to bind names to addresses. The kernel is just an a.out; its symbol table says '_msgbuf lives at 0x...'. /dev/mem supplies the reading: a special device that exposes physical memory as a file, so lseek to the address and read the bytes there -- the live running kernel's memory, from an outside program. A wise sanity check follows: if the read msgbufp points outside _msgbuf's range, the supplied /unix disagrees with the running kernel (wrong or stale kernel file) and dmesg stops with 'Namelist mismatch'. The map (/unix) and the territory (/dev/mem) must agree. This nlist + /dev/mem idiom is what ps, pstat and adb all used to inspect the live kernel.",
+      "human_story": "dmesg reads the kernel's own RAM. It asks the kernel's symbol table 'where is _msgbuf?', then opens /dev/mem -- physical memory as a file -- and reads that exact address. If the map and the memory disagree, it refuses: namelist mismatch."
+    },
+    "appraiser_note": "カーネルメモリを覗くには二つの道具が要る——番地を知ることと、その番地を読むこと。nlist() が番地を供給する: /unix(動作中のカーネルそのものの実行ファイル)の a.out シンボル表を読み、_msgbuf と _msgbufp がメモリのどの番地にあるかを引き当てる——adb や prof が名前と番地を結んだのと同じ仕掛け。カーネルもただの a.out で、そのシンボル表が『_msgbuf は 0x... にある』と教える。/dev/mem が読み取りを供給する: 物理メモリをファイルに見せる特殊デバイスで、番地へ lseek してバイトを read——動作中のカーネルの生メモリを外のプログラムから。賢明な安全確認: 読んだ msgbufp が _msgbuf の範囲外なら、指定 /unix が動作カーネルと食い違う(別/古いカーネルファイル)ので 'Namelist mismatch' で止まる。地図(/unix)と現地(/dev/mem)が一致して初めて読める。この nlist + /dev/mem は ps/pstat/adb が動作カーネルを覗くのに使った常套手段。",
+    "file_path": "usr/src/cmd/dmesg.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "dmesg-003-ring-traversal",
+    "text": "mp = mstart;\ndo {\n\tpdate();\n\tif (*mp) putchar(*mp);          /* skip the \\0 of unused space */\n\tmp++;\n\tif (mp == &msgbuf[MSGBUFS])      /* hit the end... */\n\t\tmp = msgbuf;                   /* ...wrap to the front */\n} while (mp != msgbufp);           /* until we catch the write head */",
+    "line_number": 72,
+    "tags": [
+      "unix",
+      "kernel",
+      "dmesg",
+      "ring-buffer",
+      "wraparound"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "craft": 4
+      },
+      "technical_context": "A ring is circular but output is a line; dmesg must unroll the ring into one correctly-ordered stream. The key: _msgbufp (the write head) is also the oldest message's position -- once the ring is full, the slot the head is about to write holds the not-yet-overwritten oldest data. So dmesg reads from there, goes all the way around, and stops when it returns to the write head -- oldest to newest. The one-lap engine is if (mp == &msgbuf[MSGBUFS]) mp = msgbuf: when the pointer reaches the array end, wrap to the front. Those few lines are the heart of ring-buffer handling -- a linear array treated as a logical circle. mp++ steps, wraps at the end, until it catches msgbufp; the \\0 of unused space is skipped by if(*mp). The same circular geometry as uucp's sliding window or vplot's block cycling.",
+      "human_story": "The buffer is a circle; the screen is a line. dmesg starts at the write head (which is also the oldest entry), walks once around -- wrapping from the end back to the front -- and stops when it meets the head again. A circle unrolled into the right order."
+    },
+    "appraiser_note": "リングは円環だが出力は一直線。dmesg は円環を正しい順序の一本の流れに展開する。鍵は _msgbufp(書込ヘッド)が最古メッセージの位置でもあること——リングが一杯になると、ヘッドが次に書く場所にはまだ上書きされていない最古データがある。だから dmesg はそこから読み始め、ぐるりと一周し、書込ヘッドに戻るまで読む——古いものから新しいものへ。一周を支えるのが if (mp == &msgbuf[MSGBUFS]) mp = msgbuf: ポインタが配列末尾に達したら先頭へ巻き戻す。この数行がリングバッファ操作の核心——線形配列を論理的な円環として扱う。mp++ で進め端で巻き戻し msgbufp に追いつくまで。未使用部分の \\0 は if(*mp) で飛ばす。uucp のスライディングウィンドウや vplot のブロック巡回と同じ円環の幾何学。",
+    "file_path": "usr/src/cmd/dmesg.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "dmesg-004-incremental-log-syslog",
+    "text": "if (sflg) of = open(\"/usr/adm/msgbuf\", 2);   /* file holding last run's state */\nread(of, (char *)&omesg, sizeof(omesg));      /* read the previous ring contents */\ndo {                                          /* compare this ring against last */\n\tif (*mp++ != *omp++) {                       /* divergence point = start of new messages */\n\t\tmstart = msgbufp; pdate(); printf(\"...\\n\"); break;\n\t}\n} while (mp != mstart);\n/* done(): write this ring to /usr/adm/msgbuf as next run's baseline */",
+    "line_number": 36,
+    "tags": [
+      "unix",
+      "kernel",
+      "dmesg",
+      "incremental",
+      "syslog"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "ingenuity": 4,
+        "legacy": 4
+      },
+      "technical_context": "dmesg's most refined part is incremental output. With - (sflg) it reads the previous run's ring contents from /usr/adm/msgbuf and compares them to the current ring. Why? To run dmesg periodically (cron) and accumulate kernel messages into a log file without re-logging the same lines. So it compares saved (omesg) and current byte by byte, finds the divergence point -- the start of messages new since last time -- and prints only from there, prefixing '...' to mean 'everything before was already reported'; then done() writes the current ring back to /usr/adm/msgbuf as the next baseline. This is log accumulation: a fixed ring loses old messages if left alone, but running dmesg - regularly skims the new ones before they are overwritten and persists them. Volatile ring to durable log -- the same 'only what is new since last read' idea as rsync's delta or log shippers, in 1979 via byte comparison. This two-stage 'kernel writes a volatile ring, a periodic drainer persists it' grows into syslog, and journald is its heir.",
+      "human_story": "Run dmesg - from cron and it only logs what is new: it remembers last time's ring, finds where the new messages begin, prints from there, and saves the new state. A volatile ring skimmed into a durable log before it overwrites itself -- the seed of syslog."
+    },
+    "appraiser_note": "dmesg の最も洗練された部分が増分出力。-(sflg) で前回のリング内容を /usr/adm/msgbuf から読み今回と比較する。なぜか: dmesg を定期的に(cron)走らせカーネルメッセージをログファイルに溜めたいが、毎回リング全体を出すと同じ行が重複する。そこで保存した前回(omesg)と現在を1文字ずつ突き合わせ、食い違った地点——前回以降に新しく書かれたメッセージの始まり——を見つけ、そこから先だけ出力し、先頭に '...' を付けて『ここより前は報告済み』と示す。そして done() が今回のリングを /usr/adm/msgbuf に書き戻し次回の基準にする。これはログの累積: 固定リングは放っておけば古いものを失うが、dmesg - を定期実行すれば上書き前に新着を拾い永続化できる。揮発するリングから永続するログへ——rsync の差分や log shipper の『前回読んだ位置から先だけ』と同じ発想を1979年に文字比較で。この『カーネルが揮発リングに書き定期的に吸い上げ永続ログにする』二段構えが syslog へ発展し、journald はその裔。",
+    "file_path": "usr/src/cmd/dmesg.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]
