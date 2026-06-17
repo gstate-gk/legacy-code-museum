@@ -1515,6 +1515,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "247",
+    title: "鑑定書#247 checkeq — eqn 入力の括弧バランスを検査する85行の lint。数式を一切パースせず、表示数式 .EQ/.EN とインライン区切り $...$ の二種類の括弧の対応だけを数える。totdel%2 のパリティでインライン数式の内/外を判定し複数行$$を行範囲で報告、eq フラグで表示数式の入れ子を検出、両括弧の交差（EQ in $$ / EN in $$ / $$ in EQ）、delim xx/off に追従、EOF で Unfinished を締める。checknr(troff)/lint(C) と同じ小さな言語の校正係、Kernighan 的な上流で叩く preflight 哲学",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

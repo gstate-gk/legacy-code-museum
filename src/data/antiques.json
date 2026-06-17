@@ -20823,5 +20823,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "checkeq-001-two-kinds-of-brackets",
+    "text": "if (*in=='.' && *(in+1)=='E' && *(in+2)=='Q') { ... }       /* display math */\nelse if (*in=='.' && *(in+1)=='E' && *(in+2)=='N') { ... }  /* end display */\n...\nfor (p = in; *p; p++)\n    if (*p == delim)   /* delim defaults to '$' */\n        ndel++;        /* count inline delimiters on this line */",
+    "line_number": 35,
+    "tags": [
+      "unix",
+      "eqn",
+      "checkeq",
+      "lint",
+      "troff"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 3
+      },
+      "technical_context": "checkeq is a lint for eqn, Kernighan & Cherry's math typesetting preprocessor for troff. eqn math comes two ways: display equations bracketed by the troff macros .EQ and .EN (like tbl's .TS/.TE), and inline equations wrapped in a delimiter character (delim, default '$'). checkeq distinguishes them with no lexer at all: it compares the first characters of a line literally -- *in=='.' && *(in+1)=='E' && *(in+2)=='Q' -- to spot .EQ/.EN, and for every other line it just walks the characters counting how many delimiters appear (ndel). No parser, no AST: it recognizes brackets by raw character comparison and counts the delimiter symbols.",
+      "human_story": "checkeq checks eqn input before eqn runs. eqn math is bracketed two ways -- .EQ/.EN for display, and $...$ inline. checkeq tells them apart by comparing the first letters of a line and counting dollar signs. No real parsing at all."
+    },
+    "appraiser_note": "checkeq は eqn の lint だ。eqn は Kernighan & Cherry が作った troff 用の数式組版前処理。eqn の数式は二通り: 表示数式は troff マクロ .EQ/.EN で挟み(tbl の .TS/.TE と同型)、インライン数式は区切り文字(delim、既定 '$')で挟む。checkeq はこれらを字句解析器なしで見分ける: 行頭の文字をそのまま比べ(*in=='.' && *(in+1)=='E' && *(in+2)=='Q')て .EQ/.EN を判定し、それ以外の行は文字を走査して区切り文字の数(ndel)を数えるだけ。parser も AST もない: 括弧をベタ比較で見分け、区切り記号を数えるだけだ。",
+    "file_path": "usr/src/cmd/checkeq.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "checkeq-002-parity-inside-outside",
+    "text": "totdel += ndel;\nif (totdel%2) {          /* odd -> inside an inline equation */\n    if (start == 0) start = line;\n    else { printf(\"   %d line %c%c, lines %d-%d\\n\", line-start+1, delim, delim, start, line); start = line; }\n} else {                 /* even -> back outside */\n    if (start > 0) { printf(\"   %d line %c%c, lines %d-%d\\n\", line-start+1, delim, delim, start, line); start = 0; }\n    totdel = 0;\n}",
+    "line_number": 60,
+    "tags": [
+      "unix",
+      "eqn",
+      "checkeq",
+      "parity",
+      "balance-check"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 4
+      },
+      "technical_context": "The heart of checkeq is a single parity bit. It keeps a running total (totdel) of delimiter characters seen; when totdel is odd, an inline equation is open, when even, it is closed. The whole decision of 'are we inside math?' reduces to totdel%2. When odd, it records the opening line in start; when it returns to even, the equation closes and totdel resets to 0. If start is still set while a line is still open, it prints 'N line $$, lines A-B' (N = line-start+1) reporting a multi-line inline equation -- a strong sign of a missing closing delimiter, since inline math normally closes on one line. checkeq never understands the math; it just counts brackets and watches the parity.",
+      "human_story": "The whole tool turns on one even/odd bit. Count the dollar signs: odd means you're inside an equation, even means you're out. If a '$' stays open across several lines, checkeq reports the line span -- usually a forgotten closing '$'."
+    },
+    "appraiser_note": "checkeq の心臓は一個のパリティビットだ。見た区切り文字の累計(totdel)を持ち、totdel が奇数ならインライン数式が開いている、偶数なら閉じている。『いま数式の中か?』という判断はすべて totdel%2 に集約される。奇数になったら開始行を start に記録し、偶数に戻れば数式が閉じて totdel を 0 にリセット。start が残ったまま行が開きっぱなしなら 'N line $$, lines A-B'(N = line-start+1)と複数行にまたがるインライン数式を報告する——インライン数式は普通一行で閉じるので、これは閉じ忘れの強い兆候だ。checkeq は数式を理解しない; 括弧を数え、偶奇を見張るだけ。",
+    "file_path": "usr/src/cmd/checkeq.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "checkeq-003-crossed-brackets",
+    "text": "if (eq++) printf(\"   Spurious EQ, line %d\\n\", line);       /* .EQ already open */\nif (totdel) printf(\"   EQ in %c%c, line %d\\n\", delim, delim, line);  /* .EQ while inline open */\n...\nif (eq==0) printf(\"   Spurious EN, line %d\\n\", line);     /* .EN with no .EQ */\nif (totdel > 0) printf(\"   EN in %c%c, line %d\\n\", delim, delim, line); /* .EN while inline open */\n...\nif (ndel > 0 && eq > 0) printf(\"   %c%c in EQ, line %d\\n\", delim, delim, line); /* delim inside .EQ */",
+    "line_number": 40,
+    "tags": [
+      "unix",
+      "eqn",
+      "checkeq",
+      "lint",
+      "diagnostics"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 3
+      },
+      "technical_context": "checkeq tracks both bracket systems at once -- the .EQ/.EN display pair (flag eq) and the inline $...$ parity (totdel) -- and catches the ways they tangle. Spurious EQ: an .EQ while eq is already nonzero (display math can't nest). Spurious EN: an .EN with eq==0 (no matching open). EQ in $$: an .EQ arrives while totdel is nonzero (an inline equation is still open). EN in $$: symmetrically, an .EN while inline is still open. $$ in EQ: a delimiter appears (ndel>0) while inside a display block (eq>0). Pure bookkeeping with one flag and one counter pins down every way the two worlds -- display and inline -- can collide.",
+      "human_story": "checkeq watches two kinds of brackets together and flags where they collide: a display .EQ that never closed, an .EN with nothing to close, a display block opened while an inline '$' is still hanging, or a stray '$' inside a display block. Just a flag and a counter catch them all."
+    },
+    "appraiser_note": "checkeq は二つの括弧体系を同時に追う——表示の .EQ/.EN 対(フラグ eq)とインライン $...$ のパリティ(totdel)——そして両者が絡む異常を捕まえる。Spurious EQ: eq が既に非0なのに .EQ(表示数式は入れ子不可)。Spurious EN: eq==0 で .EN(対応する開きがない)。EQ in $$: totdel 非0(インライン未閉じ)のまま .EQ。EN in $$: 対称に、インライン未閉じのまま .EN。$$ in EQ: 表示ブロック内(eq>0)に区切り文字(ndel>0)。フラグ一つとカウンタ一つだけの簿記で、表示とインラインという二つの世界が衝突するあらゆる形を言い当てる。",
+    "file_path": "usr/src/cmd/checkeq.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "checkeq-004-delim-follow-and-eof",
+    "text": "else if (eq && *in=='d' && *(in+1)=='e' && *(in+2)=='l' && *(in+3)=='i' && *(in+4)=='m') {\n    for (p=in+5; *p; p++) if (*p != ' ') {\n        if (*p == 'o' && *(p+1) == 'f') delim = 0;   /* delim off */\n        else delim = *p;                              /* new delimiter char */\n        break;\n    }\n}\n...\nif (totdel) printf(\"   Unfinished %c%c\\n\", delim, delim);\nif (eq)     printf(\"   Unfinished EQ\\n\");",
+    "line_number": 47,
+    "tags": [
+      "unix",
+      "eqn",
+      "checkeq",
+      "lint",
+      "preflight"
+    ],
+    "interesting_score": 17,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "legacy": 4,
+        "insight": 3
+      },
+      "technical_context": "The inline delimiter isn't fixed: inside an .EQ block, eqn lets you write 'delim xx' to change it (or 'delim off' to disable inline math). checkeq follows this -- recognized only inside an .EQ (the eq && guard) -- parsing the first non-space after 'delim': 'of'(f) sets delim=0, otherwise the character becomes the new delimiter. The checker reconfigures its own counting to match the document it's checking. At end of file it closes the books: if totdel is still nonzero, 'Unfinished $$' (an unclosed inline equation); if eq is still set, 'Unfinished EQ' (a missing .EN). The end of the document is where every bracket should be closed; anything left open is a forgotten close. checkeq is a preflight lint run before eqn|troff, so broken input is caught upstream instead of producing gibberish downstream -- the same lineage as checknr (troff) and lint (C).",
+      "human_story": "eqn lets you change the inline delimiter mid-document with 'delim'; checkeq follows along and re-counts accordingly. At the end it reports anything left open -- an unclosed '$' or a missing .EN. Run it before eqn so mistakes are caught before they turn into garbled output."
+    },
+    "appraiser_note": "インライン区切り文字は固定ではない: .EQ ブロックの中で eqn は 'delim xx' で変更できる('delim off' でインライン無効)。checkeq はこれに追従する——.EQ 内でのみ認識(eq && ガード)し、'delim' の次の非空白を解析: 'of'(f) なら delim=0、それ以外はその文字が新しい区切り文字。検査ツールが、検査対象の設定変更に合わせて自分の数え方を組み替える。ファイル終端では帳簿を締める: totdel が残っていれば 'Unfinished $$'(閉じていないインライン数式)、eq が残っていれば 'Unfinished EQ'(.EN 欠落)。文書の終わりは全ての括弧が閉じているべき場所で、残っていれば閉じ忘れだ。checkeq は eqn|troff の前に走らせる preflight lint で、壊れた入力を下流で意味不明な出力にする前に上流で叩く——checknr(troff)・lint(C) と同じ系譜。",
+    "file_path": "usr/src/cmd/checkeq.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]
