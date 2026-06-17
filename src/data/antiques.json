@@ -21289,5 +21289,123 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "dpr-001-mainframe-cards",
+    "text": "card('S', \"\");\ncard('L', \"$\\tsgrade\\t2\");\nident();\ncard('L', \"$\\tselect\\tken/mh322\");\ncard('L', \"$\\tdata\\ti*,ncksum,copy\");\n...\ncard('L', \"$\\tendjob\");   /* GCOS job-control 'cards' */",
+    "line_number": 60,
+    "tags": [
+      "unix",
+      "dpr",
+      "gcos",
+      "mainframe",
+      "jcl"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "wistful",
+      "emotion_intensity": 4,
+      "emotions": {
+        "wistful": 4,
+        "legacy": 4,
+        "insight": 3
+      },
+      "technical_context": "dpr's job is to assemble job-control 'cards' that a GCOS mainframe understands. $ sgrade, $ select, $ data, $ ident, $ endcopy, $ endjob are GCOS job-control language lines; card() writes each one -- a type char plus content -- to a spool file. The physical punch cards are gone but the concept lives: each 'card' is one line of a job deck submitted to the mainframe. This is early Unix speaking the mainframe's language, not its own -- a PDP-11 Unix box acting as a smart terminal that offloads heavy printing to a Honeywell GCOS machine over a dataphone link (the file's own comment: 'off line print via dataphone daemon to GCOS').",
+      "human_story": "dpr builds a deck of GCOS job-control 'cards' -- $ ident, $ select, $ data, $ endjob -- and ships them to a mainframe. Early Unix wasn't a world of its own; it was a clever terminal handing its heavy printing to a Honeywell GCOS machine down a phone line."
+    },
+    "appraiser_note": "dpr の仕事は、GCOS メインフレームが理解するジョブ制御『カード』を組み立てることだ。$ sgrade, $ select, $ data, $ ident, $ endcopy, $ endjob は GCOS のジョブ制御言語の行で、card() がそれぞれを——種類1文字＋内容——スプールファイルに書く。物理的なパンチカードはもう無いが概念は生きている: 一枚一枚の『カード』がメインフレームに送るジョブデッキの一行だ。これは初期 Unix が自分の流儀ではなくメインフレームの言葉を喋っている姿——PDP-11 の Unix が、重い印刷を dataphone 越しに Honeywell GCOS に肩代わりさせる賢い端末として振る舞っている(ファイル冒頭コメント: 'off line print via dataphone daemon to GCOS')。",
+    "file_path": "usr/src/cmd/dpr.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "dpr-002-gecos-field-origin",
+    "text": "if(getpw(getuid(), b1p)) { b1p = \"pdp::::m0000,m000:\"; }\n...\nn = 5;\nwhile(--n) while(*b1p++ != ':');   /* skip 4 colons -> field 5 */\nwhile((*b2p++ = *b1p++) != ':');    /* copy field 5 = the GECOS field */\n/* /etc/passwd: name:passwd:uid:gid:GECOS:home:shell */",
+    "line_number": 165,
+    "tags": [
+      "unix",
+      "dpr",
+      "gecos",
+      "passwd",
+      "etymology"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "wistful",
+      "emotion_intensity": 5,
+      "emotions": {
+        "wistful": 5,
+        "legacy": 5,
+        "insight": 4
+      },
+      "technical_context": "To submit a job to GCOS, the job needs an identity GCOS recognizes. dpr's ident() gets the user's /etc/passwd line via getpw(), skips four colons to reach the FIFTH field, and embeds it in a '$ ident' card. That fifth field -- name:passwd:uid:gid:**GECOS**:home:shell -- is the GECOS field. The default fallback string 'pdp::::m0000,m000:' shows a GCOS account id (m0000,m000) sitting in field 5. This is the literal origin of the GECOS field that still exists in every Unix/Linux/macOS /etc/passwd today. The field now holds a user's full name (shown by finger), but it was originally added to carry the user's GCOS identity for jobs submitted to the GCOS mainframe from Bell Labs Unix. GECOS = General Electric Comprehensive Operating Supervisor (later Honeywell GCOS). The strange name on that fifth field is a fossil of programs like dpr.",
+      "human_story": "The reason /etc/passwd has a 'GECOS field' for your full name is right here. dpr reads the fifth passwd field to identify your job to a GCOS mainframe. The field's odd name is a fossil from the days when Unix shipped jobs to a Honeywell GCOS machine -- it long outlived the machine it was named for."
+    },
+    "appraiser_note": "GCOS にジョブを投げるには、GCOS が認識する識別が要る。dpr の ident() は getpw() でユーザの /etc/passwd 行を取り、コロンを4つ飛ばして5番目のフィールドに達し、'$ ident' カードに埋め込む。その5番目——name:passwd:uid:gid:GECOS:home:shell——が GECOS フィールドだ。既定のフォールバック文字列 'pdp::::m0000,m000:' を見れば、5番目に GCOS アカウント識別子(m0000,m000)が入るとわかる。これは、今も世界中の Unix/Linux/macOS の /etc/passwd に存在する GECOS フィールドの、文字どおりの起源だ。今このフィールドはユーザのフルネーム(finger が表示)を入れるが、元々は Bell Labs の Unix から GCOS メインフレームに投げるジョブのために、ユーザの GCOS 識別情報を運ぶ場所として追加された。GECOS = General Electric Comprehensive Operating Supervisor(後の Honeywell GCOS)。あの5番目のフィールドの奇妙な名前は、dpr のようなプログラムの化石である。",
+    "file_path": "usr/src/cmd/dpr.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "dpr-003-spool-and-daemon",
+    "text": "char tfname[] = \"/usr/dpd/tfaXXXXX\";  /* control cards */\nchar cfname[] = \"/usr/dpd/cfaXXXXX\";  /* copied data */\n...\npidfn();   /* burn the PID digits into the XXXXX for a unique name */\n...\nf = link(tfname, dfname);\nunlink(tfname);\nexecl(\"/etc/dpd\", \"dpd\", 0);   /* hand the deck to the dataphone daemon */",
+    "line_number": 8,
+    "tags": [
+      "unix",
+      "dpr",
+      "spool",
+      "daemon",
+      "lpr"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "legacy": 4,
+        "insight": 3
+      },
+      "technical_context": "dpr doesn't talk to GCOS directly; it spools the job into /usr/dpd/ and lets a dedicated daemon, dpd, do the transmission. The four files tfa/cfa/lfa/dfa get unique names from pidfn(), which burns the process id's digits into the XXXXX placeholder so concurrent dpr runs don't collide; nfile() bumps the last character each time a file is made, so one job can hold several copy files. When all the cards are written, it links the control file to dfname and execl's /etc/dpd -- handing the finished deck to the dataphone daemon and turning into it. This is exactly lpr/lpd's spool-then-daemon structure; the only difference is the destination: not a local printer, but a GCOS mainframe at the other end of a phone line.",
+      "human_story": "dpr spools the job to /usr/dpd/, names the files uniquely from its process id, then hands the finished deck to a daemon (dpd) to actually send. It's the same spool-and-daemon shape as lpr/lpd -- just aimed at a mainframe down a phone line instead of a local printer."
+    },
+    "appraiser_note": "dpr は GCOS に直接喋らず、ジョブを /usr/dpd/ にスプールし、専用デーモン dpd に送信を委ねる。tfa/cfa/lfa/dfa の4ファイルは pidfn() が固有名にする——プロセス ID の各桁を XXXXX に焼き込み、同時に走る dpr が衝突しないようにする; nfile() はファイルを作るたび末尾の文字を進め、一つのジョブが複数のコピーファイルを持てるようにする。全カードを書き終えると、制御ファイルを dfname にリンクし /etc/dpd を execl する——完成デッキを dataphone daemon に引き渡し、自分はそれに化ける。これは lpr/lpd のスプール＋デーモン構造そのもので、違うのは行き先: ローカルのプリンタではなく、電話線の向こうの GCOS メインフレームだ。",
+    "file_path": "usr/src/cmd/dpr.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "dpr-004-clean-exit",
+    "text": "if (signal(SIGHUP, SIG_IGN) != SIG_IGN) signal(SIGHUP, out);  /* respect inherited ignore */\n...\nout() {\n    ...\n    while(tfname[i] != 'a') { tfname[i]--; unlink(tfname); }  /* undo nfile's ++, in reverse */\n    while(cfname[i] != 'a') { cfname[i]--; unlink(cfname); }\n    ... exit(0);\n}",
+    "line_number": 240,
+    "tags": [
+      "unix",
+      "dpr",
+      "signals",
+      "cleanup",
+      "spool"
+    ],
+    "interesting_score": 17,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 3,
+      "emotions": {
+        "legacy": 3,
+        "insight": 3
+      },
+      "technical_context": "If dpr is interrupted while building the job, half-written spool files would be left in /usr/dpd/. It guards against this: it catches SIGHUP/SIGINT/SIGQUIT and runs out() -- but only sets the handler if the signal isn't already ignored (the classic 'if (signal(s,SIG_IGN) != SIG_IGN)' idiom that respects an inherited ignore from the parent). out() then removes every spool file it created, walking the last character back down to 'a' -- undoing nfile()'s ++ increments in reverse order so each file it made is unlinked. It doesn't destroy anything of the user's; it just declines to leave a mess behind.",
+      "human_story": "If you interrupt dpr mid-job, it cleans up after itself -- deleting every temp spool file it created, in reverse order, before exiting. It catches the interrupt signals only if they weren't already being ignored. Quietly tidy, not destructive."
+    },
+    "appraiser_note": "ジョブを組み立てる途中で中断されると、/usr/dpd/ に書きかけのスプールファイルが残る。dpr はそれを防ぐ: SIGHUP/SIGINT/SIGQUIT を捕まえて out() を呼ぶ——ただしシグナルが既に無視設定でなければハンドラを設定する(親から無視を引き継いでいれば尊重する、古典的な 'if (signal(s,SIG_IGN) != SIG_IGN)' イディオム)。out() は作った全スプールファイルを掃除する: 末尾の文字を 'a' まで戻しながら——nfile() の ++ を逆順に取り消して——作ったファイルを unlink する。ユーザのものは何も壊さない; ただ後始末をして散らかさずに去るだけだ。",
+    "file_path": "usr/src/cmd/dpr.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]

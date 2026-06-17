@@ -1543,6 +1543,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "251",
+    title: "鑑定書#251 dpr — dataphone 経由で印刷ジョブを Honeywell GCOS メインフレームに投げる267行。初期 Unix が GCOS の賢い端末だった時代の証人。card() で GCOS の JCL カード($ ident/$ select/$ data/$ endjob)を組み、ident() は /etc/passwd の5番目=GECOS フィールドを読んで GCOS ジョブ識別を作る＝今も全 Unix に残る GECOS フィールドの起源。/usr/dpd/ にスプール(PIDで固有名化)し execl(\"/etc/dpd\")で daemon に委譲、out() で中断時に痕跡を逆順掃除。lpr(#240)/lpd の同型で行き先がローカルか GCOS かの違い",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
