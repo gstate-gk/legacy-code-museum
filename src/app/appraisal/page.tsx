@@ -1508,6 +1508,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "246",
+    title: "鑑定書#246 arcv — 第6版→第7版 ar アーカイブ形式を in-place 変換する90行弱の使い捨て移行ツール。マジックは 0177555→0177545 の一桁差だが裏で台帳様式が全面再設計（name 8→14、gid 新設、mode char→int、size を long に拡張＝第6版フォーマットの64KB上限撤廃）。omode は読まれるが捨てられ mode=0666/gid=1 に塗り替え、SIGHUP/INT/QUIT を握りつぶして原本fdへの書き戻しを中断不能にする。ファイル形式アップグレーダ／DBマイグレーションの祖型",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

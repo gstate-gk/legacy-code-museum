@@ -20707,5 +20707,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "arcv-001-magic-number",
+    "text": "union {\n    char buf[512];\n    int  magic;\n} b;\n...\nread(f, (char *)&b.magic, sizeof(b.magic));\nif(b.magic != omag) { printf(\"arcv: %s not archive format\\n\", fil); ... return; }\nb.magic = ARMAG;   /* omag=0177555 -> ARMAG=0177545, a one-octal-digit difference */",
+    "line_number": 56,
+    "tags": [
+      "unix",
+      "archive",
+      "arcv",
+      "magic-number",
+      "type-punning"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 3
+      },
+      "technical_context": "arcv decides whether to act by reading just the first int of a file: the archive magic number. Old (6th edition) archives carry 0177555, new (7th edition) archives 0177545 -- a difference of a single octal digit. The read is done through a union { char buf[512]; int magic; }, overlaying a 512-byte copy buffer and an int on the same memory so the first bytes can be reinterpreted as the magic and the buffer reused for bulk copying. If the magic is not the old one, arcv refuses ('not archive format'), protecting already-converted or non-archive files from being mangled. A whole identity -- 'this file is a 6th edition archive' -- rests on two bytes.",
+      "human_story": "The entire decision to convert hinges on the first two bytes. Old archives are stamped 0177555, new ones 0177545 -- one digit apart. If the stamp is wrong, arcv backs off so it never damages a file that isn't an old archive."
+    },
+    "appraiser_note": "arcv は処理するかどうかを、ファイル先頭の int ひとつ——アーカイブのマジックナンバー——を読むだけで決める。旧(第6版)アーカイブは 0177555、新(第7版)は 0177545。8進でたった一桁差だ。読み取りは union { char buf[512]; int magic; } を通して行う: 512バイトのコピー用バッファと int を同じメモリに重ね、先頭をマジックとして解釈しつつ、同じ領域をデータコピーにも使い回す型のだまし討ち。マジックが旧でなければ arcv は『not archive format』と言って手を引き、既に変換済み・非アーカイブのファイルを壊さない。『このファイルは第6版アーカイブだ』という素性が、2バイトに託されている。",
+    "file_path": "usr/src/cmd/arcv.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "arcv-002-fattened-struct",
+    "text": "for(i=0; i<8; i++) nh.ar_name[i] = oh.oname[i];\nnh.ar_size = oh.siz;\nnh.ar_uid  = oh.ouid;\nnh.ar_gid  = 1;        /* gid field is new in v7 -- invented as 1 */\nnh.ar_mode = 0666;     /* original oh.omode is read but discarded */\nnh.ar_date = oh.odate;",
+    "line_number": 73,
+    "tags": [
+      "unix",
+      "archive",
+      "arcv",
+      "format-migration",
+      "metadata"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "legacy": 4,
+        "insight": 3
+      },
+      "technical_context": "Behind the one-digit magic bump, the header struct was fully redesigned. The old 6th edition header is {oname[8], odate, ouid, omode, siz}; the new v7 ar_hdr is {ar_name[14], ar_date, ar_uid, ar_gid, ar_mode, ar_size}. arcv migrates field by field by hand. Two things are striking. ar_gid (group id) is brand new in v7 -- the old format had no group concept, so every member is stamped gid=1, a value with no origin in the source data. And ar_mode: the old oh.omode (the member's real permissions) is read into the struct but never copied; instead 0666 (rw-rw-rw-) is written wholesale. The generation upgrade silently discards each member's permissions and fabricates its group.",
+      "human_story": "Upgrading the format isn't just flipping a magic number -- the header grew a new group-id field and widened others, so every entry is rebuilt by hand. In the process each file's real permissions are thrown away (everyone becomes 0666) and a group id of 1 is invented from nothing."
+    },
+    "appraiser_note": "一桁のマジック変更の裏で、ヘッダ構造体はまるごと再設計されていた。旧(第6版)は {oname[8], odate, ouid, omode, siz}、新(第7版)の ar_hdr は {ar_name[14], ar_date, ar_uid, ar_gid, ar_mode, ar_size}。arcv はフィールドを一つずつ手で詰め替える。目を引くのは二点。ar_gid(グループID)は第7版の新設フィールドで、旧形式にはグループの概念がなかったため、全メンバが gid=1 で塗りつぶされる——出所のない値の捏造だ。そして ar_mode: 旧 oh.omode(メンバの実際の権限)は構造体に読み込まれるのに一度も使われず、代わりに 0666(rw-rw-rw-)が一律に書き込まれる。世代交代のついでに、各メンバの権限は黙って捨てられ、グループは捏造される。",
+    "file_path": "usr/src/cmd/arcv.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "arcv-003-64kb-ceiling",
+    "text": "/* old (6th ed) on-disk size field: unsigned, 16-bit on the PDP-11 -> max 65535 bytes */\nunsigned siz;\n/* new (v7) ar.h */\nlong ar_size;\n...\nnh.ar_size = oh.siz;\nn = (oh.siz+1) & ~01;   /* round member up to a 2-byte boundary */",
+    "line_number": 74,
+    "tags": [
+      "unix",
+      "archive",
+      "arcv",
+      "16-bit",
+      "format-migration"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "legacy": 4,
+        "insight": 4
+      },
+      "technical_context": "The most consequential field change is the size. The 6th edition archive format was born on the PDP-11, where unsigned is 16-bit, so its size field maxed out at 65535 bytes -- a 6th edition archive could not hold a member larger than 64KB. v7's ar.h widens ar_size to a 32-bit long, removing that ceiling. (Note: this code is the 32V/VAX build, where unsigned is itself 32-bit; the 16-bit limit is a property of the old PDP-11-era format, not of this machine.) arcv is the bridge that carries members across that ceiling. The (oh.siz+1)&~01 rounds each member up to a 2-byte boundary -- archives pad odd-length members by one byte -- and the body is copied 512 bytes at a time.",
+      "human_story": "The old archive format came from the 16-bit PDP-11, so no member could be bigger than 64KB. Version 7 widened the size field to 32 bits and lifted that limit. arcv is the one-way bridge that carries old members past the old ceiling."
+    },
+    "appraiser_note": "もっとも本質的なフィールド変更はサイズだ。第6版アーカイブ形式は PDP-11 上で生まれ、その PDP-11 では unsigned が16ビット。ゆえにサイズ欄は最大65535バイト——第6版アーカイブは64KBを超えるメンバを持てなかった。第7版の ar.h は ar_size を32ビットの long に広げ、この天井を撤廃する。(本コードは 32V/VAX 版で unsigned 自体は32ビット。16ビットは旧 PDP-11 期の形式の素性であって、この機械の属性ではない。)arcv はその天井を越えてメンバを運ぶ橋だ。(oh.siz+1)&~01 は各メンバを2バイト境界に切り上げ(奇数長は1バイト詰める)、本体は512バイトずつコピーされる。",
+    "file_path": "usr/src/cmd/arcv.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "arcv-004-in-place-surgery",
+    "text": "for(i=1; i<4; i++)\n    signal(i, SIG_IGN);   /* ignore SIGHUP/SIGINT/SIGQUIT */\n...\nout:\n    lseek(f, 0L, 0);\n    lseek(tf, 0L, 0);\n    while((i=read(tf, b.buf, 512)) > 0)\n        write(f, b.buf, i);   /* copy temp back over the ORIGINAL fd, in place */",
+    "line_number": 88,
+    "tags": [
+      "unix",
+      "archive",
+      "arcv",
+      "in-place",
+      "signals"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "legacy": 4,
+        "insight": 4
+      },
+      "technical_context": "The man page says conversion is 'done in place', and this is how. arcv builds the new-format archive in a temp file /tmp/arcXXXXX, then lseeks the ORIGINAL file descriptor (opened O_RDWR) back to 0 and copies the temp contents over it -- it overwrites the original file through its own open fd, rather than renaming or replacing. Because the new header is strictly larger than the old (ar_name alone grows 8->14, plus the added gid and widened fields) while the data bytes are unchanged, the new file is always bigger, so the in-place overwrite never leaves stale tail bytes. main() first does signal(i, SIG_IGN) for i=1,2,3 -- SIGHUP, SIGINT, SIGQUIT -- so a Ctrl-C or a dropped line cannot interrupt the destructive write-back midway. The temp file is scaffolding; the real surgery happens on the original.",
+      "human_story": "arcv rewrites the original file in place: it assembles the new archive in a temp file, then copies it back over the original through the same open handle. Before it starts, it disables Ctrl-C, hangup, and quit, so nothing can interrupt the rewrite and leave a half-converted archive."
+    },
+    "appraiser_note": "man ページの『in place で変換する』の正体がこれだ。arcv は新形式を一時ファイル /tmp/arcXXXXX に組み立て、元のファイル記述子(O_RDWR で開いている)を先頭に lseek し、一時ファイルの中身をその上に上書きする——名前を変えるのでも置き換えるのでもなく、開いたままの fd を通して原本を書き換える。新ヘッダは旧より必ず大きく(ar_name だけで 8→14、加えて gid 新設と各フィールド拡張)、データ本体は不変なので、新ファイルは常に大きい。ゆえに in-place 上書きで古い末尾が残ることはない。main() は最初に signal(i, SIG_IGN) を i=1,2,3——SIGHUP/SIGINT/SIGQUIT——に対して行い、Ctrl-C や回線切断が書き戻しの途中で割り込めないようにする。一時ファイルは足場で、本当の手術は原本の上で行われる。",
+    "file_path": "usr/src/cmd/arcv.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]
