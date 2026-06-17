@@ -20243,5 +20243,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "tc-001-pcat-twin",
+    "text": "while((i = getchar()) != EOF){\n\tif(i & 0200){ esc += (~i) & 0177; continue; }   /* escape (horizontal) */\n\tif(esc){ ... xx += (esc*mpy+rx)/div; sendpt(); esc = 0; }\n\tswitch(i){\n\tcase 0100: ... oput(US); if(!first && !tflag) kwait(); init(); continue;  /* init/page */\n\tcase 0101: railmag &= ~01; continue;   /* lower rail (font wheel) */\n\tcase 0112: verd = 0; continue;         /* lead forward (vertical) */\n\t}\n\tif((i & 0340) == 0140){ lead = (~i) & 037; ... }   /* leading */\n}",
+    "line_number": 96,
+    "tags": [
+      "unix",
+      "typesetting",
+      "tc",
+      "tektronix",
+      "troff"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "history",
+      "emotion_intensity": 4,
+      "emotions": {
+        "history": 4,
+        "legacy": 4
+      },
+      "technical_context": "tc, 'Simulate typesetter on 4014', does for the Tektronix 4014 vector terminal exactly what pcat did for plot(5): it reads troff's Graphic Systems C/A/T phototypesetter output and renders it on a different device. tc and pcat are twins. The front half -- decoding the C/A/T codes troff emits (high-bit byte = escape/horizontal motion, 0100 = init, 0101-0104 = railmag font-wheel rail+magnification, 0105/0106 = case, 0112/0114 = lead direction, 0140-family = leading/vertical motion) -- is nearly identical in both. Only the back half differs: where pcat called plot primitives, tc emits Tektronix 4014 control codes (US, GS, and sendpt's coordinate bytes). This exposes the troff family's structure: troff's output was tied to one machine (the C/A/T), so seeing a typeset page on any other device needed a per-device translator -- pcat for one, tc for the 4014, t450/t300 for DASI terminals -- the same C/A/T decode wrapped around a different output. tc is one of those per-device translators.",
+      "human_story": "tc and pcat read the very same troff output and disagree only on where to draw it: pcat to a plotter, tc to a Tektronix screen. Because troff spoke one typesetter's language, every other device needed its own translator -- and tc is the one for the 4014."
+    },
+    "appraiser_note": "tc『Simulate typesetter on 4014』は、pcat が plot(5) に対してやったことを Tektronix 4014 ベクタ端末に対してやる: troff の Graphic Systems C/A/T 写植機出力を読み、別のデバイスに再現する。tc と pcat は双子だ。前半——troff が吐く C/A/T コード(最上位ビット=escape/横送り、0100=init、0101-0104=railmag フォント盤の rail+倍率、0105/0106=case、0112/0114=lead 方向、0140 系=leading/縦送り)のデコード——は二つでほぼ同一。違うのは後半だけ: pcat は plot プリミティブを呼び、tc は Tektronix 4014 の制御コード(US/GS/sendpt の座標バイト)を吐く。これは troff 一族の構造を露わにする: troff の出力は1機種(C/A/T)に縛られていたので、他のデバイスで組版を見るには機種ごとの翻訳器が必要だった——pcat、4014 には tc、DASI 端末には t450/t300——同じ C/A/T デコードを別の出力で包む。tc はその機種別翻訳器の一つ。",
+    "file_path": "usr/src/cmd/tc.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "tc-002-4014-coordinate-encoding",
+    "text": "sendpt(){\n\toput(GS);                                  /* enter graphics mode */\n\thy = ((yy>>7) & 037);                      /* Y high 5 bits   -> tag 040  */\n\txb = ((xx & 03) + ((yy<<2) & 014) & 017);  /* low 2 bits of X,Y (extra)  -> tag 0140 */\n\tly = ((yy>>2) & 037);                      /* Y mid 5 bits    -> tag 0140 */\n\thx = ((xx>>7) & 037);                      /* X high 5 bits   -> tag 040  */\n\tlx = ((xx>>2) & 037);                      /* X mid 5 bits    -> tag 0100 */\n}",
+    "line_number": 322,
+    "tags": [
+      "unix",
+      "typesetting",
+      "tc",
+      "tektronix",
+      "encoding"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "craft",
+      "emotion_intensity": 4,
+      "emotions": {
+        "craft": 4,
+        "insight": 4
+      },
+      "technical_context": "The Tektronix 4014 is a vector terminal; to draw a point you send its coordinate in the 4014's peculiar form. tc's sendpt() encodes (xx,yy) into five parts: Y high 5 bits (hy), an extra byte packing the low 2 bits of both X and Y (xb, for the 4014's high-resolution extended addressing), Y mid 5 bits (ly), X high 5 bits (hx), X mid 5 bits (lx). Each gets tag bits -- hy 040, xb and ly 0140, hx 040, lx 0100 -- so the 4014, reading each byte's top bits, knows which coordinate part it is and reassembles the point. GS (035) is sent first to enter graphics mode. The tags also keep each 5-bit value (0-31) inside the printable byte range, clear of control characters, while being self-describing. The opposite of od or cat -v turning unprintable bytes into a representation, tc folds a number into a byte that can safely cross the line -- the 4014's five-byte coordinate protocol, emblem of the vector-terminal era (base 10-bit addressing extended to 12-bit/4096 via the extra byte).",
+      "human_story": "A point on the Tektronix 4014 is five tagged bytes: pieces of X and Y, each marked by its top bits so the terminal can tell hi-Y from lo-X and rebuild the point. The tags also keep every byte printable, safe to send down a serial line."
+    },
+    "appraiser_note": "Tektronix 4014 はベクタ端末で、点を描くには座標を 4014 独特の形で送る。tc の sendpt() は (xx,yy) を5つの部分に符号化する: Y上位5bit(hy)、X と Y の最下位2bitずつを詰めた拡張バイト(xb、4014 の高精度拡張アドレッシング用)、Y中位5bit(ly)、X上位5bit(hx)、X中位5bit(lx)。それぞれにタグビット——hy=040、xb と ly=0140、hx=040、lx=0100——を付け、4014 は各バイトの上位ビットを見てどの座標部分かを判別し点を組み立てる。先に GS(035)でグラフィックスモードに入る。タグは各5bit値(0〜31)を印字可能バイト範囲に収め制御文字と衝突させず、かつ自己記述的にする。od や cat -v が非印字バイトを表現に変えたのと逆向きに、tc は数値を回線を安全に通れるバイトに畳む——4014 の5バイト座標プロトコルは、ベクタ端末時代の象徴(基本10bit→拡張バイトで12bit/4096)。",
+    "file_path": "usr/src/cmd/tc.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "tc-003-differential-transmission",
+    "text": "if(hy != ohy) oput(hy | 040);    /* send Y-high only if it changed */\nif(xb != oxb) oput(xb | 0140);\nif((ly != oly) || (hx != ohx) || (xb != oxb)) oput(ly | 0140);\nif(hx != ohx) oput(hx | 040);    /* send X-high only if it changed */\noput(lx | 0100);                 /* X-low always sent: commits the point */\nohy=hy; oxb=xb; oly=ly; ohx=hx; olx=lx;   /* remember this as 'previous' */",
+    "line_number": 331,
+    "tags": [
+      "unix",
+      "typesetting",
+      "tc",
+      "bandwidth",
+      "delta"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "ingenuity": 4,
+        "craft": 4
+      },
+      "technical_context": "sendpt's real trick is in what it does NOT send. A point needs five bytes, but tc rarely sends all five: it compares against the previous point (ohy/oxb/oly/ohx) and sends only the bytes that changed. This works because the 4014 remembers the previous coordinate bytes. Laying characters across a line, Y barely changes, so hy and ly repeat until the line breaks -- sending them every time would flood the link. tc omits the unchanged bytes; only X-low (lx) is always sent, as the terminator that commits the point. This is bandwidth optimization for a slow terminal line (hundreds to thousands of bytes/sec in 1979) -- a few bytes per point, over thousands of points a page, decides how fast it feels. The same idea as vi/curses sending only the changed characters in a screen update, and dmesg logging only the diff from last time: remember the prior state, transmit only the change -- the universal thrift of a resource-poor era.",
+      "human_story": "Five bytes per point is a lot over a slow line, so tc sends only the bytes that changed since the last point -- the terminal keeps the rest. Writing along a line, the Y stays put, so most points cost just a byte or two. The same trick vi uses to redraw only what moved."
+    },
+    "appraiser_note": "sendpt の真の妙は送らない判断にある。一点に5バイト要るが、tc は毎回5バイト全部は送らない: 前の点(ohy/oxb/oly/ohx)と比べ、変わったバイトだけ送る。4014 が前回の座標バイトを覚えているからだ。文字を横に並べるとき Y はほとんど変わらず、hy/ly は行が変わるまで同じ値を繰り返す——毎回送れば回線が溢れる。tc は変化のないバイトを省き、X最下位(lx)だけは常に送る(点を確定させる終端バイト)。これは遅い端末回線(1979年は毎秒数百〜数千バイト)への帯域最適化——1点あたり数バイトの差が、一画面数千点では体感速度を左右する。vi/curses が画面更新で変わった文字だけ送るのと、dmesg が前回との差分だけログするのと同じ発想: 前の状態を覚え、変化だけを伝える——資源が限られた時代の普遍的な節約術。",
+    "file_path": "usr/src/cmd/tc.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "tc-004-interactive-paging-device-dependence",
+    "text": "kwait(){                                 /* wait for the user before the next page */\n\twhile((c=readch()) && (c!='\\n')) *bptr++=c;   /* read a line from the terminal */\n\tif(*bptr=='!'){ callunix(&buf[1]); ... }       /* ! = shell escape */\n\tswitch(*bptr++){ case 'e': erase=0; ...; case 's': pgskip=atoi()+1; ... }\n}\nreadch(){ char c; if (read(2,&c,1)<1) c=0; return(c); }   /* read from fd 2 (the terminal) */\ncallunix(line){ if(fork()==0){ ... execl(\"/bin/sh\",\"-sh\",\"-c\",line,0); } ... }",
+    "line_number": 273,
+    "tags": [
+      "unix",
+      "typesetting",
+      "tc",
+      "interactive",
+      "ditroff"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "legacy": 4,
+        "insight": 4
+      },
+      "technical_context": "tc differs from pcat in one decisive way: the output is a screen. Paper just prints page after page, but a screen is one surface -- the next page cannot be drawn until the current one is erased, and not before the user has had time to see it. tc's answer is kwait(): after drawing a page it stops and waits for the user to press return (readch reads a byte from fd 2, the terminal); on return it erases and draws the next. One page at a time, see, confirm, next -- interactive control a paper printer never needed. While waiting the user can type commands: '!' runs a shell via callunix (fork+execl /bin/sh, the shell escape seen in learn and cu), 'e' overlays without erasing, 's' skips pages -- a primitive page viewer. And tc, with pcat, testifies to the troff family BEFORE device independence: because troff's output was tied to the C/A/T, viewing it on a 4014 needed tc, on another device pcat, on DASI t450 -- N devices, N translators. plot already had graphics device independence at the same Bell Labs; troff did not, until ditroff (device-independent troff) made its output a machine-independent intermediate language needing only a small per-device driver. tc is a living fossil of the before time.",
+      "human_story": "Paper just keeps printing, but a screen must be seen then wiped -- so tc draws a page, waits for you to hit return, erases, and draws the next, a page-at-a-time viewer with a shell escape. And because troff spoke one typesetter's tongue, every screen needed its own tc-like translator, until ditroff finally set the output free."
+    },
+    "appraiser_note": "tc が pcat と決定的に違うのは出力先が画面だという点だ。紙はページを次々刷ればいいが、画面は一つの面——次のページは今のページを消すまで描けず、消す前にユーザが見る時間が要る。tc の答えが kwait(): 一ページ描いたら止まってユーザの改行を待ち(readch が fd 2＝端末から1バイト読む)、改行で消して次を描く。一画面ずつ、見て、確認して、次へ——紙のプリンタにない対話的制御だ。待つ間ユーザはコマンドも打てる: '!' で callunix がシェルを起動(fork+execl /bin/sh、learn や cu で見たシェル脱出)、'e' で消さず重ね描き、's' でページ飛ばし——原始的なページビューア。そして tc は pcat と共に、デバイス非依存以前の troff 一族を証言する: troff の出力が C/A/T に縛られていたため、4014 で見るには tc、別装置には pcat、DASI には t450——N デバイスに N 翻訳器。plot は同じ Bell Labs で既にグラフィックスのデバイス非依存を持っていたのに、troff はまだ持たず、ditroff(device-independent troff)が出力を機械非依存の中間言語にしデバイスごとの小さなドライバだけで済むようにするまで続いた。tc はその前夜の生きた化石。",
+    "file_path": "usr/src/cmd/tc.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]

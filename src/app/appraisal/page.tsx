@@ -1480,6 +1480,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "242",
+    title: "鑑定書#242 tc — troff の C/A/T 写植機出力を Tektronix 4014 のベクタ命令に翻訳し、座標をタグ付き5バイトに符号化、変わったバイトだけ送る差分転送で遅い回線を労り、一画面ずつ描いてはユーザの改行を待つ636行。pcat の Tektronix 版、ditroff 以前の「デバイスごとの翻訳器」",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
