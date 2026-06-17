@@ -20591,5 +20591,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "rc-001-suffix-routing",
+    "text": "switch( getsuf(t) ) {            /* dispatch by the file's last suffix char */\n\tcase 'e': eflcomp(t); break;   /* .e = EFL  -> efl translates to Fortran */\n\tcase 'r': ratcomp(t); break;   /* .r = Ratfor -> ratfor translates to Fortran */\n\tcase 'f': fortcomp(t); llenter(setsuf(copy(t),'o')); break;  /* .f = Fortran, compile */\n\tdefault:  llenter(copy(t)); break;   /* .o etc = straight to the linker */\n}",
+    "line_number": 107,
+    "tags": [
+      "unix",
+      "compiler",
+      "rc",
+      "driver",
+      "suffix"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 4
+      },
+      "technical_context": "rc, 'EFL-Ratfor-Fortran command', is a compiler driver -- like cc for C, it turns sources into an executable in one command. The three languages are not a stack but share a common base: Fortran. EFL (Feldman's Extended Fortran Language) and Ratfor (Kernighan's Rational Fortran) are two preprocessor languages that both translate to Fortran; the Fortran compiler then produces machine code. The dispatch is by file suffix: getsuf() returns the last char after the dot, and rc routes accordingly -- .e through efl (EFL->Fortran), .r through ratfor (Ratfor->Fortran), .f straight to the Fortran compiler, .o straight to the linker. This 'suffix = compilation stage' convention is the same one cc uses (.c/.s/.o) and make encodes as suffix rules: judge the file by its name's tail, not its contents. setsuf() renames the suffix as a file advances a stage (.f -> .o).",
+      "human_story": "rc reads a filename's last letter to decide what to do: .e goes through the EFL preprocessor, .r through Ratfor, .f straight to the Fortran compiler, .o straight to the linker. The same 'the extension tells you the stage' rule your compiler still uses."
+    },
+    "appraiser_note": "rc『EFL-Ratfor-Fortran command』はコンパイラ駆動プログラム——cc が C に対してやるように、ソースを一つのコマンドで実行ファイルにする。三つの言語は塔でなく共通の下地 Fortran を持つ。EFL(Feldman の Extended Fortran Language)と Ratfor(Kernighan の Rational Fortran)は、どちらも Fortran に翻訳される2つの前処理器言語で、Fortran コンパイラがそれを機械語にする。振り分けは拡張子で: getsuf() が最後の '.' の次の1文字を返し、rc が振り分ける——.e は efl(EFL→Fortran)、.r は ratfor(Ratfor→Fortran)、.f は直接 Fortran コンパイラ、.o は直接リンカへ。この『拡張子＝コンパイル段階』の規約は cc(.c/.s/.o)と同じ、make がサフィックスルールとして符号化したもの: ファイルを中身でなく名前の末尾で判断する。setsuf() は段が進むたびに拡張子を付け替える(.f → .o)。",
+    "file_path": "usr/src/cmd/rc.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "rc-002-fortran-as-target",
+    "text": "eflcomp(s){ if(callprep(efl, s, eflout, eflopt,0,0)==0){ splitup(eflout); dorlist(s); } }\n/* efl writes Fortran into eflout(=efljunk); splitup cuts it into subroutines; dorlist compiles each */\nratcomp(s){\n\tif(mflag) callprep(macro /*m4*/, s, rattmp, ...);   /* -m: run m4 first */\n\tcallprep(ratfor, ..., ratout, ratopt, ...);          /* ratfor writes Fortran into ratout */\n\tsplitup(ratout); dorlist(s);\n}",
+    "line_number": 163,
+    "tags": [
+      "unix",
+      "compiler",
+      "rc",
+      "transpiler",
+      "fortran"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "insight": 4
+      },
+      "technical_context": "rc's first idea: translate different upper languages into one common base language. Neither EFL nor Ratfor emits machine code -- both emit Fortran. eflcomp runs efl (/usr/bin/efl) to turn EFL into plain Fortran (eflout=efljunk); ratcomp runs ratfor to turn Ratfor's structured control (if/else/while) into Fortran's GOTOs and labels (ratout=ratjunk), with an optional m4 macro pass first (-m). Two upper languages of differing expressiveness, both landing on the same Fortran. Why Fortran as the common base? It dominated scientific computing but lacked structured programming and could not be rewritten -- vast existing code, a mature optimizing compiler, established numeric libraries. So keep Fortran as the base and stack new languages on top via preprocessors; EFL and Ratfor write only the syntax/structure translation and leave code generation to the mature Fortran compiler. Fortran is used as an intermediate language -- the same trick as cfront (C++ to C) and CoffeeScript/TypeScript (to JavaScript): target a mature language instead of building a backend. The generated Fortran is then split by splitup into per-subroutine/function units (parsing Fortran keywords) and compiled separately.",
+      "human_story": "Neither EFL nor Ratfor makes machine code -- both compile down to Fortran, the lingua franca of 1970s science. New structured languages get bolted onto old Fortran by preprocessors, leaving the hard part to Fortran's compiler. The same move as compiling TypeScript to JavaScript."
+    },
+    "appraiser_note": "rc の第一の思想: 別々の上位言語を一つの共通の下地言語へ翻訳する。EFL も Ratfor も機械語を吐かない——どちらも Fortran を吐く。eflcomp は efl(/usr/bin/efl)で EFL を素の Fortran(eflout=efljunk)に、ratcomp は ratfor で Ratfor の構造化制御(if/else/while)を Fortran の GOTO とラベル(ratout=ratjunk)に翻訳する(-m なら先に m4 マクロ展開)。表現力の違う二つの上位言語が、同じ Fortran に降りる。なぜ Fortran を下地に? 科学計算で支配的だが構造化を欠き書き直せない——膨大な既存コード、成熟した最適化コンパイラ、確立した数値ライブラリ。ならば Fortran を下地に残しその上に前処理器で新言語を載せる。EFL/Ratfor は構文・構造の翻訳だけ書き、コード生成は成熟した Fortran コンパイラに委ねる。Fortran を中間言語として使う——cfront(C++→C)や CoffeeScript/TypeScript(→JavaScript)と同じ手: バックエンドを作る代わりに成熟言語をターゲットにする。生成された Fortran は splitup でサブルーチン/関数単位(Fortran キーワードで)に分割され別々にコンパイルされる。",
+    "file_path": "usr/src/cmd/rc.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "rc-003-redirected-process-pipeline",
+    "text": "callprep( prep, file, output, ... ) {\n\tif( (t=fork())==0 ){              /* child */\n\t\tclose(1); fout=creat(output,0666);  /* stdout -> the output file */\n\t\tclose(0); fin=open(file,0);         /* stdin  <- the input file */\n\t\texecv(prep, av);                    /* exec the preprocessor */\n\t}\n\twhile( t!=wait(&status) );        /* parent waits for this stage */\n}",
+    "line_number": 191,
+    "tags": [
+      "unix",
+      "compiler",
+      "rc",
+      "fork-exec",
+      "pipeline"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "craft",
+      "emotion_intensity": 4,
+      "emotions": {
+        "craft": 4,
+        "elegance": 4
+      },
+      "technical_context": "rc launches each stage as a process with stdin/stdout redirected to files. callprep() forks, and in the child close(1)+creat(output) sends stdout to the output file, close(0)+open(file) draws stdin from the input file, then execv runs the preprocessor (efl/ratfor/m4). Each preprocessor is just a filter -- read stdin, write stdout -- and rc wires its mouth to the source and a temp file. This assembles a compilation pipeline from Unix's most basic parts: fork, exec, and file-descriptor swapping. For .e: feed the source to efl, get Fortran (efljunk), pass it to the Fortran compiler. For .r: (optionally through m4, then) ratfor, get Fortran (ratjunk), compile. The same thing the shell does with the pipe '|', rc does through temp files (eflout/ratout/rattmp), gluing each stage's output to the next and cleaning them up with cunlink in dexit. Just like cc launching c0/c1/c2/as/ld in order: a driver is an orchestrator that starts independent tools in a fixed order, wires their I/O, and manages the intermediates.",
+      "human_story": "Each compiler stage is a separate program that reads stdin and writes stdout; rc forks it, points its input at the source and its output at a temp file, and runs it. The shell joins such filters with a pipe; rc joins them with temp files -- the same idea, building a compiler out of small processes."
+    },
+    "appraiser_note": "rc は各段を、標準入出力をファイルに繋ぎ替えたプロセスとして起動する。callprep() が fork し、子で close(1)+creat(output)で標準出力を出力ファイルへ、close(0)+open(file)で標準入力を入力ファイルへ繋ぎ替え、execv で前処理器(efl/ratfor/m4)を起動する。各前処理器はただのフィルタ——標準入力を読み標準出力に書く——で、rc がその口をソースと一時ファイルに繋ぐ。これは Unix の最も基本的な部品(fork/exec/ファイルディスクリプタの繋ぎ替え)でコンパイルパイプラインを組み立てている。.e なら: ソースを efl に食わせ Fortran(efljunk)を得て Fortran コンパイラへ。.r なら:(-m なら m4 を通してから)ratfor に食わせ Fortran(ratjunk)を得てコンパイル。shell がパイプ '|' でやることを、rc は中間ファイル(eflout/ratout/rattmp)を介して行い、各段の出力を次に繋ぎ、dexit の cunlink で掃除する。cc が c0/c1/c2/as/ld を順に起動して繋いだのと同じ: 駆動プログラムとは独立したツールを決まった順序で起動し入出力を繋ぎ中間生成物を管理するオーケストレータだ。",
+    "file_path": "usr/src/cmd/rc.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "rc-004-driver-hides-the-chain",
+    "text": "if(rflag) dexit(0);   /* -r: stop after preprocessing, just see the generated Fortran */\n...\nav[0]=\"ld\"; av[1]=\"-x\"; av[2]=\"/lib/fr0.o\";   /* Fortran runtime startup */\nwhile(i<nl) av[j++]=llist[i++];                  /* the compiled objects */\nav[j++]=\"-lf\"; av[j++]=\"/usr/lib/filib.a\";      /* the EFL/Fortran library */\ncallsys(\"/bin/ld\", av);                          /* link into an executable */",
+    "line_number": 128,
+    "tags": [
+      "unix",
+      "compiler",
+      "rc",
+      "linker",
+      "toolchain"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "legacy": 4,
+        "insight": 4
+      },
+      "technical_context": "rc's last job is to link the objects that came out of preprocessing and compilation into an executable: it runs ld with /lib/fr0.o (the Fortran runtime startup), the compiled objects, and /usr/lib/filib.a (the EFL/Fortran library). A journey that began in EFL or Ratfor source ends in one running executable. This is the essence of a compiler driver: the user types rc foo.e, and the chain underneath -- efl turns EFL into Fortran, the Fortran compiler into machine code, as assembles, ld links with the library -- stays hidden. One command hides a chain of independent tools and their temp files and libraries. Options control how far the chain runs: -r stops after preprocessing to inspect the generated Fortran (like cc -S/-E), -2 swaps in a different Fortran compiler (/usr/fort/fc2). rc is cc's sibling for the Fortran-family languages: cc drives the C toolchain (c0/c1/c2/as/ld), rc drives efl/ratfor/Fortran/as/ld, sharing the same as/ld bottom half. The same driver pattern that gcc/clang/rustc still use to run frontend-to-linker behind one command.",
+      "human_story": "Type rc foo.e and out comes a runnable program -- the whole chain (efl, the Fortran compiler, the assembler, the linker plus libraries) stays hidden. -r lets you stop early to read the generated Fortran. The same one-command driver pattern gcc and rustc use today."
+    },
+    "appraiser_note": "rc の最後の仕事は、前処理とコンパイルを抜けたオブジェクトをリンクして実行ファイルにすること: ld を起動し /lib/fr0.o(Fortran ランタイム起動コード)、コンパイル済みオブジェクト、/usr/lib/filib.a(EFL/Fortran ライブラリ)を繋ぐ。EFL や Ratfor のソースから始まった旅が一つの実行ファイルに結実する。これがコンパイラ駆動プログラムの本質: ユーザは rc foo.e と打つだけで、裏の連鎖——efl が EFL を Fortran に、Fortran コンパイラが機械語に、as がアセンブル、ld がライブラリと繋ぐ——は隠れる。一つのコマンドが独立したツールの連鎖と中間ファイルとライブラリを隠す。オプションが工程のどこまで進むかを制御: -r は前処理で止め生成された Fortran を見る(cc -S/-E のよう)、-2 は別の Fortran コンパイラ(/usr/fort/fc2)に切替。rc は cc の Fortran系言語版の兄弟: cc が C ツールチェーン(c0/c1/c2/as/ld)を駆動するように、rc は efl/ratfor/Fortran/as/ld を駆動し、同じ as/ld の下半分を共有する。gcc/clang/rustc がフロントエンドからリンカまでを一コマンドで駆動するのと同じ駆動プログラムの型。",
+    "file_path": "usr/src/cmd/rc.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]

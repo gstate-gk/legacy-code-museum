@@ -1501,6 +1501,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "245",
+    title: "鑑定書#245 rc — EFL/Ratfor/Fortran コンパイラ駆動。拡張子で前処理器を振り分け、EFL も Ratfor も共通の下地 Fortran へ翻訳し、生成 Fortran を分割・コンパイルし、各段を fork+リダイレクトのプロセスで繋いで ld でランタイムとリンクする523行。cc の Fortran系言語版、Fortran を中間言語にしたトランスパイラ駆動",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
