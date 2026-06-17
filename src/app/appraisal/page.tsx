@@ -1536,6 +1536,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "250",
+    title: "鑑定書#250 cvtbl — tbl(表組み前処理) の旧表書式を新書式へ変換する105行の使い捨て移行ツール。arcv(#246) の tbl 版。.TS の直後のフォーマット指定行だけを書き換え、本質は行列の転置＝横に積まれた列ごとのキー文字を縦の行ごとの指定に組み替える（行優先の文字列を列優先で読む、短い列は col[j]-- で最後のキー文字を繰り返し padding、最終行を \".\" で締める）。一時ファイル+system(\"mv tmp orig\")で in-place 置換。無境界 gets()、printf(-1,...) の sprintf 相当、独自 cin/cout I/O＝標準ライブラリ以前の作法",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

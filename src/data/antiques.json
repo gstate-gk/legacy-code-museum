@@ -21173,5 +21173,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "cvtbl-001-ts-filter",
+    "text": "while (gets(s)) {\n    puts(s);                       /* pass every line through */\n    if (!prefix(\".TS\", s)) continue;\n    gets(s);                       /* only the line right after .TS: the format spec */\n    ...\n}",
+    "line_number": 25,
+    "tags": [
+      "unix",
+      "cvtbl",
+      "tbl",
+      "troff",
+      "filter"
+    ],
+    "interesting_score": 17,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 3,
+      "emotions": {
+        "legacy": 3,
+        "insight": 3
+      },
+      "technical_context": "cvtbl converts old tbl table-format specs to the new format (its own comment: 'program to convert tables to new format'). tbl is Lesk's table preprocessor for troff; a table is bracketed by .TS and .TE. cvtbl passes every line straight through with puts(), and only when a line begins with .TS does it grab the very next line -- the format specification line -- with gets() and rewrite it. It's the classic troff filter discipline (like pic's .PS/.PE, eqn's .EQ/.EN): touch only inside your own markers, leave everything else alone. Here the touched region is a single line, the table's format spec.",
+      "human_story": "cvtbl reads a document, copies every line through untouched, and only rewrites one line: the table-format spec that follows a .TS marker. It changes exactly what it must and nothing more."
+    },
+    "appraiser_note": "cvtbl は古い tbl の表書式を新書式に変換する(自身のコメント: 'program to convert tables to new format')。tbl は Lesk の troff 用表組み前処理で、表は .TS と .TE で挟まれる。cvtbl は全行を puts() でそのまま素通しさせ、.TS で始まる行を見つけたときだけ、その次の一行——フォーマット指定行——を gets() で捕まえて書き換える。pic の .PS/.PE、eqn の .EQ/.EN と同じ troff フィルタの定石: 自分のマーカーの中だけ手を入れ、他は触らない。ここで触るのはたった一行、表のフォーマット指定だ。",
+    "file_path": "usr/src/cmd/cvtbl.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "cvtbl-002-column-parse",
+    "text": "for(p=s; *p; p++) {\n    if (letter(*p)) {\n        col[k++]=p;            /* start of this column's key letters */\n        while (letter(*p)) p++;\n        if (digit(*p)) len[k-1]=p;  /* start of its width/spacing digits */\n        while (digit(*p)) p++;\n    }\n    if (*p==0) break;\n}",
+    "line_number": 35,
+    "tags": [
+      "unix",
+      "cvtbl",
+      "tbl",
+      "parsing",
+      "pointers"
+    ],
+    "interesting_score": 17,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 3,
+      "emotions": {
+        "insight": 3,
+        "legacy": 3
+      },
+      "technical_context": "The old format wrote every column's spec on one line, side by side: each column is a run of key letters (l=left, r=right, c=center, n=numeric) optionally followed by digits (a width/spacing number). cvtbl walks the line character by character and, for each column, records the START of its letter run in col[k] and the start of its following digit run in len[k-1]. It doesn't parse or interpret the key letters at all -- it just pins down their positions with pointers into the single spec string. The whole later transpose works by advancing these pointers.",
+      "human_story": "The old format crams every column's layout codes onto one line. cvtbl scans that line and just remembers where each column's letters and numbers start -- pointers, not parsing."
+    },
+    "appraiser_note": "旧書式は各列の指定を一行に横並びにした: 各列はキー文字の連なり(l=左、r=右、c=中央、n=数値揃え)で、必要なら数字(幅/間隔)が続く。cvtbl は行を一文字ずつ走査し、各列について letter 連の先頭を col[k] に、続く digit 連の先頭を len[k-1] に記録する。キー文字をパース・解釈は一切しない——一本の指定文字列へのポインタで位置だけを押さえる。後段の転置はすべて、このポインタを進めることで動く。",
+    "file_path": "usr/src/cmd/cvtbl.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "cvtbl-003-transpose",
+    "text": "for(i=m=0; i<k; i++) m=max(length(col[i]),m);  /* m = rows in new format = longest spec */\nfor(i=0; i<m; i++) {\n    for(j=0; j<k; j++) {\n        printf(\"%c \", *(col[j])++);          /* column j's i-th key letter */\n        if (!letter(*(col[j]))) col[j]--;     /* exhausted -> repeat last letter (pad) */\n    }\n    if (i+1==m) printf(\".\");                 /* last format row ends with a period */\n    printf(\"\\n\");\n}",
+    "line_number": 48,
+    "tags": [
+      "unix",
+      "cvtbl",
+      "tbl",
+      "transpose",
+      "matrix"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 5,
+      "emotions": {
+        "insight": 5,
+        "legacy": 4
+      },
+      "technical_context": "This is the heart of cvtbl: a matrix transpose. In the old format, a multi-row table layout stacked each column's per-row key letters together (a column written 'lc' meant row1=left, row2=center). The new format does the opposite -- one line per row, columns laid out across it. cvtbl flips between them. m, the number of rows in the new format, is the length of the longest column spec. Then for each row i it prints every column's i-th key letter, advancing each pointer; when a column runs out of letters, col[j]-- steps back so its last key letter repeats, padding short columns up to the tallest. A row-major string read column-major -- a transpose, complete with last-element padding -- and the final format row is closed with a '.' as the new tbl format requires.",
+      "human_story": "The core is a transpose. The old format stacked each column's row-codes vertically on one line; the new format wants one line per row. cvtbl reads the string the other way around, column by column, repeating a column's last code if it's shorter than the others, and ends the last line with a period."
+    },
+    "appraiser_note": "ここが cvtbl の心臓: 行列の転置だ。旧書式では、複数行にわたる表の体裁は各列の行ごとのキー文字を縦に積んで書いた(列に 'lc' と書けば 1行目=左、2行目=中央)。新書式は逆——行ごとに一行を使い、各列の指定を横に並べる。cvtbl はこの二つを入れ替える。新書式の行数 m は最も長い列指定の文字数。各行 i について、すべての列の i 番目のキー文字を出力しポインタを進める; 列の文字が尽きたら col[j]-- で戻して最後のキー文字を繰り返し、短い列を最長に揃える。行優先の文字列を列優先で読む——最後の要素による padding まで備えた転置だ——そして最終行は新 tbl 書式が求める '.' で締める。",
+    "file_path": "usr/src/cmd/cvtbl.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "cvtbl-004-inplace-mv",
+    "text": "cin = copen(argv[1], 'r');\ncout = copen(tmpnam(stt), 'w');   /* write the converted file to a temp */\n...\nprintf(-1, s, \"mv %s %s\", stt, argv[1]);  /* archaic sprintf: format into s */\nsystem(s);                                  /* mv temp over the original */\nargc--; argv++;                             /* next file */",
+    "line_number": 14,
+    "tags": [
+      "unix",
+      "cvtbl",
+      "in-place",
+      "migration",
+      "archaic"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "legacy": 4,
+        "insight": 3
+      },
+      "technical_context": "Like arcv, cvtbl rewrites files in place -- but by a different route. It reads from the original and writes the converted output to a temp file (tmpnam), then builds the string 'mv temp orig' and hands it to system() to overwrite the original. arcv did in-place by seeking its own file descriptor back to 0; cvtbl delegates to the mv command. Multiple files are processed in turn by advancing argc/argv. The few lines are thick with period idiom: gets(s) reads with no bounds (s is char[200]); printf(-1, s, ...) is a pre-sprintf in-house idiom where the -1 'descriptor' apparently means 'format into the buffer s' (s is certainly the output, since system(s) runs it next); and I/O goes through tbl's own cin/cout/copen/cexit rather than stdio. This is the era before the standard library settled, when each tool brought its own plumbing.",
+      "human_story": "cvtbl converts each file into a temp, then runs 'mv temp original' to replace it -- in-place editing by delegating to the shell. The code is full of pre-standard idioms: unbounded gets, a homegrown sprintf, and tbl's own I/O routines instead of the standard library."
+    },
+    "appraiser_note": "arcv と同じく cvtbl も in-place でファイルを書き換える——が、経路が違う。原本から読み、変換結果を一時ファイル(tmpnam)に書き、'mv 一時 原本' という文字列を組み立てて system() で原本を上書きする。arcv は自分のファイル記述子を 0 に巻き戻して in-place を実現したが、cvtbl は mv コマンドに委ねる。複数ファイルは argc/argv を進めて順に処理する。この数行は時代の作法が濃い: gets(s) は無境界読み(s は char[200])、printf(-1, s, ...) は sprintf 以前の自家製イディオムで -1 の『記述子』はバッファ s への整形を意味するらしい(直後の system(s) が走るので s が出力先なのは確実)、入出力も stdio でなく tbl 独自の cin/cout/copen/cexit。標準ライブラリが固まる前、各ツールが自分の配管を持ち寄っていた時代だ。",
+    "file_path": "usr/src/cmd/cvtbl.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]
