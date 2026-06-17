@@ -1473,6 +1473,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "241",
+    title: "鑑定書#241 lpr/lpd — 印刷の完了を待たず、ジョブを spool ディレクトリにファイルとして置き(tf→df の原子的改名)、ロックファイル(モード0＋setuid非root)で唯一性を守った lpd が一つずつ刷り完了をメールで知らせる441行の印刷キュー。spool+daemon、submit/async worker/notify の非同期ジョブキューの祖",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

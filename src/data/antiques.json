@@ -20127,5 +20127,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "lpr-001-spool-atomic-rename",
+    "text": "char tfname[] = \"/usr/lpd/tfaXXXXX\";   /* control file being written */\nchar cfname[] = \"/usr/lpd/cfaXXXXX\";   /* copied print data */\nchar dfname[] = \"/usr/lpd/dfaXXXXX\";   /* finished, runnable job */\nlink(tfname, dfname);   /* give the temp two names */\nunlink(tfname);         /* drop the temp name -> only df remains: the job 'appears' */\n/* lpd: read the spool dir, find entries starting with 'df' */\nwhile (dbuf.ino==0 || dbuf.name[0]!='d' || dbuf.name[1]!='f') ...;",
+    "line_number": 100,
+    "tags": [
+      "unix",
+      "spooler",
+      "lpr",
+      "queue",
+      "atomic-rename"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "elegance": 4
+      },
+      "technical_context": "lpr and lpd are the print spooler: lpr queues a file, lpd is the daemon that prints it. The point is to free the user from the slow printer -- lpr does not wait. Between them is only a directory: /usr/lpd, the spool, IS the queue. lpr drops a job there as files; lpd takes them. The filesystem is the IPC channel and the wait queue. A job is two files: the data file (cf, the content lpr copies) and the control file (df, the spec). The clever part is atomic rename: lpr writes the control file under a temp name (tf), then link(tf,df)+unlink(tf) -- which works as an atomic rename (no rename(2) yet). Until that instant df does not exist; after it, df exists complete. So when lpd scans for df* it only ever finds finished jobs, never a half-written one. Using the filesystem's rename atomicity as a job commit -- the same trick in mail spools, uucp work files, and modern write-temp-then-rename.",
+      "human_story": "There is no socket or pipe between lpr and lpd -- just a directory. lpr drops the job in as files; the daemon picks it up. And the job only 'appears' the instant its control file is atomically renamed into place, so the daemon never grabs a half-written job."
+    },
+    "appraiser_note": "lpr と lpd は印刷スプーラ: lpr がファイルをキューに入れ、lpd がデーモンとして刷る。肝は遅いプリンタからユーザを解放すること——lpr は待たない。両者の間にあるのはディレクトリだけ: /usr/lpd（スプール）がキューそのもの。lpr がジョブをファイルとして置き、lpd が取る。ファイルシステムが通信路であり待ち行列だ。ジョブは二つのファイル: データファイル(cf、lpr が複製した内容)と制御ファイル(df、仕様)。巧妙なのが原子的改名: lpr は制御ファイルを一時名(tf)で書き、link(tf,df)+unlink(tf)——これが原子的改名として働く(当時 rename(2) は無い)。その瞬間まで df は存在せず、後には完全な df が在る。だから lpd が df* を探すとき、見つかるのは必ず完成ジョブだけ、書きかけは決して掴まない。ファイルシステムの rename の原子性をジョブのコミットに使う——メールスプール、uucp 作業ファイル、現代の一時書き→rename と同じ定石。",
+    "file_path": "usr/src/cmd/lpr.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "lpr-002-control-file-cards",
+    "text": "card(c, s) int c; char s[]; {     /* write one 'card' to the control file */\n\t*p1++ = c;                       /* first byte = type */\n\twhile((c=*p2++)) *p1++ = c;      /* rest = argument */\n\twrite(tff, buf, col+2);\n}\ncard('F', name);   /* F: print this file */\ncard('U', name);   /* U: unlink it after printing */\ncard('L', person); /* L: banner with this login */\ncard('M', person); /* M: mail this user when done */",
+    "line_number": 142,
+    "tags": [
+      "unix",
+      "spooler",
+      "lpr",
+      "job-spec",
+      "data-not-code"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "craft": 4
+      },
+      "technical_context": "lpr writes the job's control file as cards -- one instruction per line, a leading type byte and an argument: F (file to print), U (unlink after), L (login, for the banner), M (mail when done), $ (remote control). It is the job expressed not as code but as a small description language. lpd reads the control file and switches on line[0] to interpret each card -- F sends the file to the printer, U deletes, M mails. Issuer (lpr) and executor (lpd) meet through a data format, because submission and execution are separated in time and process: the job must be written down as data to be interpreted later. lpd does two passes: first the F cards (print), then U (cleanup) and M (notify) after everything is printed. Like calendar's plain-text reminders and learn's lesson scripts, lpr records what to do as data, not as a running program -- the root of batch jobs, message queues, task queues.",
+      "human_story": "A print job is a little stack of punch-card-like lines: F print this, U delete after, M mail me when done. lpr writes the cards, lpd reads and obeys them. The job is data describing the work, not the work itself -- which is why it can sit in a queue and be run later."
+    },
+    "appraiser_note": "lpr はジョブの制御ファイルをカードとして書く——1行1命令、先頭1文字の種別＋引数: F(刷るファイル)、U(刷後 unlink)、L(ログイン、バナー用)、M(完了メール)、$(リモート制御)。ジョブをコードでなく小さな記述言語で表す。lpd は制御ファイルを読み line[0] で switch して各カードを解釈する——F はファイルを印刷へ、U は削除、M はメール。発行者(lpr)と実行者(lpd)がデータ形式を介して繋がる。発行と実行が時間的・プロセス的に分離されるからこそ、ジョブはデータとして書き置かれ後で解釈される必要がある。lpd は二段パス: まず F(印刷)、全部刷り終えてから U(後始末)と M(通知)。calendar の平文リマインダ、learn の台本のように、lpr はやるべきことを実行でなくデータとして残す——バッチジョブ、メッセージキュー、タスクキューの根。",
+    "file_path": "usr/src/cmd/lpr.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "lpd-003-daemonize-lockfile",
+    "text": "setuid(DAEMUID);                       /* become the daemon user (uid 1, non-root) */\nsignal(SIGHUP, SIG_IGN); ...           /* ignore terminal signals */\nfor (df=0; df<=15; df++) close(df);    /* drop inherited fds */\nopen(\"/\",0); dup(0); dup(0);          /* clean stdin/out/err */\nif ((df=creat(\"/usr/lpd/lock\", 0)) < 0) exit(0);  /* lock is mode 0; 2nd daemon (non-root) gets EACCES */\nclose(df);\nif (fork()) exit(0);                   /* parent leaves; child is the daemon */",
+    "line_number": 27,
+    "tags": [
+      "unix",
+      "daemon",
+      "lpd",
+      "lockfile",
+      "single-instance"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 4
+      },
+      "technical_context": "lpd's startup is the daemon birth ritual. It setuid(DAEMUID)s to a dedicated non-root user, ignores terminal signals (SIGHUP/INT/QUIT) so a closed terminal cannot kill it, closes all inherited fds and reopens / as 0/1/2 for a clean environment, then forks and the PARENT exits so only the detached child remains. This close-reopen-fork-parent-exits pattern became the standard Unix daemonization. The single-instance guard is a lockfile with a subtle trick: creat('/usr/lpd/lock', 0) makes a mode-0 (no-write-permission) file. creat does NOT fail just because a file exists (it truncates and succeeds) -- exclusion works because lpd is now a non-root user (setuid uid 1): the second lpd trying to creat (open-for-write) the existing mode-0 lock is denied (EACCES) and exits. The mode-0 file plus non-root setuid is what keeps exactly one printer daemon alive; on finishing the queue, lpd unlinks the lock. Later O_EXCL gives this its own flag; here it is done with permissions. The single-instance idea lives on as PID files and lockfiles.",
+      "human_story": "To become a daemon, lpd closes everything, reopens a clean environment, ignores the terminal, and forks so the parent dies and the child lives on alone. And to stay the only printer daemon, it drops a lock file no one can write -- so a second daemon, running unprivileged, simply can't open it and gives up."
+    },
+    "appraiser_note": "lpd の起動部はデーモン誕生の儀式だ。setuid(DAEMUID) で専用の非 root ユーザになり、端末由来のシグナル(SIGHUP/INT/QUIT)を無視して端末が閉じても死なず、継いだ fd を全部閉じて / を 0/1/2 に開き直しクリーンな環境にし、fork して親が exit、切り離された子だけが残る。この閉じて・開き直して・fork・親が去る型が Unix のデーモン化の標準に。単一インスタンスの番人がロックファイルで、巧妙な仕掛けがある: creat('/usr/lpd/lock', 0) はモード0(書込権限なし)のファイルを作る。creat はファイルが存在するだけでは失敗しない(切り詰めて成功)——排他が成立するのは lpd が非 root(setuid uid 1)になっているから: 二つ目の lpd が既存のモード0ロックを creat(書込で開く)しようとすると拒否される(EACCES)。モード0ファイル＋非rootのsetuid が、印刷デーモンをただ一つに保つ。キューを捌き終えると lpd はロックをunlink する。後に O_EXCL がこの用途の専用フラグになるが、ここでは権限で実現している。単一インスタンスの発想は PIDファイルやロックファイルとして今も生きる。",
+    "file_path": "usr/src/cmd/lpd.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "lpd-004-async-job-queue",
+    "text": "/* lpr: queue the job, exec lpd, and the user's shell is freed at once */\nexecl(\"/usr/lib/lpd\", \"lpd\", 0);\n/* lpd send(): fork a child to run the real printer driver vpr; daemon waits */\nsend() { if (p=fork()) { wait(&p); return(p); }\n\texecl(\"/usr/bin/vpr\", \"vpr\", line, 0); }\n/* lpd sendmail(): tell the user it is done */\nexecl(\"/bin/mail\", \"mail\", &line[1], 0);   printf(\"Your printer job is done\\n\");",
+    "line_number": 164,
+    "tags": [
+      "unix",
+      "spooler",
+      "lpd",
+      "async",
+      "job-queue"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 5,
+      "emotions": {
+        "legacy": 5,
+        "insight": 4
+      },
+      "technical_context": "lpr and lpd together are an asynchronous job queue -- submit, forget, be notified later. lpr (the submitter) drops the job in the spool and returns without waiting for printing; the user is freed instantly. lpd (the worker), as a background daemon, pulls jobs one at a time and send()s them by forking a child that execs the real printer driver vpr (the Versatec printer); the daemon can afford to wait one job to completion, then take the next. Slow printers are the daemon's problem, not the user's. When a job is fully printed, lpd sendmail()s 'Your printer job is done' through /bin/mail to the M-card address -- notifying after the fact the user who did not wait, the same async notify as calendar. This triad -- submit / async worker / notify -- is the skeleton of every job queue since: print queues (lpd -> CUPS), batch jobs, message queues, task queues, CI build queues. lpr/lpd is the oldest, plainest version, built only from Unix parts: queue=directory, job=file, worker=daemon, notify=mail. Like uucp's store-and-forward, it makes the slow work asynchronous.",
+      "human_story": "Submit, forget, get told later. lpr drops your job and returns; the daemon prints it in the background at the printer's pace; and when it is done, it mails you 'Your printer job is done'. Every job queue since -- print, batch, message, task -- is this same three-step dance."
+    },
+    "appraiser_note": "lpr と lpd は合わせて非同期ジョブキューだ——投げて、忘れて、後で知らされる。lpr(投入側)はジョブをスプールに置いたら印刷を待たず戻る、ユーザは即解放。lpd(処理側)はバックグラウンドのデーモンとしてジョブを一つずつ取り出し、send() で子プロセスを fork して実際のプリンタ駆動 vpr(Versatec プリンタ)を exec する。デーモンは一つのジョブを wait で待ってから次へ——遅いプリンタに付き合うのはデーモンの仕事でユーザの仕事ではない。ジョブが全部刷り終わると lpd は sendmail() で「Your printer job is done」を /bin/mail 経由で M カードの宛先に送る——待たなかったユーザに完了を後から通知する、calendar と同じ非同期通知。この三拍子——投入/非同期ワーカー/通知——は以降あらゆるジョブキューの骨格だ: 印刷キュー(lpd→CUPS)、バッチジョブ、メッセージキュー、タスクキュー、CI ビルドキュー。lpr/lpd は最古・最素朴の版で、Unix の部品だけで組まれる: キュー=ディレクトリ、ジョブ=ファイル、ワーカー=デーモン、通知=メール。uucp の store-and-forward がそうだったように、遅い仕事を非同期にする。",
+    "file_path": "usr/src/cmd/lpd.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]
