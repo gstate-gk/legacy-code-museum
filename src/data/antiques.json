@@ -20359,5 +20359,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "pg-001-page-and-pause",
+    "text": "print(){\n\tputchar(CLEAR);                     /* clear the screen */\n\tfor(;;) {\n\t\tsetpage(); nlc=0;\n\t\twhile(nlc<20) { c=readchar(); if(eof) return; if(c==NL) nlc++; putchar(c); }  /* one screen = 20 lines */\n\t\twhile(read(2,buf,1)==1 && buf[0]!=NL) switch(buf[0]) {  /* wait for a key (from fd 2) */\n\t\t\tcase '/': case HOME: putchar(CLEAR); getpage(0); break;   /* to start */\n\t\t\tcase '-': case BACK: getpage(-1); putchar(CLEAR); break;  /* back a page */\n\t\t\tcase '!': shell(); break;                                 /* shell escape */\n\t\t}\n\t}\n}",
+    "line_number": 40,
+    "tags": [
+      "unix",
+      "pager",
+      "pg",
+      "terminal",
+      "interactive"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 4
+      },
+      "technical_context": "pg is a screen pager: it shows a long file one screen at a time, pausing for a keystroke before the next. Why a pager? cat floods a long file past the screen -- on a teletype (paper) the scrolled lines stayed on paper, but on a CRT they vanish. pg dams the flood: print() clears the screen, emits 20 lines (counting newlines), then STOPS and waits for the user. Press return and the next screen comes; '/' or HOME go to the start, '-' or BACK go back a page, '!' escapes to a shell. Output is sent at the human's reading pace, not the machine's. The key is reading the control key from fd 2 (the terminal), not stdin: pg file takes the content from the file and the commands from the keyboard -- data and control on separate channels. Where cat is a passive filter that pours output out, pg is an active viewer that controls output in dialogue with the user. When the medium changed from teletype to screen, watching output turned from passive to active.",
+      "human_story": "cat floods a long file off the top of the screen. pg dams it: twenty lines, then it stops and waits for you to press a key. Return for the next, '-' for the last -- output finally moving at your pace, not the machine's."
+    },
+    "appraiser_note": "pg は画面ページャ: 長いファイルを一画面ずつ見せ、キー入力を待っては次の画面へ進む。なぜページャか? cat は長いファイルを画面の上へ流し去る——テレタイプ(紙)なら流れた行は紙に残ったが、CRT では消える。pg はその滝を堰き止める: print() が画面を消し、20行(改行カウント)出力し、止まってユーザを待つ。改行で次の画面、'/'/HOME で先頭、'-'/BACK で前のページ、'!' でシェル脱出。出力は機械でなく人間の読む速度で送られる。鍵は制御キーを stdin でなく fd 2(端末)から読むこと: pg file は内容をファイルから、コマンドをキーボードから取る——データと制御を別チャネルで。cat が出力を垂れ流す受動的フィルタなら、pg はユーザと対話しながら出力を制御する能動的ビューア。媒体がテレタイプから画面へ変わったとき、出力を見るという行為が受動から能動へ変わった。",
+    "file_path": "usr/src/cmd/pg.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "pg-002-circular-buffer",
+    "text": "char buf[BUFMAX];           /* 16384 bytes (2^14) fixed buffer */\nint bptr, bnxt, bend;       /* discard floor / read pos / write end */\n#define incr(a,b) (a++, a&=b-1)   /* step a, wrap mod b (b is a power of 2) */\n#define decr(a,b) (a--, a&=b-1)\nfillbuf(){\n\tensure();                  /* make room (drop oldest page if full) */\n\tr=read(file,&buf[bend],512);   /* read 512 bytes */\n\tbend += r; bend &= BUFMAX-1;   /* advance write end, wrapping */\n}",
+    "line_number": 14,
+    "tags": [
+      "unix",
+      "pager",
+      "pg",
+      "ring-buffer",
+      "bitmask"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "craft",
+      "emotion_intensity": 4,
+      "emotions": {
+        "craft": 4,
+        "elegance": 4
+      },
+      "technical_context": "pg does not slurp the whole file. It views a long file -- or an endless pipe -- through a fixed BUFMAX (16384-byte) circular buffer; both reading (fillbuf, 512 bytes at a time) and consuming (readchar) cycle around the ring. The ring is made by incr/decr: a++, a&=b-1 -- step the pointer, then AND with BUFMAX-1. Because BUFMAX is a power of two (2^14), & (BUFMAX-1) equals modulo BUFMAX, folding a pointer past the end back to the front in one bit operation, no division. (Same ring idea as dmesg's if(mp==&msgbuf[MSGBUFS]) mp=msgbuf, here via bitmask.) Why a ring? pg can scroll back, so it must retain some shown content -- but keeping the whole file or pipe would exhaust memory. So pg holds only the recent window in the ring; when it needs room (ensure) it discards the oldest page (losepage). You can scroll back only as far as the buffer holds. That very limit is what lets pg handle infinite input (a pipe) -- unlike less, which uses a temp file to reach anywhere, pg stays light and stream-capable.",
+      "human_story": "pg never loads the whole file -- it watches it through a fixed 16K ring, reading 512 bytes at a time and wrapping with a single bitmask. You can scroll back only as far as the ring still holds, which is exactly why pg can page through an endless pipe."
+    },
+    "appraiser_note": "pg はファイル全体を読み込まない。長いファイル——あるいは終わりのないパイプ——を固定 BUFMAX(16384バイト)の循環バッファを窓にして覗く。読み込み(fillbuf、512バイトずつ)も消費(readchar)も環の中を回る。環は incr/decr で作る: a++, a&=b-1——ポインタを進め BUFMAX-1 と AND。BUFMAX が2の冪(2^14)なので &(BUFMAX-1) は BUFMAX の剰余に等しく、末尾を越えたポインタを除算なしの一回のビット演算で先頭へ折り返す。(dmesg の if(mp==&msgbuf[MSGBUFS]) mp=msgbuf と同じ環の発想、ここではビットマスクで。)なぜ環か? pg は前へ戻れるので表示済み内容も少しは残す必要があるが、ファイル全体やパイプの全出力を覚えたらメモリが足りない。だから直近の窓だけを環に保持し、空きが要れば(ensure)最古のページを捨てる(losepage)。戻れるのはバッファが残す範囲だけ。その制約こそ pg が無限の入力(パイプ)を扱える理由——任意位置へ飛べる less が一時ファイルを使うのに対し、pg は軽量でストリーム対応のまま。",
+    "file_path": "usr/src/cmd/pg.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "pg-003-page-index-ring",
+    "text": "int page[PAGMAX];    /* where each page starts in buf */\nint cp, hp;          /* cp = current page, hp = oldest retained page */\nsetpage(){ incr(cp,PAGMAX); if(cp==hp) incr(hp,PAGMAX); page[cp]=bnxt; }  /* bookmark page start */\nlosepage(){ if(hp<cp) bptr=page[incr(hp,PAGMAX)]; }                        /* drop oldest page */\ngetpage(i){ if(i==0) cp=hp; else if(cp!=hp) decr(cp,PAGMAX); bnxt=page[cp]; }  /* go back / home */",
+    "line_number": 144,
+    "tags": [
+      "unix",
+      "pager",
+      "pg",
+      "scrollback",
+      "ring"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 5,
+      "emotions": {
+        "ingenuity": 5,
+        "elegance": 4
+      },
+      "technical_context": "How does pg scroll back? By remembering where each page started. page[] is a second ring -- the buffer offset at which each page began. Every new page, setpage() saves the current read position (bnxt) into page[cp], like dropping a bookmark. To go back, getpage(-1) decrements the page number (decr) and restores bnxt from page[cp]; '/' (HOME) sets cp=hp, jumping to the oldest page still buffered. cp (current) and hp (oldest) walk the page[] ring as 'the page I am viewing' and 'the oldest page still in the buffer'; when the buffer fills and old data is dropped (losepage), hp advances to record 'no page before here'. So you can scroll back only to hp -- as far as the buffer holds. PAGMAX (64) bookmarks plus BUFMAX bytes: two rings working together -- a ring of page boundaries and a ring of character data -- make a window you can move back and forth within a bounded range. The character data lives in the buf[] ring (what can be read), the page divisions in the page[] ring (where to break). Scrolling -- the new operation the CRT made possible -- implemented with two rings and remembered offsets.",
+      "human_story": "To let you scroll back, pg drops a bookmark at the start of every page -- the buffer offset -- in a ring of 64 slots. Go back, and it recalls the bookmark and rewinds to it. Two rings, one for the text and one for the page breaks, let you move back and forth within what the buffer still holds."
+    },
+    "appraiser_note": "pg はどう前へ戻るか? 各ページの開始位置を覚えておくことで。page[] はもう一つの環——各ページがバッファのどのオフセットから始まったか。新しいページごとに setpage() が現在の読み出し位置(bnxt)を page[cp] に保存する、しおりを挟むように。戻るときは getpage(-1) がページ番号を減らし(decr) page[cp] から bnxt を戻す。'/'(HOME)は cp=hp でバッファに残る最古ページへ飛ぶ。cp(現在)と hp(最古)が page[] の環を歩き「見ているページ」と「バッファに残る一番古いページ」を指す。バッファが一杯になり古いデータを捨てるとき(losepage)、hp を進めて「ここより前は無い」と記録する。だから戻れるのは hp まで=バッファが残す範囲。PAGMAX(64)のしおりと BUFMAX バイト: 二つの環——ページ境界の環と文字データの環——が連動し、限られた範囲で前後に動ける窓を作る。文字データは buf[] の環(何が読めるか)に、ページの区切りは page[] の環(どこで区切るか)に。スクロールという CRT が生んだ新操作を、二つの環としおりとしてのオフセット記憶で実装した。",
+    "file_path": "usr/src/cmd/pg.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "pg-004-watch-to-navigate",
+    "text": "#define CLEAR 014    /* clear screen */\n#define HOME  031    /* to start */\n#define BACK  037    /* back a page */\ncase '!': shell(); break;   /* run a shell while reading */\nshell(){ if(fork()==0){ ... execl(\"/bin/sh\", \"sh\", \"-t\", 0); } ... }\n/* pg's '/' = jump to start (NOT search); search was added later by more/less */",
+    "line_number": 72,
+    "tags": [
+      "unix",
+      "pager",
+      "pg",
+      "more-less",
+      "navigation"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "legacy": 4,
+        "insight": 4
+      },
+      "technical_context": "pg marks a shift: from watching output to navigating it. On a teletype, command output printed and scrolled by on paper; cat, grep, ls all pour output one way and the human just reads. On a CRT the output vanishes, so pg made output a thing to operate: see a screen, go forward, go back (HOME/BACK), '!' to run a shell while reading (fork+execl /bin/sh, the shell escape seen in tc and learn), and return. Single keystrokes move you through a long document. Output stopped being a vanishing waterfall and became a document that stays and turns. This grew into more (the first widely used pager) and then less ('less is more'). less surpassed pg by using a temp file to reach any position in a huge file and by adding '/' search -- note pg's own '/' jumps to the start, it is not search; search came later. But the core -- show a screen, move back and forth, escape to a shell -- pg drew first. Like vi to ed, pg is a child of the CRT era: where ed edited by lines, vi showed a screen; where cat poured output, pg paged it. The medium going from teletype to CRT turned both editing and viewing from line/stream to screen/navigation.",
+      "human_story": "pg turned output from something you watch into something you navigate: a screen at a time, back and forth, with a shell escape to work while you read. more and less inherited it; less added a temp file for huge files and the '/' search pg never had (pg's '/' just jumps home). The same CRT-era leap that took editing from ed to vi."
+    },
+    "appraiser_note": "pg は転換を画する: 出力を眺めるからナビゲートするへ。テレタイプではコマンド出力は紙に印字され流れていった——cat/grep/ls はどれも出力を一方向に吐き、人間は読むだけ。CRT では出力は消えるので、pg は出力を操作の対象にした: 一画面見て、進み、戻り(HOME/BACK)、'!' で見ながらシェルを起動し(fork+execl /bin/sh、tc や learn で見たシェル脱出)、また戻る。単一キーストロークで長い文書を動き回る。出力は流れ去る滝でなく、留まってめくれる文書になった。これは more(最初に広く普及したページャ)、そして less('less is more')へ受け継がれた。less が pg を超えたのは、一時ファイルで巨大ファイルの任意位置へ飛べる点と '/' 検索を加えた点——pg 自身の '/' は先頭へ飛ぶ操作で検索ではない、検索は後付け。だが核心——一画面表示・前後移動・シェル脱出——は pg が最初に描いた。ed に対する vi のように、pg は CRT 時代の子: ed が行で編集したところを vi が画面で見せ、cat が出力を流したところを pg がページングした。媒体がテレタイプから CRT へ変わり、編集も閲覧も、行/ストリームから画面/ナビゲーションへ変わった。",
+    "file_path": "usr/src/cmd/pg.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]

@@ -1487,6 +1487,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "243",
+    title: "鑑定書#243 pg — 一画面ずつ見せて止まり、各ページの開始位置を環状配列に覚えて前後にスクロールする159行の画面ページャ。循環バッファで限りある窓を流れの上に滑らせ、cat の垂れ流しをナビゲート可能な文書に変えた。more/less の祖、画面端末の申し子",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
