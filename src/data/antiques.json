@@ -21407,5 +21407,120 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "opr-001-parallel-array-table",
+    "text": "char *code[] = {\n    \"-sp\", \"/usr/lib/npr\",   /* spider network printer */\n    \"-lp\", \"/usr/bin/lpr\",   /* line printer */\n    \"-mh\", \"/usr/lib/dpr\",   /* GCOS via 201 dataphone */\n    0\n};",
+    "line_number": 9,
+    "tags": [
+      "unix",
+      "opr",
+      "dispatcher",
+      "print",
+      "table"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 3
+      },
+      "technical_context": "All of opr's knowledge lives in one array. code[] interleaves a flag and the path of the program to run for it: -sp -> /usr/lib/npr (spider network printer), -lp -> /usr/bin/lpr (line printer), -mh -> /usr/lib/dpr (GCOS via a 201 dataphone), then a 0 terminator. No key/value struct -- just a flat char* array with even indices as keys and odd as values, the minimal table representation. And what it binds together matters: npr, lpr, and dpr are three separate, independent programs. opr itself prints nothing; it only knows which one to invoke. Small specialized tools bound by a thin dispatcher -- the Unix composition philosophy compressed into one table.",
+      "human_story": "opr's whole brain is one array pairing a destination flag with the program that handles it: network printer, line printer, or GCOS mainframe. opr prints nothing itself -- it just knows who to call."
+    },
+    "appraiser_note": "opr の知識はすべて一つの配列に入っている。code[] はフラグと、それに対して実行するプログラムのパスを交互に並べる: -sp→/usr/lib/npr(spider ネットワークプリンタ)、-lp→/usr/bin/lpr(ラインプリンタ)、-mh→/usr/lib/dpr(GCOS via 201 dataphone)、そして終端の 0。キー/バリュー構造体ではなく、偶数番＝キー・奇数番＝値の平らな char* 配列＝最小のテーブル表現。そして束ねる中身が肝心だ: npr/lpr/dpr は三つの独立した別プログラム。opr 自身は印刷を一切しない; どれを呼ぶかだけを知っている。小さな専用ツールを薄いディスパッチャで束ねる——Unix の組み合わせ哲学が一つの表に凝縮されている。",
+    "file_path": "usr/src/cmd/opr.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "opr-002-default-as-loop-boundary",
+    "text": "for(i=0; code[i+2]; i+=2)   /* stops before the LAST pair: i=0,2 only */\n    if(argc > 1)\n        for(j=0; code[i][j]==argv[1][j]; j++)\n            if(code[i][j] == 0) goto OK;\nOK:\n/* no match -> loop ends with i=4 = the default (-mh / GCOS) */",
+    "line_number": 22,
+    "tags": [
+      "unix",
+      "opr",
+      "dispatcher",
+      "default",
+      "control-flow"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 4
+      },
+      "technical_context": "The destination loop is an ordinary linear search with a clever ending. for(i=0; code[i+2]; i+=2) runs only while code[i+2] is non-null. Since the real entries are code[0..5] and code[6] is the null terminator, it only ever compares i=0 (-sp) and i=2 (-lp): at i=2 the body runs, then i+=2 makes i=4, and code[6]==0 stops the loop. So the last entry, -mh / /usr/lib/dpr, is never even compared. If nothing matches, the loop simply ends with i pointing at 4 and control falls through to OK: -- exactly the comment's 'last entry in table is default'. The default isn't an if/else branch; it's expressed by where the loop stops. GCOS is the destination when you ask for nothing.",
+      "human_story": "The lookup loop quietly leaves the last table entry untested, so if your flag matches nothing, you land on it by default -- printing to the GCOS mainframe. The default isn't written as a branch; it's just where the loop runs out."
+    },
+    "appraiser_note": "宛先を選ぶループは、ふつうの線形探索だが終わり方に技巧がある。for(i=0; code[i+2]; i+=2) は code[i+2] が非ヌルの間だけ回る。実体は code[0..5]、code[6] が終端ヌルなので、照合するのは i=0(-sp) と i=2(-lp) だけ: i=2 で body 実行→i+=2 で i=4→code[6]==0 で停止。つまり最後のエントリ -mh / /usr/lib/dpr は照合すらされない。どれにも一致しなければループは i=4 を指したまま終わり、OK: へ落ちる——まさにコメントの『last entry in table is default』。デフォルトは if/else の分岐ではなく、ループの停止位置で表現される。何も指定しなければ行き先は GCOS だ。",
+    "file_path": "usr/src/cmd/opr.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "opr-003-char-compare",
+    "text": "if(argc > 1)                          /* no args -> skip match, go default */\n    for(j=0; code[i][j]==argv[1][j]; j++)\n        if(code[i][j] == 0)           /* both reached '\\0' = exact match */\n            goto OK;",
+    "line_number": 23,
+    "tags": [
+      "unix",
+      "opr",
+      "string-compare",
+      "argv"
+    ],
+    "interesting_score": 16,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 3,
+      "emotions": {
+        "legacy": 3,
+        "insight": 3
+      },
+      "technical_context": "The flag match is hand-written, no strcmp. It compares code[i] (e.g. \"-sp\") with argv[1] character by character; the inner loop breaks the moment they differ, and if both reach '\\0' together (code[i][j]==0) it's an exact match -> goto OK. An argc>1 guard skips the comparison entirely when no argument was given, dropping straight to the default. Spare and minimal: do only what's needed.",
+      "human_story": "opr matches your flag the plainest way possible -- comparing letters one at a time, no library call. If you pass no argument at all, it skips matching and uses the default."
+    },
+    "appraiser_note": "フラグの一致判定は手書きで strcmp を使わない。code[i](例 \"-sp\")と argv[1] を一文字ずつ比べ、食い違った瞬間に内側ループを抜け、両方が '\\0' に達したら(code[i][j]==0)完全一致→goto OK。argc>1 ガードは引数がなければ照合自体を飛ばし、そのままデフォルトへ落とす。素朴で最小限——必要なことだけをやる。",
+    "file_path": "usr/src/cmd/opr.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "opr-004-two-stage-execv",
+    "text": "OK:\n    execv(code[i+1]+4, &argv[0]);   /* +4 skips \"/usr\": try /lib/dpr first */\n    execv(code[i+1], &argv[0]);     /* then the full /usr/lib/dpr */\n    write(2, \"can't start daemon\\n\", 19);",
+    "line_number": 27,
+    "tags": [
+      "unix",
+      "opr",
+      "execv",
+      "filesystem",
+      "dispatcher"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 4
+      },
+      "technical_context": "Once a destination is chosen, opr becomes its spooler. Two touches stand out. First, code[i+1]+4: advancing the path four chars turns \"/usr/lib/dpr\" into \"/lib/dpr\" (\"/usr\" is exactly four characters). opr tries /lib/dpr first; if that execv returns (not found), it tries the full /usr/lib/dpr. In early Unix /bin and /lib lived on the root filesystem and /usr on a separate one, so this tests both possible locations by just bumping a pointer by 4. Second, a successful execv never returns: opr turns into the spooler and vanishes. Passing &argv[0] hands the whole argv (flag included) down, so dpr reads -mh as its own destination spec. Only if both execv's fail does opr survive to print 'can't start daemon'. A dispatcher leaves no trace -- once it routes, it becomes what it routed to.",
+      "human_story": "After choosing, opr replaces itself with the spooler via execv -- trying /lib/dpr first, then /usr/lib/dpr. It passes the arguments straight through and simply becomes the other program; only if it can't start anything does it stay alive to report the failure."
+    },
+    "appraiser_note": "宛先が決まると opr はそのスプーラに化ける。妙が二つ。第一に code[i+1]+4: パスを4文字進めると \"/usr/lib/dpr\" は \"/lib/dpr\" になる(\"/usr\" はちょうど4文字)。opr はまず /lib/dpr を試し、execv が戻ってきたら(見つからない)フルの /usr/lib/dpr を試す。初期 Unix では /bin・/lib はルートfs、/usr は別fs にあったので、ポインタを4進めるだけで両方の置き場所を試し分ける。第二に、execv が成功すれば戻らない: opr はスプーラに化けて消える。&argv[0] をそのまま渡すので argv 全体(フラグ含む)が下流に伝わり、dpr は -mh を自分の宛先指定として読む。両方の execv が失敗したときだけ opr は生き残り 'can't start daemon' と告げる。ディスパッチャは痕跡を残さない——振り分けたら、振り分けた先に成り代わる。",
+    "file_path": "usr/src/cmd/opr.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]

@@ -1550,6 +1550,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "252",
+    title: "鑑定書#252 opr — 印刷の宛先を振り分け自分は execv で消える31行のディスパッチャ。code[] の並列配列(-sp→npr spider network / -lp→lpr #240 / -mh→dpr #251 GCOS via 201 dataphone)で宛先別にスプーラを選ぶ。for(i=0;code[i+2];i+=2) のループ停止位置で「表の最後の要素=デフォルト(GCOS)」を表現、文字単位の照合、execv(path+4) で /lib を先に試し失敗で /usr/lib を試す二段フォールバック(/usr=4文字スキップ)。dpr/lpr の上位＝印刷サブシステムの司令塔、サブコマンド/プラグインレジストリの祖型",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
