@@ -20475,5 +20475,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "dumpdir-001-self-describing-tape",
+    "text": "gethead(buf) struct spcl *buf; {\n\treadtape((char *)buf);\n\tif (buf->c_magic != MAGIC || checksum((int *)buf) == 0) return(0);  /* magic + checksum */\n\treturn(1);\n}\nchecktype(b,t){ return(b->c_type == t); }   /* TS_TAPE/TS_BITS/TS_INODE/TS_ADDR/TS_CLRI */\nchecksum(b){ ... i += *b++ over BSIZE/sizeof(int); return(i==CHECKSUM); }",
+    "line_number": 386,
+    "tags": [
+      "unix",
+      "backup",
+      "dumpdir",
+      "tape-format",
+      "checksum"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "craft",
+      "emotion_intensity": 4,
+      "emotions": {
+        "craft": 4,
+        "legacy": 4
+      },
+      "technical_context": "A dump tape is not raw bytes -- it is a stream of self-describing records, and dumpdir parses that grammar. The tape is a chain of blocks (struct spcl), each with a header: a magic number (c_magic), a type (c_type), a checksum, the dump date, a volume number. gethead() reads a block and verifies the magic and checksum; checksum() sums the whole block (BSIZE/sizeof(int) ints) and compares to CHECKSUM, guarding against corruption on a noisy tape -- the same defense uucp used against line errors. checktype() then tells what record it is: TS_TAPE (start), TS_BITS (bitmap), TS_INODE (an inode), TS_ADDR (data-block addresses), TS_CLRI. dump made the tape self-describing because tape is read front-to-back only (no random access): each record names itself in its header and the reader interprets the stream in order. A flow of typed records, like a.out or plot(5). dumpdir reads what dump wrote, the same format restor reads -- a third tool sharing the dump format.",
+      "human_story": "A backup tape can only be read front to back, so every block says what it is in its own header -- magic, type, checksum. dumpdir reads that stream the same way dump wrote it and restor reads it, checking each block is not corrupt as it goes."
+    },
+    "appraiser_note": "dump のテープはただのバイト列でなく自己記述的なレコードの流れで、dumpdir はその文法を読み解く。テープは struct spcl の連なりで、各ブロックがヘッダを持つ——マジック(c_magic)・種別(c_type)・チェックサム・ダンプ日付・ボリューム番号。gethead() が1ブロックを読みマジックとチェックサムを検証、checksum() はブロック全体(BSIZE/sizeof(int)個の int)を合計し CHECKSUM と比較してテープの化けに備える——uucp が回線の化けに備えたのと同じ。checktype() で種別を判別: TS_TAPE(先頭)、TS_BITS(ビットマップ)、TS_INODE(inode)、TS_ADDR(データブロックのアドレス)、TS_CLRI。dump がテープを自己記述的にしたのは、テープが前から順にしか読めない(ランダムアクセス不可)から: 各レコードがヘッダで自分を名乗り、読む側は順に解釈するしかない。a.out や plot(5) のような型付きレコードの流れ。dumpdir は dump が書いたものを、restor が読むのと同じフォーマットで読む——dump フォーマットを共有する三人目。",
+    "file_path": "usr/src/cmd/dumpdir.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "dumpdir-002-ncheck-for-tape",
+    "text": "pass1() {\n\tif ((ip->di_mode & IFMT) != IFDIR) goto finish;   /* keep only directory inodes */\n\tinotab[ipos].t_ino = spcl.c_inumber;              /* inode number ... */\n\tinotab[ipos++].t_seekpt = seekpt;                 /* ... and where its contents sit on tape */\n\tgetfile(spcl.c_inumber, putdir, null, ...);       /* save the dir entries to a temp file */\n}\nprintem(prefix, inum) {            /* recurse from root, building paths */\n\tif (search(dir.d_ino)!=0 && not . or ..) { strcat(prefix, dir.d_name); printem(prefix, dir.d_ino); }\n}",
+    "line_number": 91,
+    "tags": [
+      "unix",
+      "backup",
+      "dumpdir",
+      "ncheck",
+      "pathname"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 5,
+      "emotions": {
+        "insight": 5,
+        "legacy": 4
+      },
+      "technical_context": "dumpdir's core job is recovering names from inode numbers -- structurally identical to ncheck, but on tape instead of disk. The asymmetry is the same on either medium: directories map name->inode, but the reverse (inode->name) is indexed nowhere. pass1() scans the tape and keeps only directory inodes, recording each inode number (t_ino) and where its contents (the directory entries) sit on tape (t_seekpt) in inotab[]; ordinary files' contents are skipped, since rebuilding names needs only the directory structure (just as ncheck hashed only directories). Then printem() recurses from root (inode 2): for each entry, search() asks via binary search of inotab whether the entry's inode is a directory; if so it extends prefix and recurses, else it prints prefix+name as the full path. ncheck climbed up via pname recursion; dumpdir descends from the root -- opposite direction, same act: translate a chain of inode numbers into human-readable paths. That dumpdir is ncheck's twin is telling: a live filesystem and a backup tape share the same shape (names live only inside directories), so reversing names on either is the same algorithm.",
+      "human_story": "A tape, like a disk, does not know a file's name -- only directories map names to inode numbers. So dumpdir does what ncheck did for disks: gather every directory, then walk from the root rebuilding each full path. Same problem, same recursion, different medium."
+    },
+    "appraiser_note": "dumpdir の核心は inode 番号から名前を復元することで、ncheck と構造的に同一——ただし対象がディスクでなくテープ。非対称性はどちらの媒体でも同じ: ディレクトリは名前→inode を引けるが逆(inode→名前)はどこにも索引化されていない。pass1() はテープを舐めディレクトリ inode だけを拾い、その inode 番号(t_ino)と中身(ディレクトリエントリの並び)がテープのどこにあるか(t_seekpt)を inotab[] に記録する。普通のファイルの中身は読み飛ばす——名前の復元に要るのはディレクトリ構造だけ(ncheck がディレクトリだけハッシュ表に集めたのと同じ)。そして printem() が根(inode 2)から再帰し、各エントリについて search() が inotab の二分探索でディレクトリか調べ、そうなら prefix を伸ばして再帰、ファイルなら prefix+名前でフルパスを出す。ncheck が pname 再帰で親を辿ったのと向きは逆(こちらは根から下へ)だが、やることは同じ——inode 番号の鎖を人間が読めるパスに翻訳する。dumpdir が ncheck の双子なのは深い: 生きた FS もバックアップテープも同じ形(名前はディレクトリの中だけ)を持つので、どちらで名前を逆引きしても同じアルゴリズムになる。",
+    "file_path": "usr/src/cmd/dumpdir.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "dumpdir-003-dumpmap-incremental",
+    "text": "#define MWORD(m,i) (m[(unsigned)(i-1)/MLEN])   /* word holding inode i's bit */\n#define MBIT(i)    (1<<((unsigned)(i-1)%MLEN)) /* that bit */\n#define BIT(i,w)   (MWORD(w,i) & MBIT(i))\n/* readbits(dumpmap) from a TS_BITS record */\nelse if (BIT(dir.d_ino, dumpmap))            /* only inodes actually on the tape */\n\tprintf(\"%5d\\t%s%-.14s\\n\", dir.d_ino, prefix, dir.d_name);",
+    "line_number": 15,
+    "tags": [
+      "unix",
+      "backup",
+      "dumpdir",
+      "bitmap",
+      "incremental"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "ingenuity",
+      "emotion_intensity": 4,
+      "emotions": {
+        "ingenuity": 4,
+        "insight": 4
+      },
+      "technical_context": "printem prints only entries whose inode has its bit set in dumpmap. Why not list every name in the directory? Because dump does incremental dumps: re-dumping the whole filesystem each time wastes tape, so dump can write only files changed since the last dump (the tape's c_ddate = since-date marks this). A directory may list ten files while only the three changed ones are actually on the tape. dumpmap is the map of 'inodes actually on this tape', recorded in a TS_BITS record and read by readbits(); one bit per inode, with MWORD/MBIT computing the bit's position from the inode number -- the same bit-array technique icheck used for disk blocks. So dumpdir builds paths from the directory structure (name->inode) but checks dumpmap to confirm the inode is really on this tape, listing only those. Its output is thus the accurate list of files restorable from this backup -- a name in a directory with no contents on the tape cannot be restored. The bitmap faithfully reflects that an incremental dump does not contain everything.",
+      "human_story": "An incremental backup holds only what changed, so a directory may name ten files while only three are on the tape. dumpdir keeps a bitmap of which inodes are really there and lists only those -- so the listing is exactly what you could restore, not just what the directory mentions."
+    },
+    "appraiser_note": "printem は dumpmap にビットの立った inode のエントリだけを表示する。なぜディレクトリの名前を全部出さないか。dump が増分ダンプをするからだ: 毎回 FS 全体を取るのは無駄なので、dump は前回以降に変更されたファイルだけを書ける(テープの c_ddate＝since-date がそれを示す)。あるディレクトリに10個のファイルが載っていても、テープに実際に入っているのは変更された3個だけ、ということが起きる。dumpmap は「テープに実際に入っている inode」の地図で、TS_BITS レコードに記録され readbits() が読む。1 inode 1ビット、MWORD/MBIT が inode 番号からビット位置を計算する——icheck がディスクブロックに使ったのと同じビット配列。だから dumpdir はディレクトリ構造(名前→inode)からパスを組みつつ、dumpmap でその inode が本当にこのテープに入っているか確かめ、入っているものだけを出す。出力は「このバックアップから復元できるファイル」の正確なリストになる——ディレクトリに名前があってもテープに中身がなければ復元できない。増分ダンプの「全部は入っていない」をビットマップが正直に映す。",
+    "file_path": "usr/src/cmd/dumpdir.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "dumpdir-004-catalog-before-restore",
+    "text": "if (readhdr(&spcl) == 0) { printf(\"Tape is not a dump tape\\n\"); exit(1); }\nprintf(\"Dump   date: %s\", ctime(&spcl.c_date));    /* when this dump was taken */\nprintf(\"Dumped from: %s\", ctime(&spcl.c_ddate));   /* the incremental since-date */\nif (checkvol(&spcl, 1) == 0) { printf(\"Tape is not volume 1\\n\"); exit(1); }\npass1();                                            /* rebuild the directory structure */\nprintem(prebuf, (ino_t) 2);                         /* list all paths from the root */",
+    "line_number": 51,
+    "tags": [
+      "unix",
+      "backup",
+      "dumpdir",
+      "catalog",
+      "tar"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "legacy": 4,
+        "history": 4
+      },
+      "technical_context": "dumpdir exists to know a tape's contents before restoring. dump/restor back up to tape; tape rewinds slowly and reads only front-to-back, so restoring one file means winding through it -- but is the file even on this tape? when was it taken? main() first reads the header to confirm this is a dump tape (readhdr), shows when it was taken (c_date) and what increment it is (c_ddate) and whether it is volume 1 (checkvol), then pass1() rebuilds the directory structure and printem() lists every path from the root. It restores nothing -- it makes a catalog. That completes the backup trio: dump folds a filesystem onto tape (#208), restor unfolds it (#209), dumpdir reads the contents while still folded -- three tools sharing the dump format, like as writes / ld reads / adb dissects a.out. And listing an archive without unpacking lives on: tar -t, unzip -l, git show --stat -- see what is inside before extracting. dumpdir is one of the oldest of these archive catalogers, the ncheck of tape, opening a folded name space into a human-readable list.",
+      "human_story": "Before you spend ages winding a tape to restore a file, dumpdir tells you what is on it and when it was taken -- a catalog, no restore. dump writes the tape, restor brings it back, dumpdir reads it while still folded. The same 'list before you extract' as tar -t today."
+    },
+    "appraiser_note": "dumpdir の存在理由は、復元する前にテープの中身を知ること。dump/restor はテープにバックアップする。テープは巻き戻しが遅く前から順にしか読めないので、1ファイルを復元するにも延々と読み進める——だがそのファイルは本当にこのテープに入っているのか? いつ取られたのか? main() はまずヘッダを読みこれが dump テープか確認(readhdr)、いつ取られたか(c_date)・何の増分か(c_ddate)・第1巻か(checkvol)を表示し、pass1() でディレクトリ構造を再構成し printem() で根から全パスを一覧する。復元は一切しない——目録を作る。これがバックアップの三役を完成させる: dump がFSをテープに畳み込み(#208)、restor が展き戻し(#209)、dumpdir が畳まれたまま中身を読む——dump フォーマットを共有する三道具、as が書き ld が読み adb が解剖する a.out のように。そして展開せずアーカイブを一覧するのは今に続く: tar -t、unzip -l、git show --stat——取り出す前に何が入っているか見る。dumpdir はそのアーカイブ目録の最も古い一つ、テープの ncheck、畳まれた名前空間を人間が読める一覧へ開く。",
+    "file_path": "usr/src/cmd/dumpdir.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]

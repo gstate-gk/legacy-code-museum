@@ -1494,6 +1494,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "244",
+    title: "鑑定書#244 dumpdir — dump テープを舐めて根(inode 2)から再帰的に全ファイルのフルパスを復元し、dumpmap ビットマップで増分ダンプの「実際に入っている inode」だけを選別して目録を出す473行。復元せず中身を一覧する、dump/restor の三人目、ncheck の dump 版、tar -t の祖",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
