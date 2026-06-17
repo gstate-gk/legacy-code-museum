@@ -1522,6 +1522,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "248",
+    title: "鑑定書#248 vis — 非印字バイトを \\NNN（3桁8進）で可視化する約50行。cat -v / od -c / BSD vis(3) の祖。改行・タブ・空白040〜チルダ0176は素通し、DEL(0177)と高位ビットは escape。可逆かつ幅一定（col+=4）のエスケープ、MAXCOL=72 で \\<改行> 折り返し（データ改行と区別できる継ぎ目）でテレタイプ/端末を守る。冒頭が #defie（define のタイプミス）のまま snapshot に凍結＝発掘される化石としての古コードの象徴",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

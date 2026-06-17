@@ -20939,5 +20939,122 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "vis-001-printable-boundary",
+    "text": "if (c == '\\n' || c == '\\t' || c >= ' ' && c <= 0176) {\n    putchar(c);   /* newline, tab, and space(040)..tilde(0176) pass through */\n    col++;\n} else {\n    printf(\"\\\\%03o\", c);   /* everything else: control, DEL(0177), high-bit */\n    col += 4;\n}",
+    "line_number": 36,
+    "tags": [
+      "unix",
+      "vis",
+      "ascii",
+      "control-characters",
+      "filter"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 3
+      },
+      "technical_context": "vis -- 'make all funny characters visible' -- draws the line between printable and non-printable in a single condition. It passes through newline, tab, and any character from space (octal 040) up to 0176 (decimal 126, the tilde '~'). The upper bound 0176 is the key: 0177 is DEL (a non-printing control char), so '<= 0176' lets DEL fall through to the escape side. Everything outside the visible band -- control characters, DEL, and bytes with the high bit set -- gets translated. The whole definition of 'what is printable' is compressed into this one comparison. It is the ancestor of cat -v and BSD vis(3).",
+      "human_story": "vis decides what you can see in one line: newline, tab, and the printable ASCII run from space to '~' pass straight through; everything else -- control codes, DEL, high-bit bytes -- gets turned into something visible."
+    },
+    "appraiser_note": "vis（'make all funny characters visible'＝変な文字を全部見えるように）は、印字可能/不可能の線を一つの条件式で引く。改行・タブ、そして空白(8進040)から 0176(10進126、チルダ '~')までを素通しする。上限 0176 が鍵だ: 0177 は DEL(非印字の制御文字)なので、'<= 0176' により DEL は escape 側へ落ちる。可視帯の外——制御文字・DEL・8ビット目の立ったバイト——はすべて翻訳される。『何が印字可能か』の定義がこの一つの比較に凝縮されている。cat -v と BSD vis(3) の祖。",
+    "file_path": "usr/src/cmd/vis.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "vis-002-octal-escape",
+    "text": "printf(\"\\\\%03o\", c);   /* backslash + 3-digit zero-padded octal */\ncol += 4;               /* an escape is always exactly 4 columns wide */\n/* DEL(0177)->\\177, NUL(0)->\\000, FF(014)->\\014 : reversible, fixed-width */",
+    "line_number": 40,
+    "tags": [
+      "unix",
+      "vis",
+      "octal",
+      "encoding",
+      "reversible"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "legacy": 4,
+        "insight": 4
+      },
+      "technical_context": "Non-printing bytes become a backslash followed by a 3-digit zero-padded octal number: DEL(0177)->\\177, NUL->\\000, form-feed(014)->\\014. Octal, not hex, because a byte is 8 bits and the octal-triple notation was the standard of the PDP and early Unix (octal ran through permissions and memory dumps). Two virtues fall out. First, reversibility: a human reading \\177 recovers the exact byte 0177 -- no information lost. Second, fixed width: an escape is always 4 characters (backslash plus three digits), so col += 4 keeps an exact column count. That exact accounting is what makes the line folding below possible.",
+      "human_story": "Invisible bytes become \\ plus three octal digits -- \\177 for DEL, \\000 for NUL. Octal because that was the early-Unix convention. You can read the byte straight back off the page, and every escape is exactly four characters wide so the program can count columns exactly."
+    },
+    "appraiser_note": "非印字バイトはバックスラッシュ＋3桁ゼロ詰め8進になる: DEL(0177)→\\177、NUL→\\000、改ページ(014)→\\014。16進でなく8進なのは、バイトが8ビットで、8進3桁表記が PDP と初期 Unix の標準だったから(パーミッションやメモリダンプも8進)。二つの美点が生まれる。第一に可逆性: 人が \\177 を読めば元バイト 0177 を正確に復元できる——情報は失われない。第二に幅一定: エスケープは必ず4文字(バックスラッシュ＋3桁)なので col += 4 で正確な桁勘定ができる。この正確な勘定が、下の行折り返しを可能にする。",
+    "file_path": "usr/src/cmd/vis.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "vis-003-fold-at-72",
+    "text": "#define MAXCOL 72   /* fold after here (written #defie in the snapshot) */\n...\nif (c == '\\n')\n    col = 0;\nif (col > MAXCOL) {\n    printf(\"\\\\\\n\");   /* backslash + a REAL newline: a fold, not data */\n    col = 0;\n}",
+    "line_number": 45,
+    "tags": [
+      "unix",
+      "vis",
+      "line-folding",
+      "teletype",
+      "terminal"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 4
+      },
+      "technical_context": "vis watches its own output width. col tracks the current column (+1 per visible char, +4 per escape, reset to 0 on a data newline). When col passes MAXCOL (72), it emits a backslash followed by a REAL newline and resets the column. The backslash-newline is deliberate: teletypes, terminals, and line printers had a width limit, and visualizing binary could otherwise produce one endless line. Folding at 72 keeps it readable, and marking the fold as backslash-newline makes it distinguishable from a genuine newline in the data (a data newline was passed through verbatim by putchar). The reader sees a line ending in backslash and knows it continues. Making the invisible visible, without breaking the terminal that shows it.",
+      "human_story": "vis folds long output at 72 columns so it never runs off the edge of a teletype or printer. It marks each fold with a trailing backslash, so you can tell a wrap from a real newline in the data."
+    },
+    "appraiser_note": "vis は自分の出力幅を見張る。col が現在の桁(可視文字+1、エスケープ+4、データ中の改行で0リセット)を追い、col が MAXCOL(72)を超えるとバックスラッシュ＋本物の改行を出して桁をリセットする。このバックスラッシュ＋改行は意図的だ: テレタイプ・端末・行プリンタには幅の限界があり、バイナリの可視化は放っておくと延々と続く一行になりかねない。72桁で折れば読めるし、折り返しをバックスラッシュ＋改行で印すことで、データ本来の改行(putchar でそのまま通る)と区別できる。読み手は \\ で終わる行を見て『続く』と分かる。見えないものを見せつつ、見せる端末を壊さない配慮だ。",
+    "file_path": "usr/src/cmd/vis.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "vis-004-defie-typo-fossil",
+    "text": "#defie\tMAXCOL\t72\t/* fold after here */\n/* ^ literally '#defie', not '#define' -- preserved in the Bell-32V snapshot.\n   As written it won't compile: an invalid preprocessor directive, and then\n   MAXCOL is undefined where 'if (col > MAXCOL)' references it. */",
+    "line_number": 2,
+    "tags": [
+      "unix",
+      "vis",
+      "typo",
+      "archaeology",
+      "fossil"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "wistful",
+      "emotion_intensity": 5,
+      "emotions": {
+        "wistful": 5,
+        "legacy": 4,
+        "humor": 3
+      },
+      "technical_context": "The very first line of vis.c in the Bell-32V snapshot reads '#defie MAXCOL 72' -- a missing 'n'. As written it cannot compile twice over: #defie is an invalid preprocessing directive, and even if that were ignored, MAXCOL is then an undefined identifier where 'if (col > MAXCOL)' uses it. This is the file as preserved in dspinellis's unix-history-repo, the canonical source we cite throughout. Whether the typo came from the original AT&T tape or crept in during decades of preservation and copying cannot be settled. What is certain is that the 'historical vis.c' that reached us 40+ years later is frozen with this one-character typo intact -- a tool that surely once worked now sleeping in the record in a form that won't even build. Excavating old code means meeting these fossils: the period piece complete with its scratches and errors, not the pristine just-written artifact.",
+      "human_story": "The first line of vis.c says '#defie', not '#define'. As preserved, it wouldn't even compile. Nobody can say if the typo was on the original tape or crept in over decades of copying -- but the version that reached us is frozen with the mistake intact. Old code arrives as a fossil, scratches and all."
+    },
+    "appraiser_note": "Bell-32V スナップショットの vis.c の一行目は '#defie MAXCOL 72'——'n' が一つ欠けている。この字面のままでは二重にコンパイルが通らない: #defie は不正なプリプロセッサ指令で、仮にそれが無視されても 'if (col > MAXCOL)' で MAXCOL が未定義の識別子になる。これは私たちが一貫して正本とする dspinellis の unix-history-repo に、この姿で残っているものだ。原典の AT&T テープ由来か、数十年の保存と複写で混入したかは断定できない。確かなのは、40年以上を経て私たちに届いた『歴史的記録としての vis.c』が、この一文字のタイプミスごと凍結されている事実だ——かつて確かに動いていた道具が、記録の中ではビルドすら通らない姿で眠っている。古いコードの発掘とは、こうした化石——傷や誤りまで含めた当時の姿——に出会うことでもある。",
+    "file_path": "usr/src/cmd/vis.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]
