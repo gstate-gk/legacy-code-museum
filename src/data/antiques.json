@@ -20011,5 +20011,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "quot-001-raw-inode-scan",
+    "text": "char *dargv[] = { \"/dev/rrp3\", 0 };   /* default: the raw disk device */\ncheck(file) {\n\tfi = open(file, 0);                    /* open the raw disk, not via the filesystem */\n\tbread(1, &sblock, sizeof sblock);      /* read the superblock */\n\tnfiles = (sblock.s_isize-2)*(BSIZE/sizeof(struct dinode));   /* total inodes */\n\tfor(i=2; ino<nfiles; i += ITABSZ/ISIZ) {\n\t\tbread(i, itab, sizeof itab);          /* read the inode table block by block */\n\t\tfor (j=0; j<ITABSZ && ino<nfiles; j++) { ino++; acct(&itab[j]); }\n\t}\n}",
+    "line_number": 87,
+    "tags": [
+      "unix",
+      "filesystem",
+      "quot",
+      "inode",
+      "disk-usage"
+    ],
+    "interesting_score": 21,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 4
+      },
+      "technical_context": "quot answers 'disk usage by user' -- who is using how much disk -- the third axis of accounting after sa (CPU time) and ac (connect time). But unlike du, quot never walks directories. It opens the raw disk device (/dev/rrp3), reads the superblock to learn the inode area size, and scans the entire inode table linearly with bread (raw block reads) into itab[], processing every inode in turn. A Unix disk has fixed structure: superblock, then the inode table (a numbered array of every file's metadata -- owner, size, block locations, mode), then data blocks. quot reads that array straight through; no directories, no path names. Same raw-inode scan as icheck (for integrity) and ncheck (for inode->name) -- seeing the filesystem from below (an array of inodes) rather than above (a name tree). It is fast and complete: a linear read catches every inode, even files no directory references (files that lost their name) as long as the inode is allocated.",
+      "human_story": "du walks the directory tree to add up files; quot ignores names entirely. It reads the raw disk and marches through the inode table from front to back -- every file on the disk at once, by owner, even the ones no directory points to."
+    },
+    "appraiser_note": "quot は『ユーザごとのディスク使用量』に答える——誰がどれだけ使っているか、sa(CPU時間)/ac(接続時間)に続く会計の第三軸。だが du と違い、quot はディレクトリを一切辿らない。生ディスクデバイス(/dev/rrp3)を開き、スーパーブロックを読んで inode 領域の大きさを知り、inode 表を bread(生ブロック読み)で itab[] に線形に読み、全 inode を順に処理する。Unix のディスクは構造が決まっている: スーパーブロック、inode 表(全ファイルのメタデータ＝所有者・サイズ・ブロック位置・許可属性を番号順に並べた配列)、データブロック。quot はその配列を端から舐める——ディレクトリもパス名も無関係。icheck(整合性)/ncheck(inode→名前)と同じ生inodeスキャンで、ファイルシステムを上(名前の木)でなく下(inodeの配列)から見る。速くて漏れがない: 線形読みは全 inode を確実に拾い、どのディレクトリからも参照されない(名前を失った)ファイルも、inode が割り当てられている限り数える。",
+    "file_path": "usr/src/cmd/quot.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "quot-002-aggregate-by-owner",
+    "text": "struct du { long blocks; long nfiles; int uid; char *name; } du[NUID];  /* table indexed by uid */\nwhile((lp=getpwent()) != 0) {           /* read /etc/passwd */\n\tif (lp->pw_uid<=NUID && !du[n].name)\n\t\tdu[n].name = copy(lp->pw_name);      /* so uid -> username is known */\n}\n/* acct(): per inode */\nif ((ip->di_mode&IFMT) == 0) return;     /* skip unused inodes */\ndu[ip->di_uid].blocks += (ip->di_size+BSIZE-1)/BSIZE;   /* charge to the owner's account */\ndu[ip->di_uid].nfiles++;",
+    "line_number": 118,
+    "tags": [
+      "unix",
+      "filesystem",
+      "quot",
+      "uid",
+      "accounting"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "elegance",
+      "emotion_intensity": 4,
+      "emotions": {
+        "elegance": 4,
+        "insight": 4
+      },
+      "technical_context": "quot's tally is addition keyed by owner (uid). du[] is an array indexed by uid -- each entry an account hoarding that user's total blocks and files. For each inode read, it charges the size (rounded up to blocks) and a file to that inode's owner (ip->di_uid). When the scan ends, du[] holds each user's disk total. What makes this work is that the inode knows its owner: every Unix file records its uid in the inode's di_uid field. As ncheck showed, an inode does not know its name (names live in directories) -- but it does know its owner, stamped in the inode itself. So quot can aggregate by owner without walking directories: read the inode table once. (Recovering names needs the big directory walk of ncheck; aggregating by owner needs only one inode pass.) At startup quot reads /etc/passwd via getpwent() to map uid to name, so it can print 'smith 4321 blocks' -- count by number, show by name, like sa.",
+      "human_story": "An inode does not know its name, but it knows its owner -- the uid is stamped right in it. So quot can total disk use per person by reading the inode table once, no directories needed, then looks up /etc/passwd to print names instead of numbers."
+    },
+    "appraiser_note": "quot の集計は所有者(uid)を口座番号にした足し算だ。du[] は uid 索引の配列で、各エントリがそのユーザの総ブロック数・総ファイル数を貯める口座。inode を一つ読むたびに、サイズ(ブロック切上げ)とファイル1個をその inode の所有者(ip->di_uid)の口座に足す。走査が終われば du[] に各ユーザのディスク総量が積み上がる。効くのは inode が所有者を知っていること: すべての Unix ファイルは inode の di_uid フィールドに uid を記録する。ncheck で見たように inode は名前を知らない(名前はディレクトリにある)が、持ち主は inode 自身に刻まれている。だから quot はディレクトリを辿らず所有者別に束ねられる——inode 表を一度舐めるだけ。(名前の復元は ncheck の全ディレクトリ走査が要るが、所有者集計は inode 一巡で済む。)起動時に /etc/passwd を getpwent() で読み uid→名前を作り、『smith は 4321 ブロック』と出せる——番号で集計し名前で見せる、sa と同じ作法。",
+    "file_path": "usr/src/cmd/quot.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "quot-003-owner-view-vs-du",
+    "text": "qcmp(p1, p2) { return p1->blocks>p2->blocks ? -1 : p1->blocks<p2->blocks ? 1 : strcmp(...); }\nreport() {\n\tqsort(du, NUID, sizeof(du[0]), qcmp);   /* sort users by blocks, descending */\n\tfor (i=0; i<NUID; i++) {\n\t\tif (du[i].blocks==0) return;           /* zero -> rest are zero, stop */\n\t\tprintf(\"%5D\\t%s\\n\", du[i].blocks, du[i].name);   /* hog at the top */\n\t}\n}\n/* -n mode: read 'inode  pathname' from stdin (ncheck output) and name specific inodes */",
+    "line_number": 182,
+    "tags": [
+      "unix",
+      "filesystem",
+      "quot",
+      "du",
+      "ncheck"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "craft": 4
+      },
+      "technical_context": "quot's output is a ranking of users by usage: report() qsorts the table by blocks descending (qcmp) and prints from the top -- the biggest hog first; on hitting a zero it stops (sorted, so the rest are zero). -f adds file counts. When a shared disk fills, quot names the culprit at a glance. The contrast with du is the point: du is the namespace view -- 'this directory subtree is N blocks', built by walking the tree; quot is the ownership view -- 'this user's files total N blocks across the whole disk', built from inodes. du answers where, quot answers whose. Each has a blind spot: du depends on where files are (scattered files are hard to sum), quot cannot name individual files (inodes have no names -- ncheck). So quot has a -n mode that takes ncheck's output (inode-number -> pathname) on stdin, matching each piped inode number against the inode being scanned (fino vs ino), to attach names to specific inodes. quot + ncheck gives both whose and which-file.",
+      "human_story": "quot prints users biggest-first, so the disk hog is line one. du tells you which directory is big; quot tells you which person is big. They are two views of the same disk -- and pipe ncheck's inode->name list into quot -n and you get both at once."
+    },
+    "appraiser_note": "quot の出力は使用量によるユーザのランキング: report() が blocks 降順(qcmp)で qsort して上から表示——最大の犯人が一番上、blocks==0 で打ち切り(ソート済みなので以降全0)。-f でファイル数も。共有ディスクが満杯なら quot が犯人を一目で名指す。du との対比が肝だ: du は名前空間の視点『このディレクトリ以下が N ブロック』を木を辿って積む、quot は所有の視点『このユーザのファイルがディスク全体で N ブロック』を inode から束ねる。du は『どこに』、quot は『誰の』。互いに盲点がある: du はファイルがどこにあるかに依存(散らばると集計困難)、quot は個々のファイル名を言えない(inode は名前を持たない=ncheck)。だから quot には -n モードがあり、ncheck の出力(inode番号→パス名)を標準入力で受け、パイプされた inode番号を走査中の inode と突き合わせ(fino vs ino)、特定 inode に名前を付ける。quot + ncheck で『誰の』と『どのファイル』の両方が分かる。",
+    "file_path": "usr/src/cmd/quot.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "quot-004-disk-as-third-account",
+    "text": "acct(ip) {\n\tif (cflg) {                            /* -c: distribution of file sizes, not owners */\n\t\tif (...IFDIR nor IFREG...) return;\n\t\tn = (ip->di_size+BSIZE-1)/BSIZE;     /* how many blocks this file is */\n\t\tif (n >= TSIZE) { overflow += n; n = TSIZE-1; }\n\t\tsizes[n]++;                          /* count files of size n */\n\t}\n}\n/* report (-c): for each size, print count and running cumulative blocks */",
+    "line_number": 127,
+    "tags": [
+      "unix",
+      "filesystem",
+      "quot",
+      "quota",
+      "capacity"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "legacy": 4,
+        "history": 4
+      },
+      "technical_context": "quot is not only per-owner. With -c it answers a different question: the distribution of file sizes. acct() computes each file's block count and bumps sizes[] (a size histogram); report prints, per size, the count and the cumulative blocks. This is capacity-planning data: many tiny files or a few huge ones? which size band eats the disk? Like prof's time distribution and iostat's activity distribution, quot -c is a full census of file sizes -- informing block-size choice and storage design. Overall quot embodies disk capacity as another thing to account for. Where sa measures CPU time and ac measures connect time, quot measures occupied space -- the three great shared resources (compute, connection, storage), with storage tallied per owner from the bottom of the filesystem. It is the forebear of quota (enforcing per-user disk limits), the basis of capacity-based charging, and a companion to df. Today's per-user storage dashboards, quota blocks, and pay-per-GB billing descend from quot summing blocks by di_uid.",
+      "human_story": "sa counts the time you worked, ac the time you were present, quot the space you occupy. With -c it even tabulates how many files of each size fill the disk. Your cloud storage bill and disk quota are the descendants of quot adding up blocks by owner."
+    },
+    "appraiser_note": "quot は所有者別集計だけの道具ではない。-c では別の問いに答える: ファイルサイズの分布。acct() が各ファイルのブロック数を計算し sizes[](サイズ別ヒストグラム)を増やし、report が各サイズの個数と累積ブロック数を出す。これは容量計画のデータ: 小さなファイルが大量か、巨大なファイルが少数か、どのサイズ帯がディスクを食うか。prof の実行時間分布、iostat の活動分布のように、quot -c はファイルサイズの全数調査——ブロックサイズの選択やストレージ設計の判断材料。quot 全体が体現するのはディスク容量というもう一つの会計対象だ。sa が CPU 時間を、ac が接続時間を測るように、quot は占めた容量を測る——共有資源の三大要素(計算・接続・記憶)のうち記憶を、ファイルシステムの底から所有者ごとに集計する。quota(ユーザ別ディスク上限の強制)の前身、容量課金の基礎、df の相棒。今日のユーザ別ストレージ使用量、quota ブロック、GB 課金は、quot が di_uid 別にブロックを足し上げた、この所有者別会計の子孫だ。",
+    "file_path": "usr/src/cmd/quot.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]

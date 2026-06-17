@@ -1466,6 +1466,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "240",
+    title: "鑑定書#240 quot — ディレクトリを一切辿らず、生ディスクの inode 表を端から端まで舐めて、ファイルの持ち主(di_uid)ごとにブロック数を足し上げる235行のディスク使用量集計。名前でなく所有で見る du の対極、-c でファイルサイズ分布。sa/ac と並ぶ三面会計の第三軸、quota・ストレージ課金の祖",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
