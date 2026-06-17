@@ -21056,5 +21056,122 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "number-001-four-word-tables",
+    "text": "char *card[]   = { \"hundred\",\"thousand\",\"million\", ... \"vigintillion\" }; /* up to 10^63 */\nchar *unit[]   = { \"zero\",\"one\", ... \"nine\" };\nchar *teen[]   = { \"ten\",\"eleven\",\"twelve\", ... \"nineteen\" };  /* irregular 10-19 */\nchar *decade[] = { \"zero\",\"ten\",\"twenty\", ... \"ninety\" };",
+    "line_number": 4,
+    "tags": [
+      "unix",
+      "number",
+      "speech",
+      "lookup-table",
+      "english"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 3
+      },
+      "technical_context": "Reading numbers aloud in English is messy: 13 is 'thirteen' not 'threeteen', 20 is 'twenty' not 'twoty'. The 10-19 range is fully irregular and the tens have their own forms. number absorbs all of it into four lookup tables instead of an algorithm. unit[] is 0-9, teen[] the irregular 10-19, decade[] the tens (twenty, thirty...), and card[] the scale words: hundred, thousand, million, billion ... all the way to vigintillion (10^63), 22 names with none missing. The irregularity of a natural language is better written out as data than fought in code -- that is the design judgment here.",
+      "human_story": "English number words are full of exceptions -- thirteen, twenty, eleven. number doesn't compute them; it just looks them up in four tables, including a scale table that runs absurdly far, up to vigintillion (a 1 followed by 63 zeros)."
+    },
+    "appraiser_note": "数を英語で読むのは厄介だ: 13 は 'threeteen' でなく 'thirteen'、20 は 'twoty' でなく 'twenty'。10-19 は完全に不規則で十の位も独自形を持つ。number はそれをアルゴリズムでなく4つの表引きに押し込める。unit[]=0-9、teen[]=不規則な10-19、decade[]=十の位(twenty, thirty…)、card[]=位の語: hundred, thousand, million, billion … vigintillion(10^63)まで22語を一つも欠かさず。自然言語の不規則性は、コードで戦うよりデータに書き出すほうが正しい——という設計判断だ。",
+    "file_path": "usr/src/cmd/number.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "number-002-recursive-triples",
+    "text": "r = i/3;                 /* split the digit string into 3-digit groups */\nconv(line+i-3*r, r);\n...\nconv(p, c) char *p; {\n    if(c > max) {        /* more groups than scale names: recurse */\n        conv(p, c-max);\n        print(card[max]);  /* card[max] = vigintillion */\n        p += (c-max)*3; c = max;\n    }\n    while(c > 1) { c--; conv(p,1); cprint(card[c]); nline(); p += 3; }\n    ones(p[0]); cprint(card[0]); tens(p); ones(p[2]);  /* one 3-digit group */\n}",
+    "line_number": 110,
+    "tags": [
+      "unix",
+      "number",
+      "recursion",
+      "grouping",
+      "algorithm"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 4
+      },
+      "technical_context": "English number reading is grouped in threes (thousand, million, billion are all 1000x steps), and number mirrors that structure directly into recursion. The digit string is padded with a leading '00' to a 3-digit boundary and split into r = i/3 groups. conv() is recursive: if the group count c exceeds max (21, the vigintillion slot), it recurses on the high part, prints card[max]=vigintillion, and chunks the rest at the top scale -- so there is effectively no digit-count limit, the recursion repeats the largest scale name as needed. Each group is read by conv(p,1) as a 'hundreds' unit -- ones(p[0]), cprint(hundred), tens(p), ones(p[2]) -- with the scale word card[c] appended.",
+      "human_story": "English reads numbers in groups of three, and number's code is recursive in exactly the same shape. If a number has more groups than there are scale names, it recurses, printing 'vigintillion' and chunking the rest -- so it never really runs out of room."
+    },
+    "appraiser_note": "英語の数の読みは3桁ごとに区切られ(thousand, million, billion は全て1000倍刻み)、number のコードはその構造をそのまま再帰に写し取る。数字列は先頭に '00' を補って3桁境界に揃え、r = i/3 グループに分ける。conv() は再帰的: グループ数 c が max(21=vigintillion の枠)を超えたら上位を再帰し、card[max]=vigintillion を刷り、残りを最大スケールで chunk する——だから桁数に事実上の上限はなく、再帰が最大スケール名を必要なだけ繰り返す。各グループは conv(p,1) で『百の単位』として読まれ——ones(p[0]), cprint(hundred), tens(p), ones(p[2])——スケール語 card[c] が添えられる。",
+    "file_path": "usr/src/cmd/number.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "number-003-flag-silences-zero",
+    "text": "print(s)  { if(flag) printf(\" \"); printf(s); flag = 1; }\ncprint(s) { if(flag) print(s); }   /* print scale word ONLY if the group had content */\nnline()   { if(flag) printf(\".\\n\"); flag = 0; }\n/* 1,000,000 -> 'one million', not 'one million zero thousand zero hundred' */",
+    "line_number": 175,
+    "tags": [
+      "unix",
+      "number",
+      "state-machine",
+      "formatting",
+      "elegant"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 4
+      },
+      "technical_context": "Reading numbers naturally requires knowing when NOT to speak: 1,000,000 is 'one million', not 'one million zero thousand zero hundred'. An empty group must stay silent, scale word and all. number does this with a single flag. print() sets flag whenever it emits something (and inserts a leading space next time). The key is cprint() (conditional print): it emits the scale word only if flag is set. So if a group's ones/tens printed nothing, flag stays down and the following cprint(card[c]) does nothing -- the 'thousand'/'million' of an all-zero group is swallowed automatically. nline() emits a '.' separator only if flag is set, then clears it. State (flag) plus data (tables) decide the entire say/don't-say behavior.",
+      "human_story": "Saying a number aloud means knowing what to leave out -- you don't say 'zero thousand'. number tracks one flag: if a group printed nothing, its scale word ('thousand', 'million') is silently skipped. One bit handles all the 'don't say it' cases."
+    },
+    "appraiser_note": "数を自然に読むには『言わない』判断が要る: 1,000,000 は 'one million' であって 'one million zero thousand zero hundred' ではない。中身が空のグループはスケール語ごと黙らねばならない。number はこれを flag 一個で実現する。print() は何かを刷るたび flag を立てる(次回は語の前にスペース)。鍵は cprint()(conditional print): flag が立っているときだけスケール語を刷る。あるグループの ones/tens が何も刷らなければ flag は立たず、続く cprint(card[c]) は何もしない——中身ゼロのグループの 'thousand'/'million' は自動的に飲み込まれる。nline() は flag が立つときだけ '.' 区切りを刷り、flag を落とす。状態(flag)とデータ(表)だけで『言う・言わない』のすべてを捌く。",
+    "file_path": "usr/src/cmd/number.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "number-004-punctuation-for-speak",
+    "text": "out:\n    nline();           /* '.' : short pause between scale groups */\n    printf(\"...\\n\");   /* '...' : long pause after each number */\n/* man: \"Punctuation is added to make the output sound well when\n   played through speak(1).\"  number is the front-end of a speech synthesizer. */",
+    "line_number": 90,
+    "tags": [
+      "unix",
+      "number",
+      "speech-synthesis",
+      "tts",
+      "bell-labs"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "wistful",
+      "emotion_intensity": 5,
+      "emotions": {
+        "wistful": 5,
+        "legacy": 4,
+        "insight": 4
+      },
+      "technical_context": "The '.' and '...' that the flag machine prints are not mere separators. The man page says: 'Punctuation is added to make the output sound well when played through speak(1).' speak(1) is a speech synthesizer -- so the punctuation is pause marks: '.' a short pause between scale groups, '...' a longer pause after a whole number, telling the talking machine where to breathe. number is the text-normalization front-end of a 1979 speech-synthesis pipeline, not just a cute number-speller. Fractions are streamed digit by digit (putchar) so speak can voice them one at a time. This is Bell Labs, the home of speech-synthesis research -- in 1961 an IBM 704 there sang 'Daisy Bell', later echoed by HAL 9000's death scene in 2001: A Space Odyssey. number is a humble part down at the base of that work: before any synthesizer can voice 123, someone has to turn digits into words. number is exactly that prep step -- the direct ancestor of the 'number normalization' stage in every modern text-to-speech system.",
+      "human_story": "The dots number prints are pauses for speak(1), a speech synthesizer -- a short pause between groups, a long one after each number, so the machine knows where to breathe. This little tool is the front-end of 1979 text-to-speech, at Bell Labs, the same lab whose computer sang 'Daisy Bell' in 1961. Before a machine can say 123, something has to turn it into words."
+    },
+    "appraiser_note": "flag マシンが刷る '.' と '...' は単なる区切りではない。man はこう言う: 'Punctuation is added to make the output sound well when played through speak(1).' speak(1) は音声合成プログラム——だから句読点はポーズ記号だ: '.' はスケールグループ間の短い間、'...' は数全体の後の長い間で、しゃべる機械に息継ぎの場所を教える。number は単なる可愛い数字綴り器ではなく、1979年の音声合成パイプラインのテキスト正規化フロントエンドだ。小数部は一桁ずつ putchar で流され、speak が一つずつ発声できるようにする。ここは Bell Labs——音声合成研究の本拠地だ。1961年、ここの IBM 704 が 'Daisy Bell' を歌い、後に映画『2001年宇宙の旅』の HAL 9000 の最期で再現された。number はその仕事の裾野にある地味な部品だ: どんな合成器も、誰かが数字を言葉に直さなければ 123 を声にできない。number はまさにその下ごしらえ——現代のあらゆる TTS にある『number normalization』段の直接の祖先である。",
+    "file_path": "usr/src/cmd/number.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]

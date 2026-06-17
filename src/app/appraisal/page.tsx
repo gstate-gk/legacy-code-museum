@@ -1529,6 +1529,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "249",
+    title: "鑑定書#249 number — 数字を英語の読みに翻訳する199行。man が明かす真の役目は speak(1)（音声合成）のテキスト正規化＝1979年のTTSフロントエンド。card[]=hundred〜vigintillion(10^63, 22語)+unit/teen/decade の4表で英語数詞の不規則性を吸収、3桁グループ化と conv() の再帰（max超過は再帰でchunk）、flag ステートマシンの cprint でゼロのグループのスケール語を黙らせる、\".\"/\"...\" は speak 用のポーズ記号。現代TTSの number normalization の祖、Bell Labs 音声合成（Daisy Bell 1961）の裾野",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
