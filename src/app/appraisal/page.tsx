@@ -1620,6 +1620,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "262",
+    title: "鑑定書#262 tk — Tektronix 4014 蓄積管(DVST)用のテキストページャ 248行。蓄積管は描いた像を保持し続け部分消去できず全画面消去(ESC FF=緑の閃光)でしか消えない。だから pg(#243)/more と違い一ページを座標で描く→Enter待ち(kwait)→全消去→次ページ。文字は行でなく (x,y) 座標で配置(yy=MAXY 3071 から LINE=47 ずつ、xx 31/文字)、キャリッジ運動を座標操作で再現。sendpt が座標を5部分に分け前回と変わったバイトだけ GS の後に送る差分座標伝送(\"optimize output for Tek 4014\"、tc #242 と同じ)。Model 37 の半行/逆行(ESC 7/8/9)を縦座標±で解釈し端数を ry に繰り越し、-N 多段組(coff=4096/N)、!command でシェル脱出。vpr(#261) が紙の制約と向き合ったように tk は画面消去の制約と向き合う",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

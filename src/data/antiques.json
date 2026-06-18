@@ -22568,5 +22568,122 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "tk-001-coordinates-not-rows",
+    "text": "#define MAXY 3071\n#define LINE 47\nint xx = XOFF;   /* horizontal dot position */\nint yy = MAXY;   /* vertical, from the top (3071) downward */\n/* '\\n': xx=xoff; yy-=LINE;   ' ': xx+=31;   '\\b': xx-=31;   tab stops at 8*31=248 */\ndefault: sendpt(alpha); putchar(US); putchar(i); if(i>' ') xx+=31;  /* place glyph at (xx,yy) */",
+    "line_number": 70,
+    "tags": [
+      "unix",
+      "tk",
+      "tektronix",
+      "4014",
+      "graphics"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 4
+      },
+      "technical_context": "An ordinary terminal scrolls: say 'next line' and it happens. The Tektronix 4014 is a graphics screen, so tk places text by (x,y) coordinate, not by row. The screen is 3072 dots tall (MAXY=3071); each new line drops yy by LINE (47 dots), each character advances xx by 31. Newline resets xx and lowers yy, carriage return resets xx, tabs jump to 8*31=248-dot stops, backspace moves xx back 31 -- the typewriter's carriage motion reproduced entirely as coordinate arithmetic. To draw a glyph, tk first moves the beam to (xx,yy) via sendpt, switches to alphanumeric mode with US, then writes the character. To the 4014, a character is a figure placed at a coordinate.",
+      "human_story": "On a graphics terminal you can't just say 'next line' -- there are no lines, only points. tk places every character at an (x,y) dot position on a 3072-tall screen, turning the typewriter's carriage motions (tab, backspace, newline) into arithmetic on coordinates."
+    },
+    "appraiser_note": "ふつうの端末はスクロールする: 『次の行へ』と言えば済む。Tektronix 4014 はグラフィック画面なので、tk は文字を行でなく (x,y) 座標で置く。画面は縦3072ドット(MAXY=3071)、一行下がるたび yy を LINE(47ドット)減らし、一文字進むたび xx を31増やす。改行は xx を戻し yy を下げ、復帰は xx を戻し、タブは 8*31=248ドットのストップへ、バックスペースは xx を31戻す——タイプライターのキャリッジ運動を、すべて座標の足し引きで再現する。文字を描くにはまず sendpt でビームを (xx,yy) へ動かし、US で英数字モードに切り替え、文字を出す。4014 にとって文字は、ある座標に置かれた図形だ。",
+    "file_path": "usr/src/cmd/tk.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "tk-002-differential-coordinates",
+    "text": "/* optimize output for Tek 4014: send only the address bytes that changed */\nhy=(zz>>7)&037; xb=...; ly=(zz>>2)&037; hx=(xx>>7)&037; lx=(xx>>2)&037;\nputchar(GS);\nif(hy!=ohy) putchar(hy|040);\nif(xb!=oxb) putchar(xb|0140);\nif((ly!=oly)||(hx!=ohx)||(xb!=oxb)) putchar(ly|0140);\nif(hx!=ohx) putchar(hx|040);\nputchar(lx|0100);   /* low-X always sent */",
+    "line_number": 230,
+    "tags": [
+      "unix",
+      "tk",
+      "tektronix",
+      "optimization",
+      "serial"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 5,
+        "legacy": 4
+      },
+      "technical_context": "The file's stated purpose is 'optimize output for Tek 4014', and this is it. The 4014 addresses a point with up to five bytes after GS -- high-Y, an extra-bits byte, low-Y, high-X, low-X -- each carrying tag bits (040/0140/0140/040/0100) that identify which part it is. Sending all five every time would waste a slow serial line, so sendpt remembers the previous point's five parts (ohy, oxb, oly, ohx, olx) and emits only the ones that changed; the 4014's protocol lets you omit unchanged high-order bytes. Text usually advances left to right on the same line, so the vertical bytes stay put and often only low-X changes -- about one or two bytes per character. The same differential-coordinate trick tc(#242) used for troff graphics, here applied to paging text. Frugality with the wire, done in a data structure.",
+      "human_story": "tk's whole point is sending coordinates cheaply. A 4014 position takes up to five bytes, but tk remembers the last position and sends only the parts that changed -- so moving one character to the right costs about one byte instead of five. Kindness to a slow serial line."
+    },
+    "appraiser_note": "ファイルの目的は『optimize output for Tek 4014』——その正体がこれだ。4014 の座標指定は GS に続く最大5バイト——縦の上位・追加ビット・縦の下位・横の上位・横の下位——で、各バイトがどの部分かを示すタグビット(040/0140/0140/040/0100)を持つ。毎回5バイト全部送れば遅い回線を食うので、sendpt は前回の点の5部分(ohy, oxb, oly, ohx, olx)を覚え、変わったものだけを出す; 4014 のプロトコルは変化しない上位バイトの省略を許す。文章は左から右へ進むことが多く、縦のバイトは据え置きで横の下位だけ変わる——一文字あたり実質1〜2バイト。tc(#242) が troff の図形で使った差分座標伝送を、tk はテキストのページ送りで使う。回線への、データ構造による倹約だ。",
+    "file_path": "usr/src/cmd/tk.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "tk-003-half-line-remainder",
+    "text": "case '7': yy += LINE;                    /* reverse line feed: one line up */\ncase '8': yy += (LINE+ry)/2; ry = (LINE+ry)%2;   /* half line down */\ncase '9': yy -= (LINE-ry)/2; ry = -(LINE-ry)%2;  /* half line up */\n/* LINE=47 is odd; ry carries the half-dot remainder so half-lines don't drift */",
+    "line_number": 110,
+    "tags": [
+      "unix",
+      "tk",
+      "tektronix",
+      "half-line",
+      "rounding"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 4
+      },
+      "technical_context": "tk interprets the Teletype Model 37's half-line and reverse-line escape sequences -- used for superscripts, subscripts and reverse feed. With no physical carriage, these become arithmetic on yy. ESC 7 is a reverse line feed (yy += LINE, one line up); ESC 8/9 move half a line (LINE/2 = 23.5 dots) down/up. But LINE=47 is odd, so halving leaves a 0.5-dot remainder. tk carries that remainder in ry and folds it into the next half-line, so two half-lines add back to exactly one line (ry: 0 -> +23, +24 -> 0; sum 47). On a screen addressable only in whole dots, it tracks the continuous notion of a 'half line' precisely, preventing rounding error from accumulating and drifting the text.",
+      "human_story": "For superscripts and subscripts, tk handles half-line moves on a screen that only knows whole dots. A line is 47 dots -- odd -- so half is 23.5; tk carries the leftover half-dot forward so two half-steps land exactly one line apart, instead of slowly drifting."
+    },
+    "appraiser_note": "tk は Teletype Model 37 の半行送り・逆行送りシーケンス——上付き・下付き・逆送りに使う——を解釈する。物理的なキャリッジが無いので、これらは yy の足し引きになる。ESC 7 は逆行送り(yy += LINE、一行上)、ESC 8/9 は半行(LINE/2 = 23.5ドット)の下げ上げ。だが LINE=47 は奇数で、半分にすると0.5ドットの端数が出る。tk はその端数を ry に持ち越し、次の半行に足し込むので、半行二回でちょうど一行に戻る(ry: 0→+23, +24→0; 計47)。ドット単位でしか指定できない画面で、『半行』という連続的な概念を正確に刻み、丸め誤差が積もって文字がずれるのを防ぐ。",
+    "file_path": "usr/src/cmd/tk.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "tk-004-draw-wait-erase",
+    "text": "kwait(): while((c=getc(ttyin))!='\\n') { if(c=='!') execom(); if(c==EOF) ex(); }  /* wait for Enter */\ninit(): if(ncol==0) fputs(\"\\033\\014\\033;\", stdout);   /* ESC FF = erase the whole tube */\n/* a storage tube keeps everything drawn until erased ALL at once (the green flash) */\nexecom(): fork; child execl(\"/bin/sh\",\"sh\",\"-t\",0);   /* !command escapes to a shell */",
+    "line_number": 180,
+    "tags": [
+      "unix",
+      "tk",
+      "tektronix",
+      "storage-tube",
+      "pager"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "wistful",
+      "emotion_intensity": 4,
+      "emotions": {
+        "wistful": 4,
+        "legacy": 4,
+        "insight": 4
+      },
+      "technical_context": "Having drawn a page, tk stops and waits, like more. But the reason is different. On a scrolling terminal, not stopping just lets text flow off the top. On a storage tube, nothing ever disappears -- once drawn, the image is held on the phosphor -- so if tk didn't stop, pages would pile on top of each other into an unreadable mess. To move on, you must let the reader finish, then erase. kwait waits for an empty line (Enter) from /dev/tty; then init sends ESC FF (\\033\\014), the 4014's full-screen erase -- the characteristic green flash -- and the next page is drawn from coordinates. 'Draw, hold, erase-all' is the storage tube's nature, and it becomes the pager's behavior. While waiting, !command escapes to a shell (execom forks /bin/sh); -t skips the wait for piping to a file.",
+      "human_story": "After each page tk waits for you to press Enter -- not because text would scroll away, but because on a storage tube nothing ever fades, so pages would stack into a blur. Press Enter and the whole screen flashes clear (ESC FF) before the next page is drawn. You can type !command to drop to a shell while you read."
+    },
+    "appraiser_note": "一ページ描き終えると、tk は more のように止まって待つ。だが理由が違う。スクロールする端末なら、止まらなくても文字が上へ流れて消えるだけ。蓄積管では何も消えない——一度描いた像は燐光に保持される——ので、止まらなければページが重なり合って読めなくなる。次へ進むには、読み手に読み終えてもらい、それから消すしかない。kwait は /dev/tty から空行(Enter)を待ち、init が ESC FF(\\033\\014)——4014 の全画面消去、あの緑の閃光——を送り、次のページを座標から描く。『描いて・保持して・全消去』が蓄積管の本性であり、そのままページャの動作になる。待ち中は !command でシェルに脱出でき(execom が /bin/sh を fork)、-t は待ちを飛ばす(ファイルへ流す用)。",
+    "file_path": "usr/src/cmd/tk.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]
