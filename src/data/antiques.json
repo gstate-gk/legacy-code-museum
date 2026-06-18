@@ -21872,5 +21872,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "mtm-001-tape-geometry-double-eof",
+    "text": "if((cnt = read(fd,buf,bcnt)) == 0){      /* read==0 = a file mark */\n    if(eof){                             /* two in a row = end of recorded data */\n        printf(\"Double EOF after file %d\\n\", --filecnt);\n        finis();\n    } else { eof=1; if(lflag) printf(\"      %d Records\\n\",reccnt); }\n} else { eof = 0; ... }",
+    "line_number": 70,
+    "tags": [
+      "unix",
+      "mtm",
+      "magtape",
+      "eof",
+      "sequential"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "legacy": 4,
+        "insight": 4
+      },
+      "technical_context": "Magnetic tape has no random access -- only a sequence of records. File boundaries are marked by a file mark, and the end of recorded data by two file marks in a row. mtm reads this geometry purely from read()'s return value: read==0 is a file mark (end of one file); if the previous read was also EOF, that's a double EOF meaning end of tape data, so it calls finis(). A single eof flag remembers 'I just saw one EOF'. Concepts absent from the disk world: on tape, both a file boundary and the end of data appear as blank stretches, and mtm reads that physical convention directly as consecutive read==0 results.",
+      "human_story": "A tape is just a line of records you can only read forward. mtm finds where one file ends (a blank gap) and where the whole tape's data ends (two gaps in a row) purely from read() returning zero -- the physical shape of tape, read straight off the return value."
+    },
+    "appraiser_note": "磁気テープにランダムアクセスはない——あるのはレコードの列だけ。ファイルの区切りはファイルマークで、記録の終わりはファイルマークが二つ続くことで示される。mtm はこの幾何学を read() の戻り値だけで読む: read==0 はファイルマーク(1ファイルの終わり)、直前も EOF なら二重 EOF=テープデータの終端で finis() を呼ぶ。eof フラグ一つが『いま一度 EOF を見た』を覚える。ディスクの世界には無い概念だ: テープではファイルの境界もデータの終わりも『何も書かれていない区間』として現れ、mtm はその物理的な約束を read==0 の連続として直接読む。",
+    "file_path": "usr/src/cmd/mtm.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "mtm-002-norewind-rewind-duality",
+    "text": "unit = unit | 04;   /* force to no-rewind unit (0->4, 1->5): keep position across reads */\nsprintf(&file[8],\"%d\",unit);\n...\nfinis(): unit -= 4;            /* back to the rewind unit */\n         close(fd);\n         fd = open(file, 0);\n         close(fd);             /* closing the rewind device rewinds the tape */",
+    "line_number": 47,
+    "tags": [
+      "unix",
+      "mtm",
+      "magtape",
+      "device",
+      "rewind"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 5,
+      "emotions": {
+        "insight": 5,
+        "legacy": 4
+      },
+      "technical_context": "The raw tape device /dev/rmtN has two faces for the same physical drive: units 0-3 rewind automatically on close, units 4-7 do not (no-rewind). That's the comment's 'mapping of 4-7 into physical drives 0-3'. mtm ORs 04 onto the unit to open the NO-REWIND version while working, so skipping and listing files preserves the tape position -- if it rewound on every close you couldn't advance to the third file. Then to rewind at the end, finis() does unit -= 4 to name the REWIND version and just open()s and close()s it. The auto-rewind device rewinds the tape as a side effect of being closed -- so 'open then close, doing nothing' is the whole rewind. Two faces of one drive, used to hold position while reading and to gently rewind at the end.",
+      "human_story": "A tape drive has two device names: one that rewinds when you close it, one that doesn't. mtm uses the no-rewind name while working so it keeps its place, then rewinds at the end simply by opening and closing the rewind name -- the rewind is a side effect of closing."
+    },
+    "appraiser_note": "生テープデバイス /dev/rmtN には、同じ物理ドライブに二つの顔がある: ユニット 0-3 は閉じると自動巻き戻し、4-7 は巻き戻さない(no-rewind)。これがコメントの『mapping of 4-7 into physical drives 0-3』だ。mtm は作業中、ユニットに 04 を OR して no-rewind 版を開く——ファイルをスキップ・一覧するあいだテープの位置を保つため。閉じるたび巻き戻ったら3つ目のファイルへ進めない。そして最後に巻き戻すとき、finis() は unit -= 4 で rewind 版のデバイス名に戻し、ただ open して close する。自動巻き戻しデバイスは閉じられると副作用としてテープを巻き戻す——だから『open して何もせず close』が巻き戻しの全体だ。一つのドライブの二つの顔を、読みながら位置を保ち、最後にそっと巻き戻すために使い分ける。",
+    "file_path": "usr/src/cmd/mtm.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "mtm-003-device-name-and-sbrk",
+    "text": "file = \"/dev/rmt0 \";          /* trailing space leaves room */\nsprintf(&file[8],\"%d\",unit);   /* index 8 is the unit digit: overwrite it */\n...\nbcnt = bcnt<<10;              /* K -> bytes */\nbuf = sbrk(bcnt);            /* grow the data segment for the read buffer */",
+    "line_number": 42,
+    "tags": [
+      "unix",
+      "mtm",
+      "device",
+      "sbrk",
+      "string"
+    ],
+    "interesting_score": 17,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 3,
+      "emotions": {
+        "legacy": 4,
+        "insight": 3
+      },
+      "technical_context": "mtm builds its device name by overwriting one character of a string literal. file = \"/dev/rmt0 \" has a trailing space; '/dev/rmt' is 8 chars (index 0..7), so index 8 is the unit digit. sprintf(&file[8], \"%d\", unit) rewrites that single character to produce /dev/rmt4 or /dev/rmt0; the trailing space is padding for the digit and terminator. The read buffer is allocated not with malloc but with sbrk(bcnt), growing the data segment directly; bcnt<<10 converts the -b size from K to bytes, capped under 30K. Memory and tape blocks alike are handled at the lowest reachable layer.",
+      "human_story": "mtm makes its device name by rewriting one character of a string -- the digit in '/dev/rmt0 '. Its read buffer comes straight from sbrk, growing the program's memory by hand. Everything is handled at the lowest level."
+    },
+    "appraiser_note": "mtm はデバイス名を、文字列リテラルの一文字を上書きして作る。file = \"/dev/rmt0 \" は末尾に空白があり、'/dev/rmt' は8文字(index 0..7)なので index 8 がユニット番号の桁だ。sprintf(&file[8], \"%d\", unit) でその一文字を書き換え /dev/rmt4 や /dev/rmt0 を作る; 末尾の空白は数字と終端のための座布団。読み取りバッファは malloc でなく sbrk(bcnt) で、データセグメントを直接伸ばして確保する; bcnt<<10 で -b のサイズを K からバイトに換算し、30K 未満に制限。メモリもテープのブロックも、手の届く最も低い層で扱われる。",
+    "file_path": "usr/src/cmd/mtm.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "mtm-004-rewind-on-interrupt-and-deltas",
+    "text": "signal(SIGINT,finis);\nsignal(SIGQUIT,finis);   /* even on Ctrl-C, rewind before exiting */\n...\nif(lflag && cnt != prevcnt)            /* only when record size CHANGES */\n    printf(\"      Record %d - %d bytes\\n\", reccnt,cnt);",
+    "line_number": 16,
+    "tags": [
+      "unix",
+      "mtm",
+      "signals",
+      "rewind",
+      "listing"
+    ],
+    "interesting_score": 17,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 3,
+      "emotions": {
+        "legacy": 4,
+        "insight": 3
+      },
+      "technical_context": "Two small courtesies are woven in. First, signal(SIGINT,finis) and signal(SIGQUIT,finis): if the user aborts mid-operation, mtm still passes through finis() and rewinds the tape before exiting -- it never leaves the tape stranded at some odd position, so the next use always starts from the front. Second, when listing (-l), it does not print every record's size; only when cnt != prevcnt -- when the record size changes from the previous one -- does it report 'Record N - M bytes'. Tapes often hold thousands of equal-sized records, so reporting only the transitions, with 'File N:' headers and 'N Records' summaries, compresses a huge tape into a human-readable outline.",
+      "human_story": "mtm rewinds even if you Ctrl-C, so the tape is never left mid-reel. And when listing, it only prints a record's size when it changes -- so a tape of thousands of identical records collapses into a short, readable summary."
+    },
+    "appraiser_note": "二つの細やかな配慮が織り込まれている。第一に signal(SIGINT,finis)/signal(SIGQUIT,finis): ユーザが途中で打ち切っても、mtm は finis() を通ってテープを巻き戻してから終わる——テープを中途半端な位置に置き去りにせず、次に使うときいつも先頭から始められる。第二に、一覧(-l)では各レコードのサイズを全部は出さない; cnt != prevcnt のとき——直前とサイズが変わったときだけ——『Record N - M bytes』と報告する。テープには同サイズのレコードが何千と続くことが多いので、変化点だけを出し、『File N:』の見出しと『N Records』のまとめを添えれば、長大なテープが人の読める要約に圧縮される。",
+    "file_path": "usr/src/cmd/mtm.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]

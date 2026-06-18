@@ -1578,6 +1578,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "256",
+    title: "鑑定書#256 mtm — 磁気テープの物理を直に触る146行(Magnetic Tape Manipulation)。生テープのファイルを skip/list する低レベルツール。read==0=ファイルマーク／二重EOF=記録終端をフラグで検出(テープは順次媒体)、no-rewind 版(unit|04)で位置を保ち finis() で rewind 版(unit-4)を open+close するだけで巻き戻す(close時の自動巻き戻しを副作用に)。\"/dev/rmt0 \" の index8 を sprintf で上書きしデバイス名生成、buf は sbrk で確保。SIGINT/SIGQUIT でも finis で巻き戻し、一覧はサイズ変化点(cnt!=prevcnt)だけ報告。テープの物理(レコード/ファイルマーク/巻き戻し)がそのまま API。dump/restor/dumpdir(#244)/tar の下層",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
