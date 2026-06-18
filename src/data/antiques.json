@@ -21756,5 +21756,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "atrun-001-filesystem-is-the-schedule",
+    "text": "chdir(DIR);                 /* /usr/spool/at */\ndirf = fopen(\".\", \"r\");     /* open the directory itself */\nwhile (fread((char *)&dirent, sizeof(dirent), 1, dirf) == 1) {\n    if (dirent.d_ino==0) continue;\n    if (sscanf(dirent.d_name, \"%2d.%3d.%4d.%2d\", &year, &day, &tt, &uniq) != 4) continue;\n    if (... now is before scheduled ...) continue;\n    run(dirent.d_name);\n}",
+    "line_number": 23,
+    "tags": [
+      "unix",
+      "atrun",
+      "scheduler",
+      "filesystem",
+      "at"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 5,
+        "legacy": 4
+      },
+      "technical_context": "atrun has no database. The schedule lives in the names of the files in /usr/spool/at. Each job's filename is year.dayofyear.HHMM.uniq, and atrun's whole scheduler is: chdir there, open the directory as a file, fread raw directory entries (struct direct -- this predates opendir/readdir, when a directory was just a file of 16-byte entries), skip empty slots (d_ino==0), sscanf the name into year/day/time/uniq (skip if it doesn't parse), and compare to now. If the scheduled time has passed, run it. The listing of the spool directory IS the queue and the timetable. makenowtime() builds nowtime = hour*100+min, nowdate = tm_yday, nowyear = tm_year to compare against the parsed name.",
+      "human_story": "atrun keeps no database. The time a job should run is written right into its filename, and the list of files in /usr/spool/at is the whole schedule. atrun reads the directory, parses each name, and runs whatever is due."
+    },
+    "appraiser_note": "atrun にデータベースはない。スケジュールは /usr/spool/at に並ぶファイルの名前に宿る。各ジョブのファイル名は 年.通算日.時刻HHMM.連番 で、atrun のスケジューラの全体はこうだ: そこへ chdir し、ディレクトリをファイルとして開き、生のディレクトリエントリ(struct direct——opendir/readdir 以前、ディレクトリは16バイトのエントリが並んだただのファイルだった)を fread し、空きスロット(d_ino==0)を飛ばし、名前を sscanf で year/day/time/uniq に分解(分解できなければ無視)し、いまと比べる。予定時刻が過ぎていれば実行。スプールディレクトリの一覧こそが待ち行列であり予定表だ。makenowtime() が nowtime=hour*100+min, nowdate=tm_yday, nowyear=tm_year を作り、分解した名前と比較する。",
+    "file_path": "usr/src/cmd/atrun.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "atrun-002-owner-is-identity",
+    "text": "if (stat(file, &stbuf) == -1) exit(1);\nsetgid(stbuf.st_gid);\nsetuid(stbuf.st_uid);   /* become the user who submitted the job */\n/* atrun runs as root; the job's owner carries the security context */",
+    "line_number": 80,
+    "tags": [
+      "unix",
+      "atrun",
+      "setuid",
+      "security",
+      "filesystem"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 5,
+        "legacy": 4
+      },
+      "technical_context": "atrun runs as root, but a job must not run with root's power. atrun recovers whose job it is from the file's ownership: at created the spool file owned by the submitter, so atrun stat()s it, reads st_uid/st_gid, and setgid()/setuid()s to become that user before running the job. Your at job runs as you, not as root. File ownership itself carries the security context -- no separate 'this job belongs to X' record is needed; one stat() is the identity proof. setgid is called before setuid (the right order, since after dropping root via setuid you can no longer change gid). It's the most concise possible use of the fact that a Unix filesystem stores owner and permission, not just data.",
+      "human_story": "atrun runs as root but must not run your job as root. It finds out whose job it is simply by checking who owns the file, then becomes that user before running it. The file's owner is the identity -- no extra bookkeeping needed."
+    },
+    "appraiser_note": "atrun は root として動くが、ジョブを root の権限で走らせてはならない。atrun は『誰のジョブか』をファイルの所有権から取り戻す: at がスプールファイルを依頼者の所有で作るので、atrun は stat して st_uid/st_gid を読み、setgid/setuid でその人に成り代わってからジョブを実行する。あなたの at ジョブは root でなくあなた自身として走る。ファイルの所有権そのものがセキュリティの文脈を運ぶ——『このジョブは誰のもの』と別途記録する必要はなく、stat 一回が身元証明だ。setgid は setuid より先に呼ばれる(正しい順序。setuid で root を捨てた後は gid を変えられない)。Unix のファイルシステムがデータだけでなく所有者・権限を保持する、という事実の最も簡潔な使い切りである。",
+    "file_path": "usr/src/cmd/atrun.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "atrun-003-mv-to-past-once",
+    "text": "sprintf(sbuf, \"/bin/mv %.14s %s\", file, PDIR);   /* PDIR = \"past\" */\nsystem(sbuf);     /* move out of the queue BEFORE running -> runs at most once */\n...\nwait((int *)0);\nunlink(file);     /* after it finishes, remove it from past/ too */",
+    "line_number": 75,
+    "tags": [
+      "unix",
+      "atrun",
+      "idempotency",
+      "spool",
+      "rename"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 4
+      },
+      "technical_context": "Before running a job, atrun moves it out of the queue: /bin/mv of the job file into past/. Once moved, it no longer shows up in the spool listing, so even if atrun is started twice, or crashes and is re-run, the job already in past/ won't run again. The file's presence in /usr/spool/at means 'pending'; moving it out is the act of claiming it. Because source and destination are on the same filesystem, mv is a rename -- effectively atomic. After the job finishes, the parent wait()s and unlink()s it from past/ as well. The whole once-only guarantee rests on a single filesystem move.",
+      "human_story": "atrun moves a job into a 'past' folder before running it, so it drops out of the queue and can't be run twice -- even if atrun is started again. A file sitting in the queue means 'to do'; moving it out means 'I've taken this one'."
+    },
+    "appraiser_note": "ジョブを実行する前に、atrun はそれを待ち行列から移す: ジョブファイルを past/ へ /bin/mv する。移してしまえばスプールの一覧に現れなくなるので、atrun が二重起動しても、クラッシュして再実行されても、すでに past/ にあるジョブは二度と走らない。ファイルが /usr/spool/at に在ることが『未実行』を意味し、それを取り出すことが『自分が引き受けた』という宣言だ。移動元と移動先は同一ファイルシステムなので mv は rename——実質的に原子的。ジョブ終了後、親は wait して past/ からも unlink する。『一度きり』の保証の全体が、たった一回のファイル移動に乗っている。",
+    "file_path": "usr/src/cmd/atrun.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "atrun-004-detach-and-run",
+    "text": "if (fork()!=0) return;             /* parent keeps scanning the directory */\nfor (i=0; i<15; i++) close(i);     /* close all fds */\ndup(dup(open(\"/dev/null\", 0)));    /* 0/1/2 -> /dev/null */\n...\nnice(3);                           /* low priority */\nexecl(\"/bin/sh\", \"sh\", file, 0);   /* the job is a shell script */",
+    "line_number": 64,
+    "tags": [
+      "unix",
+      "atrun",
+      "daemon",
+      "fork",
+      "shell"
+    ],
+    "interesting_score": 17,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 3,
+      "emotions": {
+        "legacy": 4,
+        "insight": 3
+      },
+      "technical_context": "A job should run in the background, with no terminal, bothering no one. run() builds that carefully: it fork()s and the parent returns to keep scanning the directory, so jobs run concurrently as children. The child closes all 15 open fds and does dup(dup(open(\"/dev/null\",0))) to point stdin/stdout/stderr at /dev/null -- the classic detach-from-terminal idiom. After switching to the submitter's identity it fork()s again: the parent wait()s for the child and then unlinks the file; the child nice(3)s itself down (at jobs are unhurried background work) and execl's /bin/sh on the job file (with /usr/bin/sh as fallback). Since at had stashed 'input to sh', feeding it to the shell here is what finally runs the requested work.",
+      "human_story": "atrun runs each job detached from any terminal -- it closes every file, points input/output at /dev/null, lowers the priority, and hands the job file to /bin/sh. The shell script that 'at' saved earlier finally executes, quietly in the background."
+    },
+    "appraiser_note": "ジョブは端末を持たず、誰も邪魔せず、背景で走るべきだ。run() はそれを丁寧に組み立てる: fork し、親は戻ってディレクトリ走査を続ける——ジョブは子プロセスとして並行に走る。子は開いている15個の fd をすべて閉じ、dup(dup(open(\"/dev/null\",0))) で標準入出力・エラーを /dev/null に向ける——端末との縁を断つデーモン化の作法だ。依頼者の身元に切り替えたあとさらに fork する: 親は子を wait し終わったらファイルを unlink、子は nice(3) で優先度を下げ(at のジョブは急がない背景仕事)、/bin/sh にジョブファイルを渡して実行する(フォールバックは /usr/bin/sh)。at がしまったのは『sh への入力』だったから、ここでシェルに食わせれば依頼された仕事がようやく動き出す。",
+    "file_path": "usr/src/cmd/atrun.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]

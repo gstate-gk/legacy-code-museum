@@ -1571,6 +1571,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "255",
+    title: "鑑定書#255 atrun — at が蓄えたジョブを時刻が来たら実行する105行の実行係。cron(#140) から定期起動され /usr/spool/at を走査、予定時刻はファイル名(年.通算日.時刻.連番)に刻まれ sscanf で分解+now と比較＝ファイルシステムが予定表。fopen(\".\")+fread で生 struct direct を読む(readdir以前)。ジョブファイルの所有者を stat→setgid/setuid で依頼者本人に成り代わって実行＝所有者が身元。実行前に past/ へ mv して二度実行防止、fd を閉じ /dev/null に繋ぎ nice(3) で /bin/sh にジョブを渡す。FS を台帳として使い切る(名前=予定/所有者=身元/場所=状態)、at(#100)/cron(#140) と並ぶ遅延実行の小部品",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
