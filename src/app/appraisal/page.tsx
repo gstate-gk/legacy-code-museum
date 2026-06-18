@@ -1592,6 +1592,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "258",
+    title: "鑑定書#258 dcheck — ディレクトリ整合性を検査する214行＝ファイルシステムの参照カウント監査。icheck(#221, ブロック検査)の対。pass1 で全ディレクトリを歩き各 inode への参照を ecount[kno]++ で数え、pass2 で inode が名乗る di_nlink と突き合わせ不一致を報告(nlink>実数=容量リーク/nlink<実数=データ消失)。ecount は inode 1個1バイトで255飽和(嘘をつかない)。生デバイス直読(sync→superblock→l3tol→bmap の直接/単間接)。kno>nfiles||kno<=1 で壊れエントリ検出、-i で番号から名前へ逆引き(icheck→dcheck -i→clri #253 の修復段取り)。ncheck(#222)/clri(#253) と並ぶ fsck 一族、後の fsck の二本柱",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

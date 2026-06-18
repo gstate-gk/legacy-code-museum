@@ -22104,5 +22104,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "dcheck-001-refcount-audit",
+    "text": "/* pass1: walk every directory, count references to each inode */\nif((ip->di_mode&IFMT) != IFDIR) return;\n... ecount[kno]++;\n/* pass2: compare the count against the inode's own claim */\nif (ip->di_nlink==((ecount[i])&0377) && ip->di_nlink!=0) return;   /* match -> silent */\nprintf(\"%u\\t%d\\t%d\\n\", ino, ecount[i]&0377, ip->di_nlink);     /* mismatch -> report */",
+    "line_number": 116,
+    "tags": [
+      "unix",
+      "dcheck",
+      "filesystem",
+      "link-count",
+      "fsck"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 5,
+        "legacy": 4
+      },
+      "technical_context": "A Unix file records how many names point at it -- the link count, di_nlink -- and is freed when it reaches zero. dcheck audits that number. In pass1 it walks every directory inode (di_mode&IFMT == IFDIR) and increments ecount[kno] for each entry's target inode, so ecount[n] becomes the real number of names pointing at inode n. In pass2 it compares ecount against di_nlink: if they match it stays silent; if they differ it reports the inode, the real entry count, and the claimed link count. A mismatch is a disease: nlink too high leaks space (a deleted file never freed); nlink too low risks data loss (the file freed while names still reference it). This is a reference-count assertion over the filesystem -- the same idea a garbage collector uses to verify its counts.",
+      "human_story": "Every Unix file claims how many names point at it. dcheck checks whether that's true: it walks all directories counting the real references, then compares to each file's claim. When they disagree, the filesystem is lying to itself -- and that lie leaks space or loses data."
+    },
+    "appraiser_note": "Unix のファイルは自分が幾つの名前から指されているか——リンクカウント di_nlink——を持ち、0 で解放される。dcheck はその数を監査する。pass1 で全ディレクトリ inode(di_mode&IFMT==IFDIR)を歩き、各エントリの指す inode について ecount[kno]++ するので、ecount[n] は inode n を実際に指す名前の数になる。pass2 で ecount を di_nlink と比べ、一致なら沈黙、食い違えば inode 番号・実測の参照数・自称リンク数を報告する。食い違いは病だ: nlink が多すぎれば容量リーク(消したファイルが解放されない)、少なすぎればデータ消失(名前が残るのに実体が解放)。これはファイルシステムに対する参照カウントのアサーション——ガベージコレクタが自分のカウントを検算するのと同じ発想だ。",
+    "file_path": "usr/src/cmd/dcheck.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "dcheck-002-saturating-byte-counter",
+    "text": "ecount = malloc(nfiles+1);   /* one byte per inode (up to 40000) */\n...\necount[kno]++;\nif (ecount[kno] == 0)        /* wrapped 255->0 ? */\n    ecount[kno] = 0377;      /* saturate at 255 instead of lying */",
+    "line_number": 158,
+    "tags": [
+      "unix",
+      "dcheck",
+      "saturation",
+      "memory",
+      "counter"
+    ],
+    "interesting_score": 17,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 3,
+      "emotions": {
+        "insight": 4,
+        "legacy": 3
+      },
+      "technical_context": "The reference counter ecount is one byte per inode -- malloc(nfiles+1), about 40KB even for 40000 inodes. A char tops out at 255. If a count hits 255 and the next ++ wraps to zero, dcheck sets it back to 0377 (255) to saturate. This is a small but honest safeguard: if it silently wrapped to zero, an inode pointed at by 255 names would read as zero references and dcheck would raise a false alarm. Saturating preserves the fact 'very many (>=255)'. pass2 masks with ecount[i]&0377 to match the byte width. Frugal with memory, but the counter refuses to lie.",
+      "human_story": "dcheck counts references in a single byte per file. A byte only reaches 255, so if it would overflow back to zero it pins at 255 instead -- because a count silently flipping to zero would make dcheck cry wolf. Tiny memory, but an honest counter."
+    },
+    "appraiser_note": "参照カウンタ ecount は inode 1個につき1バイト——malloc(nfiles+1)、inode 4万個でも約40KB。char は最大255。カウントが255に達し次の ++ がゼロに巻き戻ったら、dcheck は 0377(255)に戻して飽和させる。小さいが誠実な配慮だ: 黙ってゼロに巻き戻れば、255個の名前から指される inode が『0個』に化け、dcheck が偽の警告を出してしまう。飽和させれば『とても多い(255以上)』という事実は保たれる。pass2 は ecount[i]&0377 とマスクしてバイト幅と辻褄を合わせる。メモリは切り詰めつつ、カウンタは嘘をつかない。",
+    "file_path": "usr/src/cmd/dcheck.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "dcheck-003-raw-device-below-fs",
+    "text": "sync();\nbread((daddr_t)1, (char *)&sblock, sizeof(sblock));   /* block 1 = superblock */\nnfiles = (sblock.s_isize-2)*INOPB;                    /* total inode count */\nl3tol(iaddr, ip->di_addr, NADDR);                     /* 3-byte addrs -> long */\n/* bmap: i<NADDR-3 direct; else iaddr[NADDR-3] single-indirect; i>NINDIR 'huge directory' */",
+    "line_number": 96,
+    "tags": [
+      "unix",
+      "dcheck",
+      "raw-device",
+      "inode",
+      "bmap"
+    ],
+    "interesting_score": 17,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "legacy": 4,
+        "insight": 4
+      },
+      "technical_context": "dcheck uses none of the filesystem abstraction; it reads the raw device and decodes superblock, inodes and block addresses itself. sync() first flushes memory buffers to disk so it inspects the disk's true state. bread reads block 1 (the superblock), and s_isize (inode-area block count) gives the inode total: (s_isize-2)*INOPB. The 3-byte packed disk addresses in di_addr are expanded to longs with l3tol. To read a directory's data it maps logical to physical blocks with bmap: direct blocks for i<NADDR-3, one indirect block via iaddr[NADDR-3] beyond that, and it gives up past NINDIR with 'huge directory' (directories are small). Like icheck and clri, when the filesystem may be broken you can't trust its abstraction -- you walk blocks by hand.",
+      "human_story": "dcheck reads the disk directly, decoding the superblock and inodes itself, after a sync() so it sees the real on-disk state. When the filesystem might be corrupt, you can't use it to inspect itself -- you read the raw blocks."
+    },
+    "appraiser_note": "dcheck はファイルシステムの抽象を使わず、生デバイスを読んでスーパーブロック・inode・ブロックアドレスを自分で解読する。まず sync() でメモリのバッファをディスクへ書き出し、ディスクの実際の姿を検査する。bread でブロック1(スーパーブロック)を読み、s_isize(inode 領域のブロック数)から inode 総数 (s_isize-2)*INOPB を得る。di_addr の3バイト詰めディスクアドレスは l3tol で long に展開。ディレクトリのデータを読むには bmap で論理→物理ブロックを変換する: i<NADDR-3 は直接、それを超えると iaddr[NADDR-3] の単間接、NINDIR を超えると『huge directory』と諦める(ディレクトリは小さい)。icheck や clri と同じく、ファイルシステムが壊れているかもしれない状況ではその抽象を信じられない——ブロックを手で辿る。",
+    "file_path": "usr/src/cmd/dcheck.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "dcheck-004-bad-entries-and-i-flag",
+    "text": "if(kno > nfiles || kno <= 1){            /* entry points outside valid inode range */\n    printf(\"%5u bad; %u/%.14s\\n\", kno, ino, dp->d_name); nerror++; continue;\n}\nfor (k=0; ilist[k] != 0; k++)            /* -i: report names pointing at suspect inodes */\n    if (ilist[k]==kno) printf(\"%5u arg; %u/%.14s\\n\", kno, ino, dp->d_name);",
+    "line_number": 145,
+    "tags": [
+      "unix",
+      "dcheck",
+      "diagnostics",
+      "reverse-lookup",
+      "repair"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 3,
+      "emotions": {
+        "insight": 4,
+        "legacy": 3
+      },
+      "technical_context": "Beyond link-count auditing, dcheck spots plainly broken directory entries: if an entry's target inode kno is out of range (kno > nfiles) or a reserved/impossible value (kno <= 1), it reports it as 'bad' with the directory inode and the name. The -i flag reverses the search: given a list of suspect inode numbers, dcheck reports every directory entry that points at them as 'arg'. This fits the repair workflow -- icheck flags 'inode N is bad', you run dcheck -i N to find the names (paths) referencing N, then rm them or clri N. Going from a number back to a name is what stitches the repair steps together.",
+      "human_story": "dcheck also flags directory entries that point nowhere valid, and with -i it works backwards: tell it a suspect inode number and it finds every name that points there. That's how you turn 'inode 1234 is broken' into 'here are the files to fix'."
+    },
+    "appraiser_note": "リンクカウント監査だけでなく、dcheck は明らかに壊れたディレクトリエントリも見つける: エントリの指す inode kno が範囲外(kno > nfiles)か、あってはならない値(kno <= 1)なら、『bad』としてディレクトリ inode と名前とともに報告する。-i フラグは捜査を逆にする: 疑わしい inode 番号のリストを渡すと、それらを指すディレクトリエントリを残らず『arg』として報告する。これは修復の流れに組み込まれている——icheck が『inode N がおかしい』と告げたら、dcheck -i N で N を指す名前(パス)を突き止め、rm するか clri N する。番号から名前へ遡ることが、修復の段取りを繋ぐ。",
+    "file_path": "usr/src/cmd/dcheck.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]
