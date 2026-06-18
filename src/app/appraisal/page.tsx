@@ -1557,6 +1557,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "253",
+    title: "鑑定書#253 clri — 壊れた inode を生ディスク上で直接ゼロ消去する79行の修復ツール。raw device を open(.., 2) し lseek/read/write でブロックを直接操作＝ファイルシステムの下層で執刀。inode の住所を off=((n-1)/NI+2)*512, j=(n-1)%NI で手計算(dinode=64B, NI=8=INOPB)。二段階の安全装置（第1パスで全引数を検証、一つでも不正なら何も消さず exit、第2パスで初めてゼロ書込）。struct ino { char junk[ISIZE]; } で inode を解釈せず ISIZE バイトをゼロに＝目的をそのまま名前にした潔い命名。icheck(#221)/ncheck(#222)/dumpdir(#244) の「書いて切除する」役",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

@@ -21522,5 +21522,122 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "clri-001-below-the-filesystem",
+    "text": "f = open(argv[1], 2);          /* argv[1] = the raw filesystem device, O_RDWR */\n...\noff = ((n-1)/NI + 2) * (long)512;\nlseek(f, off, 0);\nread(f, (char *)buf, BSIZE);   /* raw blocks: no directories, no paths, no files */",
+    "line_number": 28,
+    "tags": [
+      "unix",
+      "clri",
+      "filesystem",
+      "inode",
+      "raw-device"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "legacy": 4,
+        "insight": 4
+      },
+      "technical_context": "clri doesn't open a file -- it opens the raw device the filesystem lives on, with mode 2 (O_RDWR), and seeks to byte offsets to read and write 512-byte blocks directly. The names open/read/write appear, but the filesystem abstraction beneath them -- directories, path names, files -- is entirely absent. clri works below the filesystem, with blocks and bytes only. That's the point: when a filesystem is corrupt, ordinary file operations no longer work, so a repair tool slips under the abstraction and edits the disk directly. clri opens the device raw because it is the tool you reach for when the normal world is broken.",
+      "human_story": "clri doesn't open a file -- it opens the whole disk device and seeks to raw byte offsets. When the filesystem itself is broken, you can't use normal file operations, so clri goes underneath and edits the disk directly."
+    },
+    "appraiser_note": "clri はファイルを開くのではない——ファイルシステムが載っているデバイスを生のまま、モード 2(O_RDWR)で開き、バイトオフセットに lseek して 512 バイトのブロックを直接読み書きする。open/read/write という名前は出てくるが、その下にあるべきファイルシステムの抽象——ディレクトリ・パス名・ファイル——は一切ない。clri はファイルシステムの下で、ブロックとバイトだけを相手に働く。それが要点だ: ファイルシステムが壊れているとき、普通のファイル操作はもう効かない。だから修復ツールは抽象の層をくぐり、ディスクに直接手を入れる。clri がデバイスを生で開くのは、それが『普通の世界が壊れたとき』に手にする道具だからだ。",
+    "file_path": "usr/src/cmd/clri.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "clri-002-inode-address-math",
+    "text": "off = ((n-1)/NI + 2) * (long)512;   /* byte offset of the block holding inode n */\nj   = (n-1)%NI;                      /* index within that block */\n/* inode numbers start at 1; inode area starts at block 2 (0=boot, 1=superblock).\n   dinode = 64 bytes on 32V, so NI = 512/64 = 8 inodes per block (INOPB=8). */",
+    "line_number": 46,
+    "tags": [
+      "unix",
+      "clri",
+      "inode",
+      "filesystem-layout",
+      "arithmetic"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 4
+      },
+      "technical_context": "clri turns an inode number into a disk address by hand. Inode numbers start at 1, and the inode area begins at block 2 (block 0 is the boot block, block 1 the superblock). A dinode is 64 bytes on 32V, so a 512-byte block holds 8 of them (NI = 512/64 = 8, and the header's INOPB agrees: '8 inodes per block'). So inode n lives in block (n-1)/NI + 2 at slot (n-1)%NI. This one line encodes the physical on-disk layout of the V7/32V filesystem. The dinode itself holds file attributes plus di_addr[40] -- 13 block addresses of 3 bytes each -- but clri never touches those fields. It only needs to know where on disk the inode sits.",
+      "human_story": "clri computes exactly where an inode sits on disk: inodes start at block 2, eight per 512-byte block, so inode n is at block (n-1)/8+2, slot (n-1)%8. One line of arithmetic captures the whole on-disk layout."
+    },
+    "appraiser_note": "clri は inode 番号からディスク上の住所を手で割り出す。inode 番号は 1 から始まり、inode 領域はブロック 2 から始まる(ブロック 0 はブート、1 はスーパーブロック)。dinode は 32V で 64 バイトなので、512 バイトのブロックには 8 個入る(NI = 512/64 = 8、ヘッダの INOPB も『8 inodes per block』)。ゆえに inode n はブロック (n-1)/NI + 2 の、スロット (n-1)%NI にいる。この一行に V7/32V ファイルシステムの物理レイアウトが畳み込まれている。dinode 自体はファイル属性と di_addr[40]——3 バイトのブロックアドレス 13 個——を持つが、clri はそのフィールドに一切触れない。inode がディスクのどこにあるかだけ分かればいい。",
+    "file_path": "usr/src/cmd/clri.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "clri-003-all-or-nothing",
+    "text": "for(i=2; i<argc; i++) {              /* pass 1: validate every arg, test every read */\n    if(!isnumber(argv[i])) { ...; status = 1; continue; }\n    if((n=atoi(argv[i])) == 0) { ...; status = 1; continue; }\n    ... if(read(f, buf, BSIZE) != BSIZE) { ...; status = 1; }\n}\nif(status) exit(status);             /* any failure -> clear NOTHING */\nfor(i=2; i<argc; i++) { ... buf[j].junk[k] = 0; write(f, buf, BSIZE); }  /* pass 2 */",
+    "line_number": 35,
+    "tags": [
+      "unix",
+      "clri",
+      "safety",
+      "two-pass",
+      "destructive"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 4
+      },
+      "technical_context": "clri is dangerous: a wrong inode number erases a live file. So it runs in two passes. Pass 1 only validates -- is each argument a number, is it non-zero, can its block be read -- and sets status on any problem, writing nothing. If status is set, clri exits immediately, clearing nothing. Only when every argument has passed does pass 2 begin: read the block, zero the inode's bytes, write it back, announcing 'clearing N' for each. The discipline is 'don't do half the job': for a destructive operation, act only once you're sure the whole batch is sound. The same instinct as ignoring signals during an in-place rewrite -- make a dangerous write safe.",
+      "human_story": "Because clearing the wrong inode destroys a file, clri checks everything first -- every number, every block read -- and if anything is wrong it quits without changing a thing. Only when the whole batch checks out does it actually start zeroing inodes."
+    },
+    "appraiser_note": "clri は危険だ: 間違った inode 番号は生きたファイルを消す。だから二段階で走る。第 1 パスは検証だけ——各引数が数値か、ゼロでないか、ブロックが読めるか——を確かめ、問題があれば status を立て、一切書き込まない。status が立っていれば clri は即座に exit し、何も消さない。すべての引数が通ったときだけ第 2 パスが始まる: ブロックを読み、inode のバイトをゼロにし、書き戻す——一つずつ『clearing N』と告げながら。規律は『仕事を半分でやめない』: 破壊的な操作は、バッチ全体が健全だと確信できてから手を下す。in-place 書き戻し中にシグナルを封じるのと同じ本能——危険な書き込みを安全にする。",
+    "file_path": "usr/src/cmd/clri.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "clri-004-junk-honest-naming",
+    "text": "#include <sys/ino.h>   /* defines struct dinode: di_mode, di_nlink, di_uid, di_size, di_addr[40]... */\nstruct ino { char junk[ISIZE]; };   /* but clri redeclares it as ISIZE bytes of 'junk' */\n...\nfor(k=0; k<ISIZE; k++)\n    buf[j].junk[k] = 0;             /* zero it end to end, interpreting nothing */",
+    "line_number": 9,
+    "tags": [
+      "unix",
+      "clri",
+      "naming",
+      "inode",
+      "minimalism"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "humor",
+      "emotion_intensity": 4,
+      "emotions": {
+        "humor": 4,
+        "insight": 4,
+        "legacy": 3
+      },
+      "technical_context": "sys/ino.h carefully defines struct dinode with every inode field -- di_mode, di_nlink, di_uid, di_gid, di_size, di_addr[40], the three timestamps. clri #includes it and then never touches a single field. Instead it redeclares the same size (ISIZE = sizeof(struct dinode)) as a block of 'junk' bytes and zeroes them end to end in a for loop. This isn't ignorance, it's honesty. clri's job is not to interpret an inode but to erase it -- and what you're about to destroy needs no name. So: junk. Who owns the file, which blocks it points to, none of it matters to clri; it just zeroes ISIZE bytes. One of those rare Unix variable names that states its purpose plainly.",
+      "human_story": "clri includes the full inode definition, then ignores every field and calls the inode 'junk' -- because it's about to zero it anyway. The honest name says exactly what the tool thinks of the data it's destroying."
+    },
+    "appraiser_note": "sys/ino.h は struct dinode を inode の全フィールド——di_mode, di_nlink, di_uid, di_gid, di_size, di_addr[40], 3 つのタイムスタンプ——で丁寧に定義する。clri はそれを #include しておきながら、フィールドに一度も触れない。代わりに同じ大きさ(ISIZE = sizeof(struct dinode))を『junk バイトの塊』として再宣言し、for ループで端から端までゼロにする。これは無知ではなく潔さだ。clri の仕事は inode を解釈することではなく消去すること——消すものに名前は要らない。だから junk。ファイルの所有者が誰で、どのブロックを指していようと clri には関係ない; ただ ISIZE バイトをゼロにする。目的をそのまま名前にした、Unix のソースに時折現れる正直な変数の一例だ。",
+    "file_path": "usr/src/cmd/clri.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]
