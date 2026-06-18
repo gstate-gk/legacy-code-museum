@@ -22452,5 +22452,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "vpr-001-paper-only-forward",
+    "text": "/* a raster printer's paper only moves forward -- no physical backspace */\ncase '\\b': if (col>0) col--; continue;   /* simulate carriage backspace */\ncase '\\r': col = 0; continue;            /* carriage return */\ncase '\\t': col = (col|07) + 1; continue; /* tab to 8-col stop */\n/* overstrike of _ on a char -> record in ovbuf instead of moving paper */\nif (linebuf[col]=='_') { ov++; ovbuf[2*col]=ovbuf[2*col+1]=0377; }\nlinebuf[col++] = c;",
+    "line_number": 100,
+    "tags": [
+      "unix",
+      "vpr",
+      "versatec",
+      "raster",
+      "overstrike"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 5,
+        "legacy": 4
+      },
+      "technical_context": "Line printers and typewriters make bold and underline by overstriking: print a char, backspace the carriage, print again -- 'A' over 'A' is bold, a char over '_' is underline. That needs paper that can move both ways. The Versatec is an electrostatic raster printer: paper only moves forward, you can't go back to a line you've passed. So vpr does the overstrike in memory. getline faithfully simulates carriage motion -- \\b decrements col, \\r resets col to 0, \\t tabs to 8-column stops -- composing the line in linebuf. When a char and an underscore land on the same column, the collision is recorded in ovbuf (the overlay) instead of being printed by moving paper. The typewriter's mechanical motion becomes a software data structure.",
+      "human_story": "Typewriters made bold and underline by backing up the carriage and printing twice. A raster printer's paper only goes forward, so vpr does the overstrike in memory instead: it simulates the carriage moving, and when two marks land in the same spot it remembers the overlap to paint later."
+    },
+    "appraiser_note": "ラインプリンタやタイプライターは重ね打ちで太字・下線を作る: 文字を打ち、キャリッジを後退させ、もう一度打つ——'A' の上に 'A' で太字、文字の上に '_' で下線。紙を前後に動かせる機械の特権だ。Versatec は静電気式ラスタプリンタ: 紙は前にしか進まず、通り過ぎた行へは戻れない。だから vpr は重ね打ちをメモリの中でやる。getline はキャリッジ運動を忠実に再現する——\\b は col を減らし、\\r は col を0に、\\t は8桁ストップへ——linebuf に一行を組み立てる。文字とアンダースコアが同じ桁に来るとその衝突を、紙を動かす代わりに ovbuf(オーバーレイ)に記録する。タイプライターの機械的運動が、ソフトウェアのデータ構造になる。",
+    "file_path": "usr/src/cmd/vpr.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "vpr-002-print-vs-plot-mode",
+    "text": "while (c = *lp++) putc(c, out);              /* body: print mode (built-in char generator) */\nif (ov) {\n    ioctl(fileno(out), SETSTATE, pltmode);  /* switch to PLOT mode */\n    for (lp=ovbuf; ...) putc(*lp++, out);    /* paint the overstrike as raw dots */\n    ioctl(fileno(out), SETSTATE, prtmode);  /* switch back to PRINT mode */\n}\n/* SETSTATE = ('v'<<8)+1 ; pltmode={0200,0,0}; prtmode={0100,0,0} */",
+    "line_number": 184,
+    "tags": [
+      "unix",
+      "vpr",
+      "versatec",
+      "ioctl",
+      "mode-switch"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 5,
+        "legacy": 4
+      },
+      "technical_context": "The Versatec has two faces, and vpr switches between them line by line. The body text is sent in PRINT mode -- the Versatec's own character generator draws the glyphs from a character code, which is fast and simple. But the overstrike layer (ov) can't be drawn by the character generator: underline and bold are not characters, they're dot patterns. So vpr flushes, calls ioctl(SETSTATE, pltmode) to put the device into PLOT mode (raw raster), streams the ovbuf dots straight through, then ioctl(SETSTATE, prtmode) to return to PRINT mode. SETSTATE = ('v'<<8)+1 is the Versatec-specific ioctl ('v' for Versatec). One device, two personalities -- text printer and dot plotter -- toggled within a single line.",
+      "human_story": "The Versatec can act as a text printer or a dot plotter. vpr uses both within one line: it sends the words in fast text mode using the printer's built-in font, then flips to plot mode to paint the underline as raw dots, then flips back. One machine with two personalities, switched line by line."
+    },
+    "appraiser_note": "Versatec には二つの顔があり、vpr はそれを一行ごとに切り替える。本文は印字モードで送る——Versatec 自身の文字ジェネレータが文字コードから字形を描く、速くて簡単だ。だが重ね打ちの層(ov)は文字ジェネレータには描けない: 下線や太字は『文字』でなくドットの模様だからだ。そこで vpr は flush し、ioctl(SETSTATE, pltmode) でデバイスをプロットモード(生のラスタ)にし、ovbuf のドットをそのまま流し込み、ioctl(SETSTATE, prtmode) で印字モードに戻す。SETSTATE = ('v'<<8)+1 は Versatec 固有の ioctl('v' は Versatec)。一つのデバイスの二つの人格——テキストプリンタとドットプロッタ——を、一行のうちに切り替える。",
+    "file_path": "usr/src/cmd/vpr.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "vpr-003-builtin-bitmap-font",
+    "text": "char chrtab[][16] = {\n  ... 0000,0010,0024,0042,0101,0101,0177,0101,0101,0101,0101, ... /* A */\n};\nbanner(s): for(i=0;i<16;i++){ ... t = chrtab[*sp-' '][i];\n  for(j=7;j>=0;j--) putc(((t>>j)&01)? 'X' : ' ', out); }\n  fprintf(out, ctime(&timeb));   /* timestamp on the burst page */",
+    "line_number": 250,
+    "tags": [
+      "unix",
+      "vpr",
+      "versatec",
+      "font",
+      "bitmap"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "legacy": 4,
+        "insight": 4
+      },
+      "technical_context": "vpr can print a banner -- the big-letter cover page that says whose printout this is -- using a font it carries itself. chrtab[][16] is a bitmap font written straight into the source: one character is 16 bytes, each byte (in octal) a row of 8 dots. banner walks each character of the banner string, reads chrtab[c-' '][i] for each of 16 rows, and expands each bit to 'X' (dot on) or ' ' (off), drawing magnified block letters, then adds a ctime timestamp. From a stack of printouts piling out of a shared printer, the banner is how you find yours -- and vpr assembles those big letters from a font held inside itself.",
+      "human_story": "vpr draws a banner -- a cover page of big block letters naming the job -- from a bitmap font baked right into its source code. Each letter is 16 bytes of dots, expanded into X's and spaces. It's how you spot your own printout in the pile."
+    },
+    "appraiser_note": "vpr は、誰の印刷物かを示すバナー(大きな文字の表紙)を、自前のフォントで描ける。chrtab[][16] はソースに直書きされたビットマップフォント: 一文字16バイト、各バイト(8進)が8ドットの一行。banner はバナー文字列の各文字について chrtab[c-' '][i] を16行分読み、各ビットを 'X'(点あり)/' '(なし)に展開して拡大した角文字を描き、ctime のタイムスタンプを添える。共有プリンタから積み上がる印刷物の山から自分のものを見つける——その大きな文字を、vpr は自分の中に持つフォントから組み上げる。",
+    "file_path": "usr/src/cmd/vpr.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "vpr-004-shared-printer-discipline",
+    "text": "#define EJLINE 63\nif (lineno >= EJLINE) { putline(1); lineno = 0; }     /* eject every 63 lines */\nif (lineno==0 && linebuf[0]==0 && nskipped<3) continue; /* skip up to 3 leading blanks */\n...\nfprintf(out, \"\\004\");   /* EOT terminates the job */\nif (ban && ...) fprintf(out, \"%4d %s\\n\", npages, ban);  /* /usr/adm/vpacct accounting */",
+    "line_number": 60,
+    "tags": [
+      "unix",
+      "vpr",
+      "versatec",
+      "accounting",
+      "spool"
+    ],
+    "interesting_score": 16,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 3,
+      "emotions": {
+        "legacy": 4,
+        "insight": 3
+      },
+      "technical_context": "Behind the raster problem, vpr does the mundane work of running a shared printer. It ejects a page every EJLINE=63 lines (form feed), skips up to 3 leading blank lines so jobs don't waste paper, and sends \\004 (EOT) to terminate the job. And it accounts: if the job had a banner, it appends the page count and banner name to /usr/adm/vpacct, the Versatec billing ledger. Recording who printed how many pages is the unglamorous but essential machinery that lets an expensive shared printer be used fairly by many users -- the same concern lpr and dpr met with spools and daemons.",
+      "human_story": "Beyond the raster tricks, vpr does the housekeeping of a shared printer: eject a page every 63 lines, skip wasteful leading blanks, end the job cleanly, and log how many pages each job used to a billing file. That's how an expensive printer gets shared fairly."
+    },
+    "appraiser_note": "ラスタの問題の陰で、vpr は共有プリンタを運用する地味な仕事をこなす。EJLINE=63行ごとに改ページ(form feed)し、先頭の空行は3つまで飛ばして紙を無駄にせず、\\004(EOT)でジョブを締める。そして課金: バナー付きなら、ページ数とバナー名を /usr/adm/vpacct(Versatec の課金台帳)に追記する。誰が何ページ刷ったかを記録する——高価な共有プリンタを多数のユーザーで公平に使うための、地味だが欠かせない機構だ。lpr や dpr がスプールとデーモンで応えたのと同じ関心である。",
+    "file_path": "usr/src/cmd/vpr.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]

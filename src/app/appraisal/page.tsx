@@ -1613,6 +1613,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "261",
+    title: "鑑定書#261 vpr — Versatec ラスタプリンタ用フィルタ 332行。静電気式で紙は前にしか進まない制約から出発。タイプライターがキャリッジ後退で実現した重ね打ち(太字/下線)を、getline がキャリッジ運動(\\b \\r \\t)を col 操作で再現し _ を軸にした衝突を ovbuf に記録してメモリ内合成。putline は本文を印字モード(内蔵文字ジェネレータ)で、重ね打ち層は ioctl(SETSTATE,pltmode) でプロットモードに落としドットを描き prtmode に戻す＝印字/プロットの二つの顔を行単位で往復。chrtab[][16] の内蔵ビットマップフォントで banner(X/空白拡大+ctime)、EJLINE=63改ページ、/usr/adm/vpacct でページ課金。lpr(#240)/dpr(#251)/opr(#252) の印刷一族のラスタ担当、活字→ドットの転換点",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
