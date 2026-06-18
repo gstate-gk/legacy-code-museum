@@ -1564,6 +1564,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "254",
+    title: "鑑定書#254 sp — 行を横に詰めて紙を節約する75行のフィルタ。冒頭コメント \"Print horizontally as possible, thus saving paper\"。連続紙ラインプリンタ時代の紙節約ツール。tab[8]={8,7,6,5,4,3,2,1} で次タブストップまでの距離を表引き(=8-(p%8))、alen(文字数)/slen(行頭基準の幅)/elen(出力位置基準の幅)を一走査で測り分け、elen+next<len の間タブ区切りで同じ行に継ぎ超えたら改行。tab[next%8]<1 の分岐は到達しない dead branch。pr が整える道具なら sp は詰めて紙を浮かせる道具",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

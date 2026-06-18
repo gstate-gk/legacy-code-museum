@@ -21639,5 +21639,122 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "sp-001-saving-paper",
+    "text": "/*\n * Print horizontally as possible, thus saving paper\n */",
+    "line_number": 1,
+    "tags": [
+      "unix",
+      "sp",
+      "lineprinter",
+      "paper",
+      "filter"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "wistful",
+      "emotion_intensity": 4,
+      "emotions": {
+        "wistful": 4,
+        "legacy": 4
+      },
+      "technical_context": "sp's whole reason to exist is in its first line: 'Print horizontally as possible, thus saving paper.' It takes input that is a column of short lines and packs them side by side, multiple input lines per output line separated by tabs, up to a width (default 80), to use less paper. It's a pre-printing filter for the era of line printers and fanfold paper, when output went to paper by default and paper, ink, and ribbon were finite. Where pr formats output into neat columns, sp just crams it to save sheets. A tiny utility whose purpose -- conserving paper -- is almost meaningless now that output is just pixels.",
+      "human_story": "sp exists to save paper. It takes a tall column of short lines and packs them sideways onto fewer printed lines. In the line-printer era that was a real saving; today, when output is just a screen, the whole purpose has quietly evaporated."
+    },
+    "appraiser_note": "sp の存在理由は一行目にある: 'Print horizontally as possible, thus saving paper'(できる限り横に印刷し、紙を節約する)。短い行が縦に並んだ入力を、幅(既定80桁)に収まる限り横に詰め、複数の入力行をタブ区切りで1出力行に並べて紙の消費を減らす。ラインプリンタと連続紙の時代の、印刷前フィルタだ。出力が既定で紙に行き、紙もインクもリボンも有限だった頃の道具。pr が出力を整然と整える道具なら、sp はとにかく詰めて紙を浮かせる。出力が画素になった今では目的自体がほぼ意味を失った、ささやかなユーティリティである。",
+    "file_path": "usr/src/cmd/sp.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "sp-002-tabstop-table",
+    "text": "int tab[8] = {8,7,6,5,4,3,2,1};   /* distance to next 8-col tab stop = tab[p%8] = 8-(p%8) */\n...\nelen += tab[(next+elen)%8];   /* tab width measured from the output position */\nslen += tab[slen%8];          /* tab width measured from column 0 */",
+    "line_number": 5,
+    "tags": [
+      "unix",
+      "sp",
+      "tab-stop",
+      "lookup-table",
+      "minimalism"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 3
+      },
+      "technical_context": "Packing lines with tabs means constantly asking 'how many columns to the next tab stop?' sp answers with a lookup table instead of arithmetic: tab[p%8] gives the distance, which is 8-(p%8) -- 8 at column 0, 7 at column 1, down to 1 at column 7. The eight possible answers are precomputed into the array tab[8]={8,7,6,5,4,3,2,1}. Tab width is needed all over the program, and the table makes each use a short, readable index instead of a subtraction. A minimal instance of the recurring Unix habit of replacing a computation with data.",
+      "human_story": "To pack lines with tabs you keep asking how far the next tab stop is. sp just looks it up in tab[]={8,7,6,5,4,3,2,1} rather than computing 8-(p%8) each time -- a tiny table standing in for arithmetic."
+    },
+    "appraiser_note": "タブで行を詰めるには『次のタブストップまで何桁か』を絶えず問う必要がある。sp はそれを算術でなく表引きで答える: tab[p%8] が距離を返し、それは 8-(p%8)——位置0で8、位置1で7、位置7で1。その8通りの答えをあらかじめ配列 tab[8]={8,7,6,5,4,3,2,1} に並べておく。タブ幅の計算はプログラム中で何度も要るので、表引きにすると各使用が引き算でなく短く読みやすいインデックスになる。計算をデータに置き換える、Unix の繰り返し現れる癖の最小の実例だ。",
+    "file_path": "usr/src/cmd/sp.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "sp-003-three-lengths",
+    "text": "/* one pass over a line measures three different lengths at once */\nslen=alen=elen=0;\n...\ncase '\\n': if(i==0) continue;   /* skip blank lines */\ncase EOF:   alen=i; return(i);   /* alen = actual char count */\ncase '\\t':  elen += tab[(next+elen)%8];   /* width if appended at output pos */\n            slen += tab[slen%8];           /* width if placed from column 0 */",
+    "line_number": 16,
+    "tags": [
+      "unix",
+      "sp",
+      "tabs",
+      "width",
+      "measurement"
+    ],
+    "interesting_score": 17,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 3,
+      "emotions": {
+        "insight": 4,
+        "legacy": 3
+      },
+      "technical_context": "A line's visible width depends on where you put it: tabs stretch differently from column 3 than from column 0. sp handles this by measuring three lengths in a single pass through the line. alen is the actual byte count in buf[]. slen is the width if the line is placed from column 0. elen is the width if the line is appended at the current output position next. On a tab, elen advances relative to next, slen relative to column 0 -- so the same line is measured both 'standing alone' and 'continued after others' at once. Blank lines (newline at i==0) are skipped. The right length is then used depending on whether the line starts a fresh output row or continues the current one.",
+      "human_story": "How wide a line looks depends on where it sits, because tabs stretch differently. sp measures both at once -- the width from column 0 and the width if tacked onto the current line -- in a single read of the line, and skips blank lines."
+    },
+    "appraiser_note": "行の見た目の幅は置く場所で変わる: タブは位置3から置くのと位置0から置くのとで伸び方が違う。sp はこれを、一行の一度の走査で三つの長さを測ることで捌く。alen は buf[] の実バイト数。slen はその行を位置0から置いたときの幅。elen は現在の出力位置 next に継いだときの幅。タブに出会うと elen は next 基準、slen は位置0基準で伸びる——同じ行を『単独で置くとき』と『他の後ろに継ぐとき』の両方で同時に測る。空行(i==0 の改行)はスキップ。その後、行が新しい出力行を始めるか現在の行を継ぐかで、適切な長さが使い分けられる。",
+    "file_path": "usr/src/cmd/sp.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "sp-004-pack-loop-and-dead-branch",
+    "text": "if(elen+next>=len) { clean(); next=slen; putit(0); }   /* overflow: newline, restart */\nelse               { next += elen; putit(ntab); }     /* fits: continue same line */\n...\nelse if(tab[next%8]<1) { ntab=2; ... }   /* tab[] is always 1..8, so NEVER taken */",
+    "line_number": 55,
+    "tags": [
+      "unix",
+      "sp",
+      "loop",
+      "dead-code",
+      "archaeology"
+    ],
+    "interesting_score": 17,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 3,
+      "emotions": {
+        "legacy": 3,
+        "humor": 3,
+        "insight": 3
+      },
+      "technical_context": "The main loop packs lines horizontally: next is the current output column. If appending the new line (elen+next) reaches the width len, it overflows -- clean() emits a newline, next resets to slen, and putit(0) places the line with no leading tab. Otherwise it fits: next += elen and putit(ntab) tacks it on after a separating tab. putit prints tabs then the chars with no newline, so lines keep flowing onto the same physical row; only clean() ever ends a row. There's a curiosity too: the branch 'else if(tab[next%8]<1)' can never run, because every tab[] value is between 1 and 8, so the condition is always false -- the ntab=2 arm is dead code. Excavating old code turns up these unreachable spare branches and conditions that lost their meaning when something else changed.",
+      "human_story": "sp keeps tacking lines onto the same printed row until they'd pass the width, then starts a new row. Tucked in the loop is a branch that can never run -- a leftover condition that's always false. Old code is full of these quiet dead ends."
+    },
+    "appraiser_note": "メインループは行を横に詰める: next は現在の出力桁。新しい行を継いだ幅(elen+next)が上限 len に達すると溢れ——clean() が改行を出し、next を slen にリセットし、putit(0) が先頭タブなしで置く。収まれば next += elen で進め putit(ntab) が区切りタブの後に継ぐ。putit はタブと文字を出すが改行はしないので、行は同じ物理行に流れ続け、改行は clean() だけが打つ。そして奇妙な点: 'else if(tab[next%8]<1)' の枝は決して実行されない——tab[] の値は常に1〜8なので条件は恒偽、ntab=2 の腕は dead code だ。古いコードを発掘すると、こうした到達しない予備の枝や、何かが変わって意味を失った条件に出会う。",
+    "file_path": "usr/src/cmd/sp.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]
