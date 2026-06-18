@@ -1585,6 +1585,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "257",
+    title: "鑑定書#257 mvall — 複数の通常ファイルをディレクトリへ移す64行。移動の本体は持たず、ファイルごとに fork して /bin/mv(#143) を execl(逐次 wait)＝既存ツールを呼んで新ツールを組む組み合わせ哲学。filetype() が stat の st_mode & S_IFMT で種類判定(宛先=S_IFDIR/ソース=S_IFREG)、不適格は飛ばして続行(部分成功)。\"宛先/.\" を while(*c1++=*c2++)+c1[-1]='/' で組み立て、ディレクトリ検査と mv の移動先を兼ねる。prs は write(2,...) を一文字ずつ(stdio不使用)。opr(#252) と同じ組み合わせ哲学の小例",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

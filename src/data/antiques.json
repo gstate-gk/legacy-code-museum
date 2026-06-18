@@ -21988,5 +21988,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "mvall-001-delegate-to-mv",
+    "text": "for(i=1; i<argc; i++) {\n    if(filetype(argv[i]) != S_IFREG) { prs(argv[i]); prs(\" is not an ordinary file.\\n\"); }\n    else if(fork() == 0) { execl(\"/bin/mv\", \"mv\", argv[i], dirname, 0); exit(1); }\n    else wait(&status);\n}",
+    "line_number": 30,
+    "tags": [
+      "unix",
+      "mvall",
+      "fork",
+      "exec",
+      "composition"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 3
+      },
+      "technical_context": "mvall moves multiple files into a directory, but contains no move logic at all. For each source it fork()s and the child execl()s /bin/mv; the parent wait()s, so files move one at a time. This is the Unix composition philosophy in miniature: rather than reimplement moving, mvall builds the new 'move many into a dir' tool by calling the existing mv once per file. What mvall owns is only the part mv doesn't do -- deciding which files are eligible to move.",
+      "human_story": "mvall is a 'move several files into a folder' tool that never moves anything itself -- it just runs /bin/mv once per file. The new tool is built by orchestrating the old one, not by rewriting it."
+    },
+    "appraiser_note": "mvall は複数のファイルをディレクトリへ移すが、移動のロジックは一切持たない。各ソースについて fork し、子が /bin/mv を execl する; 親は wait するので一ファイルずつ移る。これは Unix の組み合わせ哲学そのものだ: 移動を作り直すのではなく、既にある mv をファイルの数だけ呼び出して『まとめて移す』新ツールを組む。mvall が引き受けるのは、mv がやらない部分——どれを移してよいかの判断——だけである。",
+    "file_path": "usr/src/cmd/mvall.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "mvall-002-sifmt-typecheck",
+    "text": "filetype(filename) char *filename; {\n    struct stat buf;\n    if(stat(filename,&buf) < 0) return(-1);\n    else return(buf.st_mode & S_IFMT);   /* extract just the file-type bits */\n}\n/* S_IFMT=0170000 mask; S_IFREG=0100000 regular; S_IFDIR=0040000 directory */",
+    "line_number": 36,
+    "tags": [
+      "unix",
+      "mvall",
+      "stat",
+      "st_mode",
+      "filetype"
+    ],
+    "interesting_score": 17,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 3,
+      "emotions": {
+        "insight": 4,
+        "legacy": 3
+      },
+      "technical_context": "mvall only moves ordinary files. It decides this straight from the inode's mode: filetype() stat()s the file and returns st_mode & S_IFMT, isolating just the type bits. st_mode packs both permissions (read/write/execute) and type (directory, regular, device) into one integer; S_IFMT (0170000) masks out the type portion. If the result isn't S_IFREG (0100000) the file is skipped with a message -- but the loop continues, so one ineligible file doesn't abort the rest. One stat() and one bitmask is the whole type test, because the filesystem already encodes type in st_mode.",
+      "human_story": "mvall moves only regular files, and it tells what's a regular file by masking the type bits out of the inode's mode -- one stat and one bitwise AND. Anything that isn't a plain file is skipped with a note, and the rest still move."
+    },
+    "appraiser_note": "mvall が移すのは通常ファイルだけだ。その判定を inode のモードから直接取り出す: filetype() は stat して st_mode & S_IFMT を返し、種類のビットだけを抜き出す。st_mode はパーミッション(読み書き実行)と種類(ディレクトリ・通常・デバイス)を一つの整数に詰め込んでおり、S_IFMT(0170000) はそのうち種類の部分を取り出すマスクだ。結果が S_IFREG(0100000) でなければメッセージを出して飛ばす——だがループは続くので、不適格が一つあっても残りは諦めない。stat 一回とビットマスク一つが種類判定の全体だ。ファイルシステムが st_mode に種類を埋め込んでいるおかげである。",
+    "file_path": "usr/src/cmd/mvall.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "mvall-003-slash-dot-trick",
+    "text": "c1 = dirname; c2 = argv[argc];\nwhile(*c1++ = *c2++);   /* copy dest name incl. the terminating NUL */\nc1[-1] = '/';           /* overwrite that NUL with '/' */\nc1[0] = '.'; c1[1] = '\\0';   /* append '.' -> \"dest/.\" */\nif(filetype(dirname) != S_IFDIR) { prs(dirname); prs(\" is not a directory.\\n\"); exit(1); }",
+    "line_number": 16,
+    "tags": [
+      "unix",
+      "mvall",
+      "path",
+      "directory",
+      "pointer"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 4
+      },
+      "technical_context": "Before moving anything, mvall checks the destination really is a directory by appending '/.' to its name. while(*c1++=*c2++) copies the dest name including the terminating NUL, leaving c1 one past that NUL; c1[-1]='/' overwrites the NUL, then c1[0]='.' and c1[1]='\\0' append the dot, yielding \"dest/.\". That single string serves two purposes: stat'ing \"dest/.\" and checking S_IFDIR verifies it's a directory (else exit before moving anything), and the same \"dest/.\" is handed to /bin/mv as the destination, where 'mv file dest/.' means 'into this directory'. Check the destination before you start -- the natural caution before a destructive batch.",
+      "human_story": "mvall tacks '/.' onto the destination name -- by hand, rewriting the string's end byte -- then uses that one string both to verify the target is really a directory and as the place to move files into. It checks the destination before moving a single file."
+    },
+    "appraiser_note": "何かを移す前に、mvall は宛先の名前に '/.' を継ぎ足して本当にディレクトリかを確かめる。while(*c1++=*c2++) が宛先名を終端 NUL まで含めてコピーし、c1 はその NUL の1つ後ろを指す; c1[-1]='/' が NUL を上書きし、c1[0]='.'、c1[1]='\\0' で '.' を継ぎ足して \"宛先/.\" を作る。この一つの文字列が二役を兼ねる: \"宛先/.\" を stat して S_IFDIR を確かめれば、それがディレクトリだと検査でき(でなければ何も移さず終了)、同じ \"宛先/.\" を /bin/mv の移動先に渡すと 'mv file 宛先/.' は『このディレクトリの中へ』を意味する。移し始める前に行き先を確かめる——破壊的なバッチの前の当然の用心だ。",
+    "file_path": "usr/src/cmd/mvall.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "mvall-004-prs-minimal-stderr",
+    "text": "prs(s) register char *s; {\n    while(*s)\n        write(2, s++, 1);   /* one byte at a time to stderr, no stdio */\n}",
+    "line_number": 55,
+    "tags": [
+      "unix",
+      "mvall",
+      "stderr",
+      "minimalism",
+      "write"
+    ],
+    "interesting_score": 16,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 3,
+      "emotions": {
+        "legacy": 3,
+        "insight": 3
+      },
+      "technical_context": "Even the error output is kept tiny. prs() (print string) uses neither fprintf nor puts; it just writes the string one byte at a time with write(2, s++, 1) to standard error. No stdio buffering, no format machinery. A 64-line program doesn't need printf's heavy apparatus to say 'not a directory' -- looping write over the characters is enough. Everything in mvall is in this register: delegate the move to mv, tell type with one S_IFMT mask, emit errors with one write.",
+      "human_story": "mvall prints its error messages by writing one character at a time to standard error -- no printf, no buffering. A tiny tool keeps even its complaints tiny."
+    },
+    "appraiser_note": "エラー出力すら徹底して小さい。prs()(print string) は fprintf も puts も使わず、write(2, s++, 1) で文字列を一バイトずつ標準エラーへ書くだけ。stdio のバッファも書式整形もない。64行のプログラムに『not a directory』と告げるための printf の重い機構は要らない——文字数だけ write を繰り返せば足りる。mvall のすべてがこの調子だ: 移動は mv に任せ、種類は S_IFMT 一つで見分け、エラーは write 一つで吐く。",
+    "file_path": "usr/src/cmd/mvall.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]
