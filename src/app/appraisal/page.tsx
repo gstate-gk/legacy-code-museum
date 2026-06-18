@@ -1599,6 +1599,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "259",
+    title: "鑑定書#259 diffh — 巨大ファイル用の倹約 diff 262行＝diff -h(half-hearted) の実体。本家 diff(#66, Hunt-McIlroy で最小差分だが全ファイルをメモリに載せる)に対し、各ファイル最大 RANGE=30 行の窓だけをスライドさせメモリ一定で無制限長を処理。getl で読み足し clrl で確定済みを捨て前詰め(読む・比べる・捨てる)。easysynch が C=3 行連続一致を両方向で探して再同期(1行一致は偶然、3行連続なら構造的同期の賭け)、窓を超えるズレは hardsynch で \"can't resynchronize\" と正直に降参。出力は本家と同じ ed スクリプト(< / > / --- / 範囲ヘッダ)、\"-\"=stdin/ディレクトリ引数も互換。最適性 vs メモリのトレードオフでメモリを選んだ倹約家の兄弟",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

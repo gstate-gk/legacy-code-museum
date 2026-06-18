@@ -22220,5 +22220,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "diffh-001-sliding-window",
+    "text": "#define RANGE 30\nchar *text[2][RANGE];       /* at most 30 lines of each file in memory */\nlong lineno[2] = {1, 1};    /* line number of the first stored line */\n...\nclrl(f,n): j=n-lineno[f]+1; for(i=0;i+j<ntext[f];i++) movstr(text[f][i+j],text[f][i]);\n/* getl reads one more line; clrl drops settled lines and slides the window forward */",
+    "line_number": 6,
+    "tags": [
+      "unix",
+      "diffh",
+      "diff",
+      "memory",
+      "streaming"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 5,
+        "legacy": 4
+      },
+      "technical_context": "diffh is the implementation of 'diff -h' -- the half-hearted diff for files of unlimited length. Where the real diff (Hunt-McIlroy) loads both whole files to compute a minimal edit, diffh keeps at most RANGE=30 lines of each file in a small window. getl(f,n) returns line n: if it's in the window it returns text[f][delta], if it's the next line it fgets one more (malloc(LEN+1)), and anything outside the window is a progerr -- it never reaches past the window. clrl(f,n) drops lines that are settled (matched or already emitted), shifting the rest forward with movstr and advancing lineno. Read, compare, drop: the window stays within 30 lines, so memory is constant no matter how large the files. The exact opposite of diff holding everything.",
+      "human_story": "diffh never loads the whole file. It slides a 30-line window over each file: read a line, compare it, and once a line is settled, throw it away. Memory stays flat however huge the files are -- the frugal opposite of the real diff."
+    },
+    "appraiser_note": "diffh は 'diff -h'——無制限長のファイル用の不熱心(half-hearted)な diff——の実体だ。本家 diff(Hunt-McIlroy)が両ファイルを丸ごと載せて最小編集を計算するのに対し、diffh は各ファイル最大 RANGE=30 行の小さな窓しか持たない。getl(f,n) は n 行目を返す: 窓内なら text[f][delta]、次の行なら fgets で1行読み足し(malloc(LEN+1))、窓外は progerr——窓の外へは決して手を伸ばさない。clrl(f,n) は確定した行(一致か出力済み)を捨て、残りを movstr で前詰めし lineno を進める。読む・比べる・捨てる: 窓は30行以内に保たれ、ファイルがどれだけ大きくてもメモリは一定。全体を抱える diff の正反対だ。",
+    "file_path": "usr/src/cmd/diffh.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "diffh-002-resync-on-3-matches",
+    "text": "#define C 3\neasysynch():\n  for(i=j=1; i<RANGE && j<RANGE; i++,j++) {\n    for(k=C-1;k<j;k++){ for(m=0;m<C;m++) if(cmp(getl(0,n0+i-m),getl(1,n1+k-m))!=0) goto cont1;\n                        return(output(i-C,k-C)); cont1:; }   /* 3 lines in a row match -> resynced */\n    ... (symmetric search for the other direction) ...\n  }\n  return(0);   /* nothing found within the window */",
+    "line_number": 120,
+    "tags": [
+      "unix",
+      "diffh",
+      "diff",
+      "heuristic",
+      "resync"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 5,
+        "legacy": 4
+      },
+      "technical_context": "When two lines differ, diffh calls easysynch -- its heart. It widens its search forward within the window (up to RANGE lines) looking for a point where C=3 lines match in a row. Shifting file0 by i and file1 by k, if three consecutive lines all match, it declares the two files resynchronized there and reports output(i-C, k-C). It searches both directions symmetrically (a run inserted into file0, or into file1). C=3 is the gamble: a single matching line happens by chance (blank lines, common lines), but three in a row is very likely a real realignment. diffh gives up optimality and bets on this rule of thumb -- that's exactly what 'half-hearted' means. If it scans the whole window without finding three in a row, it returns 0.",
+      "human_story": "When lines stop matching, diffh looks ahead in its window for three matching lines in a row -- its sign that the files are back in step. One matching line could be luck; three in a row almost never is. It bets on that rule instead of computing the perfect answer."
+    },
+    "appraiser_note": "二行が食い違うと diffh は easysynch を呼ぶ——その心臓だ。窓の中(最大 RANGE 行)を前方へ広げ、C=3 行が連続して一致する地点を探す。ファイル0を i、ファイル1を k ずらした位置で3行が揃って一致すれば、そこで再同期したとみなし output(i-C, k-C) を報告する。両方向(file0 への挿入/file1 への挿入)を対称に探す。C=3 が賭けの肝だ: 1行の一致は偶然起こる(空行やよくある行)が、3行連続なら本当に揃い直した可能性が高い。diffh は最適性を捨て、この経験則に賭ける——それが『不熱心(half-hearted)』の意味だ。窓を探し尽くして3行連続が無ければ 0 を返す。",
+    "file_path": "usr/src/cmd/diffh.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "diffh-003-honest-give-up",
+    "text": "if(!easysynch() && !hardsynch()) progerr(\"5\");\n...\nhardsynch() {   /* stub for resynch beyond the limits of the text buffer */\n    change(n0,INF,n1,INF,\"c\");\n    printf(\"---change record omitted\\n\");\n    error(\"can't resynchronize\",\"\");\n}",
+    "line_number": 240,
+    "tags": [
+      "unix",
+      "diffh",
+      "diff",
+      "limit",
+      "honesty"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "legacy": 4,
+        "insight": 4
+      },
+      "technical_context": "If easysynch scans the whole 30-line window without finding three matching lines, it returns 0, and hardsynch is called. hardsynch simply surrenders: it prints that everything from here changed, writes '---change record omitted', says 'can't resynchronize' and exits. Its own comment admits it's a stub. A divergence wider than the window is beyond diffh's reach. This isn't weakness, it's design honesty. diffh is explicitly for files where changes are short and well separated; a difference too large to fit the 30-line window is out of scope, so rather than emit a wrong diff it states plainly that it can't and steps back. The honest boundary of a tool that traded completeness for constant memory.",
+      "human_story": "If the gap is wider than its 30-line window, diffh doesn't guess -- it says 'can't resynchronize' and quits. That's not a bug; it's a tool that knows its limits and admits them rather than print a wrong answer."
+    },
+    "appraiser_note": "easysynch が30行の窓を探し尽くして3行連続一致を見つけられなければ 0 を返し、hardsynch が呼ばれる。hardsynch は潔く降参する: ここから先がまるごと変わったと告げ、'---change record omitted' と書き、'can't resynchronize' と言って終了する。コメント自身が stub(仮実装)と認めている。窓を超えるズレは diffh の手に余る。これは弱さでなく設計上の正直さだ。diffh は変更箇所が短くよく離れているファイルのための道具だと割り切っている; 30行の窓に収まらない大きな食い違いは守備範囲外なので、誤った差分を出すより『できない』と明言して退く。完全性を一定メモリと引き換えにした道具の、誠実な境界線だ。",
+    "file_path": "usr/src/cmd/diffh.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "diffh-004-same-face-as-diff",
+    "text": "output(): printf(\"< %s\",s);  ... printf(\"---\\n\");  ... printf(\"> %s\",s);  /* ed-script, like diff */\nrange(): \"%ld,%ld\"  (e.g. 5,7c8,10)\ndopen(): if(cmp(f1,\"-\")==0) return(stdin);            /* '-' = stdin */\n         if((statbuf.st_mode&S_IFMT)==S_IFDIR) ...      /* dir arg -> dir/basename(other) */",
+    "line_number": 150,
+    "tags": [
+      "unix",
+      "diffh",
+      "diff",
+      "ed-script",
+      "compatibility"
+    ],
+    "interesting_score": 17,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 3,
+      "emotions": {
+        "insight": 4,
+        "legacy": 3
+      },
+      "technical_context": "Different engine, same face. diffh emits the same ed-script output as the real diff: range headers like 5,7c8,10, '<' for deleted lines, '>' for added, '---' as the separator. So when a file is too big and diff switches to diffh, users and downstream tools (feeding the script to ed, etc.) never notice the difference. Its input conventions match diff too: dopen treats '-' as stdin, and a directory argument as 'the file of the same name inside that directory' (the classic 'diff dir file'), using stat's S_IFMT the same way mvall does. Frugal inside, but indistinguishable from diff outside -- consistency of the tool's interface across two very different engines.",
+      "human_story": "diffh prints exactly the same diff output as the real diff -- same <, >, ---, and line ranges -- and takes '-' for stdin and directory arguments the same way. So switching to it for huge files is invisible: same tool on the outside, different engine within."
+    },
+    "appraiser_note": "エンジンは違っても顔は同じ。diffh は本家 diff と同じ ed スクリプトを吐く: 5,7c8,10 のような範囲ヘッダ、削除行の '<'、追加行の '>'、区切りの '---'。だから巨大ファイルで diff が diffh に切り替わっても、ユーザーや下流のツール(ed スクリプトとして食わせる等)は違いに気づかない。入力作法も diff 譲りだ: dopen は '-' を標準入力、ディレクトリ引数を『そのディレクトリ内の相手と同じ名前のファイル』(定番の diff dir file)として扱い、mvall と同じく stat の S_IFMT を使う。中身は倹約家でも外から見れば diff と区別できない——まったく異なるエンジンをまたいで、道具のインターフェースの一貫性が保たれている。",
+    "file_path": "usr/src/cmd/diffh.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]
