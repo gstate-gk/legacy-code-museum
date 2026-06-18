@@ -1627,6 +1627,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "263",
+    title: "鑑定書#263 update — 30秒ごとに sync(2) を打つ Unix の心臓 36行。Unix は書き込みをバッファキャッシュに溜める(遅延書き込み)ので、クラッシュ時の損失を~30秒に抑えるため update が定期的に sync を呼ぶ常駐デーモン。init の rc から起動。fork→親exit+close(0/1/2) でデーモン化、dosync が sync→signal(SIGALRM,dosync)→alarm(30) で自己再武装(当時の signal はハンドラがリセットされるので再登録必須)、main は for(;;)pause()。/bin・/usr・/usr/bin を open して fd 保持しキャッシュに常連を温める。man の BUGS=sync 中の CPU 停止+DEC の NPR(DMA)失敗ゼロ書き込みで FS 破損、回避案は時刻30秒前倒し。sync(#123) の定期版、bdflush/pdflush/カーネル writeback の祖",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

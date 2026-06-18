@@ -22685,5 +22685,122 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "update-001-the-heartbeat",
+    "text": "/*\n * Update the file system every 30 seconds.\n * For cache benefit, open certain system directories.\n */\n/* man: executes the sync(2) primitive every 30 seconds, so the file system\n   is fairly up to date in case of a crash. run from the init rc file. */",
+    "line_number": 1,
+    "tags": [
+      "unix",
+      "update",
+      "sync",
+      "daemon",
+      "filesystem"
+    ],
+    "interesting_score": 19,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 5,
+        "legacy": 4
+      },
+      "technical_context": "Unix doesn't write to disk immediately. For speed, writes are buffered in the cache and flushed later -- which is fast, but if power is lost before 'later' arrives, the buffered writes are gone. update is the 36-line daemon that forces 'later' to come every 30 seconds: it calls sync() on a timer, bounding crash loss to about 30 seconds. It's the bargain at the heart of Unix I/O -- cache everything for speed, yet survive a crash -- kept by one tiny daemon started from init's rc file. sync(1) is the one-shot 'flush now'; update is the heartbeat that repeats it.",
+      "human_story": "Unix caches disk writes and flushes them later, which is why it's fast -- but a crash loses whatever hasn't been flushed. update is the little daemon that flushes every 30 seconds, so you never lose more than half a minute. It's the heartbeat that makes Unix's aggressive caching safe to use."
+    },
+    "appraiser_note": "Unix はディスクへすぐには書かない。速度のため書き込みはキャッシュに溜め後で流す——速いが、その『後で』の前に電源が落ちれば溜めた書き込みは消える。update はその『後で』を30秒ごとに来させる36行のデーモンだ: タイマーで sync() を呼び、クラッシュ時の損失を約30秒に抑える。Unix の I/O の核心の取り引き——すべてをキャッシュして速く、しかしクラッシュにも耐える——を、init の rc から起動される小さなデーモン一つが支える。sync(1) が一回の『今すぐ吐き出せ』なら、update はそれを繰り返す鼓動だ。",
+    "file_path": "usr/src/cmd/update.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "update-002-daemonize",
+    "text": "if(fork())\n    exit(0);          /* parent leaves; child is reparented to init */\nclose(0); close(1); close(2);   /* sever the terminal */\n...\nfor(;;) pause();      /* live in the background forever */",
+    "line_number": 14,
+    "tags": [
+      "unix",
+      "update",
+      "daemon",
+      "fork",
+      "background"
+    ],
+    "interesting_score": 17,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 3,
+      "emotions": {
+        "legacy": 4,
+        "insight": 3
+      },
+      "technical_context": "On startup, update makes itself a daemon. fork(), and the parent (nonzero return) exits immediately; the surviving child loses its parent, is adopted by init, and lives on detached from the shell that launched it. Then it closes fds 0/1/2 to cut all ties to a terminal. Unlike atrun or lpd, which daemonized briefly to run a job, update is born to run forever -- background-resident for as long as the machine is powered. The minimal daemon recipe (fork, parent exit, close std fds, loop forever) in a few lines.",
+      "human_story": "update turns itself into a background daemon at startup: it forks, the parent quits, and the child detaches from the terminal to run forever. Unlike job-runners that daemonize briefly, update is meant to live for the whole uptime of the machine."
+    },
+    "appraiser_note": "起動時、update は自分をデーモンに仕立てる。fork() して親(戻り値≠0)は即 exit、残った子は親を失い init の養子となり、起動したシェルから切り離されて生き続ける。続けて fd 0/1/2 を close し端末との縁を断つ。ジョブを実行するため一時的にデーモン化した atrun や lpd と違い、update は永遠に動くために生まれている——マシンの電源が入っている限り背景に常駐する。最小のデーモンの定石(fork・親exit・標準fd close・永久ループ)が数行に。",
+    "file_path": "usr/src/cmd/update.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "update-003-self-rearming-alarm",
+    "text": "dosync()\n{\n    sync();\n    signal(SIGALRM, dosync);   /* re-install itself (signals reset on delivery back then) */\n    alarm(30);                 /* wake in 30s */\n}\n/* main: dosync(); for(;;) pause();  -- sleep, woken every 30s by SIGALRM */",
+    "line_number": 29,
+    "tags": [
+      "unix",
+      "update",
+      "signal",
+      "alarm",
+      "timer"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 4
+      },
+      "technical_context": "The 30-second heartbeat is built not from a sleep loop but from a self-rearming signal. dosync() flushes with sync(), then installs itself as the SIGALRM handler and sets alarm(30), and returns. Thirty seconds later SIGALRM fires, dosync runs again -- flush, re-arm, return -- like a clockwork that rewinds its own spring each time it rings. main just calls dosync() once and then for(;;) pause(), sleeping until a signal forever. (Under the era's unreliable-signal semantics the handler reset to default on each delivery, so re-installing it inside the handler wasn't just style -- it was required.) A timer made from the plainest signal primitives.",
+      "human_story": "update keeps its 30-second beat with a self-rearming alarm rather than a sleep loop: each time the alarm rings, the handler flushes the disk and sets the next alarm. The main program just sleeps forever, woken every 30 seconds. A clock that rewinds itself."
+    },
+    "appraiser_note": "30秒の鼓動は、スリープループではなく自己再武装するシグナルで作られる。dosync() は sync() で吐き出したあと、SIGALRM ハンドラに自分自身を登録し alarm(30) を仕掛けて戻る。30秒後に SIGALRM が鳴り dosync がまた走る——吐き出し、再武装、戻る——鳴るたびに自分でゼンマイを巻き直す手巻き時計のように。main は dosync() を一度呼んでから for(;;) pause() で永久に眠り、シグナルで起こされる。(当時の unreliable signal 仕様ではハンドラが配送ごとにデフォルトへ戻るので、ハンドラ内での再登録は様式でなく必須だった。)最も素朴なシグナル原語で作った時計だ。",
+    "file_path": "usr/src/cmd/update.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "update-004-bugs-dec-hardware",
+    "text": "char *fillst[] = { \"/bin\", \"/usr\", \"/usr/bin\", 0 };\nfor(f = fillst; *f; f++) open(*f, 0);   /* hold dirs open -> keep inodes hot in cache */\n/* BUGS(man): halting the CPU just as sync runs can damage the fs, partly because DEC\n   hardware writes zeros when an NPR (DMA) request fails. */",
+    "line_number": 7,
+    "tags": [
+      "unix",
+      "update",
+      "cache",
+      "hardware",
+      "pdp-11"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "wistful",
+      "emotion_intensity": 4,
+      "emotions": {
+        "wistful": 4,
+        "legacy": 4,
+        "insight": 3
+      },
+      "technical_context": "update has a second job, noted in its opening comment: 'For cache benefit, open certain system directories.' It opens /bin, /usr, /usr/bin and never closes them. Holding those fds open keeps each directory's inode referenced ('in use'), so it resists eviction from the buffer cache -- and since update lives for the whole uptime, the most-traversed directories stay hot, speeding path lookups. A flushing daemon that also pins the cache's regulars. And the man page's BUGS section is haunting: if the CPU is halted exactly as sync runs, the filesystem can be damaged -- partly because DEC hardware writes zeros when an NPR (Non-Processor Request, i.e. DMA bus transfer) fails. The proposed fix is to have sync(1) bump the system clock 30s to trigger update early and earn a 30-second grace window before halting. Under the 36-line daemon lie the physics of spinning disks, DEC bus transfers, and the perilous edge of shutdown.",
+      "human_story": "update also keeps the busiest directories cached by holding them open. And its manual's BUGS note is memorable: stopping the machine at the exact instant of a sync can corrupt the disk, because the DEC hardware writes zeros when a DMA transfer fails -- a glimpse of 1979 hardware showing through the software."
+    },
+    "appraiser_note": "update には二つ目の仕事があり、冒頭コメントに記される: 'For cache benefit, open certain system directories'。/bin・/usr・/usr/bin を open し、閉じない。その fd を握りっぱなしにすると各ディレクトリの inode が『使用中』として参照され、バッファキャッシュから追い出されにくくなる——update はマシンの生きている限り常駐するので、最も通るディレクトリが温かいまま保たれ、パス解決が速くなる。吐き出すデーモンが、キャッシュの常連も留めておく。そして man の BUGS は忘れがたい: sync 実行のまさにその瞬間に CPU を止めるとファイルシステムが壊れることがある——一因は、DEC ハードが NPR(Non-Processor Request、つまり DMA バス転送)に失敗したときゼロを書き込むこと。回避案は sync(1) にシステム時刻を30秒進めさせ update を前倒し誘発し、止める前に30秒の猶予を作ること。36行のデーモンの下に、回るディスク・DEC のバス転送・シャットダウンの危うい際の物理がある。",
+    "file_path": "usr/src/cmd/update.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]
