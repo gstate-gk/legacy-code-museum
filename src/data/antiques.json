@@ -22336,5 +22336,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "ar11-001-why-pdp11-format",
+    "text": "/* ar11 - archiver for PDP-11 formatted archives */\n...\nif (read(af,(char *)&mbuf,sizeof(short)) != sizeof(short) || mbuf!=ARMAG) {\n    fprintf(stderr, \"ar11: %s not in PDP-11 archive format\\n\", arnam);\n    done(1);\n}",
+    "line_number": 2,
+    "tags": [
+      "unix",
+      "ar11",
+      "pdp-11",
+      "vax",
+      "interop"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "legacy": 4,
+        "insight": 4
+      },
+      "technical_context": "In 1979 Bell Labs ran two kinds of machine side by side: the long-serving 16-bit PDP-11 and the new 32-bit VAX (32V is its Unix). Archives -- ar libraries and data -- had to move between them, but the ordinary ar produces VAX-native archives a PDP-11 can't read, and vice versa. ar11 bridges that: running on the VAX, it reads and writes archives in PDP-11 format. Its error 'not in PDP-11 archive format' states its whole purpose. Where arcv bridged a version gap (6th->7th edition format), ar11 bridges an architecture gap (PDP-11 <-> VAX).",
+      "human_story": "Bell Labs in 1979 had both old 16-bit PDP-11s and new 32-bit VAXes, and files had to pass between them. ar11 is the VAX tool that reads and writes archives in the PDP-11's format, so the two machines can share their libraries."
+    },
+    "appraiser_note": "1979年の Bell Labs には二種類の計算機が同居していた: 長年の主力 16ビット PDP-11 と、新しい 32ビット VAX(32V はその Unix)。アーカイブ——ar のライブラリやデータ——は両者を行き来する必要があったが、通常の ar が作るのは VAX ネイティブで PDP-11 は読めず、逆も同じ。ar11 はそれを橋渡しする: VAX 上で動きながら PDP-11 形式のアーカイブを読み書きする。エラー 'not in PDP-11 archive format' が存在理由をそのまま語る。arcv が版の断絶(第6版→第7版)を埋めたのに対し、ar11 は機種の断絶(PDP-11↔VAX)を埋める。",
+    "file_path": "usr/src/cmd/ar11.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "ar11-002-split-long-header",
+    "text": "#define ARMAG -155  /* 017545 (should be 0177545) */\nstruct ar_hdr {\n    char ar_name[14];\n    short ar_date1; short ar_date2;   /* a 32-bit date as two 16-bit shorts */\n    char ar_uid; char ar_gid;\n    short ar_mode;                    /* mode is a short (16-bit), not int */\n    short ar_size1; short ar_size2;   /* a 32-bit size as two 16-bit shorts */\n};",
+    "line_number": 8,
+    "tags": [
+      "unix",
+      "ar11",
+      "pdp-11",
+      "header",
+      "16-bit"
+    ],
+    "interesting_score": 18,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 4,
+      "emotions": {
+        "legacy": 4,
+        "insight": 4
+      },
+      "technical_context": "The PDP-11 is a 16-bit machine, so a 32-bit value (a file's size or date) is stored as two 16-bit words. ar11's header mirrors that layout exactly: ar_date1/ar_date2 and ar_size1/ar_size2 hold 32-bit values as two shorts, and ar_mode is a 16-bit short (a VAX ar would use long/int = 32-bit). The header's very shape says 'this is a format for a 16-bit-word machine.' The magic too: the ar magic is 0177545, but here it's written -155 -- because as a 16-bit short, -155's bit pattern is 0xFF65 = octal 0177545, the same magic seen through PDP-11's integer eyes. (The snapshot's own comment drops a digit: /* 017545 */ instead of 0177545 -- a small typo frozen in the record.)",
+      "human_story": "Because the PDP-11 is a 16-bit machine, ar11's header stores 32-bit dates and sizes as two 16-bit halves and keeps mode in a 16-bit short. Even the magic number is written as -155, which is the same archive magic seen as a 16-bit value. The header's shape is the 16-bit world made visible."
+    },
+    "appraiser_note": "PDP-11 は16ビットのマシンなので、32ビットの値(ファイルのサイズや日時)は16ビットのワード二つに分けて格納される。ar11 のヘッダはそのレイアウトを正確に写す: ar_date1/ar_date2 と ar_size1/ar_size2 が32ビット値を short×2 で持ち、ar_mode は16ビットの short(VAX 版の ar なら long/int=32ビット)。ヘッダの形そのものが『これは16ビットワードのマシンの形式だ』と語る。マジックも同様: ar の magic は 0177545 だが、ここでは -155 と書かれる——16ビット short として -155 のビットパターンは 0xFF65=8進0177545、同じマジックを PDP-11 の整数の目で見たものだ。(スナップショットのコメントは桁を一つ落として /* 017545 */ と書く——記録に凍結された小さな誤記。)",
+    "file_path": "usr/src/cmd/ar11.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "ar11-003-union-and-swap",
+    "text": "union ints { struct { short h1; short h2; }; int w1; } x;\n...\nx.w1 = stbuf.st_size; arbuf.ar_size1 = x.h2; arbuf.ar_size2 = x.h1;  /* high half first */\n...\nar_size = swap(&arbuf.ar_size1);\nswap(word) short *word; { x.h1 = word->h2; x.h2 = word->h1; return(x.w1); }",
+    "line_number": 22,
+    "tags": [
+      "unix",
+      "ar11",
+      "endianness",
+      "byte-order",
+      "union"
+    ],
+    "interesting_score": 20,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 5,
+      "emotions": {
+        "insight": 5,
+        "legacy": 4
+      },
+      "technical_context": "How do you turn a VAX 32-bit integer into the PDP-11's 'two 16-bit words'? A single union does it. union ints overlays an int (w1) with two shorts (h1, h2), so a 32-bit value's high and low halves can be read out. On write, ar11 swaps the two halves: ar_size1 (first) gets the high half x.h2, ar_size2 (second) the low half x.h1. On read, swap() puts them back (h1=word->h2, h2=word->h1). VAX stores a long low-word-then-high-word; PDP-11 format puts the high word first. The bytes within each 16-bit word are identical on both machines -- only the order of the two 16-bit words differs (the word-swapped 'middle-endian' long). ar11 absorbs that one difference by overlaying the value in a union and swapping the halves. This is one of the earliest practical solutions to what later became 'endianness conversion', long before any htonl-style standard existed.",
+      "human_story": "The whole trick is swapping the two 16-bit halves of every 32-bit number. A union lets ar11 see a value both as one 32-bit int and as two halves; it exchanges the halves on the way in and out. That single swap is what lets a VAX and a PDP-11 read each other's archives."
+    },
+    "appraiser_note": "VAX の32ビット整数を PDP-11 の『16ビットワード二つ』へどう変えるか。一つの union が解く。union ints は int(w1)と short 二つ(h1,h2)を重ね、32ビット値の上半分・下半分を取り出せる。書き込み時 ar11 は二つの半分を入れ替える: ar_size1(先)に上半分 x.h2、ar_size2(後)に下半分 x.h1。読み取り時 swap() が戻す(h1=word->h2, h2=word->h1)。VAX はロングを下位ワード→上位ワードの順で格納し、PDP-11 形式は上位ワードが先。各16ビットワード内のバイトの並びは両機種とも同じで、二つの16ビットワードの順序だけが違う(ワードスワップされた middle-endian のロング)。ar11 はその一点を、値を union に重ねて半分を入れ替えるだけで吸収する。これは後にエンディアン変換と呼ばれる問題の、htonl のような標準が現れるはるか前の、最古級の実務的解決だ。",
+    "file_path": "usr/src/cmd/ar11.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "ar11-004-full-ar-different-boundary",
+    "text": "char *man { \"mrxtdp\" };   /* m move r replace x extract t table d delete p print */\nchar *opt { \"uvnbai\" };\nint (*comfun)();         /* dispatch the chosen command via a function pointer */\nint signum[] = {SIGHUP, SIGINT, SIGQUIT, 0};\ntfnam = mktemp(\"/tmp/vXXXXX\");   /* build the archive in a temp file */",
+    "line_number": 36,
+    "tags": [
+      "unix",
+      "ar11",
+      "archiver",
+      "dispatch",
+      "ar"
+    ],
+    "interesting_score": 16,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 3,
+      "emotions": {
+        "insight": 4,
+        "legacy": 3
+      },
+      "technical_context": "ar11 isn't a narrow converter -- it's a complete archiver, the same as ar. It switches the commands m/r/x/t/d/p (move, replace, extract, table, delete, print) through a function pointer comfun, builds the archive in a temp file via mktemp(/tmp/vXXXXX), and catches SIGHUP/SIGINT/SIGQUIT to clean up if interrupted -- all identical to ar's design. What differs is one thing only: the boundary with the disk. The header layout is PDP-11's, and a swap is inserted exactly when 32-bit values are read or written. The archiver's logic (which files to replace, extract, list) is wholly the same; only the shape of the I/O is fitted to the other machine.",
+      "human_story": "ar11 is a full archiver, with all of ar's commands, not just a format converter. The only thing it changes is the boundary with the disk -- the header layout and a half-swap on 32-bit values. The same tool, taught to speak another machine's word order."
+    },
+    "appraiser_note": "ar11 は狭いコンバータではなく、ar と同じ完全なアーカイバだ。m/r/x/t/d/p(移動・置換・取出・一覧・削除・印字)の各コマンドを関数ポインタ comfun で切り替え、mktemp(/tmp/vXXXXX)の一時ファイルにアーカイブを組み立て、SIGHUP/SIGINT/SIGQUIT を捕まえて中断時に片付ける——すべて ar と同じ設計だ。違うのはただ一点、ディスクとの境界だけ。ヘッダのレイアウトを PDP-11 形式にし、32ビット値を読み書きする瞬間に swap を挟む。アーカイバとしての論理(どのファイルを置換・取出・一覧するか)は丸ごと同じで、入出力の形だけを相手のマシンに合わせる。",
+    "file_path": "usr/src/cmd/ar11.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]

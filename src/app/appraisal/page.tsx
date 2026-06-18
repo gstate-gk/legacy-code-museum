@@ -1606,6 +1606,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "260",
+    title: "鑑定書#260 ar11 — VAX↔PDP-11 のアーカイブを橋渡しする ar 664行。1979年 Bell Labs に同居した PDP-11(16bit)と VAX(32bit)の間でアーカイブを相互運用するため、VAX 上で PDP-11 形式を読み書きする。ヘッダは日時/サイズを short×2・ar_mode も short(16bitワード世界)、ARMAG=-155(=0xFF65=0177545 を short のビットパターンで)。核心は union ints で 32bit を 16bit×2 に重ね swap() で上下ワードを入れ替え、PDP-11 の middle-endian(ワードスワップされたロング)と VAX のワード順を変換すること。mrxtdp 全コマンドの完全な ar で I/O 境界だけ別機種用。arcv(#246) が版の断絶を、ar11 が機種の断絶を埋める。エンディアン変換の最古級の実務解",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {
