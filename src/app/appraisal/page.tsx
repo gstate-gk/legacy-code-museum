@@ -1634,6 +1634,13 @@ const PUBLISHED_ARTICLES = [
     language: "C",
     year: 1979,
   },
+  {
+    number: "264",
+    title: "鑑定書#264 accton — コマンドがそのままシステムコールである 14行。プロセスアカウンティングの ON/OFF を行う acct(2) の薄いラッパー。本体は acct() 一回で機能はカーネルにある＝sync(#123)/nice/kill と同じ「syscall をコマンドに開く」型。acct(file)=ON+宛先指定 / acct(0)=OFF と一引数で状態と宛先を表す多義的 API。errno を見て perror(\"accton\")+exit(1)(戻り値でなく errno 直接の素朴さ)。accton で会計の蛇口を開け→カーネルが /usr/adm/acct に終了プロセスごとのレコードを追記→sa(#233) が集計・ac(#237) が接続時間。会計三部作の入口、init の rc から起動。最も薄いコマンドが Unix の思想(カーネルが原語/コマンドが入口)を体現",
+    url: null,
+    language: "C",
+    year: 1979,
+  },
 ];
 
 export default function AppraisalPage() {

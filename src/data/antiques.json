@@ -22802,5 +22802,121 @@
     "repo_name": "Bell-32V Unix (1979)",
     "language": "C",
     "year": 1979
+  },
+  {
+    "id": "accton-001-command-is-a-syscall",
+    "text": "main(argc, argv) char **argv; {\n    extern errno;\n    if (argc > 1) acct(argv[1]);    /* the entire program: one system call */\n    else          acct((char *)0);\n    if (errno) { perror(\"accton\"); exit(1); }\n    exit(0);\n}",
+    "line_number": 1,
+    "tags": [
+      "unix",
+      "accton",
+      "syscall",
+      "accounting",
+      "minimal"
+    ],
+    "interesting_score": 17,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 4
+      },
+      "technical_context": "Some Unix commands have almost no body; they exist only to call one kernel system call. accton is the extreme: its whole job is to call acct() once. Turning process accounting on or off happens entirely in the kernel; accton is just the thin handle that exposes that capability to the shell. This is a Unix design pattern -- wrap a kernel primitive in a small same-named command so it can be used from the command line or a startup script: sync(1) wraps sync(2), nice wraps nice(2), kill wraps kill(2), accton wraps acct(2). The 14-line thinness isn't a lack; it's the purest expression of 'a command is a system call given a name and arguments and handed to the shell.'",
+      "human_story": "accton barely has a body -- its entire purpose is to make one system call, acct(). Process accounting lives in the kernel; accton is just the handle that lets the shell reach it. The thinnest kind of Unix command: a system call with a name."
+    },
+    "appraiser_note": "Unix のコマンドにはほとんど中身を持たないものがある; カーネルのシステムコール一つを呼ぶためだけに存在する。accton はその極北: 全仕事は acct() を一度呼ぶこと。プロセス会計のオン/オフはすべてカーネル内で起こり、accton はその能力をシェルに差し出す薄い取っ手にすぎない。これは Unix の設計の型だ——カーネル原語を同名の小さなコマンドで包み、コマンドラインや起動スクリプトから使えるようにする: sync(1) が sync(2) を、nice が nice(2) を、kill が kill(2) を、accton が acct(2) を包む。14行の薄さは欠落でなく、『コマンドとはシステムコールに名前と引数を与えてシェルへ差し出すもの』の最も純粋な表現だ。",
+    "file_path": "usr/src/cmd/accton.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "accton-002-one-arg-state-and-target",
+    "text": "if (argc > 1) acct(argv[1]);    /* with a filename: start accounting INTO that file (ON) */\nelse          acct((char *)0);  /* no arg -> NULL: stop accounting (OFF) */",
+    "line_number": 5,
+    "tags": [
+      "unix",
+      "accton",
+      "acct",
+      "api-design",
+      "polymorphic"
+    ],
+    "interesting_score": 17,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 4,
+      "emotions": {
+        "insight": 4,
+        "legacy": 3
+      },
+      "technical_context": "The acct(2) system call's design is elegant: a single argument encodes both the on/off state and, when on, where to write. acct(path) turns accounting ON and every process's record is appended to that file; acct(0) (a NULL pointer) turns it OFF. So the presence of an argument is the switch, and its content is the destination. accton mirrors this directly -- argv[1] present means acct(argv[1]), absent means acct(0). The command is so short precisely because the kernel API folds state and target into one polymorphic argument.",
+      "human_story": "One argument does everything: give accton a filename and accounting starts, writing to that file; give it nothing and accounting stops. The presence of the argument is the on/off switch; its value is where to record. That's why the command fits in a line or two."
+    },
+    "appraiser_note": "acct(2) システムコールの設計が美しい: たった一つの引数が、オン/オフの状態と、オンのときの出力先の両方を表す。acct(path) で会計を ON にし全プロセスの記録をそのファイルへ追記、acct(0)(NULL ポインタ)で OFF。引数の有無がスイッチ、中身が宛先だ。accton はこれを直に写す——argv[1] があれば acct(argv[1])、無ければ acct(0)。コマンドがこれほど短いのは、カーネル API が状態と宛先を一つの多義的な引数に畳み込んでいるからだ。",
+    "file_path": "usr/src/cmd/accton.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "accton-003-tiny-but-reports-failure",
+    "text": "extern errno;\n...\nif (errno) {\n    perror(\"accton\");   /* 'accton: <reason>' to stderr */\n    exit(1);            /* nonzero status tells the caller it failed */\n}",
+    "line_number": 9,
+    "tags": [
+      "unix",
+      "accton",
+      "errno",
+      "error-handling",
+      "privilege"
+    ],
+    "interesting_score": 15,
+    "ai_analysis": {
+      "primary_emotion": "legacy",
+      "emotion_intensity": 3,
+      "emotions": {
+        "legacy": 3,
+        "insight": 3
+      },
+      "technical_context": "Even this 14-line program keeps the Unix manners of error reporting. acct() needs privilege (root) and will fail if the caller isn't allowed or the file can't be opened. accton checks errno afterward and, if set, calls perror(\"accton\") to print 'accton: <reason>' to stderr and exit(1) to tell the caller it failed. Four of its fourteen lines go to error handling. (Strictly, it inspects errno rather than acct()'s return value -- a simple approach that could misfire if errno were already set, but for a program that calls acct() once at startup it does the job.)",
+      "human_story": "Tiny as it is, accton still does the polite Unix thing on failure: acct() needs root, and if it's refused, accton prints why and exits with an error code. A thin handle still gives you the feel of success or failure."
+    },
+    "appraiser_note": "この14行のプログラムでも、accton はエラー報告という Unix の礼儀を守る。acct() は特権(root)を要し、許可がなければ、あるいはファイルが開けなければ失敗する。accton は呼び出し後 errno を確かめ、立っていれば perror(\"accton\") で 'accton: <理由>' を標準エラーへ出し、exit(1) で失敗を呼び出し元に伝える。14行のうち4行をエラー処理に割く。(厳密には acct() の戻り値でなく errno を直に見る素朴な作りで、前段で errno が立っていれば誤検出もしうるが、起動時に一度 acct() を呼ぶだけのこのプログラムでは十分用を足す。)",
+    "file_path": "usr/src/cmd/accton.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
+  },
+  {
+    "id": "accton-004-the-accounting-tap",
+    "text": "/* accton opens the tap: acct(\"/usr/adm/acct\") -> kernel appends a record per\n   exiting process (command name, CPU time, elapsed time, uid, ...).\n   sa(#233) summarizes /usr/adm/acct ; ac(#237) totals connect time.\n   usually run from init's rc: accton /usr/adm/acct */",
+    "line_number": 6,
+    "tags": [
+      "unix",
+      "accton",
+      "accounting",
+      "sa",
+      "ac"
+    ],
+    "interesting_score": 17,
+    "ai_analysis": {
+      "primary_emotion": "insight",
+      "emotion_intensity": 3,
+      "emotions": {
+        "insight": 4,
+        "legacy": 3
+      },
+      "technical_context": "What accton opens is the tap of the process-accounting system. Once acct(file) is called, the kernel appends, for every process that exits, a record of the command name, CPU time, elapsed time, user id and so on -- conventionally to /usr/adm/acct. Other tools read that pile: sa(#233) summarizes /usr/adm/acct into which commands ran and how much CPU they used; ac(#237) totals per-user connect time. accton starts the recording, the kernel writes, sa and ac read -- the division of labor behind Unix process accounting (knowing who used how much, for billing or auditing). accton is the first move in that chain, usually invoked from init's rc as 'accton /usr/adm/acct' to quietly open the tap for the whole uptime.",
+      "human_story": "accton opens the tap: after it runs, the kernel records every process that finishes -- command, CPU time, who ran it -- into a file. Then sa and ac read that file to summarize usage. accton is the first move; the whole accounting story begins when someone turns this tap."
+    },
+    "appraiser_note": "accton が開くのはプロセス会計の蛇口だ。acct(file) が呼ばれると、カーネルは終了するプロセスひとつひとつについて、コマンド名・CPU時間・経過時間・UID などのレコードを——慣習的に /usr/adm/acct へ——追記し続ける。その溜まった記録を別の道具が読む: sa(#233) は /usr/adm/acct を集計しどのコマンドが何回・どれだけ CPU を食ったかをまとめ、ac(#237) は利用者ごとの接続時間を集計する。accton が記録を始め、カーネルが書き、sa と ac が読む——Unix のプロセス会計(誰がどれだけ資源を使ったかを把握し課金や監査に使う)の分業だ。accton はその連鎖の最初の一手で、通常 init の rc から 'accton /usr/adm/acct' と呼ばれ、稼働中ずっと静かに蛇口を開けておく。",
+    "file_path": "usr/src/cmd/accton.c",
+    "repo_id": "bell32v",
+    "repo_name": "Bell-32V Unix (1979)",
+    "language": "C",
+    "year": 1979
   }
 ]
