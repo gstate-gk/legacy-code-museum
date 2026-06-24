@@ -1,0 +1,32 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8">
+<title>GENAPP 行単位突合 — 一覧</title><style>
+body { font-family:"Segoe UI",Meiryo,sans-serif; background:#0f2a4a; color:#e6eef7; margin:0; padding:24px 32px }
+h1 { font-size:18px }
+p { color:#bcd; font-size:13px; line-height:1.7; max-width:760px }
+ul { list-style:none; padding:0; max-width:760px }
+li { background:#0c2240; margin:8px 0; padding:12px 16px; border-radius:6px; border-left:4px solid #1f9e8f }
+li a { color:#8fd6c8; font-size:15px; font-weight:600; text-decoration:none }
+li a:hover { text-decoration:underline }
+.files { display:block; color:#7e98b6; font-size:11px; margin-top:4px }
+.lg { font-size:12px; border-left:3px solid; padding:2px 8px; margin-right:8px }
+.lg i { display:inline-block; width:10px; height:10px; margin-right:4px; border-radius:2px; vertical-align:middle }
+</style></head><body>
+<h1>GENAPP 行単位突合（元COBOL ↔ 変換後 main.py）</h1>
+<p>左に元の IBM COBOL を全行、右に変換後の <b>genapp/backend/main.py</b> を全行並べ、
+色付き行をクリックすると対応行がハイライト＆スクロールします。
+灰色（削除）行は「なぜ落としたか」の理由を表示。
+<b>COBOL のどの行が変換後のどこに行ったか／どの行を落としてそれで良いのか</b>を、
+人が1行ずつ追って欠落の有無を確認するための資料です。</p>
+<div style="margin:10px 0 18px">
+<span class="lg" style="border-color:#1f9e8f"><i style="background:#1f9e8f"></i>対応</span> <span class="lg" style="border-color:#d97706"><i style="background:#d97706"></i>意図的変更</span> <span class="lg" style="border-color:#9ca3af"><i style="background:#9ca3af"></i>削除</span> <span class="lg" style="border-color:#6d8db8"><i style="background:#6d8db8"></i>構造/宣言</span>
+</div>
+<ul>
+<li><a href="customer_inquiry.html">顧客 照会</a><span class="files">lgicus01.cbl ／ lgicdb01.cbl</span></li>
+<li><a href="customer_add.html">顧客 追加</a><span class="files">lgacus01.cbl ／ lgacdb01.cbl ／ lgacdb02.cbl</span></li>
+<li><a href="customer_update.html">顧客 更新</a><span class="files">lgucus01.cbl ／ lgucdb01.cbl</span></li>
+<li><a href="policy_add.html">契約 追加（M/E/H/C）</a><span class="files">lgapol01.cbl ／ lgapdb01.cbl</span></li>
+<li><a href="policy_inquiry.html">契約 照会（M/E/H/C）</a><span class="files">lgipol01.cbl ／ lgipdb01.cbl</span></li>
+<li><a href="policy_update.html">契約 更新（M/E/H）</a><span class="files">lgupol01.cbl ／ lgupdb01.cbl</span></li>
+<li><a href="policy_delete.html">契約 削除（M/E/H/C）</a><span class="files">lgdpol01.cbl ／ lgdpdb01.cbl</span></li>
+</ul>
+</body></html>
