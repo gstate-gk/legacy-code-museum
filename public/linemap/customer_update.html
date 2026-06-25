@@ -439,559 +439,605 @@ header h1 a { color:#8fb6e6; font-size:12px; text-decoration:none; margin-right:
 <div class="ln plain" id="r_12" data-tgt="" onclick=""><span class="n">12</span>  SSP5             -&gt; /api/claims</div>
 <div class="ln plain" id="r_13" data-tgt="" onclick=""><span class="n">13</span>&nbsp;</div>
 <div class="ln plain" id="r_14" data-tgt="" onclick=""><span class="n">14</span>The COBOL CA-RETURN-CODE convention is mapped to HTTP status:</div>
-<div class="ln plain" id="r_15" data-tgt="" onclick=""><span class="n">15</span>  00 ok -&gt; 200/201 | 01 not found -&gt; 404 | 99 dup/integrity -&gt; 409</div>
+<div class="ln plain" id="r_15" data-tgt="" onclick=""><span class="n">15</span>  00 ok -&gt; 200/201 | 01 not found -&gt; 404 | 70/99 integrity -&gt; 409</div>
 <div class="ln plain" id="r_16" data-tgt="" onclick=""><span class="n">16</span>  98 bad input -&gt; 422 | 90 db error -&gt; 500</div>
 <div class="ln plain" id="r_17" data-tgt="" onclick=""><span class="n">17</span>&quot;&quot;&quot;</div>
-<div class="ln plain" id="r_18" data-tgt="" onclick=""><span class="n">18</span>from contextlib import asynccontextmanager</div>
-<div class="ln plain" id="r_19" data-tgt="" onclick=""><span class="n">19</span>from datetime import datetime</div>
-<div class="ln plain" id="r_20" data-tgt="" onclick=""><span class="n">20</span>&nbsp;</div>
-<div class="ln plain" id="r_21" data-tgt="" onclick=""><span class="n">21</span>from fastapi import FastAPI, HTTPException</div>
-<div class="ln plain" id="r_22" data-tgt="" onclick=""><span class="n">22</span>from fastapi.middleware.cors import CORSMiddleware</div>
+<div class="ln plain" id="r_18" data-tgt="" onclick=""><span class="n">18</span>import logging</div>
+<div class="ln plain" id="r_19" data-tgt="" onclick=""><span class="n">19</span>import os</div>
+<div class="ln plain" id="r_20" data-tgt="" onclick=""><span class="n">20</span>import sqlite3</div>
+<div class="ln plain" id="r_21" data-tgt="" onclick=""><span class="n">21</span>from contextlib import asynccontextmanager</div>
+<div class="ln plain" id="r_22" data-tgt="" onclick=""><span class="n">22</span>from datetime import datetime</div>
 <div class="ln plain" id="r_23" data-tgt="" onclick=""><span class="n">23</span>&nbsp;</div>
-<div class="ln plain" id="r_24" data-tgt="" onclick=""><span class="n">24</span>from .database import get_db, init_db</div>
-<div class="ln plain" id="r_25" data-tgt="" onclick=""><span class="n">25</span>from .seed_data import seed</div>
-<div class="ln plain" id="r_26" data-tgt="" onclick=""><span class="n">26</span>from .auth import hash_password, verify_password</div>
-<div class="ln plain" id="r_27" data-tgt="" onclick=""><span class="n">27</span>from .models import (</div>
-<div class="ln plain" id="r_28" data-tgt="" onclick=""><span class="n">28</span>    CustomerCreate, CustomerOut,</div>
-<div class="ln plain" id="r_29" data-tgt="" onclick=""><span class="n">29</span>    MotorCreate, MotorOut,</div>
-<div class="ln plain" id="r_30" data-tgt="" onclick=""><span class="n">30</span>    EndowmentCreate, EndowmentOut,</div>
-<div class="ln plain" id="r_31" data-tgt="" onclick=""><span class="n">31</span>    HouseCreate, HouseOut,</div>
-<div class="ln plain" id="r_32" data-tgt="" onclick=""><span class="n">32</span>    CommercialCreate, CommercialOut,</div>
-<div class="ln plain" id="r_33" data-tgt="" onclick=""><span class="n">33</span>    ClaimCreate, ClaimOut,</div>
-<div class="ln plain" id="r_34" data-tgt="" onclick=""><span class="n">34</span>    PolicySummary, PasswordSet, PasswordVerify,</div>
-<div class="ln plain" id="r_35" data-tgt="" onclick=""><span class="n">35</span>)</div>
-<div class="ln plain" id="r_36" data-tgt="" onclick=""><span class="n">36</span>&nbsp;</div>
-<div class="ln plain" id="r_37" data-tgt="" onclick=""><span class="n">37</span>&nbsp;</div>
-<div class="ln plain" id="r_38" data-tgt="" onclick=""><span class="n">38</span>@asynccontextmanager</div>
-<div class="ln plain" id="r_39" data-tgt="" onclick=""><span class="n">39</span>async def lifespan(app: FastAPI):</div>
-<div class="ln plain" id="r_40" data-tgt="" onclick=""><span class="n">40</span>    init_db()</div>
-<div class="ln plain" id="r_41" data-tgt="" onclick=""><span class="n">41</span>    # seed on first run if empty</div>
-<div class="ln plain" id="r_42" data-tgt="" onclick=""><span class="n">42</span>    db = get_db()</div>
-<div class="ln plain" id="r_43" data-tgt="" onclick=""><span class="n">43</span>    n = db.execute(&quot;SELECT COUNT(*) AS c FROM customer&quot;).fetchone()[&quot;c&quot;]</div>
-<div class="ln plain" id="r_44" data-tgt="" onclick=""><span class="n">44</span>    db.close()</div>
-<div class="ln plain" id="r_45" data-tgt="" onclick=""><span class="n">45</span>    if n == 0:</div>
-<div class="ln plain" id="r_46" data-tgt="" onclick=""><span class="n">46</span>        seed()</div>
-<div class="ln plain" id="r_47" data-tgt="" onclick=""><span class="n">47</span>    yield</div>
-<div class="ln plain" id="r_48" data-tgt="" onclick=""><span class="n">48</span>&nbsp;</div>
+<div class="ln plain" id="r_24" data-tgt="" onclick=""><span class="n">24</span>from fastapi import FastAPI, HTTPException, Request</div>
+<div class="ln plain" id="r_25" data-tgt="" onclick=""><span class="n">25</span>from fastapi.middleware.cors import CORSMiddleware</div>
+<div class="ln plain" id="r_26" data-tgt="" onclick=""><span class="n">26</span>from fastapi.responses import JSONResponse</div>
+<div class="ln plain" id="r_27" data-tgt="" onclick=""><span class="n">27</span>from starlette.exceptions import HTTPException as StarletteHTTPException</div>
+<div class="ln plain" id="r_28" data-tgt="" onclick=""><span class="n">28</span>&nbsp;</div>
+<div class="ln plain" id="r_29" data-tgt="" onclick=""><span class="n">29</span>from .database import get_db, db_tx, init_db</div>
+<div class="ln plain" id="r_30" data-tgt="" onclick=""><span class="n">30</span>from .seed_data import seed</div>
+<div class="ln plain" id="r_31" data-tgt="" onclick=""><span class="n">31</span>from .auth import hash_password, verify_password</div>
+<div class="ln plain" id="r_32" data-tgt="" onclick=""><span class="n">32</span>from .models import (</div>
+<div class="ln plain" id="r_33" data-tgt="" onclick=""><span class="n">33</span>    CustomerCreate, CustomerOut,</div>
+<div class="ln plain" id="r_34" data-tgt="" onclick=""><span class="n">34</span>    MotorCreate, MotorOut,</div>
+<div class="ln plain" id="r_35" data-tgt="" onclick=""><span class="n">35</span>    EndowmentCreate, EndowmentOut,</div>
+<div class="ln plain" id="r_36" data-tgt="" onclick=""><span class="n">36</span>    HouseCreate, HouseOut,</div>
+<div class="ln plain" id="r_37" data-tgt="" onclick=""><span class="n">37</span>    CommercialCreate, CommercialOut,</div>
+<div class="ln plain" id="r_38" data-tgt="" onclick=""><span class="n">38</span>    ClaimCreate, ClaimOut,</div>
+<div class="ln plain" id="r_39" data-tgt="" onclick=""><span class="n">39</span>    PolicySummary, PasswordSet, PasswordVerify,</div>
+<div class="ln plain" id="r_40" data-tgt="" onclick=""><span class="n">40</span>)</div>
+<div class="ln plain" id="r_41" data-tgt="" onclick=""><span class="n">41</span>&nbsp;</div>
+<div class="ln plain" id="r_42" data-tgt="" onclick=""><span class="n">42</span># ログ設定（元 GENAPP の WRITE-ERROR-MESSAGE 診断ログの対応物）。</div>
+<div class="ln plain" id="r_43" data-tgt="" onclick=""><span class="n">43</span># LOG_LEVEL 環境変数で調整可。機密（パスワード等）は出力しない。</div>
+<div class="ln plain" id="r_44" data-tgt="" onclick=""><span class="n">44</span>logging.basicConfig(</div>
+<div class="ln plain" id="r_45" data-tgt="" onclick=""><span class="n">45</span>    level=os.environ.get(&quot;LOG_LEVEL&quot;, &quot;INFO&quot;).upper(),</div>
+<div class="ln plain" id="r_46" data-tgt="" onclick=""><span class="n">46</span>    format=&quot;%(asctime)s %(levelname)s %(name)s %(message)s&quot;,</div>
+<div class="ln plain" id="r_47" data-tgt="" onclick=""><span class="n">47</span>)</div>
+<div class="ln plain" id="r_48" data-tgt="" onclick=""><span class="n">48</span>logger = logging.getLogger(&quot;genapp&quot;)</div>
 <div class="ln plain" id="r_49" data-tgt="" onclick=""><span class="n">49</span>&nbsp;</div>
-<div class="ln plain" id="r_50" data-tgt="" onclick=""><span class="n">50</span>app = FastAPI(</div>
-<div class="ln plain" id="r_51" data-tgt="" onclick=""><span class="n">51</span>    title=&quot;GENAPP&quot;,</div>
-<div class="ln plain" id="r_52" data-tgt="" onclick=""><span class="n">52</span>    version=&quot;0.1.0&quot;,</div>
-<div class="ln plain" id="r_53" data-tgt="" onclick=""><span class="n">53</span>    description=&quot;IBM CICS General Insurance Application converted to a Web API&quot;,</div>
-<div class="ln plain" id="r_54" data-tgt="" onclick=""><span class="n">54</span>    lifespan=lifespan,</div>
-<div class="ln plain" id="r_55" data-tgt="" onclick=""><span class="n">55</span>)</div>
-<div class="ln plain" id="r_56" data-tgt="" onclick=""><span class="n">56</span>&nbsp;</div>
-<div class="ln plain" id="r_57" data-tgt="" onclick=""><span class="n">57</span>app.add_middleware(</div>
-<div class="ln plain" id="r_58" data-tgt="" onclick=""><span class="n">58</span>    CORSMiddleware,</div>
-<div class="ln plain" id="r_59" data-tgt="" onclick=""><span class="n">59</span>    allow_origins=[&quot;*&quot;],</div>
-<div class="ln plain" id="r_60" data-tgt="" onclick=""><span class="n">60</span>    allow_credentials=True,</div>
-<div class="ln plain" id="r_61" data-tgt="" onclick=""><span class="n">61</span>    allow_methods=[&quot;*&quot;],</div>
-<div class="ln plain" id="r_62" data-tgt="" onclick=""><span class="n">62</span>    allow_headers=[&quot;*&quot;],</div>
-<div class="ln plain" id="r_63" data-tgt="" onclick=""><span class="n">63</span>)</div>
-<div class="ln plain" id="r_64" data-tgt="" onclick=""><span class="n">64</span>&nbsp;</div>
+<div class="ln plain" id="r_50" data-tgt="" onclick=""><span class="n">50</span># Original commercial customer-browse (03ICOM / Cust_Cursor) stops after 20 rows</div>
+<div class="ln plain" id="r_51" data-tgt="" onclick=""><span class="n">51</span># (LGIPDB01: IF ICOM-Record-Count &gt; 20). The postcode browse (05ICOM) has no cap.</div>
+<div class="ln plain" id="r_52" data-tgt="" onclick=""><span class="n">52</span>COMMERCIAL_BROWSE_CAP = 20</div>
+<div class="ln plain" id="r_53" data-tgt="" onclick=""><span class="n">53</span>&nbsp;</div>
+<div class="ln plain" id="r_54" data-tgt="" onclick=""><span class="n">54</span>&nbsp;</div>
+<div class="ln plain" id="r_55" data-tgt="" onclick=""><span class="n">55</span>@asynccontextmanager</div>
+<div class="ln plain" id="r_56" data-tgt="" onclick=""><span class="n">56</span>async def lifespan(app: FastAPI):</div>
+<div class="ln plain" id="r_57" data-tgt="" onclick=""><span class="n">57</span>    init_db()</div>
+<div class="ln plain" id="r_58" data-tgt="" onclick=""><span class="n">58</span>    # seed on first run if empty</div>
+<div class="ln plain" id="r_59" data-tgt="" onclick=""><span class="n">59</span>    with db_tx() as db:</div>
+<div class="ln plain" id="r_60" data-tgt="" onclick=""><span class="n">60</span>        n = db.execute(&quot;SELECT COUNT(*) AS c FROM customer&quot;).fetchone()[&quot;c&quot;]</div>
+<div class="ln plain" id="r_61" data-tgt="" onclick=""><span class="n">61</span>    if n == 0:</div>
+<div class="ln plain" id="r_62" data-tgt="" onclick=""><span class="n">62</span>        seed()</div>
+<div class="ln plain" id="r_63" data-tgt="" onclick=""><span class="n">63</span>    logger.info(&quot;GENAPP backend started&quot;)</div>
+<div class="ln plain" id="r_64" data-tgt="" onclick=""><span class="n">64</span>    yield</div>
 <div class="ln plain" id="r_65" data-tgt="" onclick=""><span class="n">65</span>&nbsp;</div>
-<div class="ln plain" id="r_66" data-tgt="" onclick=""><span class="n">66</span>def now_ts() -&gt; str:</div>
-<div class="ln plain" id="r_67" data-tgt="" onclick=""><span class="n">67</span>    return datetime.now().strftime(&quot;%Y-%m-%d %H:%M:%S&quot;)</div>
-<div class="ln plain" id="r_68" data-tgt="" onclick=""><span class="n">68</span>&nbsp;</div>
-<div class="ln plain" id="r_69" data-tgt="" onclick=""><span class="n">69</span>&nbsp;</div>
-<div class="ln plain" id="r_70" data-tgt="" onclick=""><span class="n">70</span>def _policy_description(row) -&gt; str:</div>
-<div class="ln plain" id="r_71" data-tgt="" onclick=""><span class="n">71</span>    t = row[&quot;policyType&quot;]</div>
-<div class="ln plain" id="r_72" data-tgt="" onclick=""><span class="n">72</span>    db = get_db()</div>
-<div class="ln plain" id="r_73" data-tgt="" onclick=""><span class="n">73</span>    try:</div>
-<div class="ln plain" id="r_74" data-tgt="" onclick=""><span class="n">74</span>        if t == &quot;M&quot;:</div>
-<div class="ln plain" id="r_75" data-tgt="" onclick=""><span class="n">75</span>            d = db.execute(&quot;SELECT make, model FROM motor WHERE policyNumber=?&quot;,</div>
-<div class="ln plain" id="r_76" data-tgt="" onclick=""><span class="n">76</span>                           (row[&quot;policyNumber&quot;],)).fetchone()</div>
-<div class="ln plain" id="r_77" data-tgt="" onclick=""><span class="n">77</span>            return f&quot;Motor: {d[&#x27;make&#x27;].strip()} {d[&#x27;model&#x27;].strip()}&quot; if d else &quot;Motor&quot;</div>
-<div class="ln plain" id="r_78" data-tgt="" onclick=""><span class="n">78</span>        if t == &quot;E&quot;:</div>
-<div class="ln plain" id="r_79" data-tgt="" onclick=""><span class="n">79</span>            d = db.execute(&quot;SELECT fundName FROM endowment WHERE policyNumber=?&quot;,</div>
-<div class="ln plain" id="r_80" data-tgt="" onclick=""><span class="n">80</span>                           (row[&quot;policyNumber&quot;],)).fetchone()</div>
-<div class="ln plain" id="r_81" data-tgt="" onclick=""><span class="n">81</span>            return f&quot;Endowment: {d[&#x27;fundName&#x27;].strip()}&quot; if d else &quot;Endowment&quot;</div>
-<div class="ln plain" id="r_82" data-tgt="" onclick=""><span class="n">82</span>        if t == &quot;H&quot;:</div>
-<div class="ln plain" id="r_83" data-tgt="" onclick=""><span class="n">83</span>            d = db.execute(&quot;SELECT propertyType FROM house WHERE policyNumber=?&quot;,</div>
-<div class="ln plain" id="r_84" data-tgt="" onclick=""><span class="n">84</span>                           (row[&quot;policyNumber&quot;],)).fetchone()</div>
-<div class="ln plain" id="r_85" data-tgt="" onclick=""><span class="n">85</span>            return f&quot;House: {d[&#x27;propertyType&#x27;].strip()}&quot; if d else &quot;House&quot;</div>
-<div class="ln plain" id="r_86" data-tgt="" onclick=""><span class="n">86</span>        if t == &quot;C&quot;:</div>
-<div class="ln plain" id="r_87" data-tgt="" onclick=""><span class="n">87</span>            d = db.execute(&quot;SELECT address FROM commercial WHERE policyNumber=?&quot;,</div>
-<div class="ln plain" id="r_88" data-tgt="" onclick=""><span class="n">88</span>                           (row[&quot;policyNumber&quot;],)).fetchone()</div>
-<div class="ln plain" id="r_89" data-tgt="" onclick=""><span class="n">89</span>            return f&quot;Commercial: {d[&#x27;address&#x27;].strip()}&quot; if d else &quot;Commercial&quot;</div>
-<div class="ln plain" id="r_90" data-tgt="" onclick=""><span class="n">90</span>    finally:</div>
-<div class="ln plain" id="r_91" data-tgt="" onclick=""><span class="n">91</span>        db.close()</div>
-<div class="ln plain" id="r_92" data-tgt="" onclick=""><span class="n">92</span>    return t</div>
-<div class="ln plain" id="r_93" data-tgt="" onclick=""><span class="n">93</span>&nbsp;</div>
-<div class="ln plain" id="r_94" data-tgt="" onclick=""><span class="n">94</span>&nbsp;</div>
-<div class="ln plain" id="r_95" data-tgt="" onclick=""><span class="n">95</span># ════════════════════════════════════════════════════════════════════════</div>
-<div class="ln plain" id="r_96" data-tgt="" onclick=""><span class="n">96</span>#  Customers — SSC1 / LGTESTC1 + LGICUS01/LGACUS01/LGUCUS01</div>
-<div class="ln plain" id="r_97" data-tgt="" onclick=""><span class="n">97</span># ════════════════════════════════════════════════════════════════════════</div>
-<div class="ln plain" id="r_98" data-tgt="" onclick=""><span class="n">98</span>&nbsp;</div>
-<div class="ln plain" id="r_99" data-tgt="" onclick=""><span class="n">99</span>def _password_status(db, num: int) -&gt; str:</div>
-<div class="ln plain" id="r_100" data-tgt="" onclick=""><span class="n">100</span>    row = db.execute(&quot;SELECT state_indicator FROM customer_secure WHERE customerNumber=?&quot;,</div>
-<div class="ln plain" id="r_101" data-tgt="" onclick=""><span class="n">101</span>                     (num,)).fetchone()</div>
-<div class="ln plain" id="r_102" data-tgt="" onclick=""><span class="n">102</span>    return &quot;active&quot; if row and row[&quot;state_indicator&quot;] == &quot;A&quot; else &quot;reset_required&quot;</div>
-<div class="ln plain" id="r_103" data-tgt="" onclick=""><span class="n">103</span>&nbsp;</div>
-<div class="ln plain" id="r_104" data-tgt="" onclick=""><span class="n">104</span>&nbsp;</div>
-<div class="ln plain" id="r_105" data-tgt="" onclick=""><span class="n">105</span>@app.get(&quot;/api/customers&quot;, response_model=list[CustomerOut])</div>
-<div class="ln plain" id="r_106" data-tgt="" onclick=""><span class="n">106</span>def list_customers():</div>
-<div class="ln plain" id="r_107" data-tgt="" onclick=""><span class="n">107</span>    &quot;&quot;&quot;List all customers. (Web convenience — the 3270 SSC1 could only look up</div>
-<div class="ln plain" id="r_108" data-tgt="" onclick=""><span class="n">108</span>    a customer by number, never browse.)&quot;&quot;&quot;</div>
-<div class="ln plain" id="r_109" data-tgt="" onclick=""><span class="n">109</span>    db = get_db()</div>
-<div class="ln plain" id="r_110" data-tgt="" onclick=""><span class="n">110</span>    rows = db.execute(</div>
-<div class="ln plain" id="r_111" data-tgt="" onclick=""><span class="n">111</span>        &quot;SELECT c.*, (SELECT COUNT(*) FROM policy p &quot;</div>
-<div class="ln plain" id="r_112" data-tgt="" onclick=""><span class="n">112</span>        &quot;WHERE p.customerNumber=c.customerNumber) AS numPolicies, &quot;</div>
-<div class="ln plain" id="r_113" data-tgt="" onclick=""><span class="n">113</span>        &quot;(SELECT state_indicator FROM customer_secure s &quot;</div>
-<div class="ln plain" id="r_114" data-tgt="" onclick=""><span class="n">114</span>        &quot;WHERE s.customerNumber=c.customerNumber) AS state &quot;</div>
-<div class="ln plain" id="r_115" data-tgt="" onclick=""><span class="n">115</span>        &quot;FROM customer c ORDER BY c.customerNumber&quot;).fetchall()</div>
-<div class="ln plain" id="r_116" data-tgt="" onclick=""><span class="n">116</span>    db.close()</div>
-<div class="ln plain" id="r_117" data-tgt="" onclick=""><span class="n">117</span>    out = []</div>
-<div class="ln plain" id="r_118" data-tgt="" onclick=""><span class="n">118</span>    for r in rows:</div>
-<div class="ln plain" id="r_119" data-tgt="" onclick=""><span class="n">119</span>        d = dict(r)</div>
-<div class="ln plain" id="r_120" data-tgt="" onclick=""><span class="n">120</span>        d[&quot;passwordStatus&quot;] = &quot;active&quot; if d.pop(&quot;state&quot;, None) == &quot;A&quot; else &quot;reset_required&quot;</div>
-<div class="ln plain" id="r_121" data-tgt="" onclick=""><span class="n">121</span>        out.append(d)</div>
-<div class="ln plain" id="r_122" data-tgt="" onclick=""><span class="n">122</span>    return out</div>
-<div class="ln plain" id="r_123" data-tgt="" onclick=""><span class="n">123</span>&nbsp;</div>
-<div class="ln plain" id="r_124" data-tgt="" onclick=""><span class="n">124</span>&nbsp;</div>
-<div class="ln plain" id="r_125" data-tgt="" onclick=""><span class="n">125</span>@app.get(&quot;/api/customers/{num}&quot;, response_model=CustomerOut)</div>
-<div class="ln plain" id="r_126" data-tgt="" onclick=""><span class="n">126</span>def get_customer(num: int):</div>
-<div class="ln plain" id="r_127" data-tgt="" onclick=""><span class="n">127</span>    &quot;&quot;&quot;Customer Inquiry — request id 01ICUS (LGICUS01).&quot;&quot;&quot;</div>
-<div class="ln plain" id="r_128" data-tgt="" onclick=""><span class="n">128</span>    db = get_db()</div>
-<div class="ln plain" id="r_129" data-tgt="" onclick=""><span class="n">129</span>    row = db.execute(&quot;SELECT * FROM customer WHERE customerNumber=?&quot;, (num,)).fetchone()</div>
-<div class="ln plain" id="r_130" data-tgt="" onclick=""><span class="n">130</span>    if row is None:                                   # SQLCODE 100 -&gt; CA-RC 01</div>
-<div class="ln plain" id="r_131" data-tgt="" onclick=""><span class="n">131</span>        db.close()</div>
-<div class="ln plain" id="r_132" data-tgt="" onclick=""><span class="n">132</span>        raise HTTPException(404, f&quot;Customer {num} not found&quot;)</div>
-<div class="ln plain" id="r_133" data-tgt="" onclick=""><span class="n">133</span>    npol = db.execute(&quot;SELECT COUNT(*) AS c FROM policy WHERE customerNumber=?&quot;,</div>
-<div class="ln plain" id="r_134" data-tgt="" onclick=""><span class="n">134</span>                      (num,)).fetchone()[&quot;c&quot;]</div>
-<div class="ln plain" id="r_135" data-tgt="" onclick=""><span class="n">135</span>    status = _password_status(db, num)</div>
-<div class="ln plain" id="r_136" data-tgt="" onclick=""><span class="n">136</span>    db.close()</div>
-<div class="ln plain" id="r_137" data-tgt="" onclick=""><span class="n">137</span>    out = dict(row)</div>
-<div class="ln plain" id="r_138" data-tgt="" onclick=""><span class="n">138</span>    out[&quot;numPolicies&quot;] = npol</div>
-<div class="ln plain" id="r_139" data-tgt="" onclick=""><span class="n">139</span>    out[&quot;passwordStatus&quot;] = status</div>
-<div class="ln plain" id="r_140" data-tgt="" onclick=""><span class="n">140</span>    return out</div>
+<div class="ln plain" id="r_66" data-tgt="" onclick=""><span class="n">66</span>&nbsp;</div>
+<div class="ln plain" id="r_67" data-tgt="" onclick=""><span class="n">67</span>app = FastAPI(</div>
+<div class="ln plain" id="r_68" data-tgt="" onclick=""><span class="n">68</span>    title=&quot;GENAPP&quot;,</div>
+<div class="ln plain" id="r_69" data-tgt="" onclick=""><span class="n">69</span>    version=&quot;0.1.0&quot;,</div>
+<div class="ln plain" id="r_70" data-tgt="" onclick=""><span class="n">70</span>    description=&quot;IBM CICS General Insurance Application converted to a Web API&quot;,</div>
+<div class="ln plain" id="r_71" data-tgt="" onclick=""><span class="n">71</span>    lifespan=lifespan,</div>
+<div class="ln plain" id="r_72" data-tgt="" onclick=""><span class="n">72</span>)</div>
+<div class="ln plain" id="r_73" data-tgt="" onclick=""><span class="n">73</span>&nbsp;</div>
+<div class="ln plain" id="r_74" data-tgt="" onclick=""><span class="n">74</span>app.add_middleware(</div>
+<div class="ln plain" id="r_75" data-tgt="" onclick=""><span class="n">75</span>    CORSMiddleware,</div>
+<div class="ln plain" id="r_76" data-tgt="" onclick=""><span class="n">76</span>    allow_origins=[&quot;*&quot;],</div>
+<div class="ln plain" id="r_77" data-tgt="" onclick=""><span class="n">77</span>    allow_credentials=True,</div>
+<div class="ln plain" id="r_78" data-tgt="" onclick=""><span class="n">78</span>    allow_methods=[&quot;*&quot;],</div>
+<div class="ln plain" id="r_79" data-tgt="" onclick=""><span class="n">79</span>    allow_headers=[&quot;*&quot;],</div>
+<div class="ln plain" id="r_80" data-tgt="" onclick=""><span class="n">80</span>)</div>
+<div class="ln plain" id="r_81" data-tgt="" onclick=""><span class="n">81</span>&nbsp;</div>
+<div class="ln plain" id="r_82" data-tgt="" onclick=""><span class="n">82</span>&nbsp;</div>
+<div class="ln plain" id="r_83" data-tgt="" onclick=""><span class="n">83</span>@app.exception_handler(sqlite3.Error)</div>
+<div class="ln plain" id="r_84" data-tgt="" onclick=""><span class="n">84</span>async def _db_error_handler(request: Request, exc: sqlite3.Error):</div>
+<div class="ln plain" id="r_85" data-tgt="" onclick=""><span class="n">85</span>    &quot;&quot;&quot;Map any uncaught DB error to a 500 with a server-side log — the explicit</div>
+<div class="ln plain" id="r_86" data-tgt="" onclick=""><span class="n">86</span>    counterpart of the original&#x27;s CA-RETURN-CODE &#x27;90&#x27; (DB2 error) path, which</div>
+<div class="ln plain" id="r_87" data-tgt="" onclick=""><span class="n">87</span>    set RC=90 and wrote a diagnostic message. We never leak DB internals.&quot;&quot;&quot;</div>
+<div class="ln plain" id="r_88" data-tgt="" onclick=""><span class="n">88</span>    logger.error(&quot;DB error on %s %s: %s&quot;, request.method, request.url.path, exc)</div>
+<div class="ln plain" id="r_89" data-tgt="" onclick=""><span class="n">89</span>    return JSONResponse(status_code=500, content={&quot;detail&quot;: &quot;Internal database error&quot;})</div>
+<div class="ln plain" id="r_90" data-tgt="" onclick=""><span class="n">90</span>&nbsp;</div>
+<div class="ln plain" id="r_91" data-tgt="" onclick=""><span class="n">91</span>&nbsp;</div>
+<div class="ln plain" id="r_92" data-tgt="" onclick=""><span class="n">92</span>@app.exception_handler(StarletteHTTPException)</div>
+<div class="ln plain" id="r_93" data-tgt="" onclick=""><span class="n">93</span>async def _http_audit_handler(request: Request, exc: StarletteHTTPException):</div>
+<div class="ln plain" id="r_94" data-tgt="" onclick=""><span class="n">94</span>    &quot;&quot;&quot;業務失敗(4xx)は監査ログ(INFO)、サーバ側(5xx)は ERROR で残す。</div>
+<div class="ln plain" id="r_95" data-tgt="" onclick=""><span class="n">95</span>    元 GENAPP が COMM-FAIL/RC を返しつつ診断を出した対応物。応答は標準ハンドラに委譲。&quot;&quot;&quot;</div>
+<div class="ln plain" id="r_96" data-tgt="" onclick=""><span class="n">96</span>    if exc.status_code &gt;= 500:</div>
+<div class="ln plain" id="r_97" data-tgt="" onclick=""><span class="n">97</span>        logger.error(&quot;HTTP %s on %s %s: %s&quot;,</div>
+<div class="ln plain" id="r_98" data-tgt="" onclick=""><span class="n">98</span>                     exc.status_code, request.method, request.url.path, exc.detail)</div>
+<div class="ln plain" id="r_99" data-tgt="" onclick=""><span class="n">99</span>    else:</div>
+<div class="ln plain" id="r_100" data-tgt="" onclick=""><span class="n">100</span>        logger.info(&quot;business reject %s on %s %s: %s&quot;,</div>
+<div class="ln plain" id="r_101" data-tgt="" onclick=""><span class="n">101</span>                    exc.status_code, request.method, request.url.path, exc.detail)</div>
+<div class="ln plain" id="r_102" data-tgt="" onclick=""><span class="n">102</span>    return JSONResponse(</div>
+<div class="ln plain" id="r_103" data-tgt="" onclick=""><span class="n">103</span>        status_code=exc.status_code,</div>
+<div class="ln plain" id="r_104" data-tgt="" onclick=""><span class="n">104</span>        content={&quot;detail&quot;: exc.detail},</div>
+<div class="ln plain" id="r_105" data-tgt="" onclick=""><span class="n">105</span>        headers=getattr(exc, &quot;headers&quot;, None),</div>
+<div class="ln plain" id="r_106" data-tgt="" onclick=""><span class="n">106</span>    )</div>
+<div class="ln plain" id="r_107" data-tgt="" onclick=""><span class="n">107</span>&nbsp;</div>
+<div class="ln plain" id="r_108" data-tgt="" onclick=""><span class="n">108</span>&nbsp;</div>
+<div class="ln plain" id="r_109" data-tgt="" onclick=""><span class="n">109</span>@app.exception_handler(Exception)</div>
+<div class="ln plain" id="r_110" data-tgt="" onclick=""><span class="n">110</span>async def _unhandled_error_handler(request: Request, exc: Exception):</div>
+<div class="ln plain" id="r_111" data-tgt="" onclick=""><span class="n">111</span>    &quot;&quot;&quot;その他の未捕捉例外も 500＋診断ログ（ABEND 相当）。内部情報は漏らさない。&quot;&quot;&quot;</div>
+<div class="ln plain" id="r_112" data-tgt="" onclick=""><span class="n">112</span>    logger.exception(&quot;Unhandled error on %s %s&quot;, request.method, request.url.path)</div>
+<div class="ln plain" id="r_113" data-tgt="" onclick=""><span class="n">113</span>    return JSONResponse(status_code=500, content={&quot;detail&quot;: &quot;Internal server error&quot;})</div>
+<div class="ln plain" id="r_114" data-tgt="" onclick=""><span class="n">114</span>&nbsp;</div>
+<div class="ln plain" id="r_115" data-tgt="" onclick=""><span class="n">115</span>&nbsp;</div>
+<div class="ln plain" id="r_116" data-tgt="" onclick=""><span class="n">116</span>def now_ts() -&gt; str:</div>
+<div class="ln plain" id="r_117" data-tgt="" onclick=""><span class="n">117</span>    return datetime.now().strftime(&quot;%Y-%m-%d %H:%M:%S&quot;)</div>
+<div class="ln plain" id="r_118" data-tgt="" onclick=""><span class="n">118</span>&nbsp;</div>
+<div class="ln plain" id="r_119" data-tgt="" onclick=""><span class="n">119</span>&nbsp;</div>
+<div class="ln plain" id="r_120" data-tgt="" onclick=""><span class="n">120</span>def _policy_description(row) -&gt; str:</div>
+<div class="ln plain" id="r_121" data-tgt="" onclick=""><span class="n">121</span>    t = row[&quot;policyType&quot;]</div>
+<div class="ln plain" id="r_122" data-tgt="" onclick=""><span class="n">122</span>    with db_tx() as db:</div>
+<div class="ln plain" id="r_123" data-tgt="" onclick=""><span class="n">123</span>        if t == &quot;M&quot;:</div>
+<div class="ln plain" id="r_124" data-tgt="" onclick=""><span class="n">124</span>            d = db.execute(&quot;SELECT make, model FROM motor WHERE policyNumber=?&quot;,</div>
+<div class="ln plain" id="r_125" data-tgt="" onclick=""><span class="n">125</span>                           (row[&quot;policyNumber&quot;],)).fetchone()</div>
+<div class="ln plain" id="r_126" data-tgt="" onclick=""><span class="n">126</span>            return f&quot;Motor: {d[&#x27;make&#x27;].strip()} {d[&#x27;model&#x27;].strip()}&quot; if d else &quot;Motor&quot;</div>
+<div class="ln plain" id="r_127" data-tgt="" onclick=""><span class="n">127</span>        if t == &quot;E&quot;:</div>
+<div class="ln plain" id="r_128" data-tgt="" onclick=""><span class="n">128</span>            d = db.execute(&quot;SELECT fundName FROM endowment WHERE policyNumber=?&quot;,</div>
+<div class="ln plain" id="r_129" data-tgt="" onclick=""><span class="n">129</span>                           (row[&quot;policyNumber&quot;],)).fetchone()</div>
+<div class="ln plain" id="r_130" data-tgt="" onclick=""><span class="n">130</span>            return f&quot;Endowment: {d[&#x27;fundName&#x27;].strip()}&quot; if d else &quot;Endowment&quot;</div>
+<div class="ln plain" id="r_131" data-tgt="" onclick=""><span class="n">131</span>        if t == &quot;H&quot;:</div>
+<div class="ln plain" id="r_132" data-tgt="" onclick=""><span class="n">132</span>            d = db.execute(&quot;SELECT propertyType FROM house WHERE policyNumber=?&quot;,</div>
+<div class="ln plain" id="r_133" data-tgt="" onclick=""><span class="n">133</span>                           (row[&quot;policyNumber&quot;],)).fetchone()</div>
+<div class="ln plain" id="r_134" data-tgt="" onclick=""><span class="n">134</span>            return f&quot;House: {d[&#x27;propertyType&#x27;].strip()}&quot; if d else &quot;House&quot;</div>
+<div class="ln plain" id="r_135" data-tgt="" onclick=""><span class="n">135</span>        if t == &quot;C&quot;:</div>
+<div class="ln plain" id="r_136" data-tgt="" onclick=""><span class="n">136</span>            d = db.execute(&quot;SELECT address FROM commercial WHERE policyNumber=?&quot;,</div>
+<div class="ln plain" id="r_137" data-tgt="" onclick=""><span class="n">137</span>                           (row[&quot;policyNumber&quot;],)).fetchone()</div>
+<div class="ln plain" id="r_138" data-tgt="" onclick=""><span class="n">138</span>            return f&quot;Commercial: {d[&#x27;address&#x27;].strip()}&quot; if d else &quot;Commercial&quot;</div>
+<div class="ln plain" id="r_139" data-tgt="" onclick=""><span class="n">139</span>    return t</div>
+<div class="ln plain" id="r_140" data-tgt="" onclick=""><span class="n">140</span>&nbsp;</div>
 <div class="ln plain" id="r_141" data-tgt="" onclick=""><span class="n">141</span>&nbsp;</div>
-<div class="ln plain" id="r_142" data-tgt="" onclick=""><span class="n">142</span>&nbsp;</div>
-<div class="ln plain" id="r_143" data-tgt="" onclick=""><span class="n">143</span>@app.post(&quot;/api/customers&quot;, response_model=CustomerOut, status_code=201)</div>
-<div class="ln plain" id="r_144" data-tgt="" onclick=""><span class="n">144</span>def add_customer(c: CustomerCreate):</div>
-<div class="ln plain" id="r_145" data-tgt="" onclick=""><span class="n">145</span>    &quot;&quot;&quot;Customer Add — request id 01ACUS (LGACUS01 -&gt; LGACDB01). The new</div>
-<div class="ln plain" id="r_146" data-tgt="" onclick=""><span class="n">146</span>    customer number is generated by the DB (was a named-counter / DB2 IDENTITY).&quot;&quot;&quot;</div>
-<div class="ln plain" id="r_147" data-tgt="" onclick=""><span class="n">147</span>    db = get_db()</div>
-<div class="ln plain" id="r_148" data-tgt="" onclick=""><span class="n">148</span>    cur = db.execute(</div>
-<div class="ln plain" id="r_149" data-tgt="" onclick=""><span class="n">149</span>        &quot;INSERT INTO customer (firstName, lastName, dateOfBirth, houseName, &quot;</div>
-<div class="ln plain" id="r_150" data-tgt="" onclick=""><span class="n">150</span>        &quot;houseNumber, postcode, phoneHome, phoneMobile, emailAddress) &quot;</div>
-<div class="ln plain" id="r_151" data-tgt="" onclick=""><span class="n">151</span>        &quot;VALUES (?,?,?,?,?,?,?,?,?)&quot;,</div>
-<div class="ln plain" id="r_152" data-tgt="" onclick=""><span class="n">152</span>        (c.firstName, c.lastName, c.dateOfBirth, c.houseName, c.houseNumber,</div>
-<div class="ln plain" id="r_153" data-tgt="" onclick=""><span class="n">153</span>         c.postcode, c.phoneHome, c.phoneMobile, c.emailAddress))</div>
-<div class="ln plain" id="r_154" data-tgt="" onclick=""><span class="n">154</span>    num = cur.lastrowid</div>
-<div class="ln plain" id="r_155" data-tgt="" onclick=""><span class="n">155</span>    # The original (LGACDB02) seeds a shared default MD5 hash for every customer —</div>
-<div class="ln plain" id="r_156" data-tgt="" onclick=""><span class="n">156</span>    # a known-credential anti-pattern we do NOT carry over. New customers start</div>
-<div class="ln plain" id="r_157" data-tgt="" onclick=""><span class="n">157</span>    # with no usable password (state &#x27;R&#x27; = reset required) and must register one</div>
-<div class="ln plain" id="r_158" data-tgt="" onclick=""><span class="n">158</span>    # via POST /api/customers/{num}/password before they can authenticate.</div>
-<div class="ln plain" id="r_159" data-tgt="" onclick=""><span class="n">159</span>    db.execute(&quot;INSERT INTO customer_secure (customerNumber, customerPass, &quot;</div>
-<div class="ln plain" id="r_160" data-tgt="" onclick=""><span class="n">160</span>               &quot;state_indicator, pass_changes) VALUES (?, NULL, &#x27;R&#x27;, 0)&quot;, (num,))</div>
-<div class="ln plain" id="r_161" data-tgt="" onclick=""><span class="n">161</span>    db.commit()</div>
-<div class="ln plain" id="r_162" data-tgt="" onclick=""><span class="n">162</span>    db.close()</div>
-<div class="ln plain" id="r_163" data-tgt="" onclick=""><span class="n">163</span>    out = c.model_dump()</div>
-<div class="ln plain" id="r_164" data-tgt="" onclick=""><span class="n">164</span>    out[&quot;customerNumber&quot;] = num</div>
-<div class="ln plain" id="r_165" data-tgt="" onclick=""><span class="n">165</span>    out[&quot;numPolicies&quot;] = 0</div>
-<div class="ln plain" id="r_166" data-tgt="" onclick=""><span class="n">166</span>    out[&quot;passwordStatus&quot;] = &quot;reset_required&quot;</div>
-<div class="ln plain" id="r_167" data-tgt="" onclick=""><span class="n">167</span>    return out</div>
-<div class="ln plain" id="r_168" data-tgt="" onclick=""><span class="n">168</span>&nbsp;</div>
+<div class="ln plain" id="r_142" data-tgt="" onclick=""><span class="n">142</span># ════════════════════════════════════════════════════════════════════════</div>
+<div class="ln plain" id="r_143" data-tgt="" onclick=""><span class="n">143</span>#  Customers — SSC1 / LGTESTC1 + LGICUS01/LGACUS01/LGUCUS01</div>
+<div class="ln plain" id="r_144" data-tgt="" onclick=""><span class="n">144</span># ════════════════════════════════════════════════════════════════════════</div>
+<div class="ln plain" id="r_145" data-tgt="" onclick=""><span class="n">145</span>&nbsp;</div>
+<div class="ln plain" id="r_146" data-tgt="" onclick=""><span class="n">146</span>def _password_status(db, num: int) -&gt; str:</div>
+<div class="ln plain" id="r_147" data-tgt="" onclick=""><span class="n">147</span>    row = db.execute(&quot;SELECT state_indicator FROM customer_secure WHERE customerNumber=?&quot;,</div>
+<div class="ln plain" id="r_148" data-tgt="" onclick=""><span class="n">148</span>                     (num,)).fetchone()</div>
+<div class="ln plain" id="r_149" data-tgt="" onclick=""><span class="n">149</span>    return &quot;active&quot; if row and row[&quot;state_indicator&quot;] == &quot;A&quot; else &quot;reset_required&quot;</div>
+<div class="ln plain" id="r_150" data-tgt="" onclick=""><span class="n">150</span>&nbsp;</div>
+<div class="ln plain" id="r_151" data-tgt="" onclick=""><span class="n">151</span>&nbsp;</div>
+<div class="ln plain" id="r_152" data-tgt="" onclick=""><span class="n">152</span>@app.get(&quot;/api/customers&quot;, response_model=list[CustomerOut])</div>
+<div class="ln plain" id="r_153" data-tgt="" onclick=""><span class="n">153</span>def list_customers():</div>
+<div class="ln plain" id="r_154" data-tgt="" onclick=""><span class="n">154</span>    &quot;&quot;&quot;List all customers. (Web convenience — the 3270 SSC1 could only look up</div>
+<div class="ln plain" id="r_155" data-tgt="" onclick=""><span class="n">155</span>    a customer by number, never browse.)&quot;&quot;&quot;</div>
+<div class="ln plain" id="r_156" data-tgt="" onclick=""><span class="n">156</span>    with db_tx() as db:</div>
+<div class="ln plain" id="r_157" data-tgt="" onclick=""><span class="n">157</span>        rows = db.execute(</div>
+<div class="ln plain" id="r_158" data-tgt="" onclick=""><span class="n">158</span>            &quot;SELECT c.*, (SELECT COUNT(*) FROM policy p &quot;</div>
+<div class="ln plain" id="r_159" data-tgt="" onclick=""><span class="n">159</span>            &quot;WHERE p.customerNumber=c.customerNumber) AS numPolicies, &quot;</div>
+<div class="ln plain" id="r_160" data-tgt="" onclick=""><span class="n">160</span>            &quot;(SELECT state_indicator FROM customer_secure s &quot;</div>
+<div class="ln plain" id="r_161" data-tgt="" onclick=""><span class="n">161</span>            &quot;WHERE s.customerNumber=c.customerNumber) AS state &quot;</div>
+<div class="ln plain" id="r_162" data-tgt="" onclick=""><span class="n">162</span>            &quot;FROM customer c ORDER BY c.customerNumber&quot;).fetchall()</div>
+<div class="ln plain" id="r_163" data-tgt="" onclick=""><span class="n">163</span>    out = []</div>
+<div class="ln plain" id="r_164" data-tgt="" onclick=""><span class="n">164</span>    for r in rows:</div>
+<div class="ln plain" id="r_165" data-tgt="" onclick=""><span class="n">165</span>        d = dict(r)</div>
+<div class="ln plain" id="r_166" data-tgt="" onclick=""><span class="n">166</span>        d[&quot;passwordStatus&quot;] = &quot;active&quot; if d.pop(&quot;state&quot;, None) == &quot;A&quot; else &quot;reset_required&quot;</div>
+<div class="ln plain" id="r_167" data-tgt="" onclick=""><span class="n">167</span>        out.append(d)</div>
+<div class="ln plain" id="r_168" data-tgt="" onclick=""><span class="n">168</span>    return out</div>
 <div class="ln plain" id="r_169" data-tgt="" onclick=""><span class="n">169</span>&nbsp;</div>
-<div class="ln plain" id="r_170" data-tgt="" onclick=""><span class="n">170</span>@app.put(&quot;/api/customers/{num}&quot;, response_model=CustomerOut)</div>
-<div class="ln rmapped" id="r_171" data-tgt="l_us_71 l_us_72 l_us_73 l_us_74 l_us_75 l_us_76 l_us_77 l_us_78 l_us_79 l_db_87 l_db_88 l_db_89 l_db_90 l_db_91 l_db_92 l_db_93 l_db_94 l_db_95 l_db_96 l_db_97" onclick="lineClick(this)"><span class="n">171</span>def update_customer(num: int, c: CustomerCreate):</div>
-<div class="ln plain" id="r_172" data-tgt="" onclick=""><span class="n">172</span>    &quot;&quot;&quot;Customer Update — request id 01UCUS (LGUCUS01 -&gt; LGUCDB01).&quot;&quot;&quot;</div>
-<div class="ln rmapped" id="r_173" data-tgt="l_us_87 l_us_88 l_us_89 l_us_90 l_us_91" onclick="lineClick(this)"><span class="n">173</span>    db = get_db()</div>
-<div class="ln rmapped" id="r_174" data-tgt="l_us_87 l_us_88 l_us_89 l_us_90 l_us_91" onclick="lineClick(this)"><span class="n">174</span>    row = db.execute(&quot;SELECT 1 FROM customer WHERE customerNumber=?&quot;, (num,)).fetchone()</div>
-<div class="ln rmapped" id="r_175" data-tgt="l_us_87 l_us_88 l_us_89 l_us_90 l_us_91" onclick="lineClick(this)"><span class="n">175</span>    if row is None:</div>
-<div class="ln rmapped" id="r_176" data-tgt="l_db_171 l_db_172 l_db_173 l_db_174 l_db_175 l_db_176 l_db_177 l_db_178 l_db_179 l_db_180" onclick="lineClick(this)"><span class="n">176</span>        db.close()</div>
-<div class="ln rmapped" id="r_177" data-tgt="l_db_171 l_db_172 l_db_173 l_db_174 l_db_175 l_db_176 l_db_177 l_db_178 l_db_179 l_db_180" onclick="lineClick(this)"><span class="n">177</span>        raise HTTPException(404, f&quot;Customer {num} not found&quot;)</div>
-<div class="ln plain" id="r_178" data-tgt="" onclick=""><span class="n">178</span>    db.execute(</div>
-<div class="ln rmapped" id="r_179" data-tgt="l_us_128 l_db_152 l_db_153 l_db_154 l_db_155 l_db_156 l_db_157 l_db_158 l_db_159 l_db_160 l_db_161 l_db_162 l_db_163 l_db_164 l_db_165 l_db_166 l_db_167 l_db_168 l_db_169" onclick="lineClick(this)"><span class="n">179</span>        &quot;UPDATE customer SET firstName=?, lastName=?, dateOfBirth=?, houseName=?, &quot;</div>
-<div class="ln rmapped" id="r_180" data-tgt="l_us_128 l_db_152 l_db_153 l_db_154 l_db_155 l_db_156 l_db_157 l_db_158 l_db_159 l_db_160 l_db_161 l_db_162 l_db_163 l_db_164 l_db_165 l_db_166 l_db_167 l_db_168 l_db_169" onclick="lineClick(this)"><span class="n">180</span>        &quot;houseNumber=?, postcode=?, phoneHome=?, phoneMobile=?, emailAddress=? &quot;</div>
-<div class="ln rmapped" id="r_181" data-tgt="l_us_128 l_db_152 l_db_153 l_db_154 l_db_155 l_db_156 l_db_157 l_db_158 l_db_159 l_db_160 l_db_161 l_db_162 l_db_163 l_db_164 l_db_165 l_db_166 l_db_167 l_db_168 l_db_169" onclick="lineClick(this)"><span class="n">181</span>        &quot;WHERE customerNumber=?&quot;,</div>
-<div class="ln rmapped" id="r_182" data-tgt="l_us_128 l_db_152 l_db_153 l_db_154 l_db_155 l_db_156 l_db_157 l_db_158 l_db_159 l_db_160 l_db_161 l_db_162 l_db_163 l_db_164 l_db_165 l_db_166 l_db_167 l_db_168 l_db_169" onclick="lineClick(this)"><span class="n">182</span>        (c.firstName, c.lastName, c.dateOfBirth, c.houseName, c.houseNumber,</div>
-<div class="ln rmapped" id="r_183" data-tgt="l_us_128 l_db_152 l_db_153 l_db_154 l_db_155 l_db_156 l_db_157 l_db_158 l_db_159 l_db_160 l_db_161 l_db_162 l_db_163 l_db_164 l_db_165 l_db_166 l_db_167 l_db_168 l_db_169" onclick="lineClick(this)"><span class="n">183</span>         c.postcode, c.phoneHome, c.phoneMobile, c.emailAddress, num))</div>
-<div class="ln rmapped" id="r_184" data-tgt="l_us_128 l_db_152 l_db_153 l_db_154 l_db_155 l_db_156 l_db_157 l_db_158 l_db_159 l_db_160 l_db_161 l_db_162 l_db_163 l_db_164 l_db_165 l_db_166 l_db_167 l_db_168 l_db_169" onclick="lineClick(this)"><span class="n">184</span>    db.commit()</div>
-<div class="ln rmapped" id="r_185" data-tgt="l_us_128" onclick="lineClick(this)"><span class="n">185</span>    npol = db.execute(&quot;SELECT COUNT(*) AS c FROM policy WHERE customerNumber=?&quot;,</div>
-<div class="ln rmapped" id="r_186" data-tgt="l_us_128" onclick="lineClick(this)"><span class="n">186</span>                      (num,)).fetchone()[&quot;c&quot;]</div>
-<div class="ln rmapped" id="r_187" data-tgt="l_us_128" onclick="lineClick(this)"><span class="n">187</span>    status = _password_status(db, num)</div>
-<div class="ln rmapped" id="r_188" data-tgt="l_us_128" onclick="lineClick(this)"><span class="n">188</span>    db.close()</div>
-<div class="ln rmapped" id="r_189" data-tgt="l_us_128" onclick="lineClick(this)"><span class="n">189</span>    out = c.model_dump()</div>
-<div class="ln rmapped" id="r_190" data-tgt="l_us_128" onclick="lineClick(this)"><span class="n">190</span>    out[&quot;customerNumber&quot;] = num</div>
-<div class="ln rmapped" id="r_191" data-tgt="l_us_128" onclick="lineClick(this)"><span class="n">191</span>    out[&quot;numPolicies&quot;] = npol</div>
-<div class="ln rmapped" id="r_192" data-tgt="l_us_128" onclick="lineClick(this)"><span class="n">192</span>    out[&quot;passwordStatus&quot;] = status</div>
-<div class="ln rmapped" id="r_193" data-tgt="l_us_128" onclick="lineClick(this)"><span class="n">193</span>    return out</div>
-<div class="ln rmapped" id="r_194" data-tgt="l_us_128" onclick="lineClick(this)"><span class="n">194</span>&nbsp;</div>
-<div class="ln rmapped" id="r_195" data-tgt="l_us_128" onclick="lineClick(this)"><span class="n">195</span>&nbsp;</div>
-<div class="ln rmapped" id="r_196" data-tgt="l_us_128" onclick="lineClick(this)"><span class="n">196</span># ── customer password: migration forces re-registration (no legacy hashes) ──</div>
-<div class="ln plain" id="r_197" data-tgt="" onclick=""><span class="n">197</span>&nbsp;</div>
-<div class="ln plain" id="r_198" data-tgt="" onclick=""><span class="n">198</span>@app.post(&quot;/api/customers/{num}/password&quot;)</div>
-<div class="ln plain" id="r_199" data-tgt="" onclick=""><span class="n">199</span>def set_password(num: int, req: PasswordSet):</div>
-<div class="ln plain" id="r_200" data-tgt="" onclick=""><span class="n">200</span>    &quot;&quot;&quot;Register/reset a customer&#x27;s password. Migrated and new customers start</div>
-<div class="ln plain" id="r_201" data-tgt="" onclick=""><span class="n">201</span>    &#x27;reset required&#x27;; this stores a salted PBKDF2 hash and activates the account.&quot;&quot;&quot;</div>
-<div class="ln plain" id="r_202" data-tgt="" onclick=""><span class="n">202</span>    if len(req.password) &lt; 8:</div>
-<div class="ln plain" id="r_203" data-tgt="" onclick=""><span class="n">203</span>        raise HTTPException(422, &quot;Password must be at least 8 characters&quot;)</div>
-<div class="ln plain" id="r_204" data-tgt="" onclick=""><span class="n">204</span>    db = get_db()</div>
-<div class="ln plain" id="r_205" data-tgt="" onclick=""><span class="n">205</span>    row = db.execute(&quot;SELECT 1 FROM customer WHERE customerNumber=?&quot;, (num,)).fetchone()</div>
-<div class="ln plain" id="r_206" data-tgt="" onclick=""><span class="n">206</span>    if row is None:</div>
-<div class="ln plain" id="r_207" data-tgt="" onclick=""><span class="n">207</span>        db.close()</div>
-<div class="ln plain" id="r_208" data-tgt="" onclick=""><span class="n">208</span>        raise HTTPException(404, f&quot;Customer {num} not found&quot;)</div>
-<div class="ln plain" id="r_209" data-tgt="" onclick=""><span class="n">209</span>    db.execute(&quot;UPDATE customer_secure SET customerPass=?, state_indicator=&#x27;A&#x27;, &quot;</div>
-<div class="ln plain" id="r_210" data-tgt="" onclick=""><span class="n">210</span>               &quot;pass_changes=pass_changes+1 WHERE customerNumber=?&quot;,</div>
-<div class="ln plain" id="r_211" data-tgt="" onclick=""><span class="n">211</span>               (hash_password(req.password), num))</div>
-<div class="ln plain" id="r_212" data-tgt="" onclick=""><span class="n">212</span>    db.commit()</div>
-<div class="ln plain" id="r_213" data-tgt="" onclick=""><span class="n">213</span>    db.close()</div>
-<div class="ln plain" id="r_214" data-tgt="" onclick=""><span class="n">214</span>    return {&quot;customerNumber&quot;: num, &quot;passwordStatus&quot;: &quot;active&quot;}</div>
+<div class="ln plain" id="r_170" data-tgt="" onclick=""><span class="n">170</span>&nbsp;</div>
+<div class="ln rmapped" id="r_171" data-tgt="l_us_71 l_us_72 l_us_73 l_us_74 l_us_75 l_us_76 l_us_77 l_us_78 l_us_79 l_db_87 l_db_88 l_db_89 l_db_90 l_db_91 l_db_92 l_db_93 l_db_94 l_db_95 l_db_96 l_db_97" onclick="lineClick(this)"><span class="n">171</span>@app.get(&quot;/api/customers/{num}&quot;, response_model=CustomerOut)</div>
+<div class="ln plain" id="r_172" data-tgt="" onclick=""><span class="n">172</span>def get_customer(num: int):</div>
+<div class="ln rmapped" id="r_173" data-tgt="l_us_87 l_us_88 l_us_89 l_us_90 l_us_91" onclick="lineClick(this)"><span class="n">173</span>    &quot;&quot;&quot;Customer Inquiry — request id 01ICUS (LGICUS01).&quot;&quot;&quot;</div>
+<div class="ln rmapped" id="r_174" data-tgt="l_us_87 l_us_88 l_us_89 l_us_90 l_us_91" onclick="lineClick(this)"><span class="n">174</span>    with db_tx() as db:</div>
+<div class="ln rmapped" id="r_175" data-tgt="l_us_87 l_us_88 l_us_89 l_us_90 l_us_91" onclick="lineClick(this)"><span class="n">175</span>        row = db.execute(&quot;SELECT * FROM customer WHERE customerNumber=?&quot;, (num,)).fetchone()</div>
+<div class="ln rmapped" id="r_176" data-tgt="l_db_171 l_db_172 l_db_173 l_db_174 l_db_175 l_db_176 l_db_177 l_db_178 l_db_179 l_db_180" onclick="lineClick(this)"><span class="n">176</span>        if row is None:                               # SQLCODE 100 -&gt; CA-RC 01</div>
+<div class="ln rmapped" id="r_177" data-tgt="l_db_171 l_db_172 l_db_173 l_db_174 l_db_175 l_db_176 l_db_177 l_db_178 l_db_179 l_db_180" onclick="lineClick(this)"><span class="n">177</span>            raise HTTPException(404, f&quot;Customer {num} not found&quot;)</div>
+<div class="ln plain" id="r_178" data-tgt="" onclick=""><span class="n">178</span>        npol = db.execute(&quot;SELECT COUNT(*) AS c FROM policy WHERE customerNumber=?&quot;,</div>
+<div class="ln rmapped" id="r_179" data-tgt="l_us_128 l_db_152 l_db_153 l_db_154 l_db_155 l_db_156 l_db_157 l_db_158 l_db_159 l_db_160 l_db_161 l_db_162 l_db_163 l_db_164 l_db_165 l_db_166 l_db_167 l_db_168 l_db_169" onclick="lineClick(this)"><span class="n">179</span>                          (num,)).fetchone()[&quot;c&quot;]</div>
+<div class="ln rmapped" id="r_180" data-tgt="l_us_128 l_db_152 l_db_153 l_db_154 l_db_155 l_db_156 l_db_157 l_db_158 l_db_159 l_db_160 l_db_161 l_db_162 l_db_163 l_db_164 l_db_165 l_db_166 l_db_167 l_db_168 l_db_169" onclick="lineClick(this)"><span class="n">180</span>        status = _password_status(db, num)</div>
+<div class="ln rmapped" id="r_181" data-tgt="l_us_128 l_db_152 l_db_153 l_db_154 l_db_155 l_db_156 l_db_157 l_db_158 l_db_159 l_db_160 l_db_161 l_db_162 l_db_163 l_db_164 l_db_165 l_db_166 l_db_167 l_db_168 l_db_169" onclick="lineClick(this)"><span class="n">181</span>        out = dict(row)</div>
+<div class="ln rmapped" id="r_182" data-tgt="l_us_128 l_db_152 l_db_153 l_db_154 l_db_155 l_db_156 l_db_157 l_db_158 l_db_159 l_db_160 l_db_161 l_db_162 l_db_163 l_db_164 l_db_165 l_db_166 l_db_167 l_db_168 l_db_169" onclick="lineClick(this)"><span class="n">182</span>    out[&quot;numPolicies&quot;] = npol</div>
+<div class="ln rmapped" id="r_183" data-tgt="l_us_128 l_db_152 l_db_153 l_db_154 l_db_155 l_db_156 l_db_157 l_db_158 l_db_159 l_db_160 l_db_161 l_db_162 l_db_163 l_db_164 l_db_165 l_db_166 l_db_167 l_db_168 l_db_169" onclick="lineClick(this)"><span class="n">183</span>    out[&quot;passwordStatus&quot;] = status</div>
+<div class="ln rmapped" id="r_184" data-tgt="l_us_128 l_db_152 l_db_153 l_db_154 l_db_155 l_db_156 l_db_157 l_db_158 l_db_159 l_db_160 l_db_161 l_db_162 l_db_163 l_db_164 l_db_165 l_db_166 l_db_167 l_db_168 l_db_169" onclick="lineClick(this)"><span class="n">184</span>    return out</div>
+<div class="ln rmapped" id="r_185" data-tgt="l_us_128" onclick="lineClick(this)"><span class="n">185</span>&nbsp;</div>
+<div class="ln rmapped" id="r_186" data-tgt="l_us_128" onclick="lineClick(this)"><span class="n">186</span>&nbsp;</div>
+<div class="ln rmapped" id="r_187" data-tgt="l_us_128" onclick="lineClick(this)"><span class="n">187</span>@app.post(&quot;/api/customers&quot;, response_model=CustomerOut, status_code=201)</div>
+<div class="ln rmapped" id="r_188" data-tgt="l_us_128" onclick="lineClick(this)"><span class="n">188</span>def add_customer(c: CustomerCreate):</div>
+<div class="ln rmapped" id="r_189" data-tgt="l_us_128" onclick="lineClick(this)"><span class="n">189</span>    &quot;&quot;&quot;Customer Add — request id 01ACUS (LGACUS01 -&gt; LGACDB01). The new</div>
+<div class="ln rmapped" id="r_190" data-tgt="l_us_128" onclick="lineClick(this)"><span class="n">190</span>    customer number is generated by the DB (was a named-counter / DB2 IDENTITY).</div>
+<div class="ln rmapped" id="r_191" data-tgt="l_us_128" onclick="lineClick(this)"><span class="n">191</span>&nbsp;</div>
+<div class="ln rmapped" id="r_192" data-tgt="l_us_128" onclick="lineClick(this)"><span class="n">192</span>    The customer row and its customer_secure row are inserted in one transaction:</div>
+<div class="ln rmapped" id="r_193" data-tgt="l_us_128" onclick="lineClick(this)"><span class="n">193</span>    if the second insert fails the first is rolled back (the original LGACDB01/02</div>
+<div class="ln rmapped" id="r_194" data-tgt="l_us_128" onclick="lineClick(this)"><span class="n">194</span>    could leave a CUSTOMER row without its CUSTOMER_SECURE — an intentional</div>
+<div class="ln rmapped" id="r_195" data-tgt="l_us_128" onclick="lineClick(this)"><span class="n">195</span>    improvement, see GENAPP_BRANCH_COVERAGE.md G8).&quot;&quot;&quot;</div>
+<div class="ln rmapped" id="r_196" data-tgt="l_us_128" onclick="lineClick(this)"><span class="n">196</span>    with db_tx() as db:</div>
+<div class="ln plain" id="r_197" data-tgt="" onclick=""><span class="n">197</span>        cur = db.execute(</div>
+<div class="ln plain" id="r_198" data-tgt="" onclick=""><span class="n">198</span>            &quot;INSERT INTO customer (firstName, lastName, dateOfBirth, houseName, &quot;</div>
+<div class="ln plain" id="r_199" data-tgt="" onclick=""><span class="n">199</span>            &quot;houseNumber, postcode, phoneHome, phoneMobile, emailAddress) &quot;</div>
+<div class="ln plain" id="r_200" data-tgt="" onclick=""><span class="n">200</span>            &quot;VALUES (?,?,?,?,?,?,?,?,?)&quot;,</div>
+<div class="ln plain" id="r_201" data-tgt="" onclick=""><span class="n">201</span>            (c.firstName, c.lastName, c.dateOfBirth, c.houseName, c.houseNumber,</div>
+<div class="ln plain" id="r_202" data-tgt="" onclick=""><span class="n">202</span>             c.postcode, c.phoneHome, c.phoneMobile, c.emailAddress))</div>
+<div class="ln plain" id="r_203" data-tgt="" onclick=""><span class="n">203</span>        num = cur.lastrowid</div>
+<div class="ln plain" id="r_204" data-tgt="" onclick=""><span class="n">204</span>        # The original (LGACDB02) seeds a shared default MD5 hash for every</div>
+<div class="ln plain" id="r_205" data-tgt="" onclick=""><span class="n">205</span>        # customer — a known-credential anti-pattern we do NOT carry over. New</div>
+<div class="ln plain" id="r_206" data-tgt="" onclick=""><span class="n">206</span>        # customers start with no usable password (state &#x27;R&#x27; = reset required)</div>
+<div class="ln plain" id="r_207" data-tgt="" onclick=""><span class="n">207</span>        # and must register one via POST /api/customers/{num}/password.</div>
+<div class="ln plain" id="r_208" data-tgt="" onclick=""><span class="n">208</span>        db.execute(&quot;INSERT INTO customer_secure (customerNumber, customerPass, &quot;</div>
+<div class="ln plain" id="r_209" data-tgt="" onclick=""><span class="n">209</span>                   &quot;state_indicator, pass_changes) VALUES (?, NULL, &#x27;R&#x27;, 0)&quot;, (num,))</div>
+<div class="ln plain" id="r_210" data-tgt="" onclick=""><span class="n">210</span>    out = c.model_dump()</div>
+<div class="ln plain" id="r_211" data-tgt="" onclick=""><span class="n">211</span>    out[&quot;customerNumber&quot;] = num</div>
+<div class="ln plain" id="r_212" data-tgt="" onclick=""><span class="n">212</span>    out[&quot;numPolicies&quot;] = 0</div>
+<div class="ln plain" id="r_213" data-tgt="" onclick=""><span class="n">213</span>    out[&quot;passwordStatus&quot;] = &quot;reset_required&quot;</div>
+<div class="ln plain" id="r_214" data-tgt="" onclick=""><span class="n">214</span>    return out</div>
 <div class="ln plain" id="r_215" data-tgt="" onclick=""><span class="n">215</span>&nbsp;</div>
 <div class="ln plain" id="r_216" data-tgt="" onclick=""><span class="n">216</span>&nbsp;</div>
-<div class="ln plain" id="r_217" data-tgt="" onclick=""><span class="n">217</span>@app.post(&quot;/api/customers/{num}/verify&quot;)</div>
-<div class="ln plain" id="r_218" data-tgt="" onclick=""><span class="n">218</span>def verify_customer(num: int, req: PasswordVerify):</div>
-<div class="ln plain" id="r_219" data-tgt="" onclick=""><span class="n">219</span>    &quot;&quot;&quot;Demonstrate authentication. Returns whether the password matches and</div>
-<div class="ln plain" id="r_220" data-tgt="" onclick=""><span class="n">220</span>    whether a reset is still required (migrated customers can&#x27;t log in until set).&quot;&quot;&quot;</div>
-<div class="ln plain" id="r_221" data-tgt="" onclick=""><span class="n">221</span>    db = get_db()</div>
-<div class="ln plain" id="r_222" data-tgt="" onclick=""><span class="n">222</span>    row = db.execute(&quot;SELECT customerPass, state_indicator FROM customer_secure &quot;</div>
-<div class="ln plain" id="r_223" data-tgt="" onclick=""><span class="n">223</span>                     &quot;WHERE customerNumber=?&quot;, (num,)).fetchone()</div>
-<div class="ln plain" id="r_224" data-tgt="" onclick=""><span class="n">224</span>    db.close()</div>
-<div class="ln plain" id="r_225" data-tgt="" onclick=""><span class="n">225</span>    if row is None:</div>
-<div class="ln plain" id="r_226" data-tgt="" onclick=""><span class="n">226</span>        raise HTTPException(404, f&quot;Customer {num} not found&quot;)</div>
-<div class="ln plain" id="r_227" data-tgt="" onclick=""><span class="n">227</span>    if row[&quot;state_indicator&quot;] != &quot;A&quot;:</div>
-<div class="ln plain" id="r_228" data-tgt="" onclick=""><span class="n">228</span>        return {&quot;authenticated&quot;: False, &quot;resetRequired&quot;: True}</div>
-<div class="ln plain" id="r_229" data-tgt="" onclick=""><span class="n">229</span>    return {&quot;authenticated&quot;: verify_password(req.password, row[&quot;customerPass&quot;]),</div>
-<div class="ln plain" id="r_230" data-tgt="" onclick=""><span class="n">230</span>            &quot;resetRequired&quot;: False}</div>
-<div class="ln plain" id="r_231" data-tgt="" onclick=""><span class="n">231</span>&nbsp;</div>
-<div class="ln plain" id="r_232" data-tgt="" onclick=""><span class="n">232</span>&nbsp;</div>
-<div class="ln plain" id="r_233" data-tgt="" onclick=""><span class="n">233</span>@app.get(&quot;/api/customers/{num}/policies&quot;, response_model=list[PolicySummary])</div>
-<div class="ln plain" id="r_234" data-tgt="" onclick=""><span class="n">234</span>def list_customer_policies(num: int):</div>
-<div class="ln plain" id="r_235" data-tgt="" onclick=""><span class="n">235</span>    &quot;&quot;&quot;All policies belonging to a customer (joins policy + detail tables).&quot;&quot;&quot;</div>
-<div class="ln plain" id="r_236" data-tgt="" onclick=""><span class="n">236</span>    db = get_db()</div>
-<div class="ln plain" id="r_237" data-tgt="" onclick=""><span class="n">237</span>    rows = db.execute(&quot;SELECT * FROM policy WHERE customerNumber=? ORDER BY policyNumber&quot;,</div>
-<div class="ln plain" id="r_238" data-tgt="" onclick=""><span class="n">238</span>                      (num,)).fetchall()</div>
-<div class="ln plain" id="r_239" data-tgt="" onclick=""><span class="n">239</span>    result = [</div>
-<div class="ln plain" id="r_240" data-tgt="" onclick=""><span class="n">240</span>        PolicySummary(</div>
-<div class="ln plain" id="r_241" data-tgt="" onclick=""><span class="n">241</span>            policyNumber=r[&quot;policyNumber&quot;], customerNumber=r[&quot;customerNumber&quot;],</div>
-<div class="ln plain" id="r_242" data-tgt="" onclick=""><span class="n">242</span>            policyType=r[&quot;policyType&quot;], issueDate=r[&quot;issueDate&quot;],</div>
-<div class="ln plain" id="r_243" data-tgt="" onclick=""><span class="n">243</span>            expiryDate=r[&quot;expiryDate&quot;], description=_policy_description(r))</div>
-<div class="ln plain" id="r_244" data-tgt="" onclick=""><span class="n">244</span>        for r in rows</div>
-<div class="ln plain" id="r_245" data-tgt="" onclick=""><span class="n">245</span>    ]</div>
-<div class="ln plain" id="r_246" data-tgt="" onclick=""><span class="n">246</span>    db.close()</div>
-<div class="ln plain" id="r_247" data-tgt="" onclick=""><span class="n">247</span>    return result</div>
-<div class="ln plain" id="r_248" data-tgt="" onclick=""><span class="n">248</span>&nbsp;</div>
-<div class="ln plain" id="r_249" data-tgt="" onclick=""><span class="n">249</span>&nbsp;</div>
-<div class="ln plain" id="r_250" data-tgt="" onclick=""><span class="n">250</span># ════════════════════════════════════════════════════════════════════════</div>
-<div class="ln plain" id="r_251" data-tgt="" onclick=""><span class="n">251</span>#  Helper for policy add: create the common policy row + detail row</div>
-<div class="ln plain" id="r_252" data-tgt="" onclick=""><span class="n">252</span># ════════════════════════════════════════════════════════════════════════</div>
-<div class="ln plain" id="r_253" data-tgt="" onclick=""><span class="n">253</span>&nbsp;</div>
-<div class="ln plain" id="r_254" data-tgt="" onclick=""><span class="n">254</span>def _require_customer(db, customerNumber: int):</div>
-<div class="ln plain" id="r_255" data-tgt="" onclick=""><span class="n">255</span>    row = db.execute(&quot;SELECT 1 FROM customer WHERE customerNumber=?&quot;,</div>
-<div class="ln plain" id="r_256" data-tgt="" onclick=""><span class="n">256</span>                     (customerNumber,)).fetchone()</div>
-<div class="ln plain" id="r_257" data-tgt="" onclick=""><span class="n">257</span>    if row is None:                                   # CA-RC 99 (integrity)</div>
-<div class="ln plain" id="r_258" data-tgt="" onclick=""><span class="n">258</span>        db.close()</div>
-<div class="ln plain" id="r_259" data-tgt="" onclick=""><span class="n">259</span>        raise HTTPException(409, f&quot;Customer {customerNumber} does not exist&quot;)</div>
-<div class="ln plain" id="r_260" data-tgt="" onclick=""><span class="n">260</span>&nbsp;</div>
-<div class="ln plain" id="r_261" data-tgt="" onclick=""><span class="n">261</span>&nbsp;</div>
-<div class="ln plain" id="r_262" data-tgt="" onclick=""><span class="n">262</span>def _insert_policy(db, customerNumber, policyType, issueDate, expiryDate,</div>
-<div class="ln plain" id="r_263" data-tgt="" onclick=""><span class="n">263</span>                   brokerId, brokersReference, payment) -&gt; int:</div>
-<div class="ln plain" id="r_264" data-tgt="" onclick=""><span class="n">264</span>    cur = db.execute(</div>
-<div class="ln plain" id="r_265" data-tgt="" onclick=""><span class="n">265</span>        &quot;INSERT INTO policy (customerNumber, issueDate, expiryDate, policyType, &quot;</div>
-<div class="ln plain" id="r_266" data-tgt="" onclick=""><span class="n">266</span>        &quot;lastChanged, brokerId, brokersReference, payment, commission) &quot;</div>
-<div class="ln plain" id="r_267" data-tgt="" onclick=""><span class="n">267</span>        &quot;VALUES (?,?,?,?,?,?,?,?,0)&quot;,</div>
-<div class="ln plain" id="r_268" data-tgt="" onclick=""><span class="n">268</span>        (customerNumber, issueDate, expiryDate, policyType, now_ts(),</div>
-<div class="ln plain" id="r_269" data-tgt="" onclick=""><span class="n">269</span>         brokerId, brokersReference, payment))</div>
-<div class="ln plain" id="r_270" data-tgt="" onclick=""><span class="n">270</span>    return cur.lastrowid</div>
-<div class="ln plain" id="r_271" data-tgt="" onclick=""><span class="n">271</span>&nbsp;</div>
-<div class="ln plain" id="r_272" data-tgt="" onclick=""><span class="n">272</span>&nbsp;</div>
-<div class="ln plain" id="r_273" data-tgt="" onclick=""><span class="n">273</span>def _get_policy(db, policyNumber, policyType=None):</div>
-<div class="ln plain" id="r_274" data-tgt="" onclick=""><span class="n">274</span>    row = db.execute(&quot;SELECT * FROM policy WHERE policyNumber=?&quot;,</div>
-<div class="ln plain" id="r_275" data-tgt="" onclick=""><span class="n">275</span>                     (policyNumber,)).fetchone()</div>
-<div class="ln plain" id="r_276" data-tgt="" onclick=""><span class="n">276</span>    if row is None or (policyType and row[&quot;policyType&quot;] != policyType):</div>
-<div class="ln plain" id="r_277" data-tgt="" onclick=""><span class="n">277</span>        db.close()</div>
-<div class="ln plain" id="r_278" data-tgt="" onclick=""><span class="n">278</span>        raise HTTPException(404, f&quot;Policy {policyNumber} not found&quot;)</div>
-<div class="ln plain" id="r_279" data-tgt="" onclick=""><span class="n">279</span>    return row</div>
-<div class="ln plain" id="r_280" data-tgt="" onclick=""><span class="n">280</span>&nbsp;</div>
-<div class="ln plain" id="r_281" data-tgt="" onclick=""><span class="n">281</span>&nbsp;</div>
-<div class="ln plain" id="r_282" data-tgt="" onclick=""><span class="n">282</span>def _optimistic_check(db, policy_row, lastChanged):</div>
-<div class="ln plain" id="r_283" data-tgt="" onclick=""><span class="n">283</span>    &quot;&quot;&quot;Reject the update if the caller&#x27;s lastChanged is stale (concurrency</div>
-<div class="ln plain" id="r_284" data-tgt="" onclick=""><span class="n">284</span>    control — mirrors LGUPDB01&#x27;s commarea-vs-DB timestamp comparison).</div>
-<div class="ln plain" id="r_285" data-tgt="" onclick=""><span class="n">285</span>    Empty token = caller opted out of the check.&quot;&quot;&quot;</div>
-<div class="ln plain" id="r_286" data-tgt="" onclick=""><span class="n">286</span>    if lastChanged and lastChanged.strip() != (policy_row[&quot;lastChanged&quot;] or &quot;&quot;).strip():</div>
-<div class="ln plain" id="r_287" data-tgt="" onclick=""><span class="n">287</span>        db.close()</div>
-<div class="ln plain" id="r_288" data-tgt="" onclick=""><span class="n">288</span>        raise HTTPException(409, &quot;Policy was modified by another user &quot;</div>
-<div class="ln plain" id="r_289" data-tgt="" onclick=""><span class="n">289</span>                                 &quot;(stale lastChanged) — re-read and retry&quot;)</div>
-<div class="ln plain" id="r_290" data-tgt="" onclick=""><span class="n">290</span>&nbsp;</div>
+<div class="ln plain" id="r_217" data-tgt="" onclick=""><span class="n">217</span>@app.put(&quot;/api/customers/{num}&quot;, response_model=CustomerOut)</div>
+<div class="ln plain" id="r_218" data-tgt="" onclick=""><span class="n">218</span>def update_customer(num: int, c: CustomerCreate):</div>
+<div class="ln plain" id="r_219" data-tgt="" onclick=""><span class="n">219</span>    &quot;&quot;&quot;Customer Update — request id 01UCUS (LGUCUS01 -&gt; LGUCDB01).&quot;&quot;&quot;</div>
+<div class="ln plain" id="r_220" data-tgt="" onclick=""><span class="n">220</span>    with db_tx() as db:</div>
+<div class="ln plain" id="r_221" data-tgt="" onclick=""><span class="n">221</span>        cur = db.execute(</div>
+<div class="ln plain" id="r_222" data-tgt="" onclick=""><span class="n">222</span>            &quot;UPDATE customer SET firstName=?, lastName=?, dateOfBirth=?, houseName=?, &quot;</div>
+<div class="ln plain" id="r_223" data-tgt="" onclick=""><span class="n">223</span>            &quot;houseNumber=?, postcode=?, phoneHome=?, phoneMobile=?, emailAddress=? &quot;</div>
+<div class="ln plain" id="r_224" data-tgt="" onclick=""><span class="n">224</span>            &quot;WHERE customerNumber=?&quot;,</div>
+<div class="ln plain" id="r_225" data-tgt="" onclick=""><span class="n">225</span>            (c.firstName, c.lastName, c.dateOfBirth, c.houseName, c.houseNumber,</div>
+<div class="ln plain" id="r_226" data-tgt="" onclick=""><span class="n">226</span>             c.postcode, c.phoneHome, c.phoneMobile, c.emailAddress, num))</div>
+<div class="ln plain" id="r_227" data-tgt="" onclick=""><span class="n">227</span>        if cur.rowcount == 0:                         # SQLCODE 100 -&gt; CA-RC 01</div>
+<div class="ln plain" id="r_228" data-tgt="" onclick=""><span class="n">228</span>            raise HTTPException(404, f&quot;Customer {num} not found&quot;)</div>
+<div class="ln plain" id="r_229" data-tgt="" onclick=""><span class="n">229</span>        npol = db.execute(&quot;SELECT COUNT(*) AS c FROM policy WHERE customerNumber=?&quot;,</div>
+<div class="ln plain" id="r_230" data-tgt="" onclick=""><span class="n">230</span>                          (num,)).fetchone()[&quot;c&quot;]</div>
+<div class="ln plain" id="r_231" data-tgt="" onclick=""><span class="n">231</span>        status = _password_status(db, num)</div>
+<div class="ln plain" id="r_232" data-tgt="" onclick=""><span class="n">232</span>    out = c.model_dump()</div>
+<div class="ln plain" id="r_233" data-tgt="" onclick=""><span class="n">233</span>    out[&quot;customerNumber&quot;] = num</div>
+<div class="ln plain" id="r_234" data-tgt="" onclick=""><span class="n">234</span>    out[&quot;numPolicies&quot;] = npol</div>
+<div class="ln plain" id="r_235" data-tgt="" onclick=""><span class="n">235</span>    out[&quot;passwordStatus&quot;] = status</div>
+<div class="ln plain" id="r_236" data-tgt="" onclick=""><span class="n">236</span>    return out</div>
+<div class="ln plain" id="r_237" data-tgt="" onclick=""><span class="n">237</span>&nbsp;</div>
+<div class="ln plain" id="r_238" data-tgt="" onclick=""><span class="n">238</span>&nbsp;</div>
+<div class="ln plain" id="r_239" data-tgt="" onclick=""><span class="n">239</span># ── customer password: migration forces re-registration (no legacy hashes) ──</div>
+<div class="ln plain" id="r_240" data-tgt="" onclick=""><span class="n">240</span>&nbsp;</div>
+<div class="ln plain" id="r_241" data-tgt="" onclick=""><span class="n">241</span>@app.post(&quot;/api/customers/{num}/password&quot;)</div>
+<div class="ln plain" id="r_242" data-tgt="" onclick=""><span class="n">242</span>def set_password(num: int, req: PasswordSet):</div>
+<div class="ln plain" id="r_243" data-tgt="" onclick=""><span class="n">243</span>    &quot;&quot;&quot;Register/reset a customer&#x27;s password. Migrated and new customers start</div>
+<div class="ln plain" id="r_244" data-tgt="" onclick=""><span class="n">244</span>    &#x27;reset required&#x27;; this stores a salted PBKDF2 hash and activates the account.&quot;&quot;&quot;</div>
+<div class="ln plain" id="r_245" data-tgt="" onclick=""><span class="n">245</span>    if len(req.password) &lt; 8:</div>
+<div class="ln plain" id="r_246" data-tgt="" onclick=""><span class="n">246</span>        raise HTTPException(422, &quot;Password must be at least 8 characters&quot;)</div>
+<div class="ln plain" id="r_247" data-tgt="" onclick=""><span class="n">247</span>    with db_tx() as db:</div>
+<div class="ln plain" id="r_248" data-tgt="" onclick=""><span class="n">248</span>        cur = db.execute(&quot;UPDATE customer_secure SET customerPass=?, &quot;</div>
+<div class="ln plain" id="r_249" data-tgt="" onclick=""><span class="n">249</span>                         &quot;state_indicator=&#x27;A&#x27;, pass_changes=pass_changes+1 &quot;</div>
+<div class="ln plain" id="r_250" data-tgt="" onclick=""><span class="n">250</span>                         &quot;WHERE customerNumber=?&quot;, (hash_password(req.password), num))</div>
+<div class="ln plain" id="r_251" data-tgt="" onclick=""><span class="n">251</span>        if cur.rowcount == 0:</div>
+<div class="ln plain" id="r_252" data-tgt="" onclick=""><span class="n">252</span>            raise HTTPException(404, f&quot;Customer {num} not found&quot;)</div>
+<div class="ln plain" id="r_253" data-tgt="" onclick=""><span class="n">253</span>    return {&quot;customerNumber&quot;: num, &quot;passwordStatus&quot;: &quot;active&quot;}</div>
+<div class="ln plain" id="r_254" data-tgt="" onclick=""><span class="n">254</span>&nbsp;</div>
+<div class="ln plain" id="r_255" data-tgt="" onclick=""><span class="n">255</span>&nbsp;</div>
+<div class="ln plain" id="r_256" data-tgt="" onclick=""><span class="n">256</span>@app.post(&quot;/api/customers/{num}/verify&quot;)</div>
+<div class="ln plain" id="r_257" data-tgt="" onclick=""><span class="n">257</span>def verify_customer(num: int, req: PasswordVerify):</div>
+<div class="ln plain" id="r_258" data-tgt="" onclick=""><span class="n">258</span>    &quot;&quot;&quot;Demonstrate authentication. Returns whether the password matches and</div>
+<div class="ln plain" id="r_259" data-tgt="" onclick=""><span class="n">259</span>    whether a reset is still required (migrated customers can&#x27;t log in until set).&quot;&quot;&quot;</div>
+<div class="ln plain" id="r_260" data-tgt="" onclick=""><span class="n">260</span>    with db_tx() as db:</div>
+<div class="ln plain" id="r_261" data-tgt="" onclick=""><span class="n">261</span>        row = db.execute(&quot;SELECT customerPass, state_indicator FROM customer_secure &quot;</div>
+<div class="ln plain" id="r_262" data-tgt="" onclick=""><span class="n">262</span>                         &quot;WHERE customerNumber=?&quot;, (num,)).fetchone()</div>
+<div class="ln plain" id="r_263" data-tgt="" onclick=""><span class="n">263</span>    if row is None:</div>
+<div class="ln plain" id="r_264" data-tgt="" onclick=""><span class="n">264</span>        raise HTTPException(404, f&quot;Customer {num} not found&quot;)</div>
+<div class="ln plain" id="r_265" data-tgt="" onclick=""><span class="n">265</span>    if row[&quot;state_indicator&quot;] != &quot;A&quot;:</div>
+<div class="ln plain" id="r_266" data-tgt="" onclick=""><span class="n">266</span>        return {&quot;authenticated&quot;: False, &quot;resetRequired&quot;: True}</div>
+<div class="ln plain" id="r_267" data-tgt="" onclick=""><span class="n">267</span>    return {&quot;authenticated&quot;: verify_password(req.password, row[&quot;customerPass&quot;]),</div>
+<div class="ln plain" id="r_268" data-tgt="" onclick=""><span class="n">268</span>            &quot;resetRequired&quot;: False}</div>
+<div class="ln plain" id="r_269" data-tgt="" onclick=""><span class="n">269</span>&nbsp;</div>
+<div class="ln plain" id="r_270" data-tgt="" onclick=""><span class="n">270</span>&nbsp;</div>
+<div class="ln plain" id="r_271" data-tgt="" onclick=""><span class="n">271</span>@app.get(&quot;/api/customers/{num}/policies&quot;, response_model=list[PolicySummary])</div>
+<div class="ln plain" id="r_272" data-tgt="" onclick=""><span class="n">272</span>def list_customer_policies(num: int):</div>
+<div class="ln plain" id="r_273" data-tgt="" onclick=""><span class="n">273</span>    &quot;&quot;&quot;All policies belonging to a customer (joins policy + detail tables).&quot;&quot;&quot;</div>
+<div class="ln plain" id="r_274" data-tgt="" onclick=""><span class="n">274</span>    with db_tx() as db:</div>
+<div class="ln plain" id="r_275" data-tgt="" onclick=""><span class="n">275</span>        rows = db.execute(</div>
+<div class="ln plain" id="r_276" data-tgt="" onclick=""><span class="n">276</span>            &quot;SELECT * FROM policy WHERE customerNumber=? ORDER BY policyNumber&quot;,</div>
+<div class="ln plain" id="r_277" data-tgt="" onclick=""><span class="n">277</span>            (num,)).fetchall()</div>
+<div class="ln plain" id="r_278" data-tgt="" onclick=""><span class="n">278</span>    return [</div>
+<div class="ln plain" id="r_279" data-tgt="" onclick=""><span class="n">279</span>        PolicySummary(</div>
+<div class="ln plain" id="r_280" data-tgt="" onclick=""><span class="n">280</span>            policyNumber=r[&quot;policyNumber&quot;], customerNumber=r[&quot;customerNumber&quot;],</div>
+<div class="ln plain" id="r_281" data-tgt="" onclick=""><span class="n">281</span>            policyType=r[&quot;policyType&quot;], issueDate=r[&quot;issueDate&quot;],</div>
+<div class="ln plain" id="r_282" data-tgt="" onclick=""><span class="n">282</span>            expiryDate=r[&quot;expiryDate&quot;], description=_policy_description(r))</div>
+<div class="ln plain" id="r_283" data-tgt="" onclick=""><span class="n">283</span>        for r in rows</div>
+<div class="ln plain" id="r_284" data-tgt="" onclick=""><span class="n">284</span>    ]</div>
+<div class="ln plain" id="r_285" data-tgt="" onclick=""><span class="n">285</span>&nbsp;</div>
+<div class="ln plain" id="r_286" data-tgt="" onclick=""><span class="n">286</span>&nbsp;</div>
+<div class="ln plain" id="r_287" data-tgt="" onclick=""><span class="n">287</span># ════════════════════════════════════════════════════════════════════════</div>
+<div class="ln plain" id="r_288" data-tgt="" onclick=""><span class="n">288</span>#  Helper for policy add: create the common policy row + detail row</div>
+<div class="ln plain" id="r_289" data-tgt="" onclick=""><span class="n">289</span>#  (helpers raise but never close — the caller&#x27;s db_tx owns the connection)</div>
+<div class="ln plain" id="r_290" data-tgt="" onclick=""><span class="n">290</span># ════════════════════════════════════════════════════════════════════════</div>
 <div class="ln plain" id="r_291" data-tgt="" onclick=""><span class="n">291</span>&nbsp;</div>
-<div class="ln plain" id="r_292" data-tgt="" onclick=""><span class="n">292</span>def _update_policy_header(db, pnum, issueDate, expiryDate, brokerId, brokersReference):</div>
-<div class="ln plain" id="r_293" data-tgt="" onclick=""><span class="n">293</span>    &quot;&quot;&quot;Update the common policy row (LGUPDB01 UPDATE POLICY ... WHERE CURRENT OF).&quot;&quot;&quot;</div>
-<div class="ln plain" id="r_294" data-tgt="" onclick=""><span class="n">294</span>    db.execute(&quot;UPDATE policy SET issueDate=?, expiryDate=?, lastChanged=?, &quot;</div>
-<div class="ln plain" id="r_295" data-tgt="" onclick=""><span class="n">295</span>               &quot;brokerId=?, brokersReference=? WHERE policyNumber=?&quot;,</div>
-<div class="ln plain" id="r_296" data-tgt="" onclick=""><span class="n">296</span>               (issueDate, expiryDate, now_ts(), brokerId, brokersReference, pnum))</div>
+<div class="ln plain" id="r_292" data-tgt="" onclick=""><span class="n">292</span>def _require_customer(db, customerNumber: int):</div>
+<div class="ln plain" id="r_293" data-tgt="" onclick=""><span class="n">293</span>    row = db.execute(&quot;SELECT 1 FROM customer WHERE customerNumber=?&quot;,</div>
+<div class="ln plain" id="r_294" data-tgt="" onclick=""><span class="n">294</span>                     (customerNumber,)).fetchone()</div>
+<div class="ln plain" id="r_295" data-tgt="" onclick=""><span class="n">295</span>    if row is None:                                   # CA-RC 70 (FK -530)</div>
+<div class="ln plain" id="r_296" data-tgt="" onclick=""><span class="n">296</span>        raise HTTPException(409, f&quot;Customer {customerNumber} does not exist&quot;)</div>
 <div class="ln plain" id="r_297" data-tgt="" onclick=""><span class="n">297</span>&nbsp;</div>
 <div class="ln plain" id="r_298" data-tgt="" onclick=""><span class="n">298</span>&nbsp;</div>
-<div class="ln plain" id="r_299" data-tgt="" onclick=""><span class="n">299</span>def _delete_policy(pnum: int, policyType: str, customerNumber: int):</div>
-<div class="ln plain" id="r_300" data-tgt="" onclick=""><span class="n">300</span>    &quot;&quot;&quot;Customer-scoped, idempotent delete (LGDPDB01: DELETE ... WHERE</div>
-<div class="ln plain" id="r_301" data-tgt="" onclick=""><span class="n">301</span>    customerNumber AND policyNumber; SQLCODE 100 treated as success).</div>
-<div class="ln plain" id="r_302" data-tgt="" onclick=""><span class="n">302</span>    Deleting a non-existent or other-customer policy is a no-op success.&quot;&quot;&quot;</div>
-<div class="ln plain" id="r_303" data-tgt="" onclick=""><span class="n">303</span>    db = get_db()</div>
-<div class="ln plain" id="r_304" data-tgt="" onclick=""><span class="n">304</span>    db.execute(&quot;DELETE FROM policy WHERE policyNumber=? AND customerNumber=?&quot;,</div>
-<div class="ln plain" id="r_305" data-tgt="" onclick=""><span class="n">305</span>               (pnum, customerNumber))   # cascades to detail table</div>
-<div class="ln plain" id="r_306" data-tgt="" onclick=""><span class="n">306</span>    db.commit()</div>
-<div class="ln plain" id="r_307" data-tgt="" onclick=""><span class="n">307</span>    db.close()</div>
+<div class="ln plain" id="r_299" data-tgt="" onclick=""><span class="n">299</span>def _insert_policy(db, customerNumber, policyType, issueDate, expiryDate,</div>
+<div class="ln plain" id="r_300" data-tgt="" onclick=""><span class="n">300</span>                   brokerId, brokersReference, payment) -&gt; int:</div>
+<div class="ln plain" id="r_301" data-tgt="" onclick=""><span class="n">301</span>    cur = db.execute(</div>
+<div class="ln plain" id="r_302" data-tgt="" onclick=""><span class="n">302</span>        &quot;INSERT INTO policy (customerNumber, issueDate, expiryDate, policyType, &quot;</div>
+<div class="ln plain" id="r_303" data-tgt="" onclick=""><span class="n">303</span>        &quot;lastChanged, brokerId, brokersReference, payment, commission) &quot;</div>
+<div class="ln plain" id="r_304" data-tgt="" onclick=""><span class="n">304</span>        &quot;VALUES (?,?,?,?,?,?,?,?,0)&quot;,</div>
+<div class="ln plain" id="r_305" data-tgt="" onclick=""><span class="n">305</span>        (customerNumber, issueDate, expiryDate, policyType, now_ts(),</div>
+<div class="ln plain" id="r_306" data-tgt="" onclick=""><span class="n">306</span>         brokerId, brokersReference, payment))</div>
+<div class="ln plain" id="r_307" data-tgt="" onclick=""><span class="n">307</span>    return cur.lastrowid</div>
 <div class="ln plain" id="r_308" data-tgt="" onclick=""><span class="n">308</span>&nbsp;</div>
 <div class="ln plain" id="r_309" data-tgt="" onclick=""><span class="n">309</span>&nbsp;</div>
-<div class="ln plain" id="r_310" data-tgt="" onclick=""><span class="n">310</span># ════════════════════════════════════════════════════════════════════════</div>
-<div class="ln plain" id="r_311" data-tgt="" onclick=""><span class="n">311</span>#  Motor policy — SSP1 / LGTESTP1</div>
-<div class="ln plain" id="r_312" data-tgt="" onclick=""><span class="n">312</span># ════════════════════════════════════════════════════════════════════════</div>
-<div class="ln plain" id="r_313" data-tgt="" onclick=""><span class="n">313</span>&nbsp;</div>
-<div class="ln plain" id="r_314" data-tgt="" onclick=""><span class="n">314</span>@app.get(&quot;/api/policies/motor/{pnum}&quot;, response_model=MotorOut)</div>
-<div class="ln plain" id="r_315" data-tgt="" onclick=""><span class="n">315</span>def get_motor(pnum: int):</div>
-<div class="ln plain" id="r_316" data-tgt="" onclick=""><span class="n">316</span>    db = get_db()</div>
-<div class="ln plain" id="r_317" data-tgt="" onclick=""><span class="n">317</span>    p = _get_policy(db, pnum, &quot;M&quot;)</div>
-<div class="ln plain" id="r_318" data-tgt="" onclick=""><span class="n">318</span>    d = db.execute(&quot;SELECT * FROM motor WHERE policyNumber=?&quot;, (pnum,)).fetchone()</div>
-<div class="ln plain" id="r_319" data-tgt="" onclick=""><span class="n">319</span>    db.close()</div>
-<div class="ln plain" id="r_320" data-tgt="" onclick=""><span class="n">320</span>    return {**dict(d), **dict(p), &quot;policyNumber&quot;: pnum}</div>
-<div class="ln plain" id="r_321" data-tgt="" onclick=""><span class="n">321</span>&nbsp;</div>
-<div class="ln plain" id="r_322" data-tgt="" onclick=""><span class="n">322</span>&nbsp;</div>
-<div class="ln plain" id="r_323" data-tgt="" onclick=""><span class="n">323</span>@app.post(&quot;/api/policies/motor&quot;, response_model=MotorOut, status_code=201)</div>
-<div class="ln plain" id="r_324" data-tgt="" onclick=""><span class="n">324</span>def add_motor(m: MotorCreate):</div>
-<div class="ln plain" id="r_325" data-tgt="" onclick=""><span class="n">325</span>    db = get_db()</div>
-<div class="ln plain" id="r_326" data-tgt="" onclick=""><span class="n">326</span>    _require_customer(db, m.customerNumber)</div>
-<div class="ln plain" id="r_327" data-tgt="" onclick=""><span class="n">327</span>    pnum = _insert_policy(db, m.customerNumber, &quot;M&quot;, m.issueDate, m.expiryDate,</div>
-<div class="ln plain" id="r_328" data-tgt="" onclick=""><span class="n">328</span>                          m.brokerId, m.brokersReference, m.payment)</div>
-<div class="ln plain" id="r_329" data-tgt="" onclick=""><span class="n">329</span>    db.execute(</div>
-<div class="ln plain" id="r_330" data-tgt="" onclick=""><span class="n">330</span>        &quot;INSERT INTO motor (policyNumber, make, model, value, regNumber, colour, &quot;</div>
-<div class="ln plain" id="r_331" data-tgt="" onclick=""><span class="n">331</span>        &quot;cc, yearOfManufacture, premium, accidents) VALUES (?,?,?,?,?,?,?,?,?,?)&quot;,</div>
-<div class="ln plain" id="r_332" data-tgt="" onclick=""><span class="n">332</span>        (pnum, m.make, m.model, m.value, m.regNumber, m.colour, m.cc,</div>
-<div class="ln plain" id="r_333" data-tgt="" onclick=""><span class="n">333</span>         m.yearOfManufacture, m.premium, m.accidents))</div>
-<div class="ln plain" id="r_334" data-tgt="" onclick=""><span class="n">334</span>    db.commit()</div>
-<div class="ln plain" id="r_335" data-tgt="" onclick=""><span class="n">335</span>    db.close()</div>
-<div class="ln plain" id="r_336" data-tgt="" onclick=""><span class="n">336</span>    return get_motor(pnum)</div>
+<div class="ln plain" id="r_310" data-tgt="" onclick=""><span class="n">310</span>def _get_policy(db, policyNumber, policyType=None):</div>
+<div class="ln plain" id="r_311" data-tgt="" onclick=""><span class="n">311</span>    row = db.execute(&quot;SELECT * FROM policy WHERE policyNumber=?&quot;,</div>
+<div class="ln plain" id="r_312" data-tgt="" onclick=""><span class="n">312</span>                     (policyNumber,)).fetchone()</div>
+<div class="ln plain" id="r_313" data-tgt="" onclick=""><span class="n">313</span>    if row is None or (policyType and row[&quot;policyType&quot;] != policyType):</div>
+<div class="ln plain" id="r_314" data-tgt="" onclick=""><span class="n">314</span>        raise HTTPException(404, f&quot;Policy {policyNumber} not found&quot;)</div>
+<div class="ln plain" id="r_315" data-tgt="" onclick=""><span class="n">315</span>    return row</div>
+<div class="ln plain" id="r_316" data-tgt="" onclick=""><span class="n">316</span>&nbsp;</div>
+<div class="ln plain" id="r_317" data-tgt="" onclick=""><span class="n">317</span>&nbsp;</div>
+<div class="ln plain" id="r_318" data-tgt="" onclick=""><span class="n">318</span>def _policy_out(p, d, pnum):</div>
+<div class="ln plain" id="r_319" data-tgt="" onclick=""><span class="n">319</span>    &quot;&quot;&quot;Assemble a policy detail response. LGIPDB01 uses null-indicators and</div>
+<div class="ln plain" id="r_320" data-tgt="" onclick=""><span class="n">320</span>    leaves a NULL numeric DB2 column at its initialized 0 rather than moving it,</div>
+<div class="ln plain" id="r_321" data-tgt="" onclick=""><span class="n">321</span>    so a NULL brokerId/payment/commission surfaces as 0, never JSON null</div>
+<div class="ln plain" id="r_322" data-tgt="" onclick=""><span class="n">322</span>    (GENAPP_BRANCH_COVERAGE.md G6 — kept faithful to the original).&quot;&quot;&quot;</div>
+<div class="ln plain" id="r_323" data-tgt="" onclick=""><span class="n">323</span>    row = {**dict(d), **dict(p), &quot;policyNumber&quot;: pnum}</div>
+<div class="ln plain" id="r_324" data-tgt="" onclick=""><span class="n">324</span>    for k in (&quot;brokerId&quot;, &quot;payment&quot;, &quot;commission&quot;):</div>
+<div class="ln plain" id="r_325" data-tgt="" onclick=""><span class="n">325</span>        if row.get(k) is None:</div>
+<div class="ln plain" id="r_326" data-tgt="" onclick=""><span class="n">326</span>            row[k] = 0</div>
+<div class="ln plain" id="r_327" data-tgt="" onclick=""><span class="n">327</span>    return row</div>
+<div class="ln plain" id="r_328" data-tgt="" onclick=""><span class="n">328</span>&nbsp;</div>
+<div class="ln plain" id="r_329" data-tgt="" onclick=""><span class="n">329</span>&nbsp;</div>
+<div class="ln plain" id="r_330" data-tgt="" onclick=""><span class="n">330</span>def _optimistic_check(db, policy_row, lastChanged):</div>
+<div class="ln plain" id="r_331" data-tgt="" onclick=""><span class="n">331</span>    &quot;&quot;&quot;Reject the update if the caller&#x27;s lastChanged is stale (concurrency</div>
+<div class="ln plain" id="r_332" data-tgt="" onclick=""><span class="n">332</span>    control — mirrors LGUPDB01&#x27;s commarea-vs-DB timestamp comparison).</div>
+<div class="ln plain" id="r_333" data-tgt="" onclick=""><span class="n">333</span>    Empty token = caller opted out of the check.&quot;&quot;&quot;</div>
+<div class="ln plain" id="r_334" data-tgt="" onclick=""><span class="n">334</span>    if lastChanged and lastChanged.strip() != (policy_row[&quot;lastChanged&quot;] or &quot;&quot;).strip():</div>
+<div class="ln plain" id="r_335" data-tgt="" onclick=""><span class="n">335</span>        raise HTTPException(409, &quot;Policy was modified by another user &quot;</div>
+<div class="ln plain" id="r_336" data-tgt="" onclick=""><span class="n">336</span>                                 &quot;(stale lastChanged) — re-read and retry&quot;)</div>
 <div class="ln plain" id="r_337" data-tgt="" onclick=""><span class="n">337</span>&nbsp;</div>
 <div class="ln plain" id="r_338" data-tgt="" onclick=""><span class="n">338</span>&nbsp;</div>
-<div class="ln plain" id="r_339" data-tgt="" onclick=""><span class="n">339</span>@app.put(&quot;/api/policies/motor/{pnum}&quot;, response_model=MotorOut)</div>
-<div class="ln plain" id="r_340" data-tgt="" onclick=""><span class="n">340</span>def update_motor(pnum: int, m: MotorCreate):</div>
-<div class="ln plain" id="r_341" data-tgt="" onclick=""><span class="n">341</span>    db = get_db()</div>
-<div class="ln plain" id="r_342" data-tgt="" onclick=""><span class="n">342</span>    p = _get_policy(db, pnum, &quot;M&quot;)</div>
-<div class="ln plain" id="r_343" data-tgt="" onclick=""><span class="n">343</span>    _optimistic_check(db, p, m.lastChanged)</div>
-<div class="ln plain" id="r_344" data-tgt="" onclick=""><span class="n">344</span>    _update_policy_header(db, pnum, m.issueDate, m.expiryDate, m.brokerId, m.brokersReference)</div>
-<div class="ln plain" id="r_345" data-tgt="" onclick=""><span class="n">345</span>    db.execute(</div>
-<div class="ln plain" id="r_346" data-tgt="" onclick=""><span class="n">346</span>        &quot;UPDATE motor SET make=?, model=?, value=?, regNumber=?, colour=?, cc=?, &quot;</div>
-<div class="ln plain" id="r_347" data-tgt="" onclick=""><span class="n">347</span>        &quot;yearOfManufacture=?, premium=?, accidents=? WHERE policyNumber=?&quot;,</div>
-<div class="ln plain" id="r_348" data-tgt="" onclick=""><span class="n">348</span>        (m.make, m.model, m.value, m.regNumber, m.colour, m.cc,</div>
-<div class="ln plain" id="r_349" data-tgt="" onclick=""><span class="n">349</span>         m.yearOfManufacture, m.premium, m.accidents, pnum))</div>
-<div class="ln plain" id="r_350" data-tgt="" onclick=""><span class="n">350</span>    db.commit()</div>
-<div class="ln plain" id="r_351" data-tgt="" onclick=""><span class="n">351</span>    db.close()</div>
-<div class="ln plain" id="r_352" data-tgt="" onclick=""><span class="n">352</span>    return get_motor(pnum)</div>
+<div class="ln plain" id="r_339" data-tgt="" onclick=""><span class="n">339</span>def _update_policy_header(db, pnum, issueDate, expiryDate, brokerId, brokersReference):</div>
+<div class="ln plain" id="r_340" data-tgt="" onclick=""><span class="n">340</span>    &quot;&quot;&quot;Update the common policy row (LGUPDB01 UPDATE POLICY ... WHERE CURRENT OF).&quot;&quot;&quot;</div>
+<div class="ln plain" id="r_341" data-tgt="" onclick=""><span class="n">341</span>    db.execute(&quot;UPDATE policy SET issueDate=?, expiryDate=?, lastChanged=?, &quot;</div>
+<div class="ln plain" id="r_342" data-tgt="" onclick=""><span class="n">342</span>               &quot;brokerId=?, brokersReference=? WHERE policyNumber=?&quot;,</div>
+<div class="ln plain" id="r_343" data-tgt="" onclick=""><span class="n">343</span>               (issueDate, expiryDate, now_ts(), brokerId, brokersReference, pnum))</div>
+<div class="ln plain" id="r_344" data-tgt="" onclick=""><span class="n">344</span>&nbsp;</div>
+<div class="ln plain" id="r_345" data-tgt="" onclick=""><span class="n">345</span>&nbsp;</div>
+<div class="ln plain" id="r_346" data-tgt="" onclick=""><span class="n">346</span>def _update_detail(db, pnum, table, sql, params):</div>
+<div class="ln plain" id="r_347" data-tgt="" onclick=""><span class="n">347</span>    &quot;&quot;&quot;Run a detail-table UPDATE and enforce the original&#x27;s SQLCODE 100 -&gt; RC 01:</div>
+<div class="ln plain" id="r_348" data-tgt="" onclick=""><span class="n">348</span>    if no detail row matched, the policy/detail pair is inconsistent -&gt; 404.</div>
+<div class="ln plain" id="r_349" data-tgt="" onclick=""><span class="n">349</span>    Runs inside the caller&#x27;s db_tx, so a raise rolls back the header update too.&quot;&quot;&quot;</div>
+<div class="ln plain" id="r_350" data-tgt="" onclick=""><span class="n">350</span>    cur = db.execute(sql, params)</div>
+<div class="ln plain" id="r_351" data-tgt="" onclick=""><span class="n">351</span>    if cur.rowcount == 0:</div>
+<div class="ln plain" id="r_352" data-tgt="" onclick=""><span class="n">352</span>        raise HTTPException(404, f&quot;{table} policy {pnum} not found&quot;)</div>
 <div class="ln plain" id="r_353" data-tgt="" onclick=""><span class="n">353</span>&nbsp;</div>
 <div class="ln plain" id="r_354" data-tgt="" onclick=""><span class="n">354</span>&nbsp;</div>
-<div class="ln plain" id="r_355" data-tgt="" onclick=""><span class="n">355</span>@app.delete(&quot;/api/policies/motor/{pnum}&quot;, status_code=204)</div>
-<div class="ln plain" id="r_356" data-tgt="" onclick=""><span class="n">356</span>def delete_motor(pnum: int, customerNumber: int):</div>
-<div class="ln plain" id="r_357" data-tgt="" onclick=""><span class="n">357</span>    _delete_policy(pnum, &quot;M&quot;, customerNumber)</div>
-<div class="ln plain" id="r_358" data-tgt="" onclick=""><span class="n">358</span>&nbsp;</div>
-<div class="ln plain" id="r_359" data-tgt="" onclick=""><span class="n">359</span>&nbsp;</div>
-<div class="ln plain" id="r_360" data-tgt="" onclick=""><span class="n">360</span># ════════════════════════════════════════════════════════════════════════</div>
-<div class="ln plain" id="r_361" data-tgt="" onclick=""><span class="n">361</span>#  Endowment policy — SSP2 / LGTESTP2</div>
-<div class="ln plain" id="r_362" data-tgt="" onclick=""><span class="n">362</span># ════════════════════════════════════════════════════════════════════════</div>
-<div class="ln plain" id="r_363" data-tgt="" onclick=""><span class="n">363</span>&nbsp;</div>
-<div class="ln plain" id="r_364" data-tgt="" onclick=""><span class="n">364</span>@app.get(&quot;/api/policies/endowment/{pnum}&quot;, response_model=EndowmentOut)</div>
-<div class="ln plain" id="r_365" data-tgt="" onclick=""><span class="n">365</span>def get_endowment(pnum: int):</div>
-<div class="ln plain" id="r_366" data-tgt="" onclick=""><span class="n">366</span>    db = get_db()</div>
-<div class="ln plain" id="r_367" data-tgt="" onclick=""><span class="n">367</span>    p = _get_policy(db, pnum, &quot;E&quot;)</div>
-<div class="ln plain" id="r_368" data-tgt="" onclick=""><span class="n">368</span>    d = db.execute(&quot;SELECT * FROM endowment WHERE policyNumber=?&quot;, (pnum,)).fetchone()</div>
-<div class="ln plain" id="r_369" data-tgt="" onclick=""><span class="n">369</span>    db.close()</div>
-<div class="ln plain" id="r_370" data-tgt="" onclick=""><span class="n">370</span>    return {**dict(d), **dict(p), &quot;policyNumber&quot;: pnum}</div>
-<div class="ln plain" id="r_371" data-tgt="" onclick=""><span class="n">371</span>&nbsp;</div>
-<div class="ln plain" id="r_372" data-tgt="" onclick=""><span class="n">372</span>&nbsp;</div>
-<div class="ln plain" id="r_373" data-tgt="" onclick=""><span class="n">373</span>@app.post(&quot;/api/policies/endowment&quot;, response_model=EndowmentOut, status_code=201)</div>
-<div class="ln plain" id="r_374" data-tgt="" onclick=""><span class="n">374</span>def add_endowment(e: EndowmentCreate):</div>
-<div class="ln plain" id="r_375" data-tgt="" onclick=""><span class="n">375</span>    db = get_db()</div>
-<div class="ln plain" id="r_376" data-tgt="" onclick=""><span class="n">376</span>    _require_customer(db, e.customerNumber)</div>
-<div class="ln plain" id="r_377" data-tgt="" onclick=""><span class="n">377</span>    pnum = _insert_policy(db, e.customerNumber, &quot;E&quot;, e.issueDate, e.expiryDate,</div>
-<div class="ln plain" id="r_378" data-tgt="" onclick=""><span class="n">378</span>                          e.brokerId, e.brokersReference, e.payment)</div>
-<div class="ln plain" id="r_379" data-tgt="" onclick=""><span class="n">379</span>    db.execute(</div>
-<div class="ln plain" id="r_380" data-tgt="" onclick=""><span class="n">380</span>        &quot;INSERT INTO endowment (policyNumber, equities, withProfits, managedFund, &quot;</div>
-<div class="ln plain" id="r_381" data-tgt="" onclick=""><span class="n">381</span>        &quot;fundName, term, sumAssured, lifeAssured) VALUES (?,?,?,?,?,?,?,?)&quot;,</div>
-<div class="ln plain" id="r_382" data-tgt="" onclick=""><span class="n">382</span>        (pnum, e.equities, e.withProfits, e.managedFund, e.fundName, e.term,</div>
-<div class="ln plain" id="r_383" data-tgt="" onclick=""><span class="n">383</span>         e.sumAssured, e.lifeAssured))</div>
-<div class="ln plain" id="r_384" data-tgt="" onclick=""><span class="n">384</span>    db.commit()</div>
-<div class="ln plain" id="r_385" data-tgt="" onclick=""><span class="n">385</span>    db.close()</div>
-<div class="ln plain" id="r_386" data-tgt="" onclick=""><span class="n">386</span>    return get_endowment(pnum)</div>
-<div class="ln plain" id="r_387" data-tgt="" onclick=""><span class="n">387</span>&nbsp;</div>
-<div class="ln plain" id="r_388" data-tgt="" onclick=""><span class="n">388</span>&nbsp;</div>
-<div class="ln plain" id="r_389" data-tgt="" onclick=""><span class="n">389</span>@app.put(&quot;/api/policies/endowment/{pnum}&quot;, response_model=EndowmentOut)</div>
-<div class="ln plain" id="r_390" data-tgt="" onclick=""><span class="n">390</span>def update_endowment(pnum: int, e: EndowmentCreate):</div>
-<div class="ln plain" id="r_391" data-tgt="" onclick=""><span class="n">391</span>    db = get_db()</div>
-<div class="ln plain" id="r_392" data-tgt="" onclick=""><span class="n">392</span>    p = _get_policy(db, pnum, &quot;E&quot;)</div>
-<div class="ln plain" id="r_393" data-tgt="" onclick=""><span class="n">393</span>    _optimistic_check(db, p, e.lastChanged)</div>
-<div class="ln plain" id="r_394" data-tgt="" onclick=""><span class="n">394</span>    _update_policy_header(db, pnum, e.issueDate, e.expiryDate, e.brokerId, e.brokersReference)</div>
-<div class="ln plain" id="r_395" data-tgt="" onclick=""><span class="n">395</span>    db.execute(</div>
-<div class="ln plain" id="r_396" data-tgt="" onclick=""><span class="n">396</span>        &quot;UPDATE endowment SET equities=?, withProfits=?, managedFund=?, fundName=?, &quot;</div>
-<div class="ln plain" id="r_397" data-tgt="" onclick=""><span class="n">397</span>        &quot;term=?, sumAssured=?, lifeAssured=? WHERE policyNumber=?&quot;,</div>
-<div class="ln plain" id="r_398" data-tgt="" onclick=""><span class="n">398</span>        (e.equities, e.withProfits, e.managedFund, e.fundName, e.term,</div>
-<div class="ln plain" id="r_399" data-tgt="" onclick=""><span class="n">399</span>         e.sumAssured, e.lifeAssured, pnum))</div>
-<div class="ln plain" id="r_400" data-tgt="" onclick=""><span class="n">400</span>    db.commit()</div>
-<div class="ln plain" id="r_401" data-tgt="" onclick=""><span class="n">401</span>    db.close()</div>
-<div class="ln plain" id="r_402" data-tgt="" onclick=""><span class="n">402</span>    return get_endowment(pnum)</div>
-<div class="ln plain" id="r_403" data-tgt="" onclick=""><span class="n">403</span>&nbsp;</div>
-<div class="ln plain" id="r_404" data-tgt="" onclick=""><span class="n">404</span>&nbsp;</div>
-<div class="ln plain" id="r_405" data-tgt="" onclick=""><span class="n">405</span>@app.delete(&quot;/api/policies/endowment/{pnum}&quot;, status_code=204)</div>
-<div class="ln plain" id="r_406" data-tgt="" onclick=""><span class="n">406</span>def delete_endowment(pnum: int, customerNumber: int):</div>
-<div class="ln plain" id="r_407" data-tgt="" onclick=""><span class="n">407</span>    _delete_policy(pnum, &quot;E&quot;, customerNumber)</div>
+<div class="ln plain" id="r_355" data-tgt="" onclick=""><span class="n">355</span>def _delete_policy(pnum: int, policyType: str, customerNumber: int):</div>
+<div class="ln plain" id="r_356" data-tgt="" onclick=""><span class="n">356</span>    &quot;&quot;&quot;Customer-scoped, idempotent delete (LGDPDB01: DELETE ... WHERE</div>
+<div class="ln plain" id="r_357" data-tgt="" onclick=""><span class="n">357</span>    customerNumber AND policyNumber; SQLCODE 100 treated as success).</div>
+<div class="ln plain" id="r_358" data-tgt="" onclick=""><span class="n">358</span>    Deleting a non-existent or other-customer policy is a no-op success.</div>
+<div class="ln plain" id="r_359" data-tgt="" onclick=""><span class="n">359</span>    FK ON DELETE CASCADE (foreign_keys=ON, set per connection) removes the</div>
+<div class="ln plain" id="r_360" data-tgt="" onclick=""><span class="n">360</span>    detail row too.&quot;&quot;&quot;</div>
+<div class="ln plain" id="r_361" data-tgt="" onclick=""><span class="n">361</span>    with db_tx() as db:</div>
+<div class="ln plain" id="r_362" data-tgt="" onclick=""><span class="n">362</span>        db.execute(&quot;DELETE FROM policy WHERE policyNumber=? AND customerNumber=?&quot;,</div>
+<div class="ln plain" id="r_363" data-tgt="" onclick=""><span class="n">363</span>                   (pnum, customerNumber))</div>
+<div class="ln plain" id="r_364" data-tgt="" onclick=""><span class="n">364</span>&nbsp;</div>
+<div class="ln plain" id="r_365" data-tgt="" onclick=""><span class="n">365</span>&nbsp;</div>
+<div class="ln plain" id="r_366" data-tgt="" onclick=""><span class="n">366</span># ════════════════════════════════════════════════════════════════════════</div>
+<div class="ln plain" id="r_367" data-tgt="" onclick=""><span class="n">367</span>#  Motor policy — SSP1 / LGTESTP1</div>
+<div class="ln plain" id="r_368" data-tgt="" onclick=""><span class="n">368</span># ════════════════════════════════════════════════════════════════════════</div>
+<div class="ln plain" id="r_369" data-tgt="" onclick=""><span class="n">369</span>&nbsp;</div>
+<div class="ln plain" id="r_370" data-tgt="" onclick=""><span class="n">370</span>@app.get(&quot;/api/policies/motor/{pnum}&quot;, response_model=MotorOut)</div>
+<div class="ln plain" id="r_371" data-tgt="" onclick=""><span class="n">371</span>def get_motor(pnum: int):</div>
+<div class="ln plain" id="r_372" data-tgt="" onclick=""><span class="n">372</span>    with db_tx() as db:</div>
+<div class="ln plain" id="r_373" data-tgt="" onclick=""><span class="n">373</span>        p = _get_policy(db, pnum, &quot;M&quot;)</div>
+<div class="ln plain" id="r_374" data-tgt="" onclick=""><span class="n">374</span>        d = db.execute(&quot;SELECT * FROM motor WHERE policyNumber=?&quot;, (pnum,)).fetchone()</div>
+<div class="ln plain" id="r_375" data-tgt="" onclick=""><span class="n">375</span>        if d is None:</div>
+<div class="ln plain" id="r_376" data-tgt="" onclick=""><span class="n">376</span>            raise HTTPException(404, f&quot;Motor policy {pnum} not found&quot;)</div>
+<div class="ln plain" id="r_377" data-tgt="" onclick=""><span class="n">377</span>    return _policy_out(p, d, pnum)</div>
+<div class="ln plain" id="r_378" data-tgt="" onclick=""><span class="n">378</span>&nbsp;</div>
+<div class="ln plain" id="r_379" data-tgt="" onclick=""><span class="n">379</span>&nbsp;</div>
+<div class="ln plain" id="r_380" data-tgt="" onclick=""><span class="n">380</span>@app.post(&quot;/api/policies/motor&quot;, response_model=MotorOut, status_code=201)</div>
+<div class="ln plain" id="r_381" data-tgt="" onclick=""><span class="n">381</span>def add_motor(m: MotorCreate):</div>
+<div class="ln plain" id="r_382" data-tgt="" onclick=""><span class="n">382</span>    with db_tx() as db:</div>
+<div class="ln plain" id="r_383" data-tgt="" onclick=""><span class="n">383</span>        _require_customer(db, m.customerNumber)</div>
+<div class="ln plain" id="r_384" data-tgt="" onclick=""><span class="n">384</span>        pnum = _insert_policy(db, m.customerNumber, &quot;M&quot;, m.issueDate, m.expiryDate,</div>
+<div class="ln plain" id="r_385" data-tgt="" onclick=""><span class="n">385</span>                              m.brokerId, m.brokersReference, m.payment)</div>
+<div class="ln plain" id="r_386" data-tgt="" onclick=""><span class="n">386</span>        db.execute(</div>
+<div class="ln plain" id="r_387" data-tgt="" onclick=""><span class="n">387</span>            &quot;INSERT INTO motor (policyNumber, make, model, value, regNumber, colour, &quot;</div>
+<div class="ln plain" id="r_388" data-tgt="" onclick=""><span class="n">388</span>            &quot;cc, yearOfManufacture, premium, accidents) VALUES (?,?,?,?,?,?,?,?,?,?)&quot;,</div>
+<div class="ln plain" id="r_389" data-tgt="" onclick=""><span class="n">389</span>            (pnum, m.make, m.model, m.value, m.regNumber, m.colour, m.cc,</div>
+<div class="ln plain" id="r_390" data-tgt="" onclick=""><span class="n">390</span>             m.yearOfManufacture, m.premium, m.accidents))</div>
+<div class="ln plain" id="r_391" data-tgt="" onclick=""><span class="n">391</span>    return get_motor(pnum)</div>
+<div class="ln plain" id="r_392" data-tgt="" onclick=""><span class="n">392</span>&nbsp;</div>
+<div class="ln plain" id="r_393" data-tgt="" onclick=""><span class="n">393</span>&nbsp;</div>
+<div class="ln plain" id="r_394" data-tgt="" onclick=""><span class="n">394</span>@app.put(&quot;/api/policies/motor/{pnum}&quot;, response_model=MotorOut)</div>
+<div class="ln plain" id="r_395" data-tgt="" onclick=""><span class="n">395</span>def update_motor(pnum: int, m: MotorCreate):</div>
+<div class="ln plain" id="r_396" data-tgt="" onclick=""><span class="n">396</span>    with db_tx() as db:</div>
+<div class="ln plain" id="r_397" data-tgt="" onclick=""><span class="n">397</span>        p = _get_policy(db, pnum, &quot;M&quot;)</div>
+<div class="ln plain" id="r_398" data-tgt="" onclick=""><span class="n">398</span>        _optimistic_check(db, p, m.lastChanged)</div>
+<div class="ln plain" id="r_399" data-tgt="" onclick=""><span class="n">399</span>        _update_policy_header(db, pnum, m.issueDate, m.expiryDate,</div>
+<div class="ln plain" id="r_400" data-tgt="" onclick=""><span class="n">400</span>                              m.brokerId, m.brokersReference)</div>
+<div class="ln plain" id="r_401" data-tgt="" onclick=""><span class="n">401</span>        _update_detail(db, pnum, &quot;Motor&quot;,</div>
+<div class="ln plain" id="r_402" data-tgt="" onclick=""><span class="n">402</span>            &quot;UPDATE motor SET make=?, model=?, value=?, regNumber=?, colour=?, cc=?, &quot;</div>
+<div class="ln plain" id="r_403" data-tgt="" onclick=""><span class="n">403</span>            &quot;yearOfManufacture=?, premium=?, accidents=? WHERE policyNumber=?&quot;,</div>
+<div class="ln plain" id="r_404" data-tgt="" onclick=""><span class="n">404</span>            (m.make, m.model, m.value, m.regNumber, m.colour, m.cc,</div>
+<div class="ln plain" id="r_405" data-tgt="" onclick=""><span class="n">405</span>             m.yearOfManufacture, m.premium, m.accidents, pnum))</div>
+<div class="ln plain" id="r_406" data-tgt="" onclick=""><span class="n">406</span>    return get_motor(pnum)</div>
+<div class="ln plain" id="r_407" data-tgt="" onclick=""><span class="n">407</span>&nbsp;</div>
 <div class="ln plain" id="r_408" data-tgt="" onclick=""><span class="n">408</span>&nbsp;</div>
-<div class="ln plain" id="r_409" data-tgt="" onclick=""><span class="n">409</span>&nbsp;</div>
-<div class="ln plain" id="r_410" data-tgt="" onclick=""><span class="n">410</span># ════════════════════════════════════════════════════════════════════════</div>
-<div class="ln plain" id="r_411" data-tgt="" onclick=""><span class="n">411</span>#  House policy — SSP3 / LGTESTP3</div>
-<div class="ln plain" id="r_412" data-tgt="" onclick=""><span class="n">412</span># ════════════════════════════════════════════════════════════════════════</div>
+<div class="ln plain" id="r_409" data-tgt="" onclick=""><span class="n">409</span>@app.delete(&quot;/api/policies/motor/{pnum}&quot;, status_code=204)</div>
+<div class="ln plain" id="r_410" data-tgt="" onclick=""><span class="n">410</span>def delete_motor(pnum: int, customerNumber: int):</div>
+<div class="ln plain" id="r_411" data-tgt="" onclick=""><span class="n">411</span>    _delete_policy(pnum, &quot;M&quot;, customerNumber)</div>
+<div class="ln plain" id="r_412" data-tgt="" onclick=""><span class="n">412</span>&nbsp;</div>
 <div class="ln plain" id="r_413" data-tgt="" onclick=""><span class="n">413</span>&nbsp;</div>
-<div class="ln plain" id="r_414" data-tgt="" onclick=""><span class="n">414</span>@app.get(&quot;/api/policies/house/{pnum}&quot;, response_model=HouseOut)</div>
-<div class="ln plain" id="r_415" data-tgt="" onclick=""><span class="n">415</span>def get_house(pnum: int):</div>
-<div class="ln plain" id="r_416" data-tgt="" onclick=""><span class="n">416</span>    db = get_db()</div>
-<div class="ln plain" id="r_417" data-tgt="" onclick=""><span class="n">417</span>    p = _get_policy(db, pnum, &quot;H&quot;)</div>
-<div class="ln plain" id="r_418" data-tgt="" onclick=""><span class="n">418</span>    d = db.execute(&quot;SELECT * FROM house WHERE policyNumber=?&quot;, (pnum,)).fetchone()</div>
-<div class="ln plain" id="r_419" data-tgt="" onclick=""><span class="n">419</span>    db.close()</div>
-<div class="ln plain" id="r_420" data-tgt="" onclick=""><span class="n">420</span>    return {**dict(d), **dict(p), &quot;policyNumber&quot;: pnum}</div>
-<div class="ln plain" id="r_421" data-tgt="" onclick=""><span class="n">421</span>&nbsp;</div>
-<div class="ln plain" id="r_422" data-tgt="" onclick=""><span class="n">422</span>&nbsp;</div>
-<div class="ln plain" id="r_423" data-tgt="" onclick=""><span class="n">423</span>@app.post(&quot;/api/policies/house&quot;, response_model=HouseOut, status_code=201)</div>
-<div class="ln plain" id="r_424" data-tgt="" onclick=""><span class="n">424</span>def add_house(h: HouseCreate):</div>
-<div class="ln plain" id="r_425" data-tgt="" onclick=""><span class="n">425</span>    db = get_db()</div>
-<div class="ln plain" id="r_426" data-tgt="" onclick=""><span class="n">426</span>    _require_customer(db, h.customerNumber)</div>
-<div class="ln plain" id="r_427" data-tgt="" onclick=""><span class="n">427</span>    pnum = _insert_policy(db, h.customerNumber, &quot;H&quot;, h.issueDate, h.expiryDate,</div>
-<div class="ln plain" id="r_428" data-tgt="" onclick=""><span class="n">428</span>                          h.brokerId, h.brokersReference, h.payment)</div>
-<div class="ln plain" id="r_429" data-tgt="" onclick=""><span class="n">429</span>    db.execute(</div>
-<div class="ln plain" id="r_430" data-tgt="" onclick=""><span class="n">430</span>        &quot;INSERT INTO house (policyNumber, propertyType, bedrooms, value, houseName, &quot;</div>
-<div class="ln plain" id="r_431" data-tgt="" onclick=""><span class="n">431</span>        &quot;houseNumber, postcode) VALUES (?,?,?,?,?,?,?)&quot;,</div>
-<div class="ln plain" id="r_432" data-tgt="" onclick=""><span class="n">432</span>        (pnum, h.propertyType, h.bedrooms, h.value, h.houseName, h.houseNumber,</div>
-<div class="ln plain" id="r_433" data-tgt="" onclick=""><span class="n">433</span>         h.postcode))</div>
-<div class="ln plain" id="r_434" data-tgt="" onclick=""><span class="n">434</span>    db.commit()</div>
-<div class="ln plain" id="r_435" data-tgt="" onclick=""><span class="n">435</span>    db.close()</div>
-<div class="ln plain" id="r_436" data-tgt="" onclick=""><span class="n">436</span>    return get_house(pnum)</div>
-<div class="ln plain" id="r_437" data-tgt="" onclick=""><span class="n">437</span>&nbsp;</div>
-<div class="ln plain" id="r_438" data-tgt="" onclick=""><span class="n">438</span>&nbsp;</div>
-<div class="ln plain" id="r_439" data-tgt="" onclick=""><span class="n">439</span>@app.put(&quot;/api/policies/house/{pnum}&quot;, response_model=HouseOut)</div>
-<div class="ln plain" id="r_440" data-tgt="" onclick=""><span class="n">440</span>def update_house(pnum: int, h: HouseCreate):</div>
-<div class="ln plain" id="r_441" data-tgt="" onclick=""><span class="n">441</span>    db = get_db()</div>
-<div class="ln plain" id="r_442" data-tgt="" onclick=""><span class="n">442</span>    p = _get_policy(db, pnum, &quot;H&quot;)</div>
-<div class="ln plain" id="r_443" data-tgt="" onclick=""><span class="n">443</span>    _optimistic_check(db, p, h.lastChanged)</div>
-<div class="ln plain" id="r_444" data-tgt="" onclick=""><span class="n">444</span>    _update_policy_header(db, pnum, h.issueDate, h.expiryDate, h.brokerId, h.brokersReference)</div>
-<div class="ln plain" id="r_445" data-tgt="" onclick=""><span class="n">445</span>    db.execute(</div>
-<div class="ln plain" id="r_446" data-tgt="" onclick=""><span class="n">446</span>        &quot;UPDATE house SET propertyType=?, bedrooms=?, value=?, houseName=?, &quot;</div>
-<div class="ln plain" id="r_447" data-tgt="" onclick=""><span class="n">447</span>        &quot;houseNumber=?, postcode=? WHERE policyNumber=?&quot;,</div>
-<div class="ln plain" id="r_448" data-tgt="" onclick=""><span class="n">448</span>        (h.propertyType, h.bedrooms, h.value, h.houseName, h.houseNumber,</div>
-<div class="ln plain" id="r_449" data-tgt="" onclick=""><span class="n">449</span>         h.postcode, pnum))</div>
-<div class="ln plain" id="r_450" data-tgt="" onclick=""><span class="n">450</span>    db.commit()</div>
-<div class="ln plain" id="r_451" data-tgt="" onclick=""><span class="n">451</span>    db.close()</div>
-<div class="ln plain" id="r_452" data-tgt="" onclick=""><span class="n">452</span>    return get_house(pnum)</div>
-<div class="ln plain" id="r_453" data-tgt="" onclick=""><span class="n">453</span>&nbsp;</div>
-<div class="ln plain" id="r_454" data-tgt="" onclick=""><span class="n">454</span>&nbsp;</div>
-<div class="ln plain" id="r_455" data-tgt="" onclick=""><span class="n">455</span>@app.delete(&quot;/api/policies/house/{pnum}&quot;, status_code=204)</div>
-<div class="ln plain" id="r_456" data-tgt="" onclick=""><span class="n">456</span>def delete_house(pnum: int, customerNumber: int):</div>
-<div class="ln plain" id="r_457" data-tgt="" onclick=""><span class="n">457</span>    _delete_policy(pnum, &quot;H&quot;, customerNumber)</div>
-<div class="ln plain" id="r_458" data-tgt="" onclick=""><span class="n">458</span>&nbsp;</div>
-<div class="ln plain" id="r_459" data-tgt="" onclick=""><span class="n">459</span>&nbsp;</div>
-<div class="ln plain" id="r_460" data-tgt="" onclick=""><span class="n">460</span># ════════════════════════════════════════════════════════════════════════</div>
-<div class="ln plain" id="r_461" data-tgt="" onclick=""><span class="n">461</span>#  Commercial policy — SSP4 / LGTESTP4 (no update in the original SSP4 menu)</div>
+<div class="ln plain" id="r_414" data-tgt="" onclick=""><span class="n">414</span># ════════════════════════════════════════════════════════════════════════</div>
+<div class="ln plain" id="r_415" data-tgt="" onclick=""><span class="n">415</span>#  Endowment policy — SSP2 / LGTESTP2</div>
+<div class="ln plain" id="r_416" data-tgt="" onclick=""><span class="n">416</span># ════════════════════════════════════════════════════════════════════════</div>
+<div class="ln plain" id="r_417" data-tgt="" onclick=""><span class="n">417</span>&nbsp;</div>
+<div class="ln plain" id="r_418" data-tgt="" onclick=""><span class="n">418</span>@app.get(&quot;/api/policies/endowment/{pnum}&quot;, response_model=EndowmentOut)</div>
+<div class="ln plain" id="r_419" data-tgt="" onclick=""><span class="n">419</span>def get_endowment(pnum: int):</div>
+<div class="ln plain" id="r_420" data-tgt="" onclick=""><span class="n">420</span>    with db_tx() as db:</div>
+<div class="ln plain" id="r_421" data-tgt="" onclick=""><span class="n">421</span>        p = _get_policy(db, pnum, &quot;E&quot;)</div>
+<div class="ln plain" id="r_422" data-tgt="" onclick=""><span class="n">422</span>        d = db.execute(&quot;SELECT * FROM endowment WHERE policyNumber=?&quot;, (pnum,)).fetchone()</div>
+<div class="ln plain" id="r_423" data-tgt="" onclick=""><span class="n">423</span>        if d is None:</div>
+<div class="ln plain" id="r_424" data-tgt="" onclick=""><span class="n">424</span>            raise HTTPException(404, f&quot;Endowment policy {pnum} not found&quot;)</div>
+<div class="ln plain" id="r_425" data-tgt="" onclick=""><span class="n">425</span>    return _policy_out(p, d, pnum)</div>
+<div class="ln plain" id="r_426" data-tgt="" onclick=""><span class="n">426</span>&nbsp;</div>
+<div class="ln plain" id="r_427" data-tgt="" onclick=""><span class="n">427</span>&nbsp;</div>
+<div class="ln plain" id="r_428" data-tgt="" onclick=""><span class="n">428</span>@app.post(&quot;/api/policies/endowment&quot;, response_model=EndowmentOut, status_code=201)</div>
+<div class="ln plain" id="r_429" data-tgt="" onclick=""><span class="n">429</span>def add_endowment(e: EndowmentCreate):</div>
+<div class="ln plain" id="r_430" data-tgt="" onclick=""><span class="n">430</span>    with db_tx() as db:</div>
+<div class="ln plain" id="r_431" data-tgt="" onclick=""><span class="n">431</span>        _require_customer(db, e.customerNumber)</div>
+<div class="ln plain" id="r_432" data-tgt="" onclick=""><span class="n">432</span>        pnum = _insert_policy(db, e.customerNumber, &quot;E&quot;, e.issueDate, e.expiryDate,</div>
+<div class="ln plain" id="r_433" data-tgt="" onclick=""><span class="n">433</span>                              e.brokerId, e.brokersReference, e.payment)</div>
+<div class="ln plain" id="r_434" data-tgt="" onclick=""><span class="n">434</span>        db.execute(</div>
+<div class="ln plain" id="r_435" data-tgt="" onclick=""><span class="n">435</span>            &quot;INSERT INTO endowment (policyNumber, equities, withProfits, managedFund, &quot;</div>
+<div class="ln plain" id="r_436" data-tgt="" onclick=""><span class="n">436</span>            &quot;fundName, term, sumAssured, lifeAssured) VALUES (?,?,?,?,?,?,?,?)&quot;,</div>
+<div class="ln plain" id="r_437" data-tgt="" onclick=""><span class="n">437</span>            (pnum, e.equities, e.withProfits, e.managedFund, e.fundName, e.term,</div>
+<div class="ln plain" id="r_438" data-tgt="" onclick=""><span class="n">438</span>             e.sumAssured, e.lifeAssured))</div>
+<div class="ln plain" id="r_439" data-tgt="" onclick=""><span class="n">439</span>    return get_endowment(pnum)</div>
+<div class="ln plain" id="r_440" data-tgt="" onclick=""><span class="n">440</span>&nbsp;</div>
+<div class="ln plain" id="r_441" data-tgt="" onclick=""><span class="n">441</span>&nbsp;</div>
+<div class="ln plain" id="r_442" data-tgt="" onclick=""><span class="n">442</span>@app.put(&quot;/api/policies/endowment/{pnum}&quot;, response_model=EndowmentOut)</div>
+<div class="ln plain" id="r_443" data-tgt="" onclick=""><span class="n">443</span>def update_endowment(pnum: int, e: EndowmentCreate):</div>
+<div class="ln plain" id="r_444" data-tgt="" onclick=""><span class="n">444</span>    with db_tx() as db:</div>
+<div class="ln plain" id="r_445" data-tgt="" onclick=""><span class="n">445</span>        p = _get_policy(db, pnum, &quot;E&quot;)</div>
+<div class="ln plain" id="r_446" data-tgt="" onclick=""><span class="n">446</span>        _optimistic_check(db, p, e.lastChanged)</div>
+<div class="ln plain" id="r_447" data-tgt="" onclick=""><span class="n">447</span>        _update_policy_header(db, pnum, e.issueDate, e.expiryDate,</div>
+<div class="ln plain" id="r_448" data-tgt="" onclick=""><span class="n">448</span>                              e.brokerId, e.brokersReference)</div>
+<div class="ln plain" id="r_449" data-tgt="" onclick=""><span class="n">449</span>        _update_detail(db, pnum, &quot;Endowment&quot;,</div>
+<div class="ln plain" id="r_450" data-tgt="" onclick=""><span class="n">450</span>            &quot;UPDATE endowment SET equities=?, withProfits=?, managedFund=?, fundName=?, &quot;</div>
+<div class="ln plain" id="r_451" data-tgt="" onclick=""><span class="n">451</span>            &quot;term=?, sumAssured=?, lifeAssured=? WHERE policyNumber=?&quot;,</div>
+<div class="ln plain" id="r_452" data-tgt="" onclick=""><span class="n">452</span>            (e.equities, e.withProfits, e.managedFund, e.fundName, e.term,</div>
+<div class="ln plain" id="r_453" data-tgt="" onclick=""><span class="n">453</span>             e.sumAssured, e.lifeAssured, pnum))</div>
+<div class="ln plain" id="r_454" data-tgt="" onclick=""><span class="n">454</span>    return get_endowment(pnum)</div>
+<div class="ln plain" id="r_455" data-tgt="" onclick=""><span class="n">455</span>&nbsp;</div>
+<div class="ln plain" id="r_456" data-tgt="" onclick=""><span class="n">456</span>&nbsp;</div>
+<div class="ln plain" id="r_457" data-tgt="" onclick=""><span class="n">457</span>@app.delete(&quot;/api/policies/endowment/{pnum}&quot;, status_code=204)</div>
+<div class="ln plain" id="r_458" data-tgt="" onclick=""><span class="n">458</span>def delete_endowment(pnum: int, customerNumber: int):</div>
+<div class="ln plain" id="r_459" data-tgt="" onclick=""><span class="n">459</span>    _delete_policy(pnum, &quot;E&quot;, customerNumber)</div>
+<div class="ln plain" id="r_460" data-tgt="" onclick=""><span class="n">460</span>&nbsp;</div>
+<div class="ln plain" id="r_461" data-tgt="" onclick=""><span class="n">461</span>&nbsp;</div>
 <div class="ln plain" id="r_462" data-tgt="" onclick=""><span class="n">462</span># ════════════════════════════════════════════════════════════════════════</div>
-<div class="ln plain" id="r_463" data-tgt="" onclick=""><span class="n">463</span>&nbsp;</div>
-<div class="ln plain" id="r_464" data-tgt="" onclick=""><span class="n">464</span>@app.get(&quot;/api/policies/commercial&quot;, response_model=list[CommercialOut])</div>
-<div class="ln plain" id="r_465" data-tgt="" onclick=""><span class="n">465</span>def list_commercial(customerNumber: int | None = None, zipcode: str | None = None):</div>
-<div class="ln plain" id="r_466" data-tgt="" onclick=""><span class="n">466</span>    &quot;&quot;&quot;Browse commercial policies by customer (LGIPDB01 03ICOM / Cust_Cursor)</div>
-<div class="ln plain" id="r_467" data-tgt="" onclick=""><span class="n">467</span>    or by postcode (05ICOM / Zip_Cursor). Pure read-only list (no business</div>
-<div class="ln plain" id="r_468" data-tgt="" onclick=""><span class="n">468</span>    logic in the original beyond the SELECT).&quot;&quot;&quot;</div>
-<div class="ln plain" id="r_469" data-tgt="" onclick=""><span class="n">469</span>    where, params = [&quot;p.policyType=&#x27;C&#x27;&quot;], []</div>
-<div class="ln plain" id="r_470" data-tgt="" onclick=""><span class="n">470</span>    if customerNumber is not None:</div>
-<div class="ln plain" id="r_471" data-tgt="" onclick=""><span class="n">471</span>        where.append(&quot;p.customerNumber=?&quot;)</div>
-<div class="ln plain" id="r_472" data-tgt="" onclick=""><span class="n">472</span>        params.append(customerNumber)</div>
-<div class="ln plain" id="r_473" data-tgt="" onclick=""><span class="n">473</span>    if zipcode is not None:</div>
-<div class="ln plain" id="r_474" data-tgt="" onclick=""><span class="n">474</span>        where.append(&quot;c.zipcode=?&quot;)</div>
-<div class="ln plain" id="r_475" data-tgt="" onclick=""><span class="n">475</span>        params.append(zipcode)</div>
-<div class="ln plain" id="r_476" data-tgt="" onclick=""><span class="n">476</span>    db = get_db()</div>
-<div class="ln plain" id="r_477" data-tgt="" onclick=""><span class="n">477</span>    rows = db.execute(</div>
-<div class="ln plain" id="r_478" data-tgt="" onclick=""><span class="n">478</span>        &quot;SELECT p.policyNumber FROM policy p JOIN commercial c &quot;</div>
-<div class="ln plain" id="r_479" data-tgt="" onclick=""><span class="n">479</span>        &quot;ON p.policyNumber=c.policyNumber WHERE &quot; + &quot; AND &quot;.join(where) +</div>
-<div class="ln plain" id="r_480" data-tgt="" onclick=""><span class="n">480</span>        &quot; ORDER BY p.policyNumber&quot;, params).fetchall()</div>
-<div class="ln plain" id="r_481" data-tgt="" onclick=""><span class="n">481</span>    db.close()</div>
-<div class="ln plain" id="r_482" data-tgt="" onclick=""><span class="n">482</span>    return [get_commercial(r[&quot;policyNumber&quot;]) for r in rows]</div>
-<div class="ln plain" id="r_483" data-tgt="" onclick=""><span class="n">483</span>&nbsp;</div>
-<div class="ln plain" id="r_484" data-tgt="" onclick=""><span class="n">484</span>&nbsp;</div>
-<div class="ln plain" id="r_485" data-tgt="" onclick=""><span class="n">485</span>@app.get(&quot;/api/policies/commercial/{pnum}&quot;, response_model=CommercialOut)</div>
-<div class="ln plain" id="r_486" data-tgt="" onclick=""><span class="n">486</span>def get_commercial(pnum: int):</div>
-<div class="ln plain" id="r_487" data-tgt="" onclick=""><span class="n">487</span>    db = get_db()</div>
-<div class="ln plain" id="r_488" data-tgt="" onclick=""><span class="n">488</span>    p = _get_policy(db, pnum, &quot;C&quot;)</div>
-<div class="ln plain" id="r_489" data-tgt="" onclick=""><span class="n">489</span>    d = db.execute(&quot;SELECT * FROM commercial WHERE policyNumber=?&quot;, (pnum,)).fetchone()</div>
-<div class="ln plain" id="r_490" data-tgt="" onclick=""><span class="n">490</span>    db.close()</div>
-<div class="ln plain" id="r_491" data-tgt="" onclick=""><span class="n">491</span>    return {**dict(d), **dict(p), &quot;policyNumber&quot;: pnum}</div>
-<div class="ln plain" id="r_492" data-tgt="" onclick=""><span class="n">492</span>&nbsp;</div>
-<div class="ln plain" id="r_493" data-tgt="" onclick=""><span class="n">493</span>&nbsp;</div>
-<div class="ln plain" id="r_494" data-tgt="" onclick=""><span class="n">494</span>@app.post(&quot;/api/policies/commercial&quot;, response_model=CommercialOut, status_code=201)</div>
-<div class="ln plain" id="r_495" data-tgt="" onclick=""><span class="n">495</span>def add_commercial(c: CommercialCreate):</div>
-<div class="ln plain" id="r_496" data-tgt="" onclick=""><span class="n">496</span>    db = get_db()</div>
-<div class="ln plain" id="r_497" data-tgt="" onclick=""><span class="n">497</span>    _require_customer(db, c.customerNumber)</div>
-<div class="ln plain" id="r_498" data-tgt="" onclick=""><span class="n">498</span>    # commercial conflates policy issue/expiry with the commercial start/renewal</div>
-<div class="ln plain" id="r_499" data-tgt="" onclick=""><span class="n">499</span>    # dates (as the original does); keep them equal so the two stay consistent.</div>
-<div class="ln plain" id="r_500" data-tgt="" onclick=""><span class="n">500</span>    pnum = _insert_policy(db, c.customerNumber, &quot;C&quot;, c.startDate, c.renewalDate,</div>
-<div class="ln plain" id="r_501" data-tgt="" onclick=""><span class="n">501</span>                          c.brokerId, c.brokersReference, c.payment)</div>
-<div class="ln plain" id="r_502" data-tgt="" onclick=""><span class="n">502</span>    db.execute(</div>
-<div class="ln plain" id="r_503" data-tgt="" onclick=""><span class="n">503</span>        &quot;INSERT INTO commercial (policyNumber, requestDate, startDate, renewalDate, &quot;</div>
-<div class="ln plain" id="r_504" data-tgt="" onclick=""><span class="n">504</span>        &quot;address, zipcode, latitudeN, longitudeW, customer, propertyType, firePeril, &quot;</div>
-<div class="ln plain" id="r_505" data-tgt="" onclick=""><span class="n">505</span>        &quot;firePremium, crimePeril, crimePremium, floodPeril, floodPremium, weatherPeril, &quot;</div>
-<div class="ln plain" id="r_506" data-tgt="" onclick=""><span class="n">506</span>        &quot;weatherPremium, status, rejectionReason) &quot;</div>
-<div class="ln plain" id="r_507" data-tgt="" onclick=""><span class="n">507</span>        &quot;VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)&quot;,</div>
-<div class="ln plain" id="r_508" data-tgt="" onclick=""><span class="n">508</span>        (pnum, now_ts(), c.startDate, c.renewalDate, c.address, c.zipcode,</div>
-<div class="ln plain" id="r_509" data-tgt="" onclick=""><span class="n">509</span>         c.latitudeN, c.longitudeW, c.customer, c.propertyType, c.firePeril,</div>
-<div class="ln plain" id="r_510" data-tgt="" onclick=""><span class="n">510</span>         c.firePremium, c.crimePeril, c.crimePremium, c.floodPeril, c.floodPremium,</div>
-<div class="ln plain" id="r_511" data-tgt="" onclick=""><span class="n">511</span>         c.weatherPeril, c.weatherPremium, c.status, c.rejectionReason))</div>
-<div class="ln plain" id="r_512" data-tgt="" onclick=""><span class="n">512</span>    db.commit()</div>
-<div class="ln plain" id="r_513" data-tgt="" onclick=""><span class="n">513</span>    db.close()</div>
-<div class="ln plain" id="r_514" data-tgt="" onclick=""><span class="n">514</span>    return get_commercial(pnum)</div>
-<div class="ln plain" id="r_515" data-tgt="" onclick=""><span class="n">515</span>&nbsp;</div>
-<div class="ln plain" id="r_516" data-tgt="" onclick=""><span class="n">516</span>&nbsp;</div>
-<div class="ln plain" id="r_517" data-tgt="" onclick=""><span class="n">517</span>@app.delete(&quot;/api/policies/commercial/{pnum}&quot;, status_code=204)</div>
-<div class="ln plain" id="r_518" data-tgt="" onclick=""><span class="n">518</span>def delete_commercial(pnum: int, customerNumber: int):</div>
-<div class="ln plain" id="r_519" data-tgt="" onclick=""><span class="n">519</span>    _delete_policy(pnum, &quot;C&quot;, customerNumber)</div>
-<div class="ln plain" id="r_520" data-tgt="" onclick=""><span class="n">520</span>&nbsp;</div>
-<div class="ln plain" id="r_521" data-tgt="" onclick=""><span class="n">521</span>&nbsp;</div>
-<div class="ln plain" id="r_522" data-tgt="" onclick=""><span class="n">522</span># ════════════════════════════════════════════════════════════════════════</div>
-<div class="ln plain" id="r_523" data-tgt="" onclick=""><span class="n">523</span>#  Claims — SSP5 (inquiry / add only, as in the original menu)</div>
-<div class="ln plain" id="r_524" data-tgt="" onclick=""><span class="n">524</span># ════════════════════════════════════════════════════════════════════════</div>
-<div class="ln plain" id="r_525" data-tgt="" onclick=""><span class="n">525</span>&nbsp;</div>
-<div class="ln plain" id="r_526" data-tgt="" onclick=""><span class="n">526</span>@app.get(&quot;/api/claims/{cnum}&quot;, response_model=ClaimOut)</div>
-<div class="ln plain" id="r_527" data-tgt="" onclick=""><span class="n">527</span>def get_claim(cnum: int):</div>
-<div class="ln plain" id="r_528" data-tgt="" onclick=""><span class="n">528</span>    db = get_db()</div>
-<div class="ln plain" id="r_529" data-tgt="" onclick=""><span class="n">529</span>    row = db.execute(&quot;SELECT * FROM claim WHERE claimNumber=?&quot;, (cnum,)).fetchone()</div>
-<div class="ln plain" id="r_530" data-tgt="" onclick=""><span class="n">530</span>    db.close()</div>
-<div class="ln plain" id="r_531" data-tgt="" onclick=""><span class="n">531</span>    if row is None:</div>
-<div class="ln plain" id="r_532" data-tgt="" onclick=""><span class="n">532</span>        raise HTTPException(404, f&quot;Claim {cnum} not found&quot;)</div>
-<div class="ln plain" id="r_533" data-tgt="" onclick=""><span class="n">533</span>    return dict(row)</div>
-<div class="ln plain" id="r_534" data-tgt="" onclick=""><span class="n">534</span>&nbsp;</div>
+<div class="ln plain" id="r_463" data-tgt="" onclick=""><span class="n">463</span>#  House policy — SSP3 / LGTESTP3</div>
+<div class="ln plain" id="r_464" data-tgt="" onclick=""><span class="n">464</span># ════════════════════════════════════════════════════════════════════════</div>
+<div class="ln plain" id="r_465" data-tgt="" onclick=""><span class="n">465</span>&nbsp;</div>
+<div class="ln plain" id="r_466" data-tgt="" onclick=""><span class="n">466</span>@app.get(&quot;/api/policies/house/{pnum}&quot;, response_model=HouseOut)</div>
+<div class="ln plain" id="r_467" data-tgt="" onclick=""><span class="n">467</span>def get_house(pnum: int):</div>
+<div class="ln plain" id="r_468" data-tgt="" onclick=""><span class="n">468</span>    with db_tx() as db:</div>
+<div class="ln plain" id="r_469" data-tgt="" onclick=""><span class="n">469</span>        p = _get_policy(db, pnum, &quot;H&quot;)</div>
+<div class="ln plain" id="r_470" data-tgt="" onclick=""><span class="n">470</span>        d = db.execute(&quot;SELECT * FROM house WHERE policyNumber=?&quot;, (pnum,)).fetchone()</div>
+<div class="ln plain" id="r_471" data-tgt="" onclick=""><span class="n">471</span>        if d is None:</div>
+<div class="ln plain" id="r_472" data-tgt="" onclick=""><span class="n">472</span>            raise HTTPException(404, f&quot;House policy {pnum} not found&quot;)</div>
+<div class="ln plain" id="r_473" data-tgt="" onclick=""><span class="n">473</span>    return _policy_out(p, d, pnum)</div>
+<div class="ln plain" id="r_474" data-tgt="" onclick=""><span class="n">474</span>&nbsp;</div>
+<div class="ln plain" id="r_475" data-tgt="" onclick=""><span class="n">475</span>&nbsp;</div>
+<div class="ln plain" id="r_476" data-tgt="" onclick=""><span class="n">476</span>@app.post(&quot;/api/policies/house&quot;, response_model=HouseOut, status_code=201)</div>
+<div class="ln plain" id="r_477" data-tgt="" onclick=""><span class="n">477</span>def add_house(h: HouseCreate):</div>
+<div class="ln plain" id="r_478" data-tgt="" onclick=""><span class="n">478</span>    with db_tx() as db:</div>
+<div class="ln plain" id="r_479" data-tgt="" onclick=""><span class="n">479</span>        _require_customer(db, h.customerNumber)</div>
+<div class="ln plain" id="r_480" data-tgt="" onclick=""><span class="n">480</span>        pnum = _insert_policy(db, h.customerNumber, &quot;H&quot;, h.issueDate, h.expiryDate,</div>
+<div class="ln plain" id="r_481" data-tgt="" onclick=""><span class="n">481</span>                              h.brokerId, h.brokersReference, h.payment)</div>
+<div class="ln plain" id="r_482" data-tgt="" onclick=""><span class="n">482</span>        db.execute(</div>
+<div class="ln plain" id="r_483" data-tgt="" onclick=""><span class="n">483</span>            &quot;INSERT INTO house (policyNumber, propertyType, bedrooms, value, houseName, &quot;</div>
+<div class="ln plain" id="r_484" data-tgt="" onclick=""><span class="n">484</span>            &quot;houseNumber, postcode) VALUES (?,?,?,?,?,?,?)&quot;,</div>
+<div class="ln plain" id="r_485" data-tgt="" onclick=""><span class="n">485</span>            (pnum, h.propertyType, h.bedrooms, h.value, h.houseName, h.houseNumber,</div>
+<div class="ln plain" id="r_486" data-tgt="" onclick=""><span class="n">486</span>             h.postcode))</div>
+<div class="ln plain" id="r_487" data-tgt="" onclick=""><span class="n">487</span>    return get_house(pnum)</div>
+<div class="ln plain" id="r_488" data-tgt="" onclick=""><span class="n">488</span>&nbsp;</div>
+<div class="ln plain" id="r_489" data-tgt="" onclick=""><span class="n">489</span>&nbsp;</div>
+<div class="ln plain" id="r_490" data-tgt="" onclick=""><span class="n">490</span>@app.put(&quot;/api/policies/house/{pnum}&quot;, response_model=HouseOut)</div>
+<div class="ln plain" id="r_491" data-tgt="" onclick=""><span class="n">491</span>def update_house(pnum: int, h: HouseCreate):</div>
+<div class="ln plain" id="r_492" data-tgt="" onclick=""><span class="n">492</span>    with db_tx() as db:</div>
+<div class="ln plain" id="r_493" data-tgt="" onclick=""><span class="n">493</span>        p = _get_policy(db, pnum, &quot;H&quot;)</div>
+<div class="ln plain" id="r_494" data-tgt="" onclick=""><span class="n">494</span>        _optimistic_check(db, p, h.lastChanged)</div>
+<div class="ln plain" id="r_495" data-tgt="" onclick=""><span class="n">495</span>        _update_policy_header(db, pnum, h.issueDate, h.expiryDate,</div>
+<div class="ln plain" id="r_496" data-tgt="" onclick=""><span class="n">496</span>                              h.brokerId, h.brokersReference)</div>
+<div class="ln plain" id="r_497" data-tgt="" onclick=""><span class="n">497</span>        _update_detail(db, pnum, &quot;House&quot;,</div>
+<div class="ln plain" id="r_498" data-tgt="" onclick=""><span class="n">498</span>            &quot;UPDATE house SET propertyType=?, bedrooms=?, value=?, houseName=?, &quot;</div>
+<div class="ln plain" id="r_499" data-tgt="" onclick=""><span class="n">499</span>            &quot;houseNumber=?, postcode=? WHERE policyNumber=?&quot;,</div>
+<div class="ln plain" id="r_500" data-tgt="" onclick=""><span class="n">500</span>            (h.propertyType, h.bedrooms, h.value, h.houseName, h.houseNumber,</div>
+<div class="ln plain" id="r_501" data-tgt="" onclick=""><span class="n">501</span>             h.postcode, pnum))</div>
+<div class="ln plain" id="r_502" data-tgt="" onclick=""><span class="n">502</span>    return get_house(pnum)</div>
+<div class="ln plain" id="r_503" data-tgt="" onclick=""><span class="n">503</span>&nbsp;</div>
+<div class="ln plain" id="r_504" data-tgt="" onclick=""><span class="n">504</span>&nbsp;</div>
+<div class="ln plain" id="r_505" data-tgt="" onclick=""><span class="n">505</span>@app.delete(&quot;/api/policies/house/{pnum}&quot;, status_code=204)</div>
+<div class="ln plain" id="r_506" data-tgt="" onclick=""><span class="n">506</span>def delete_house(pnum: int, customerNumber: int):</div>
+<div class="ln plain" id="r_507" data-tgt="" onclick=""><span class="n">507</span>    _delete_policy(pnum, &quot;H&quot;, customerNumber)</div>
+<div class="ln plain" id="r_508" data-tgt="" onclick=""><span class="n">508</span>&nbsp;</div>
+<div class="ln plain" id="r_509" data-tgt="" onclick=""><span class="n">509</span>&nbsp;</div>
+<div class="ln plain" id="r_510" data-tgt="" onclick=""><span class="n">510</span># ════════════════════════════════════════════════════════════════════════</div>
+<div class="ln plain" id="r_511" data-tgt="" onclick=""><span class="n">511</span>#  Commercial policy — SSP4 / LGTESTP4 (no update in the original SSP4 menu)</div>
+<div class="ln plain" id="r_512" data-tgt="" onclick=""><span class="n">512</span># ════════════════════════════════════════════════════════════════════════</div>
+<div class="ln plain" id="r_513" data-tgt="" onclick=""><span class="n">513</span>&nbsp;</div>
+<div class="ln plain" id="r_514" data-tgt="" onclick=""><span class="n">514</span>@app.get(&quot;/api/policies/commercial&quot;, response_model=list[CommercialOut])</div>
+<div class="ln plain" id="r_515" data-tgt="" onclick=""><span class="n">515</span>def list_commercial(customerNumber: int | None = None, zipcode: str | None = None):</div>
+<div class="ln plain" id="r_516" data-tgt="" onclick=""><span class="n">516</span>    &quot;&quot;&quot;Browse commercial policies by customer (LGIPDB01 03ICOM / Cust_Cursor)</div>
+<div class="ln plain" id="r_517" data-tgt="" onclick=""><span class="n">517</span>    or by postcode (05ICOM / Zip_Cursor). The original caps the customer browse</div>
+<div class="ln plain" id="r_518" data-tgt="" onclick=""><span class="n">518</span>    at 20 rows (IF ICOM-Record-Count &gt; 20); the postcode browse has no cap — we</div>
+<div class="ln plain" id="r_519" data-tgt="" onclick=""><span class="n">519</span>    reproduce that asymmetry exactly (see GENAPP_BRANCH_COVERAGE.md G1).&quot;&quot;&quot;</div>
+<div class="ln plain" id="r_520" data-tgt="" onclick=""><span class="n">520</span>    where, params = [&quot;p.policyType=&#x27;C&#x27;&quot;], []</div>
+<div class="ln plain" id="r_521" data-tgt="" onclick=""><span class="n">521</span>    if customerNumber is not None:</div>
+<div class="ln plain" id="r_522" data-tgt="" onclick=""><span class="n">522</span>        where.append(&quot;p.customerNumber=?&quot;)</div>
+<div class="ln plain" id="r_523" data-tgt="" onclick=""><span class="n">523</span>        params.append(customerNumber)</div>
+<div class="ln plain" id="r_524" data-tgt="" onclick=""><span class="n">524</span>    if zipcode is not None:</div>
+<div class="ln plain" id="r_525" data-tgt="" onclick=""><span class="n">525</span>        where.append(&quot;c.zipcode=?&quot;)</div>
+<div class="ln plain" id="r_526" data-tgt="" onclick=""><span class="n">526</span>        params.append(zipcode)</div>
+<div class="ln plain" id="r_527" data-tgt="" onclick=""><span class="n">527</span>    sql = (&quot;SELECT p.policyNumber FROM policy p JOIN commercial c &quot;</div>
+<div class="ln plain" id="r_528" data-tgt="" onclick=""><span class="n">528</span>           &quot;ON p.policyNumber=c.policyNumber WHERE &quot; + &quot; AND &quot;.join(where) +</div>
+<div class="ln plain" id="r_529" data-tgt="" onclick=""><span class="n">529</span>           &quot; ORDER BY p.policyNumber&quot;)</div>
+<div class="ln plain" id="r_530" data-tgt="" onclick=""><span class="n">530</span>    if customerNumber is not None and zipcode is None:</div>
+<div class="ln plain" id="r_531" data-tgt="" onclick=""><span class="n">531</span>        sql += f&quot; LIMIT {COMMERCIAL_BROWSE_CAP}&quot;      # 03ICOM: max 20 (original)</div>
+<div class="ln plain" id="r_532" data-tgt="" onclick=""><span class="n">532</span>    with db_tx() as db:</div>
+<div class="ln plain" id="r_533" data-tgt="" onclick=""><span class="n">533</span>        rows = db.execute(sql, params).fetchall()</div>
+<div class="ln plain" id="r_534" data-tgt="" onclick=""><span class="n">534</span>    return [get_commercial(r[&quot;policyNumber&quot;]) for r in rows]</div>
 <div class="ln plain" id="r_535" data-tgt="" onclick=""><span class="n">535</span>&nbsp;</div>
-<div class="ln plain" id="r_536" data-tgt="" onclick=""><span class="n">536</span>@app.get(&quot;/api/policies/{pnum}/claims&quot;, response_model=list[ClaimOut])</div>
-<div class="ln plain" id="r_537" data-tgt="" onclick=""><span class="n">537</span>def list_policy_claims(pnum: int):</div>
-<div class="ln plain" id="r_538" data-tgt="" onclick=""><span class="n">538</span>    db = get_db()</div>
-<div class="ln plain" id="r_539" data-tgt="" onclick=""><span class="n">539</span>    rows = db.execute(&quot;SELECT * FROM claim WHERE policyNumber=? ORDER BY claimNumber&quot;,</div>
-<div class="ln plain" id="r_540" data-tgt="" onclick=""><span class="n">540</span>                      (pnum,)).fetchall()</div>
-<div class="ln plain" id="r_541" data-tgt="" onclick=""><span class="n">541</span>    db.close()</div>
-<div class="ln plain" id="r_542" data-tgt="" onclick=""><span class="n">542</span>    return [dict(r) for r in rows]</div>
-<div class="ln plain" id="r_543" data-tgt="" onclick=""><span class="n">543</span>&nbsp;</div>
-<div class="ln plain" id="r_544" data-tgt="" onclick=""><span class="n">544</span>&nbsp;</div>
-<div class="ln plain" id="r_545" data-tgt="" onclick=""><span class="n">545</span>@app.post(&quot;/api/claims&quot;, response_model=ClaimOut, status_code=201)</div>
-<div class="ln plain" id="r_546" data-tgt="" onclick=""><span class="n">546</span>def add_claim(c: ClaimCreate):</div>
-<div class="ln plain" id="r_547" data-tgt="" onclick=""><span class="n">547</span>    db = get_db()</div>
-<div class="ln plain" id="r_548" data-tgt="" onclick=""><span class="n">548</span>    row = db.execute(&quot;SELECT 1 FROM policy WHERE policyNumber=?&quot;,</div>
-<div class="ln plain" id="r_549" data-tgt="" onclick=""><span class="n">549</span>                     (c.policyNumber,)).fetchone()</div>
-<div class="ln plain" id="r_550" data-tgt="" onclick=""><span class="n">550</span>    if row is None:</div>
-<div class="ln plain" id="r_551" data-tgt="" onclick=""><span class="n">551</span>        db.close()</div>
-<div class="ln plain" id="r_552" data-tgt="" onclick=""><span class="n">552</span>        raise HTTPException(409, f&quot;Policy {c.policyNumber} does not exist&quot;)</div>
-<div class="ln plain" id="r_553" data-tgt="" onclick=""><span class="n">553</span>    cur = db.execute(</div>
-<div class="ln plain" id="r_554" data-tgt="" onclick=""><span class="n">554</span>        &quot;INSERT INTO claim (policyNumber, claimDate, paid, value, cause, observations) &quot;</div>
-<div class="ln plain" id="r_555" data-tgt="" onclick=""><span class="n">555</span>        &quot;VALUES (?,?,?,?,?,?)&quot;,</div>
-<div class="ln plain" id="r_556" data-tgt="" onclick=""><span class="n">556</span>        (c.policyNumber, c.claimDate, c.paid, c.value, c.cause, c.observations))</div>
-<div class="ln plain" id="r_557" data-tgt="" onclick=""><span class="n">557</span>    cnum = cur.lastrowid</div>
-<div class="ln plain" id="r_558" data-tgt="" onclick=""><span class="n">558</span>    db.commit()</div>
-<div class="ln plain" id="r_559" data-tgt="" onclick=""><span class="n">559</span>    db.close()</div>
-<div class="ln plain" id="r_560" data-tgt="" onclick=""><span class="n">560</span>    out = c.model_dump()</div>
-<div class="ln plain" id="r_561" data-tgt="" onclick=""><span class="n">561</span>    out[&quot;claimNumber&quot;] = cnum</div>
-<div class="ln plain" id="r_562" data-tgt="" onclick=""><span class="n">562</span>    return out</div>
-<div class="ln plain" id="r_563" data-tgt="" onclick=""><span class="n">563</span>&nbsp;</div>
-<div class="ln plain" id="r_564" data-tgt="" onclick=""><span class="n">564</span>&nbsp;</div>
-<div class="ln plain" id="r_565" data-tgt="" onclick=""><span class="n">565</span>@app.get(&quot;/api/health&quot;)</div>
-<div class="ln plain" id="r_566" data-tgt="" onclick=""><span class="n">566</span>def health():</div>
-<div class="ln plain" id="r_567" data-tgt="" onclick=""><span class="n">567</span>    return {&quot;status&quot;: &quot;ok&quot;, &quot;app&quot;: &quot;GENAPP&quot;}</div></div>
+<div class="ln plain" id="r_536" data-tgt="" onclick=""><span class="n">536</span>&nbsp;</div>
+<div class="ln plain" id="r_537" data-tgt="" onclick=""><span class="n">537</span>@app.get(&quot;/api/policies/commercial/{pnum}&quot;, response_model=CommercialOut)</div>
+<div class="ln plain" id="r_538" data-tgt="" onclick=""><span class="n">538</span>def get_commercial(pnum: int):</div>
+<div class="ln plain" id="r_539" data-tgt="" onclick=""><span class="n">539</span>    with db_tx() as db:</div>
+<div class="ln plain" id="r_540" data-tgt="" onclick=""><span class="n">540</span>        p = _get_policy(db, pnum, &quot;C&quot;)</div>
+<div class="ln plain" id="r_541" data-tgt="" onclick=""><span class="n">541</span>        d = db.execute(&quot;SELECT * FROM commercial WHERE policyNumber=?&quot;, (pnum,)).fetchone()</div>
+<div class="ln plain" id="r_542" data-tgt="" onclick=""><span class="n">542</span>        if d is None:</div>
+<div class="ln plain" id="r_543" data-tgt="" onclick=""><span class="n">543</span>            raise HTTPException(404, f&quot;Commercial policy {pnum} not found&quot;)</div>
+<div class="ln plain" id="r_544" data-tgt="" onclick=""><span class="n">544</span>    return _policy_out(p, d, pnum)</div>
+<div class="ln plain" id="r_545" data-tgt="" onclick=""><span class="n">545</span>&nbsp;</div>
+<div class="ln plain" id="r_546" data-tgt="" onclick=""><span class="n">546</span>&nbsp;</div>
+<div class="ln plain" id="r_547" data-tgt="" onclick=""><span class="n">547</span>@app.post(&quot;/api/policies/commercial&quot;, response_model=CommercialOut, status_code=201)</div>
+<div class="ln plain" id="r_548" data-tgt="" onclick=""><span class="n">548</span>def add_commercial(c: CommercialCreate):</div>
+<div class="ln plain" id="r_549" data-tgt="" onclick=""><span class="n">549</span>    with db_tx() as db:</div>
+<div class="ln plain" id="r_550" data-tgt="" onclick=""><span class="n">550</span>        _require_customer(db, c.customerNumber)</div>
+<div class="ln plain" id="r_551" data-tgt="" onclick=""><span class="n">551</span>        # commercial conflates policy issue/expiry with the commercial</div>
+<div class="ln plain" id="r_552" data-tgt="" onclick=""><span class="n">552</span>        # start/renewal dates (as the original does); keep them equal.</div>
+<div class="ln plain" id="r_553" data-tgt="" onclick=""><span class="n">553</span>        pnum = _insert_policy(db, c.customerNumber, &quot;C&quot;, c.startDate, c.renewalDate,</div>
+<div class="ln plain" id="r_554" data-tgt="" onclick=""><span class="n">554</span>                              c.brokerId, c.brokersReference, c.payment)</div>
+<div class="ln plain" id="r_555" data-tgt="" onclick=""><span class="n">555</span>        db.execute(</div>
+<div class="ln plain" id="r_556" data-tgt="" onclick=""><span class="n">556</span>            &quot;INSERT INTO commercial (policyNumber, requestDate, startDate, renewalDate, &quot;</div>
+<div class="ln plain" id="r_557" data-tgt="" onclick=""><span class="n">557</span>            &quot;address, zipcode, latitudeN, longitudeW, customer, propertyType, firePeril, &quot;</div>
+<div class="ln plain" id="r_558" data-tgt="" onclick=""><span class="n">558</span>            &quot;firePremium, crimePeril, crimePremium, floodPeril, floodPremium, weatherPeril, &quot;</div>
+<div class="ln plain" id="r_559" data-tgt="" onclick=""><span class="n">559</span>            &quot;weatherPremium, status, rejectionReason) &quot;</div>
+<div class="ln plain" id="r_560" data-tgt="" onclick=""><span class="n">560</span>            &quot;VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)&quot;,</div>
+<div class="ln plain" id="r_561" data-tgt="" onclick=""><span class="n">561</span>            (pnum, now_ts(), c.startDate, c.renewalDate, c.address, c.zipcode,</div>
+<div class="ln plain" id="r_562" data-tgt="" onclick=""><span class="n">562</span>             c.latitudeN, c.longitudeW, c.customer, c.propertyType, c.firePeril,</div>
+<div class="ln plain" id="r_563" data-tgt="" onclick=""><span class="n">563</span>             c.firePremium, c.crimePeril, c.crimePremium, c.floodPeril, c.floodPremium,</div>
+<div class="ln plain" id="r_564" data-tgt="" onclick=""><span class="n">564</span>             c.weatherPeril, c.weatherPremium, c.status, c.rejectionReason))</div>
+<div class="ln plain" id="r_565" data-tgt="" onclick=""><span class="n">565</span>    return get_commercial(pnum)</div>
+<div class="ln plain" id="r_566" data-tgt="" onclick=""><span class="n">566</span>&nbsp;</div>
+<div class="ln plain" id="r_567" data-tgt="" onclick=""><span class="n">567</span>&nbsp;</div>
+<div class="ln plain" id="r_568" data-tgt="" onclick=""><span class="n">568</span>@app.delete(&quot;/api/policies/commercial/{pnum}&quot;, status_code=204)</div>
+<div class="ln plain" id="r_569" data-tgt="" onclick=""><span class="n">569</span>def delete_commercial(pnum: int, customerNumber: int):</div>
+<div class="ln plain" id="r_570" data-tgt="" onclick=""><span class="n">570</span>    _delete_policy(pnum, &quot;C&quot;, customerNumber)</div>
+<div class="ln plain" id="r_571" data-tgt="" onclick=""><span class="n">571</span>&nbsp;</div>
+<div class="ln plain" id="r_572" data-tgt="" onclick=""><span class="n">572</span>&nbsp;</div>
+<div class="ln plain" id="r_573" data-tgt="" onclick=""><span class="n">573</span># ════════════════════════════════════════════════════════════════════════</div>
+<div class="ln plain" id="r_574" data-tgt="" onclick=""><span class="n">574</span>#  Claims — SSP5 (inquiry / add only, as in the original menu)</div>
+<div class="ln plain" id="r_575" data-tgt="" onclick=""><span class="n">575</span># ════════════════════════════════════════════════════════════════════════</div>
+<div class="ln plain" id="r_576" data-tgt="" onclick=""><span class="n">576</span>&nbsp;</div>
+<div class="ln plain" id="r_577" data-tgt="" onclick=""><span class="n">577</span>@app.get(&quot;/api/claims/{cnum}&quot;, response_model=ClaimOut)</div>
+<div class="ln plain" id="r_578" data-tgt="" onclick=""><span class="n">578</span>def get_claim(cnum: int):</div>
+<div class="ln plain" id="r_579" data-tgt="" onclick=""><span class="n">579</span>    with db_tx() as db:</div>
+<div class="ln plain" id="r_580" data-tgt="" onclick=""><span class="n">580</span>        row = db.execute(&quot;SELECT * FROM claim WHERE claimNumber=?&quot;, (cnum,)).fetchone()</div>
+<div class="ln plain" id="r_581" data-tgt="" onclick=""><span class="n">581</span>    if row is None:</div>
+<div class="ln plain" id="r_582" data-tgt="" onclick=""><span class="n">582</span>        raise HTTPException(404, f&quot;Claim {cnum} not found&quot;)</div>
+<div class="ln plain" id="r_583" data-tgt="" onclick=""><span class="n">583</span>    return dict(row)</div>
+<div class="ln plain" id="r_584" data-tgt="" onclick=""><span class="n">584</span>&nbsp;</div>
+<div class="ln plain" id="r_585" data-tgt="" onclick=""><span class="n">585</span>&nbsp;</div>
+<div class="ln plain" id="r_586" data-tgt="" onclick=""><span class="n">586</span>@app.get(&quot;/api/policies/{pnum}/claims&quot;, response_model=list[ClaimOut])</div>
+<div class="ln plain" id="r_587" data-tgt="" onclick=""><span class="n">587</span>def list_policy_claims(pnum: int):</div>
+<div class="ln plain" id="r_588" data-tgt="" onclick=""><span class="n">588</span>    with db_tx() as db:</div>
+<div class="ln plain" id="r_589" data-tgt="" onclick=""><span class="n">589</span>        rows = db.execute(&quot;SELECT * FROM claim WHERE policyNumber=? ORDER BY claimNumber&quot;,</div>
+<div class="ln plain" id="r_590" data-tgt="" onclick=""><span class="n">590</span>                          (pnum,)).fetchall()</div>
+<div class="ln plain" id="r_591" data-tgt="" onclick=""><span class="n">591</span>    return [dict(r) for r in rows]</div>
+<div class="ln plain" id="r_592" data-tgt="" onclick=""><span class="n">592</span>&nbsp;</div>
+<div class="ln plain" id="r_593" data-tgt="" onclick=""><span class="n">593</span>&nbsp;</div>
+<div class="ln plain" id="r_594" data-tgt="" onclick=""><span class="n">594</span>@app.post(&quot;/api/claims&quot;, response_model=ClaimOut, status_code=201)</div>
+<div class="ln plain" id="r_595" data-tgt="" onclick=""><span class="n">595</span>def add_claim(c: ClaimCreate):</div>
+<div class="ln plain" id="r_596" data-tgt="" onclick=""><span class="n">596</span>    with db_tx() as db:</div>
+<div class="ln plain" id="r_597" data-tgt="" onclick=""><span class="n">597</span>        row = db.execute(&quot;SELECT 1 FROM policy WHERE policyNumber=?&quot;,</div>
+<div class="ln plain" id="r_598" data-tgt="" onclick=""><span class="n">598</span>                         (c.policyNumber,)).fetchone()</div>
+<div class="ln plain" id="r_599" data-tgt="" onclick=""><span class="n">599</span>        if row is None:</div>
+<div class="ln plain" id="r_600" data-tgt="" onclick=""><span class="n">600</span>            raise HTTPException(409, f&quot;Policy {c.policyNumber} does not exist&quot;)</div>
+<div class="ln plain" id="r_601" data-tgt="" onclick=""><span class="n">601</span>        cur = db.execute(</div>
+<div class="ln plain" id="r_602" data-tgt="" onclick=""><span class="n">602</span>            &quot;INSERT INTO claim (policyNumber, claimDate, paid, value, cause, observations) &quot;</div>
+<div class="ln plain" id="r_603" data-tgt="" onclick=""><span class="n">603</span>            &quot;VALUES (?,?,?,?,?,?)&quot;,</div>
+<div class="ln plain" id="r_604" data-tgt="" onclick=""><span class="n">604</span>            (c.policyNumber, c.claimDate, c.paid, c.value, c.cause, c.observations))</div>
+<div class="ln plain" id="r_605" data-tgt="" onclick=""><span class="n">605</span>        cnum = cur.lastrowid</div>
+<div class="ln plain" id="r_606" data-tgt="" onclick=""><span class="n">606</span>    out = c.model_dump()</div>
+<div class="ln plain" id="r_607" data-tgt="" onclick=""><span class="n">607</span>    out[&quot;claimNumber&quot;] = cnum</div>
+<div class="ln plain" id="r_608" data-tgt="" onclick=""><span class="n">608</span>    return out</div>
+<div class="ln plain" id="r_609" data-tgt="" onclick=""><span class="n">609</span>&nbsp;</div>
+<div class="ln plain" id="r_610" data-tgt="" onclick=""><span class="n">610</span>&nbsp;</div>
+<div class="ln plain" id="r_611" data-tgt="" onclick=""><span class="n">611</span>@app.get(&quot;/api/health&quot;)</div>
+<div class="ln plain" id="r_612" data-tgt="" onclick=""><span class="n">612</span>def health():</div>
+<div class="ln plain" id="r_613" data-tgt="" onclick=""><span class="n">613</span>    return {&quot;status&quot;: &quot;ok&quot;, &quot;app&quot;: &quot;GENAPP&quot;}</div></div>
 </div>
 <script>
 function clearHl(){document.querySelectorAll('.hl').forEach(e=>e.classList.remove('hl'))}
@@ -1004,4 +1050,13 @@ function lineClick(el){
   tgts.forEach(function(id){var t=document.getElementById(id); if(t){t.classList.add('hl'); if(!first)first=t;}});
   if(first) first.scrollIntoView({block:'center',behavior:'smooth'});
 }
+function focusHash(){
+  var h=(location.hash||'').replace('#',''); if(!h) return;
+  var el=document.getElementById(h); if(!el) return;
+  el.scrollIntoView({block:'center'});
+  if(/\b(map|change|struct|drop|rmapped)\b/.test(el.className)) lineClick(el);
+  else { clearHl(); el.classList.add('hl'); }
+}
+window.addEventListener('load', focusHash);
+window.addEventListener('hashchange', focusHash);
 </script></body></html>
