@@ -8,7 +8,9 @@ header h1 a { color:#8fb6e6; font-size:12px; text-decoration:none; margin-right:
 .lg { font-size:11px; border-left:3px solid; padding:1px 7px; margin-right:8px }
 .lg i { display:inline-block; width:9px; height:9px; margin-right:4px; border-radius:2px; vertical-align:middle }
 .note { font-size:12px; color:#cfe; min-height:18px; padding:4px 16px; background:#0a1c33 }
-.wrap { display:flex; height:calc(100vh - 96px) }
+.attrib { font-size:11px; color:#7e98b6; margin-top:5px }
+.attrib a { text-decoration:none }
+.wrap { display:flex; height:calc(100vh - 118px) }
 .pane { flex:1; overflow:auto; font-family:ui-monospace,Consolas,monospace; font-size:12px; line-height:1.5 }
 .pane.left { border-right:2px solid #2a4a6a }
 .fhdr { background:#16395f; color:#bcd; padding:4px 10px; position:sticky; top:0; font-size:12px }
@@ -25,7 +27,8 @@ header h1 a { color:#8fb6e6; font-size:12px; text-decoration:none; margin-right:
 .ln.hl { outline:2px solid #ffd34d; background:rgba(255,211,77,.20)!important }
 </style></head><body>
 <header><h1><a href="index.html">← 一覧</a>CBSA 行単位突合 — 資金移動 (XFRFUN)（左:元COBOL ／ 右:変換後）</h1>
-<div><span class="lg" style="border-color:#1f9e8f"><i style="background:#1f9e8f"></i>対応</span> <span class="lg" style="border-color:#d97706"><i style="background:#d97706"></i>意図的変更</span> <span class="lg" style="border-color:#9ca3af"><i style="background:#9ca3af"></i>削除</span> <span class="lg" style="border-color:#6d8db8"><i style="background:#6d8db8"></i>構造/宣言</span> <span class="lg" style="border-color:#9fb3c8"><i style="background:#9fb3c8"></i>その他(宣言/コメント)</span></div></header>
+<div><span class="lg" style="border-color:#1f9e8f"><i style="background:#1f9e8f"></i>対応</span> <span class="lg" style="border-color:#d97706"><i style="background:#d97706"></i>意図的変更</span> <span class="lg" style="border-color:#9ca3af"><i style="background:#9ca3af"></i>削除</span> <span class="lg" style="border-color:#6d8db8"><i style="background:#6d8db8"></i>構造/宣言</span> <span class="lg" style="border-color:#9fb3c8"><i style="background:#9fb3c8"></i>その他(宣言/コメント)</span></div>
+<div class="attrib">元コード: <a href="https://github.com/cicsdev/cics-banking-sample-application-cbsa" style="color:#8fb6e6">cicsdev/cics-banking-sample-application-cbsa</a>（Eclipse Public License 2.0 (EPL-2.0)）— 左ペインの原典COBOLは EPL-2.0 に基づき帰属表示の上で掲載</div></header>
 <div class="note" id="note">色付き行をクリックすると、対応する反対側の行がハイライト＆スクロールします。灰=削除（理由表示）。</div>
 <div class="wrap">
   <div class="pane left" id="leftpane"><div class="fhdr">◆ XFRFUN — 資金移動 (2口座+PROCTRAN) <span class="fpath">XFRFUN.cbl</span></div>
