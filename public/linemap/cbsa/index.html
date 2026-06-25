@@ -1,0 +1,36 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8">
+<title>CBSA 行単位突合 — 一覧</title><style>
+body { font-family:"Segoe UI",Meiryo,sans-serif; background:#0f2a4a; color:#e6eef7; margin:0; padding:24px 32px }
+h1 { font-size:18px }
+p { color:#bcd; font-size:13px; line-height:1.7; max-width:760px }
+ul { list-style:none; padding:0; max-width:760px }
+li { background:#0c2240; margin:8px 0; padding:12px 16px; border-radius:6px; border-left:4px solid #1f9e8f }
+li a { color:#8fd6c8; font-size:15px; font-weight:600; text-decoration:none }
+li a:hover { text-decoration:underline }
+.files { display:block; color:#7e98b6; font-size:11px; margin-top:4px }
+.lg { font-size:12px; border-left:3px solid; padding:2px 8px; margin-right:8px }
+.lg i { display:inline-block; width:10px; height:10px; margin-right:4px; border-radius:2px; vertical-align:middle }
+</style></head><body>
+<h1>CBSA 行単位突合（元COBOL ↔ 変換後 main.py）</h1>
+<p>左に元の IBM CBSA COBOL を全行、右に変換後の <b>cbsa/backend/main.py</b> を全行並べ、
+色付き行をクリックすると対応行がハイライト＆スクロールします。
+灰色（削除）行は「なぜ落としたか」の理由を表示。
+<b>COBOL のどの行が変換後のどこに行ったか／どの行を落としてそれで良いのか</b>を、
+人が1行ずつ追って欠落の有無を確認するための資料です。</p>
+<div style="margin:10px 0 18px">
+<span class="lg" style="border-color:#1f9e8f"><i style="background:#1f9e8f"></i>対応</span> <span class="lg" style="border-color:#d97706"><i style="background:#d97706"></i>意図的変更</span> <span class="lg" style="border-color:#9ca3af"><i style="background:#9ca3af"></i>削除</span> <span class="lg" style="border-color:#6d8db8"><i style="background:#6d8db8"></i>構造/宣言</span>
+</div>
+<ul>
+<li><a href="customer_inquiry.html">顧客 照会 (INQCUST)</a><span class="files">INQCUST.cbl</span></li>
+<li><a href="account_inquiry.html">口座 照会 (INQACC)</a><span class="files">INQACC.cbl</span></li>
+<li><a href="customer_accounts.html">口座一覧 (INQACCCU)</a><span class="files">INQACCCU.cbl</span></li>
+<li><a href="debit_credit.html">入出金 (DBCRFUN)</a><span class="files">DBCRFUN.cbl</span></li>
+<li><a href="account_update.html">口座 更新 (UPDACC)</a><span class="files">UPDACC.cbl</span></li>
+<li><a href="account_delete.html">口座 削除 (DELACC)</a><span class="files">DELACC.cbl</span></li>
+<li><a href="transfer.html">資金移動 (XFRFUN)</a><span class="files">XFRFUN.cbl</span></li>
+<li><a href="account_create.html">口座 開設 (CREACC)</a><span class="files">CREACC.cbl</span></li>
+<li><a href="customer_update.html">顧客 更新 (UPDCUST)</a><span class="files">UPDCUST.cbl</span></li>
+<li><a href="customer_delete.html">顧客 削除 (DELCUS)</a><span class="files">DELCUS.cbl</span></li>
+<li><a href="customer_create.html">顧客 新規 (CRECUST)</a><span class="files">CRECUST.cbl</span></li>
+</ul>
+</body></html>

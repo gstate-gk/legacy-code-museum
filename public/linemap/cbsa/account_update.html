@@ -1,0 +1,831 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8">
+<title>CBSA 行単位突合 — 口座 更新 (UPDACC)</title><style>
+* { box-sizing:border-box }
+body { font-family:"Segoe UI",Meiryo,sans-serif; margin:0; background:#0f2a4a; color:#e6eef7 }
+header { padding:10px 16px; background:#0c2240; position:sticky; top:0; z-index:5 }
+header h1 { font-size:15px; margin:0 0 6px }
+header h1 a { color:#8fb6e6; font-size:12px; text-decoration:none; margin-right:10px }
+.lg { font-size:11px; border-left:3px solid; padding:1px 7px; margin-right:8px }
+.lg i { display:inline-block; width:9px; height:9px; margin-right:4px; border-radius:2px; vertical-align:middle }
+.note { font-size:12px; color:#cfe; min-height:18px; padding:4px 16px; background:#0a1c33 }
+.wrap { display:flex; height:calc(100vh - 96px) }
+.pane { flex:1; overflow:auto; font-family:ui-monospace,Consolas,monospace; font-size:12px; line-height:1.5 }
+.pane.left { border-right:2px solid #2a4a6a }
+.fhdr { background:#16395f; color:#bcd; padding:4px 10px; position:sticky; top:0; font-size:12px }
+.fpath { color:#7e98b6; font-size:11px; margin-left:6px }
+.ln { white-space:pre; padding:0 8px 0 0; border-left:16px solid transparent }
+.ln .n { display:inline-block; width:42px; text-align:right; color:#67809e; margin-right:10px; user-select:none }
+.ln.plain { color:#9fb3c8 }
+.ln.map,.ln.change,.ln.struct,.ln.drop,.ln.rmapped { cursor:pointer }
+.ln.map { background:rgba(31,158,143,.13); border-left-color:#1f9e8f }
+.ln.change { background:rgba(217,119,6,.14); border-left-color:#d97706 }
+.ln.struct { background:rgba(109,141,184,.12); border-left-color:#6d8db8 }
+.ln.drop { background:rgba(156,163,175,.10); border-left-color:#9ca3af; color:#8a97a6 }
+.ln.rmapped { background:rgba(31,158,143,.10); border-left-color:#1f9e8f }
+.ln.hl { outline:2px solid #ffd34d; background:rgba(255,211,77,.20)!important }
+</style></head><body>
+<header><h1><a href="index.html">← 一覧</a>CBSA 行単位突合 — 口座 更新 (UPDACC)（左:元COBOL ／ 右:変換後）</h1>
+<div><span class="lg" style="border-color:#1f9e8f"><i style="background:#1f9e8f"></i>対応</span> <span class="lg" style="border-color:#d97706"><i style="background:#d97706"></i>意図的変更</span> <span class="lg" style="border-color:#9ca3af"><i style="background:#9ca3af"></i>削除</span> <span class="lg" style="border-color:#6d8db8"><i style="background:#6d8db8"></i>構造/宣言</span> <span class="lg" style="border-color:#9fb3c8"><i style="background:#9fb3c8"></i>その他(宣言/コメント)</span></div></header>
+<div class="note" id="note">色付き行をクリックすると、対応する反対側の行がハイライト＆スクロールします。灰=削除（理由表示）。</div>
+<div class="wrap">
+  <div class="pane left" id="leftpane"><div class="fhdr">◆ UPDACC — 口座更新 <span class="fpath">UPDACC.cbl</span></div>
+<div class="ln drop" id="l_ua_1" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">1</span>       PROCESS CICS,NODYNAM,NSYMBOL(NATIONAL),TRUNC(STD)</div>
+<div class="ln drop" id="l_ua_2" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">2</span>       CBL CICS(&#x27;SP,EDF,DLI&#x27;)</div>
+<div class="ln drop" id="l_ua_3" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">3</span>       CBL SQL</div>
+<div class="ln drop" id="l_ua_4" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">4</span>      ******************************************************************</div>
+<div class="ln drop" id="l_ua_5" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">5</span>      *                                                                *</div>
+<div class="ln drop" id="l_ua_6" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">6</span>      *  Copyright IBM Corp. 2023                                      *</div>
+<div class="ln drop" id="l_ua_7" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">7</span>      *                                                                *</div>
+<div class="ln drop" id="l_ua_8" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">8</span>      ******************************************************************</div>
+<div class="ln drop" id="l_ua_9" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">9</span>      ******************************************************************</div>
+<div class="ln drop" id="l_ua_10" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">10</span>      * This program gets called when someone updates the account</div>
+<div class="ln drop" id="l_ua_11" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">11</span>      * details (this excludes the balance which must be updated by</div>
+<div class="ln drop" id="l_ua_12" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">12</span>      * crediting or debitting money to/from the account).</div>
+<div class="ln drop" id="l_ua_13" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">13</span>      *</div>
+<div class="ln drop" id="l_ua_14" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">14</span>      * The program receives as input all of the fields which make</div>
+<div class="ln drop" id="l_ua_15" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">15</span>      * up the Account record.</div>
+<div class="ln drop" id="l_ua_16" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">16</span>      *</div>
+<div class="ln drop" id="l_ua_17" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">17</span>      * It then accesses DB2 datastore &amp; updates the associated</div>
+<div class="ln drop" id="l_ua_18" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">18</span>      * Account record.</div>
+<div class="ln drop" id="l_ua_19" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">19</span>      *</div>
+<div class="ln drop" id="l_ua_20" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">20</span>      * Because it is only permissible to change a limited number of</div>
+<div class="ln drop" id="l_ua_21" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">21</span>      * fields on the Account record, and it is NOT possible to amend</div>
+<div class="ln drop" id="l_ua_22" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">22</span>      * the balance, no record needs to be written to PR0CTRAN (as the</div>
+<div class="ln drop" id="l_ua_23" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">23</span>      * the balance cannot be amended using this method). At the</div>
+<div class="ln drop" id="l_ua_24" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">24</span>      * current time, no details of the change are recorded (all that</div>
+<div class="ln drop" id="l_ua_25" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">25</span>      * can be amended is the Account Type, the Interest Rate,</div>
+<div class="ln drop" id="l_ua_26" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">26</span>      * the overdraft limit and the last and next statement dates). The</div>
+<div class="ln drop" id="l_ua_27" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">27</span>      * presentation layer is responsible for ensuring that the fields</div>
+<div class="ln drop" id="l_ua_28" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">28</span>      * are validated.</div>
+<div class="ln drop" id="l_ua_29" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">29</span>      *</div>
+<div class="ln drop" id="l_ua_30" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">30</span>      * If the Account cannot be updated then a failure flag is returned</div>
+<div class="ln drop" id="l_ua_31" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">31</span>      * to the calling program.</div>
+<div class="ln drop" id="l_ua_32" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">32</span>      *</div>
+<div class="ln drop" id="l_ua_33" data-tgt="" data-note="コンパイラ指示・著作権ヘッダ・プログラム説明コメント。設計意図は main.py 243-245 のコメントへ要約して引き継ぎ。" onclick="lineClick(this)"><span class="n">33</span>      ******************************************************************</div>
+<div class="ln drop" id="l_ua_34" data-tgt="" data-note="IDENTIFICATION/ENVIRONMENT DIVISION 等の COBOL 定型宣言。FastAPI には対応概念なし。" onclick="lineClick(this)"><span class="n">34</span>       IDENTIFICATION DIVISION.</div>
+<div class="ln drop" id="l_ua_35" data-tgt="" data-note="IDENTIFICATION/ENVIRONMENT DIVISION 等の COBOL 定型宣言。FastAPI には対応概念なし。" onclick="lineClick(this)"><span class="n">35</span>       PROGRAM-ID. UPDACC.</div>
+<div class="ln drop" id="l_ua_36" data-tgt="" data-note="IDENTIFICATION/ENVIRONMENT DIVISION 等の COBOL 定型宣言。FastAPI には対応概念なし。" onclick="lineClick(this)"><span class="n">36</span>       AUTHOR. Jon Collett.</div>
+<div class="ln drop" id="l_ua_37" data-tgt="" data-note="IDENTIFICATION/ENVIRONMENT DIVISION 等の COBOL 定型宣言。FastAPI には対応概念なし。" onclick="lineClick(this)"><span class="n">37</span>&nbsp;</div>
+<div class="ln drop" id="l_ua_38" data-tgt="" data-note="IDENTIFICATION/ENVIRONMENT DIVISION 等の COBOL 定型宣言。FastAPI には対応概念なし。" onclick="lineClick(this)"><span class="n">38</span>       ENVIRONMENT DIVISION.</div>
+<div class="ln drop" id="l_ua_39" data-tgt="" data-note="IDENTIFICATION/ENVIRONMENT DIVISION 等の COBOL 定型宣言。FastAPI には対応概念なし。" onclick="lineClick(this)"><span class="n">39</span>       CONFIGURATION SECTION.</div>
+<div class="ln drop" id="l_ua_40" data-tgt="" data-note="IDENTIFICATION/ENVIRONMENT DIVISION 等の COBOL 定型宣言。FastAPI には対応概念なし。" onclick="lineClick(this)"><span class="n">40</span>      * SOURCE-COMPUTER.   IBM-370 WITH DEBUGGING MODE.</div>
+<div class="ln drop" id="l_ua_41" data-tgt="" data-note="IDENTIFICATION/ENVIRONMENT DIVISION 等の COBOL 定型宣言。FastAPI には対応概念なし。" onclick="lineClick(this)"><span class="n">41</span>       SOURCE-COMPUTER.  IBM-370.</div>
+<div class="ln drop" id="l_ua_42" data-tgt="" data-note="IDENTIFICATION/ENVIRONMENT DIVISION 等の COBOL 定型宣言。FastAPI には対応概念なし。" onclick="lineClick(this)"><span class="n">42</span>       OBJECT-COMPUTER.  IBM-370.</div>
+<div class="ln drop" id="l_ua_43" data-tgt="" data-note="IDENTIFICATION/ENVIRONMENT DIVISION 等の COBOL 定型宣言。FastAPI には対応概念なし。" onclick="lineClick(this)"><span class="n">43</span>&nbsp;</div>
+<div class="ln drop" id="l_ua_44" data-tgt="" data-note="IDENTIFICATION/ENVIRONMENT DIVISION 等の COBOL 定型宣言。FastAPI には対応概念なし。" onclick="lineClick(this)"><span class="n">44</span>       INPUT-OUTPUT SECTION.</div>
+<div class="ln drop" id="l_ua_45" data-tgt="" data-note="IDENTIFICATION/ENVIRONMENT DIVISION 等の COBOL 定型宣言。FastAPI には対応概念なし。" onclick="lineClick(this)"><span class="n">45</span>&nbsp;</div>
+<div class="ln drop" id="l_ua_46" data-tgt="" data-note="IDENTIFICATION/ENVIRONMENT DIVISION 等の COBOL 定型宣言。FastAPI には対応概念なし。" onclick="lineClick(this)"><span class="n">46</span>       DATA DIVISION.</div>
+<div class="ln drop" id="l_ua_47" data-tgt="" data-note="IDENTIFICATION/ENVIRONMENT DIVISION 等の COBOL 定型宣言。FastAPI には対応概念なし。" onclick="lineClick(this)"><span class="n">47</span>       WORKING-STORAGE SECTION.</div>
+<div class="ln plain" id="l_ua_48" data-tgt="" data-note="" onclick=""><span class="n">48</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_49" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">49</span>       COPY SORTCODE.</div>
+<div class="ln struct" id="l_ua_50" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">50</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_51" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">51</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_52" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">52</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_53" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">53</span>       77 SYSIDERR-RETRY                PIC 999.</div>
+<div class="ln struct" id="l_ua_54" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">54</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_55" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">55</span>      * Get the ACCOUNT DB2 copybook</div>
+<div class="ln struct" id="l_ua_56" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">56</span>           EXEC SQL</div>
+<div class="ln struct" id="l_ua_57" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">57</span>              INCLUDE ACCDB2</div>
+<div class="ln struct" id="l_ua_58" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">58</span>           END-EXEC.</div>
+<div class="ln struct" id="l_ua_59" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">59</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_60" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">60</span>      * ACCOUNT Host variables for DB2</div>
+<div class="ln struct" id="l_ua_61" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">61</span>       01 HOST-ACCOUNT-ROW.</div>
+<div class="ln struct" id="l_ua_62" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">62</span>          03 HV-ACCOUNT-EYECATCHER      PIC X(4).</div>
+<div class="ln struct" id="l_ua_63" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">63</span>          03 HV-ACCOUNT-CUST-NO         PIC X(10).</div>
+<div class="ln struct" id="l_ua_64" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">64</span>          03 HV-ACCOUNT-KEY.</div>
+<div class="ln struct" id="l_ua_65" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">65</span>             05 HV-ACCOUNT-SORTCODE     PIC X(6).</div>
+<div class="ln struct" id="l_ua_66" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">66</span>             05 HV-ACCOUNT-ACC-NO       PIC X(8).</div>
+<div class="ln struct" id="l_ua_67" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">67</span>          03 HV-ACCOUNT-ACC-TYPE        PIC X(8).</div>
+<div class="ln struct" id="l_ua_68" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">68</span>          03 HV-ACCOUNT-INT-RATE        PIC S9(4)V99 COMP-3.</div>
+<div class="ln struct" id="l_ua_69" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">69</span>          03 HV-ACCOUNT-OPENED          PIC X(10).</div>
+<div class="ln struct" id="l_ua_70" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">70</span>          03 HV-ACCOUNT-OVERDRAFT-LIM   PIC S9(9) COMP.</div>
+<div class="ln struct" id="l_ua_71" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">71</span>          03 HV-ACCOUNT-LAST-STMT       PIC X(10).</div>
+<div class="ln struct" id="l_ua_72" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">72</span>          03 HV-ACCOUNT-NEXT-STMT       PIC X(10).</div>
+<div class="ln struct" id="l_ua_73" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">73</span>          03 HV-ACCOUNT-AVAIL-BAL       PIC S9(10)V99 COMP-3.</div>
+<div class="ln struct" id="l_ua_74" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">74</span>          03 HV-ACCOUNT-ACTUAL-BAL      PIC S9(10)V99 COMP-3.</div>
+<div class="ln struct" id="l_ua_75" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">75</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_76" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">76</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_77" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">77</span>      * Pull in the SQL COMMAREA</div>
+<div class="ln struct" id="l_ua_78" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">78</span>        EXEC SQL</div>
+<div class="ln struct" id="l_ua_79" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">79</span>          INCLUDE SQLCA</div>
+<div class="ln struct" id="l_ua_80" data-tgt="" data-note="SORTCODE COPY・ACCDB2/SQLCA INCLUDE・DB2 ホスト変数宣言。SQLite 行 dict と Pydantic で代替。SORTCODE は定数に相当。" onclick="lineClick(this)"><span class="n">80</span>        END-EXEC.</div>
+<div class="ln plain" id="l_ua_81" data-tgt="" data-note="" onclick=""><span class="n">81</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_82" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">82</span>        01 SQLCODE-DISPLAY             PIC S9(8) DISPLAY</div>
+<div class="ln struct" id="l_ua_83" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">83</span>            SIGN LEADING SEPARATE.</div>
+<div class="ln struct" id="l_ua_84" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">84</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_85" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">85</span>       01 WS-CICS-WORK-AREA.</div>
+<div class="ln struct" id="l_ua_86" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">86</span>          05 WS-CICS-RESP               PIC S9(8) COMP.</div>
+<div class="ln struct" id="l_ua_87" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">87</span>          05 WS-CICS-RESP2              PIC S9(8) COMP.</div>
+<div class="ln struct" id="l_ua_88" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">88</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_89" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">89</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_90" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">90</span>       LOCAL-STORAGE SECTION.</div>
+<div class="ln struct" id="l_ua_91" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">91</span>       01 DB2-DATE-REFORMAT.</div>
+<div class="ln struct" id="l_ua_92" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">92</span>          03 DB2-DATE-REF-YR            PIC 9(4).</div>
+<div class="ln struct" id="l_ua_93" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">93</span>          03 FILLER                     PIC X.</div>
+<div class="ln struct" id="l_ua_94" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">94</span>          03 DB2-DATE-REF-MNTH          PIC 99.</div>
+<div class="ln struct" id="l_ua_95" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">95</span>          03 FILLER                     PIC X.</div>
+<div class="ln struct" id="l_ua_96" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">96</span>          03 DB2-DATE-REF-DAY           PIC 99.</div>
+<div class="ln struct" id="l_ua_97" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">97</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_98" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">98</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_99" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">99</span>       01 WS-ACC-DATA.</div>
+<div class="ln struct" id="l_ua_100" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">100</span>          COPY ACCOUNT.</div>
+<div class="ln struct" id="l_ua_101" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">101</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_102" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">102</span>       01 WS-EIBTASKN12                 PIC 9(12)     VALUE 0.</div>
+<div class="ln struct" id="l_ua_103" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">103</span>       01 WS-SQLCODE-DISP               PIC 9(9)      VALUE 0.</div>
+<div class="ln struct" id="l_ua_104" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">104</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_105" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">105</span>      *</div>
+<div class="ln struct" id="l_ua_106" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">106</span>      * Pull in the input and output data structures</div>
+<div class="ln struct" id="l_ua_107" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">107</span>      *</div>
+<div class="ln struct" id="l_ua_108" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">108</span>       01 DESIRED-ACC-KEY.</div>
+<div class="ln struct" id="l_ua_109" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">109</span>          03 DESIRED-SORT-CODE          PIC 9(6).</div>
+<div class="ln struct" id="l_ua_110" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">110</span>          03 DESIRED-ACC-NO             PIC 9(8).</div>
+<div class="ln struct" id="l_ua_111" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">111</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_112" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">112</span>       01 NEW-ACCOUNT-AVAILABLE-BALANCE PIC S9(10)V99 VALUE 0.</div>
+<div class="ln struct" id="l_ua_113" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">113</span>       01 NEW-ACCOUNT-ACTUAL-BALANCE    PIC S9(10)V99 VALUE 0.</div>
+<div class="ln struct" id="l_ua_114" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">114</span>       01 WS-ACC-REC-LEN                PIC S9(4) COMP</div>
+<div class="ln struct" id="l_ua_115" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">115</span>                                                      VALUE 0.</div>
+<div class="ln struct" id="l_ua_116" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">116</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_117" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">117</span>       01 WS-U-TIME                     PIC S9(15) COMP-3.</div>
+<div class="ln struct" id="l_ua_118" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">118</span>       01 WS-ORIG-DATE                  PIC X(10).</div>
+<div class="ln struct" id="l_ua_119" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">119</span>       01 WS-ORIG-DATE-GRP REDEFINES WS-ORIG-DATE.</div>
+<div class="ln struct" id="l_ua_120" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">120</span>          03 WS-ORIG-DATE-DD            PIC 99.</div>
+<div class="ln struct" id="l_ua_121" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">121</span>          03 FILLER                     PIC X.</div>
+<div class="ln struct" id="l_ua_122" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">122</span>          03 WS-ORIG-DATE-MM            PIC 99.</div>
+<div class="ln struct" id="l_ua_123" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">123</span>          03 FILLER                     PIC X.</div>
+<div class="ln struct" id="l_ua_124" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">124</span>          03 WS-ORIG-DATE-YYYY          PIC 9999.</div>
+<div class="ln struct" id="l_ua_125" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">125</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_126" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">126</span>       01 WS-ORIG-DATE-GRP-X.</div>
+<div class="ln struct" id="l_ua_127" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">127</span>          03 WS-ORIG-DATE-DD-X          PIC XX.</div>
+<div class="ln struct" id="l_ua_128" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">128</span>          03 FILLER                     PIC X         VALUE &#x27;.&#x27;.</div>
+<div class="ln struct" id="l_ua_129" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">129</span>          03 WS-ORIG-DATE-MM-X          PIC XX.</div>
+<div class="ln struct" id="l_ua_130" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">130</span>          03 FILLER                     PIC X         VALUE &#x27;.&#x27;.</div>
+<div class="ln struct" id="l_ua_131" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">131</span>          03 WS-ORIG-DATE-YYYY-X        PIC X(4).</div>
+<div class="ln struct" id="l_ua_132" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">132</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_133" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">133</span>       01 REJ-REASON                    PIC XX        VALUE SPACES.</div>
+<div class="ln struct" id="l_ua_134" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">134</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_135" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">135</span>       01 CUSTOMER-KY.</div>
+<div class="ln struct" id="l_ua_136" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">136</span>          03 REQUIRED-SORT-CODE         PIC 9(6)      VALUE 0.</div>
+<div class="ln struct" id="l_ua_137" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">137</span>          03 REQUIRED-ACC-NUM           PIC 9(8)      VALUE 0.</div>
+<div class="ln struct" id="l_ua_138" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">138</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_139" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">139</span>       01 STORM-DRAIN-CONDITION         PIC X(20).</div>
+<div class="ln struct" id="l_ua_140" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">140</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_141" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">141</span>       01 WS-TIME-DATA.</div>
+<div class="ln struct" id="l_ua_142" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">142</span>          03 WS-TIME-NOW                PIC 9(6).</div>
+<div class="ln struct" id="l_ua_143" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">143</span>          03 WS-TIME-NOW-GRP REDEFINES WS-TIME-NOW.</div>
+<div class="ln struct" id="l_ua_144" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">144</span>             05 WS-TIME-NOW-GRP-HH      PIC 99.</div>
+<div class="ln struct" id="l_ua_145" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">145</span>             05 WS-TIME-NOW-GRP-MM      PIC 99.</div>
+<div class="ln struct" id="l_ua_146" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">146</span>             05 WS-TIME-NOW-GRP-SS      PIC 99.</div>
+<div class="ln struct" id="l_ua_147" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">147</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_148" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">148</span>       01 WS-ABEND-PGM                  PIC X(8)      VALUE &#x27;ABNDPROC&#x27;.</div>
+<div class="ln struct" id="l_ua_149" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">149</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_150" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">150</span>       01 ABNDINFO-REC.</div>
+<div class="ln struct" id="l_ua_151" data-tgt="" data-note="WORKING/LOCAL-STORAGE の作業変数（SQLCODE 表示・日付整形・REJ-REASON・ABNDINFO 等）。局所変数／不要のため持ち込まず。" onclick="lineClick(this)"><span class="n">151</span>           COPY ABNDINFO.</div>
+<div class="ln plain" id="l_ua_152" data-tgt="" data-note="" onclick=""><span class="n">152</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_153" data-tgt="r_242" data-note="LINKAGE SECTION の DFHCOMMAREA（COPY UPDACC）。FastAPI ではパスパラメータ number と body: AccountUpdate が入力、AccountOut が出力。" onclick="lineClick(this)"><span class="n">153</span>       LINKAGE SECTION.</div>
+<div class="ln struct" id="l_ua_154" data-tgt="r_242" data-note="LINKAGE SECTION の DFHCOMMAREA（COPY UPDACC）。FastAPI ではパスパラメータ number と body: AccountUpdate が入力、AccountOut が出力。" onclick="lineClick(this)"><span class="n">154</span>       01 DFHCOMMAREA.</div>
+<div class="ln struct" id="l_ua_155" data-tgt="r_242" data-note="LINKAGE SECTION の DFHCOMMAREA（COPY UPDACC）。FastAPI ではパスパラメータ number と body: AccountUpdate が入力、AccountOut が出力。" onclick="lineClick(this)"><span class="n">155</span>           COPY UPDACC.</div>
+<div class="ln struct" id="l_ua_156" data-tgt="r_242" data-note="LINKAGE SECTION の DFHCOMMAREA（COPY UPDACC）。FastAPI ではパスパラメータ number と body: AccountUpdate が入力、AccountOut が出力。" onclick="lineClick(this)"><span class="n">156</span>&nbsp;</div>
+<div class="ln map" id="l_ua_157" data-tgt="r_241 r_242" data-note="PROCEDURE DIVISION 主処理 A010：SORTCODE 設定→UPDATE-ACCOUNT-DB2→RETURN。PUT エンドポイント関数 update_account 本体に対応。" onclick="lineClick(this)"><span class="n">157</span>       PROCEDURE DIVISION.</div>
+<div class="ln map" id="l_ua_158" data-tgt="r_241 r_242" data-note="PROCEDURE DIVISION 主処理 A010：SORTCODE 設定→UPDATE-ACCOUNT-DB2→RETURN。PUT エンドポイント関数 update_account 本体に対応。" onclick="lineClick(this)"><span class="n">158</span>       PREMIERE SECTION.</div>
+<div class="ln map" id="l_ua_159" data-tgt="r_241 r_242" data-note="PROCEDURE DIVISION 主処理 A010：SORTCODE 設定→UPDATE-ACCOUNT-DB2→RETURN。PUT エンドポイント関数 update_account 本体に対応。" onclick="lineClick(this)"><span class="n">159</span>       A010.</div>
+<div class="ln map" id="l_ua_160" data-tgt="r_241 r_242" data-note="PROCEDURE DIVISION 主処理 A010：SORTCODE 設定→UPDATE-ACCOUNT-DB2→RETURN。PUT エンドポイント関数 update_account 本体に対応。" onclick="lineClick(this)"><span class="n">160</span>&nbsp;</div>
+<div class="ln map" id="l_ua_161" data-tgt="r_241 r_242" data-note="PROCEDURE DIVISION 主処理 A010：SORTCODE 設定→UPDATE-ACCOUNT-DB2→RETURN。PUT エンドポイント関数 update_account 本体に対応。" onclick="lineClick(this)"><span class="n">161</span>           MOVE SORTCODE TO COMM-SCODE.</div>
+<div class="ln map" id="l_ua_162" data-tgt="r_241 r_242" data-note="PROCEDURE DIVISION 主処理 A010：SORTCODE 設定→UPDATE-ACCOUNT-DB2→RETURN。PUT エンドポイント関数 update_account 本体に対応。" onclick="lineClick(this)"><span class="n">162</span>           MOVE SORTCODE TO DESIRED-SORT-CODE.</div>
+<div class="ln map" id="l_ua_163" data-tgt="r_241 r_242" data-note="PROCEDURE DIVISION 主処理 A010：SORTCODE 設定→UPDATE-ACCOUNT-DB2→RETURN。PUT エンドポイント関数 update_account 本体に対応。" onclick="lineClick(this)"><span class="n">163</span>&nbsp;</div>
+<div class="ln map" id="l_ua_164" data-tgt="r_241 r_242" data-note="PROCEDURE DIVISION 主処理 A010：SORTCODE 設定→UPDATE-ACCOUNT-DB2→RETURN。PUT エンドポイント関数 update_account 本体に対応。" onclick="lineClick(this)"><span class="n">164</span>      *</div>
+<div class="ln map" id="l_ua_165" data-tgt="r_241 r_242" data-note="PROCEDURE DIVISION 主処理 A010：SORTCODE 設定→UPDATE-ACCOUNT-DB2→RETURN。PUT エンドポイント関数 update_account 本体に対応。" onclick="lineClick(this)"><span class="n">165</span>      *           Update the account information</div>
+<div class="ln map" id="l_ua_166" data-tgt="r_241 r_242" data-note="PROCEDURE DIVISION 主処理 A010：SORTCODE 設定→UPDATE-ACCOUNT-DB2→RETURN。PUT エンドポイント関数 update_account 本体に対応。" onclick="lineClick(this)"><span class="n">166</span>      *</div>
+<div class="ln map" id="l_ua_167" data-tgt="r_241 r_242" data-note="PROCEDURE DIVISION 主処理 A010：SORTCODE 設定→UPDATE-ACCOUNT-DB2→RETURN。PUT エンドポイント関数 update_account 本体に対応。" onclick="lineClick(this)"><span class="n">167</span>           PERFORM UPDATE-ACCOUNT-DB2</div>
+<div class="ln map" id="l_ua_168" data-tgt="r_241 r_242" data-note="PROCEDURE DIVISION 主処理 A010：SORTCODE 設定→UPDATE-ACCOUNT-DB2→RETURN。PUT エンドポイント関数 update_account 本体に対応。" onclick="lineClick(this)"><span class="n">168</span>&nbsp;</div>
+<div class="ln map" id="l_ua_169" data-tgt="r_241 r_242" data-note="PROCEDURE DIVISION 主処理 A010：SORTCODE 設定→UPDATE-ACCOUNT-DB2→RETURN。PUT エンドポイント関数 update_account 本体に対応。" onclick="lineClick(this)"><span class="n">169</span>      *</div>
+<div class="ln map" id="l_ua_170" data-tgt="r_241 r_242" data-note="PROCEDURE DIVISION 主処理 A010：SORTCODE 設定→UPDATE-ACCOUNT-DB2→RETURN。PUT エンドポイント関数 update_account 本体に対応。" onclick="lineClick(this)"><span class="n">170</span>      *    The COMMAREA values have now been set so all we need to do</div>
+<div class="ln map" id="l_ua_171" data-tgt="r_241 r_242" data-note="PROCEDURE DIVISION 主処理 A010：SORTCODE 設定→UPDATE-ACCOUNT-DB2→RETURN。PUT エンドポイント関数 update_account 本体に対応。" onclick="lineClick(this)"><span class="n">171</span>      *    is finish</div>
+<div class="ln map" id="l_ua_172" data-tgt="r_241 r_242" data-note="PROCEDURE DIVISION 主処理 A010：SORTCODE 設定→UPDATE-ACCOUNT-DB2→RETURN。PUT エンドポイント関数 update_account 本体に対応。" onclick="lineClick(this)"><span class="n">172</span>      *</div>
+<div class="ln map" id="l_ua_173" data-tgt="r_241 r_242" data-note="PROCEDURE DIVISION 主処理 A010：SORTCODE 設定→UPDATE-ACCOUNT-DB2→RETURN。PUT エンドポイント関数 update_account 本体に対応。" onclick="lineClick(this)"><span class="n">173</span>&nbsp;</div>
+<div class="ln map" id="l_ua_174" data-tgt="r_241 r_242" data-note="PROCEDURE DIVISION 主処理 A010：SORTCODE 設定→UPDATE-ACCOUNT-DB2→RETURN。PUT エンドポイント関数 update_account 本体に対応。" onclick="lineClick(this)"><span class="n">174</span>           PERFORM GET-ME-OUT-OF-HERE.</div>
+<div class="ln plain" id="l_ua_175" data-tgt="" data-note="" onclick=""><span class="n">175</span>&nbsp;</div>
+<div class="ln drop" id="l_ua_176" data-tgt="" data-note="A999 EXIT（段落終端ラベル）。Python に対応概念なし。" onclick="lineClick(this)"><span class="n">176</span>       A999.</div>
+<div class="ln drop" id="l_ua_177" data-tgt="" data-note="A999 EXIT（段落終端ラベル）。Python に対応概念なし。" onclick="lineClick(this)"><span class="n">177</span>           EXIT.</div>
+<div class="ln plain" id="l_ua_178" data-tgt="" data-note="" onclick=""><span class="n">178</span>&nbsp;</div>
+<div class="ln plain" id="l_ua_179" data-tgt="" data-note="" onclick=""><span class="n">179</span>&nbsp;</div>
+<div class="ln plain" id="l_ua_180" data-tgt="" data-note="" onclick=""><span class="n">180</span>       UPDATE-ACCOUNT-DB2 SECTION.</div>
+<div class="ln plain" id="l_ua_181" data-tgt="" data-note="" onclick=""><span class="n">181</span>       UAD010.</div>
+<div class="ln plain" id="l_ua_182" data-tgt="" data-note="" onclick=""><span class="n">182</span>&nbsp;</div>
+<div class="ln plain" id="l_ua_183" data-tgt="" data-note="" onclick=""><span class="n">183</span>      *</div>
+<div class="ln plain" id="l_ua_184" data-tgt="" data-note="" onclick=""><span class="n">184</span>      *    Position ourself at the matching account record</div>
+<div class="ln plain" id="l_ua_185" data-tgt="" data-note="" onclick=""><span class="n">185</span>      *</div>
+<div class="ln plain" id="l_ua_186" data-tgt="" data-note="" onclick=""><span class="n">186</span>&nbsp;</div>
+<div class="ln map" id="l_ua_187" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">187</span>           MOVE COMM-ACCNO TO DESIRED-ACC-NO.</div>
+<div class="ln map" id="l_ua_188" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">188</span>           MOVE DESIRED-SORT-CODE TO HV-ACCOUNT-SORTCODE.</div>
+<div class="ln map" id="l_ua_189" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">189</span>           MOVE DESIRED-ACC-NO TO HV-ACCOUNT-ACC-NO.</div>
+<div class="ln map" id="l_ua_190" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">190</span>&nbsp;</div>
+<div class="ln map" id="l_ua_191" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">191</span>           EXEC SQL</div>
+<div class="ln map" id="l_ua_192" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">192</span>              SELECT ACCOUNT_EYECATCHER,</div>
+<div class="ln map" id="l_ua_193" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">193</span>                     ACCOUNT_CUSTOMER_NUMBER,</div>
+<div class="ln map" id="l_ua_194" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">194</span>                     ACCOUNT_SORTCODE,</div>
+<div class="ln map" id="l_ua_195" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">195</span>                     ACCOUNT_NUMBER,</div>
+<div class="ln map" id="l_ua_196" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">196</span>                     ACCOUNT_TYPE,</div>
+<div class="ln map" id="l_ua_197" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">197</span>                     ACCOUNT_INTEREST_RATE,</div>
+<div class="ln map" id="l_ua_198" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">198</span>                     ACCOUNT_OPENED,</div>
+<div class="ln map" id="l_ua_199" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">199</span>                     ACCOUNT_OVERDRAFT_LIMIT,</div>
+<div class="ln map" id="l_ua_200" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">200</span>                     ACCOUNT_LAST_STATEMENT,</div>
+<div class="ln map" id="l_ua_201" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">201</span>                     ACCOUNT_NEXT_STATEMENT,</div>
+<div class="ln map" id="l_ua_202" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">202</span>                     ACCOUNT_AVAILABLE_BALANCE,</div>
+<div class="ln map" id="l_ua_203" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">203</span>                     ACCOUNT_ACTUAL_BALANCE</div>
+<div class="ln map" id="l_ua_204" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">204</span>              INTO  :HV-ACCOUNT-EYECATCHER,</div>
+<div class="ln map" id="l_ua_205" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">205</span>                    :HV-ACCOUNT-CUST-NO,</div>
+<div class="ln map" id="l_ua_206" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">206</span>                    :HV-ACCOUNT-SORTCODE,</div>
+<div class="ln map" id="l_ua_207" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">207</span>                    :HV-ACCOUNT-ACC-NO,</div>
+<div class="ln map" id="l_ua_208" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">208</span>                    :HV-ACCOUNT-ACC-TYPE,</div>
+<div class="ln map" id="l_ua_209" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">209</span>                    :HV-ACCOUNT-INT-RATE,</div>
+<div class="ln map" id="l_ua_210" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">210</span>                    :HV-ACCOUNT-OPENED,</div>
+<div class="ln map" id="l_ua_211" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">211</span>                    :HV-ACCOUNT-OVERDRAFT-LIM,</div>
+<div class="ln map" id="l_ua_212" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">212</span>                    :HV-ACCOUNT-LAST-STMT,</div>
+<div class="ln map" id="l_ua_213" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">213</span>                    :HV-ACCOUNT-NEXT-STMT,</div>
+<div class="ln map" id="l_ua_214" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">214</span>                    :HV-ACCOUNT-AVAIL-BAL,</div>
+<div class="ln map" id="l_ua_215" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">215</span>                    :HV-ACCOUNT-ACTUAL-BAL</div>
+<div class="ln map" id="l_ua_216" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">216</span>              FROM ACCOUNT</div>
+<div class="ln map" id="l_ua_217" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">217</span>              WHERE  (ACCOUNT_SORTCODE = :HV-ACCOUNT-SORTCODE AND</div>
+<div class="ln map" id="l_ua_218" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">218</span>                      ACCOUNT_NUMBER = :HV-ACCOUNT-ACC-NO)</div>
+<div class="ln map" id="l_ua_219" data-tgt="r_248 r_249 r_250 r_251" data-note="口座キーを組み立て ACCOUNT を SELECT して既存レコードを取得。SELECT * FROM accounts WHERE sortcode=? AND number=? に対応。" onclick="lineClick(this)"><span class="n">219</span>           END-EXEC.</div>
+<div class="ln plain" id="l_ua_220" data-tgt="" data-note="" onclick=""><span class="n">220</span>&nbsp;</div>
+<div class="ln plain" id="l_ua_221" data-tgt="" data-note="" onclick=""><span class="n">221</span>      *</div>
+<div class="ln plain" id="l_ua_222" data-tgt="" data-note="" onclick=""><span class="n">222</span>      *    Check that the READ was successful. If not mark the return</div>
+<div class="ln plain" id="l_ua_223" data-tgt="" data-note="" onclick=""><span class="n">223</span>      *    field as not successful</div>
+<div class="ln plain" id="l_ua_224" data-tgt="" data-note="" onclick=""><span class="n">224</span>      *</div>
+<div class="ln change" id="l_ua_225" data-tgt="r_252 r_253" data-note="SELECT 失敗時の処理。COBOL は SQLCODE≠0 で SUCCESS=&#x27;N&#x27;・診断 DISPLAY。変換は「行が無い＝口座未存在」を not_found(404) に変換。" onclick="lineClick(this)"><span class="n">225</span>           IF SQLCODE NOT = 0</div>
+<div class="ln change" id="l_ua_226" data-tgt="r_252 r_253" data-note="SELECT 失敗時の処理。COBOL は SQLCODE≠0 で SUCCESS=&#x27;N&#x27;・診断 DISPLAY。変換は「行が無い＝口座未存在」を not_found(404) に変換。" onclick="lineClick(this)"><span class="n">226</span>&nbsp;</div>
+<div class="ln change" id="l_ua_227" data-tgt="r_252 r_253" data-note="SELECT 失敗時の処理。COBOL は SQLCODE≠0 で SUCCESS=&#x27;N&#x27;・診断 DISPLAY。変換は「行が無い＝口座未存在」を not_found(404) に変換。" onclick="lineClick(this)"><span class="n">227</span>              MOVE &#x27;N&#x27; TO COMM-SUCCESS</div>
+<div class="ln change" id="l_ua_228" data-tgt="r_252 r_253" data-note="SELECT 失敗時の処理。COBOL は SQLCODE≠0 で SUCCESS=&#x27;N&#x27;・診断 DISPLAY。変換は「行が無い＝口座未存在」を not_found(404) に変換。" onclick="lineClick(this)"><span class="n">228</span>              MOVE SQLCODE TO SQLCODE-DISPLAY</div>
+<div class="ln change" id="l_ua_229" data-tgt="r_252 r_253" data-note="SELECT 失敗時の処理。COBOL は SQLCODE≠0 で SUCCESS=&#x27;N&#x27;・診断 DISPLAY。変換は「行が無い＝口座未存在」を not_found(404) に変換。" onclick="lineClick(this)"><span class="n">229</span>              DISPLAY &#x27;ERROR: UPDACC returned &#x27; SQLCODE-DISPLAY</div>
+<div class="ln change" id="l_ua_230" data-tgt="r_252 r_253" data-note="SELECT 失敗時の処理。COBOL は SQLCODE≠0 で SUCCESS=&#x27;N&#x27;・診断 DISPLAY。変換は「行が無い＝口座未存在」を not_found(404) に変換。" onclick="lineClick(this)"><span class="n">230</span>              &#x27; on SELECT&#x27;</div>
+<div class="ln change" id="l_ua_231" data-tgt="r_252 r_253" data-note="SELECT 失敗時の処理。COBOL は SQLCODE≠0 で SUCCESS=&#x27;N&#x27;・診断 DISPLAY。変換は「行が無い＝口座未存在」を not_found(404) に変換。" onclick="lineClick(this)"><span class="n">231</span>              GO TO UAD999</div>
+<div class="ln change" id="l_ua_232" data-tgt="r_252 r_253" data-note="SELECT 失敗時の処理。COBOL は SQLCODE≠0 で SUCCESS=&#x27;N&#x27;・診断 DISPLAY。変換は「行が無い＝口座未存在」を not_found(404) に変換。" onclick="lineClick(this)"><span class="n">232</span>&nbsp;</div>
+<div class="ln change" id="l_ua_233" data-tgt="r_252 r_253" data-note="SELECT 失敗時の処理。COBOL は SQLCODE≠0 で SUCCESS=&#x27;N&#x27;・診断 DISPLAY。変換は「行が無い＝口座未存在」を not_found(404) に変換。" onclick="lineClick(this)"><span class="n">233</span>           END-IF.</div>
+<div class="ln plain" id="l_ua_234" data-tgt="" data-note="" onclick=""><span class="n">234</span>&nbsp;</div>
+<div class="ln map" id="l_ua_235" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">235</span>      *</div>
+<div class="ln map" id="l_ua_236" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">236</span>      *    If the RESP CODE was OK then update the record</div>
+<div class="ln map" id="l_ua_237" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">237</span>      *</div>
+<div class="ln map" id="l_ua_238" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">238</span>      *</div>
+<div class="ln map" id="l_ua_239" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">239</span>&nbsp;</div>
+<div class="ln map" id="l_ua_240" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">240</span>      * During BMS processing the whole account record is</div>
+<div class="ln map" id="l_ua_241" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">241</span>      * returned in the comm area on the update. However, the same</div>
+<div class="ln map" id="l_ua_242" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">242</span>      * is NOT true if the update is coming in via the API.</div>
+<div class="ln map" id="l_ua_243" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">243</span>      *</div>
+<div class="ln map" id="l_ua_244" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">244</span>      * For example, if the API update supplies an account type</div>
+<div class="ln map" id="l_ua_245" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">245</span>      * change, and doesn&#x27;t supply the other fields, the interest</div>
+<div class="ln map" id="l_ua_246" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">246</span>      * rate and the overdraft limit will come in as zeros. If</div>
+<div class="ln map" id="l_ua_247" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">247</span>      * the updater was only intending to change the account type</div>
+<div class="ln map" id="l_ua_248" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">248</span>      * from a LOAN account into an ISA, in this situation it</div>
+<div class="ln map" id="l_ua_249" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">249</span>      * would also update the overdraft limit and the interest rate</div>
+<div class="ln map" id="l_ua_250" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">250</span>      * to be zero. This may not have been the intention.</div>
+<div class="ln map" id="l_ua_251" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">251</span>      *</div>
+<div class="ln map" id="l_ua_252" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">252</span>      * To avoid this, we will put a rule into the Customer Service</div>
+<div class="ln map" id="l_ua_253" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">253</span>      * interface that on an account update you must always supply the</div>
+<div class="ln map" id="l_ua_254" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">254</span>      * account type AND the interest rate AND the overdraft limit.</div>
+<div class="ln map" id="l_ua_255" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">255</span>      * But that won&#x27;t stop someone else from using the API directly</div>
+<div class="ln map" id="l_ua_256" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">256</span>      * and unintentionally setting the overdraft and interest rate</div>
+<div class="ln map" id="l_ua_257" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">257</span>      * to zeros when they update just the account type.</div>
+<div class="ln map" id="l_ua_258" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">258</span>      *</div>
+<div class="ln map" id="l_ua_259" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">259</span>      * The best that we can hope to do is to say if we receive</div>
+<div class="ln map" id="l_ua_260" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">260</span>      * an account update and the account type contains all</div>
+<div class="ln map" id="l_ua_261" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">261</span>      * spaces or it starts with a space, then we will reject that</div>
+<div class="ln map" id="l_ua_262" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">262</span>      * update as not being valid. This let&#x27;s through updates</div>
+<div class="ln map" id="l_ua_263" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">263</span>      * where an account type IS supplied and the overdraft limit and</div>
+<div class="ln map" id="l_ua_264" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">264</span>      * or the interest rate are zero.</div>
+<div class="ln map" id="l_ua_265" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">265</span>      *</div>
+<div class="ln map" id="l_ua_266" data-tgt="r_243 r_244 r_245" data-note="未指定フィールドが 0 上書きされる問題と『種別が空/空白なら拒否』ルールを定めた設計コメント。main.py 243-245 のコメント＋246-247 の空白拒否＋254-256 の None 据え置きに反映。" onclick="lineClick(this)"><span class="n">266</span>&nbsp;</div>
+<div class="ln map" id="l_ua_267" data-tgt="r_246 r_247" data-note="★G-CBSA-5：COMM-ACC-TYPE が全空白なら SUCCESS=&#x27;N&#x27; で更新拒否。if body.type is not None and _blank(body.type): raise unprocessable(...,fail_code=&#x27;N&#x27;) に対応。None（未指定）は据え置き。" onclick="lineClick(this)"><span class="n">267</span>           IF (COMM-ACC-TYPE = SPACES OR COMM-ACC-TYPE(1:1) = &#x27; &#x27;)</div>
+<div class="ln map" id="l_ua_268" data-tgt="r_246 r_247" data-note="★G-CBSA-5：COMM-ACC-TYPE が全空白なら SUCCESS=&#x27;N&#x27; で更新拒否。if body.type is not None and _blank(body.type): raise unprocessable(...,fail_code=&#x27;N&#x27;) に対応。None（未指定）は据え置き。" onclick="lineClick(this)"><span class="n">268</span>              MOVE &#x27;N&#x27; TO COMM-SUCCESS</div>
+<div class="ln map" id="l_ua_269" data-tgt="r_246 r_247" data-note="★G-CBSA-5：COMM-ACC-TYPE が全空白なら SUCCESS=&#x27;N&#x27; で更新拒否。if body.type is not None and _blank(body.type): raise unprocessable(...,fail_code=&#x27;N&#x27;) に対応。None（未指定）は据え置き。" onclick="lineClick(this)"><span class="n">269</span>              DISPLAY &#x27;ERROR: UPDACC has invalid account-type&#x27;</div>
+<div class="ln map" id="l_ua_270" data-tgt="r_246 r_247" data-note="★G-CBSA-5：COMM-ACC-TYPE が全空白なら SUCCESS=&#x27;N&#x27; で更新拒否。if body.type is not None and _blank(body.type): raise unprocessable(...,fail_code=&#x27;N&#x27;) に対応。None（未指定）は据え置き。" onclick="lineClick(this)"><span class="n">270</span>              GO TO UAD999</div>
+<div class="ln map" id="l_ua_271" data-tgt="r_246 r_247" data-note="★G-CBSA-5：COMM-ACC-TYPE が全空白なら SUCCESS=&#x27;N&#x27; で更新拒否。if body.type is not None and _blank(body.type): raise unprocessable(...,fail_code=&#x27;N&#x27;) に対応。None（未指定）は据え置き。" onclick="lineClick(this)"><span class="n">271</span>&nbsp;</div>
+<div class="ln map" id="l_ua_272" data-tgt="r_246 r_247" data-note="★G-CBSA-5：COMM-ACC-TYPE が全空白なら SUCCESS=&#x27;N&#x27; で更新拒否。if body.type is not None and _blank(body.type): raise unprocessable(...,fail_code=&#x27;N&#x27;) に対応。None（未指定）は据え置き。" onclick="lineClick(this)"><span class="n">272</span>           END-IF.</div>
+<div class="ln plain" id="l_ua_273" data-tgt="" data-note="" onclick=""><span class="n">273</span>&nbsp;</div>
+<div class="ln map" id="l_ua_274" data-tgt="r_254 r_255 r_256 r_257 r_258 r_259 r_260 r_261" data-note="種別・利率・当座貸越をMOVEし ACCOUNT を UPDATE。None のフィールドを既存行値で埋めて UPDATE accounts SET type/interest_rate/overdraft_limit。残高等は更新対象外で原典どおり。" onclick="lineClick(this)"><span class="n">274</span>           MOVE COMM-ACC-TYPE  TO HV-ACCOUNT-ACC-TYPE.</div>
+<div class="ln map" id="l_ua_275" data-tgt="r_254 r_255 r_256 r_257 r_258 r_259 r_260 r_261" data-note="種別・利率・当座貸越をMOVEし ACCOUNT を UPDATE。None のフィールドを既存行値で埋めて UPDATE accounts SET type/interest_rate/overdraft_limit。残高等は更新対象外で原典どおり。" onclick="lineClick(this)"><span class="n">275</span>           MOVE COMM-OVERDRAFT TO HV-ACCOUNT-OVERDRAFT-LIM.</div>
+<div class="ln map" id="l_ua_276" data-tgt="r_254 r_255 r_256 r_257 r_258 r_259 r_260 r_261" data-note="種別・利率・当座貸越をMOVEし ACCOUNT を UPDATE。None のフィールドを既存行値で埋めて UPDATE accounts SET type/interest_rate/overdraft_limit。残高等は更新対象外で原典どおり。" onclick="lineClick(this)"><span class="n">276</span>           MOVE COMM-INT-RATE  TO HV-ACCOUNT-INT-RATE.</div>
+<div class="ln map" id="l_ua_277" data-tgt="r_254 r_255 r_256 r_257 r_258 r_259 r_260 r_261" data-note="種別・利率・当座貸越をMOVEし ACCOUNT を UPDATE。None のフィールドを既存行値で埋めて UPDATE accounts SET type/interest_rate/overdraft_limit。残高等は更新対象外で原典どおり。" onclick="lineClick(this)"><span class="n">277</span>&nbsp;</div>
+<div class="ln map" id="l_ua_278" data-tgt="r_254 r_255 r_256 r_257 r_258 r_259 r_260 r_261" data-note="種別・利率・当座貸越をMOVEし ACCOUNT を UPDATE。None のフィールドを既存行値で埋めて UPDATE accounts SET type/interest_rate/overdraft_limit。残高等は更新対象外で原典どおり。" onclick="lineClick(this)"><span class="n">278</span>           EXEC SQL</div>
+<div class="ln map" id="l_ua_279" data-tgt="r_254 r_255 r_256 r_257 r_258 r_259 r_260 r_261" data-note="種別・利率・当座貸越をMOVEし ACCOUNT を UPDATE。None のフィールドを既存行値で埋めて UPDATE accounts SET type/interest_rate/overdraft_limit。残高等は更新対象外で原典どおり。" onclick="lineClick(this)"><span class="n">279</span>              UPDATE ACCOUNT</div>
+<div class="ln map" id="l_ua_280" data-tgt="r_254 r_255 r_256 r_257 r_258 r_259 r_260 r_261" data-note="種別・利率・当座貸越をMOVEし ACCOUNT を UPDATE。None のフィールドを既存行値で埋めて UPDATE accounts SET type/interest_rate/overdraft_limit。残高等は更新対象外で原典どおり。" onclick="lineClick(this)"><span class="n">280</span>              SET ACCOUNT_TYPE = :HV-ACCOUNT-ACC-TYPE,</div>
+<div class="ln map" id="l_ua_281" data-tgt="r_254 r_255 r_256 r_257 r_258 r_259 r_260 r_261" data-note="種別・利率・当座貸越をMOVEし ACCOUNT を UPDATE。None のフィールドを既存行値で埋めて UPDATE accounts SET type/interest_rate/overdraft_limit。残高等は更新対象外で原典どおり。" onclick="lineClick(this)"><span class="n">281</span>                  ACCOUNT_INTEREST_RATE = :HV-ACCOUNT-INT-RATE,</div>
+<div class="ln map" id="l_ua_282" data-tgt="r_254 r_255 r_256 r_257 r_258 r_259 r_260 r_261" data-note="種別・利率・当座貸越をMOVEし ACCOUNT を UPDATE。None のフィールドを既存行値で埋めて UPDATE accounts SET type/interest_rate/overdraft_limit。残高等は更新対象外で原典どおり。" onclick="lineClick(this)"><span class="n">282</span>                  ACCOUNT_OVERDRAFT_LIMIT = :HV-ACCOUNT-OVERDRAFT-LIM</div>
+<div class="ln map" id="l_ua_283" data-tgt="r_254 r_255 r_256 r_257 r_258 r_259 r_260 r_261" data-note="種別・利率・当座貸越をMOVEし ACCOUNT を UPDATE。None のフィールドを既存行値で埋めて UPDATE accounts SET type/interest_rate/overdraft_limit。残高等は更新対象外で原典どおり。" onclick="lineClick(this)"><span class="n">283</span>              WHERE (ACCOUNT_SORTCODE = :HV-ACCOUNT-SORTCODE AND</div>
+<div class="ln map" id="l_ua_284" data-tgt="r_254 r_255 r_256 r_257 r_258 r_259 r_260 r_261" data-note="種別・利率・当座貸越をMOVEし ACCOUNT を UPDATE。None のフィールドを既存行値で埋めて UPDATE accounts SET type/interest_rate/overdraft_limit。残高等は更新対象外で原典どおり。" onclick="lineClick(this)"><span class="n">284</span>                     ACCOUNT_NUMBER = :HV-ACCOUNT-ACC-NO)</div>
+<div class="ln map" id="l_ua_285" data-tgt="r_254 r_255 r_256 r_257 r_258 r_259 r_260 r_261" data-note="種別・利率・当座貸越をMOVEし ACCOUNT を UPDATE。None のフィールドを既存行値で埋めて UPDATE accounts SET type/interest_rate/overdraft_limit。残高等は更新対象外で原典どおり。" onclick="lineClick(this)"><span class="n">285</span>           END-EXEC.</div>
+<div class="ln plain" id="l_ua_286" data-tgt="" data-note="" onclick=""><span class="n">286</span>&nbsp;</div>
+<div class="ln drop" id="l_ua_287" data-tgt="" data-note="UPDATE の SQLCODE≠0 失敗時に SUCCESS=&#x27;N&#x27;・診断 DISPLAY。キー存在を事前 SELECT で保証済、SQLite 実行例外は共通ハンドラに委譲。" onclick="lineClick(this)"><span class="n">287</span>      *</div>
+<div class="ln drop" id="l_ua_288" data-tgt="" data-note="UPDATE の SQLCODE≠0 失敗時に SUCCESS=&#x27;N&#x27;・診断 DISPLAY。キー存在を事前 SELECT で保証済、SQLite 実行例外は共通ハンドラに委譲。" onclick="lineClick(this)"><span class="n">288</span>      *    If the SQLCODE was NOT OK then we need to mark it as failed</div>
+<div class="ln drop" id="l_ua_289" data-tgt="" data-note="UPDATE の SQLCODE≠0 失敗時に SUCCESS=&#x27;N&#x27;・診断 DISPLAY。キー存在を事前 SELECT で保証済、SQLite 実行例外は共通ハンドラに委譲。" onclick="lineClick(this)"><span class="n">289</span>      *</div>
+<div class="ln drop" id="l_ua_290" data-tgt="" data-note="UPDATE の SQLCODE≠0 失敗時に SUCCESS=&#x27;N&#x27;・診断 DISPLAY。キー存在を事前 SELECT で保証済、SQLite 実行例外は共通ハンドラに委譲。" onclick="lineClick(this)"><span class="n">290</span>           IF SQLCODE NOT = 0</div>
+<div class="ln drop" id="l_ua_291" data-tgt="" data-note="UPDATE の SQLCODE≠0 失敗時に SUCCESS=&#x27;N&#x27;・診断 DISPLAY。キー存在を事前 SELECT で保証済、SQLite 実行例外は共通ハンドラに委譲。" onclick="lineClick(this)"><span class="n">291</span>              MOVE &#x27;N&#x27; TO COMM-SUCCESS</div>
+<div class="ln drop" id="l_ua_292" data-tgt="" data-note="UPDATE の SQLCODE≠0 失敗時に SUCCESS=&#x27;N&#x27;・診断 DISPLAY。キー存在を事前 SELECT で保証済、SQLite 実行例外は共通ハンドラに委譲。" onclick="lineClick(this)"><span class="n">292</span>              MOVE SQLCODE TO SQLCODE-DISPLAY</div>
+<div class="ln drop" id="l_ua_293" data-tgt="" data-note="UPDATE の SQLCODE≠0 失敗時に SUCCESS=&#x27;N&#x27;・診断 DISPLAY。キー存在を事前 SELECT で保証済、SQLite 実行例外は共通ハンドラに委譲。" onclick="lineClick(this)"><span class="n">293</span>              DISPLAY &#x27;ERROR: UPDACC returned &#x27; SQLCODE-DISPLAY</div>
+<div class="ln drop" id="l_ua_294" data-tgt="" data-note="UPDATE の SQLCODE≠0 失敗時に SUCCESS=&#x27;N&#x27;・診断 DISPLAY。キー存在を事前 SELECT で保証済、SQLite 実行例外は共通ハンドラに委譲。" onclick="lineClick(this)"><span class="n">294</span>              &#x27; on UPDATE&#x27;</div>
+<div class="ln drop" id="l_ua_295" data-tgt="" data-note="UPDATE の SQLCODE≠0 失敗時に SUCCESS=&#x27;N&#x27;・診断 DISPLAY。キー存在を事前 SELECT で保証済、SQLite 実行例外は共通ハンドラに委譲。" onclick="lineClick(this)"><span class="n">295</span>              GO TO UAD999</div>
+<div class="ln drop" id="l_ua_296" data-tgt="" data-note="UPDATE の SQLCODE≠0 失敗時に SUCCESS=&#x27;N&#x27;・診断 DISPLAY。キー存在を事前 SELECT で保証済、SQLite 実行例外は共通ハンドラに委譲。" onclick="lineClick(this)"><span class="n">296</span>           END-IF.</div>
+<div class="ln plain" id="l_ua_297" data-tgt="" data-note="" onclick=""><span class="n">297</span>&nbsp;</div>
+<div class="ln map" id="l_ua_298" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">298</span>      *</div>
+<div class="ln map" id="l_ua_299" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">299</span>      *    If the SQLCODE was normal then we just need to set the</div>
+<div class="ln map" id="l_ua_300" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">300</span>      *    SUCCESS CODE</div>
+<div class="ln map" id="l_ua_301" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">301</span>      *</div>
+<div class="ln map" id="l_ua_302" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">302</span>           MOVE HV-ACCOUNT-EYECATCHER TO COMM-EYE.</div>
+<div class="ln map" id="l_ua_303" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">303</span>           MOVE HV-ACCOUNT-CUST-NO    TO COMM-CUSTNO.</div>
+<div class="ln map" id="l_ua_304" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">304</span>           MOVE HV-ACCOUNT-SORTCODE   TO COMM-SCODE.</div>
+<div class="ln map" id="l_ua_305" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">305</span>           MOVE HV-ACCOUNT-ACC-NO     TO COMM-ACCNO.</div>
+<div class="ln map" id="l_ua_306" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">306</span>           MOVE HV-ACCOUNT-ACC-TYPE   TO COMM-ACC-TYPE.</div>
+<div class="ln map" id="l_ua_307" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">307</span>           MOVE HV-ACCOUNT-INT-RATE   TO COMM-INT-RATE.</div>
+<div class="ln map" id="l_ua_308" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">308</span>           INITIALIZE DB2-DATE-REFORMAT.</div>
+<div class="ln map" id="l_ua_309" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">309</span>           MOVE HV-ACCOUNT-OPENED     TO DB2-DATE-REFORMAT.</div>
+<div class="ln map" id="l_ua_310" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">310</span>           MOVE DB2-DATE-REF-YR       TO COMM-OPENED-YEAR.</div>
+<div class="ln map" id="l_ua_311" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">311</span>           MOVE DB2-DATE-REF-MNTH     TO COMM-OPENED-MONTH.</div>
+<div class="ln map" id="l_ua_312" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">312</span>           MOVE DB2-DATE-REF-DAY      TO COMM-OPENED-DAY.</div>
+<div class="ln map" id="l_ua_313" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">313</span>           MOVE HV-ACCOUNT-OVERDRAFT-LIM TO COMM-OVERDRAFT.</div>
+<div class="ln map" id="l_ua_314" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">314</span>           INITIALIZE DB2-DATE-REFORMAT.</div>
+<div class="ln map" id="l_ua_315" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">315</span>           MOVE HV-ACCOUNT-LAST-STMT  TO DB2-DATE-REFORMAT.</div>
+<div class="ln map" id="l_ua_316" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">316</span>           MOVE DB2-DATE-REF-YR       TO COMM-LASTST-YEAR.</div>
+<div class="ln map" id="l_ua_317" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">317</span>           MOVE DB2-DATE-REF-MNTH     TO COMM-LASTST-MONTH.</div>
+<div class="ln map" id="l_ua_318" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">318</span>           MOVE DB2-DATE-REF-DAY      TO COMM-LASTST-DAY.</div>
+<div class="ln map" id="l_ua_319" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">319</span>           INITIALIZE DB2-DATE-REFORMAT.</div>
+<div class="ln map" id="l_ua_320" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">320</span>           MOVE HV-ACCOUNT-NEXT-STMT  TO DB2-DATE-REFORMAT.</div>
+<div class="ln map" id="l_ua_321" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">321</span>           MOVE DB2-DATE-REF-YR       TO COMM-NEXTST-YEAR.</div>
+<div class="ln map" id="l_ua_322" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">322</span>           MOVE DB2-DATE-REF-MNTH     TO COMM-NEXTST-MONTH.</div>
+<div class="ln map" id="l_ua_323" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">323</span>           MOVE DB2-DATE-REF-DAY      TO COMM-NEXTST-DAY.</div>
+<div class="ln map" id="l_ua_324" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">324</span>           MOVE HV-ACCOUNT-AVAIL-BAL  TO COMM-AVAIL-BAL.</div>
+<div class="ln map" id="l_ua_325" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">325</span>           MOVE HV-ACCOUNT-ACTUAL-BAL TO COMM-ACTUAL-BAL.</div>
+<div class="ln map" id="l_ua_326" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">326</span>&nbsp;</div>
+<div class="ln map" id="l_ua_327" data-tgt="r_262 r_263 r_264 r_265" data-note="成功時、更新後の口座全項目を COMMAREA へ詰め直し SUCCESS=&#x27;Y&#x27;。UPDATE 後に再 SELECT し _row_to_account として返却。" onclick="lineClick(this)"><span class="n">327</span>           MOVE &#x27;Y&#x27; TO COMM-SUCCESS.</div>
+<div class="ln plain" id="l_ua_328" data-tgt="" data-note="" onclick=""><span class="n">328</span>&nbsp;</div>
+<div class="ln drop" id="l_ua_329" data-tgt="" data-note="UAD999 EXIT（SECTION 終端ラベル）。Python に対応概念なし。" onclick="lineClick(this)"><span class="n">329</span>       UAD999.</div>
+<div class="ln drop" id="l_ua_330" data-tgt="" data-note="UAD999 EXIT（SECTION 終端ラベル）。Python に対応概念なし。" onclick="lineClick(this)"><span class="n">330</span>           EXIT.</div>
+<div class="ln plain" id="l_ua_331" data-tgt="" data-note="" onclick=""><span class="n">331</span>&nbsp;</div>
+<div class="ln plain" id="l_ua_332" data-tgt="" data-note="" onclick=""><span class="n">332</span>&nbsp;</div>
+<div class="ln plain" id="l_ua_333" data-tgt="" data-note="" onclick=""><span class="n">333</span>&nbsp;</div>
+<div class="ln plain" id="l_ua_334" data-tgt="" data-note="" onclick=""><span class="n">334</span>&nbsp;</div>
+<div class="ln plain" id="l_ua_335" data-tgt="" data-note="" onclick=""><span class="n">335</span>&nbsp;</div>
+<div class="ln plain" id="l_ua_336" data-tgt="" data-note="" onclick=""><span class="n">336</span>&nbsp;</div>
+<div class="ln plain" id="l_ua_337" data-tgt="" data-note="" onclick=""><span class="n">337</span>&nbsp;</div>
+<div class="ln drop" id="l_ua_338" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">338</span>      *    MOVE COMM-ACC-TYPE     TO</div>
+<div class="ln drop" id="l_ua_339" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">339</span>      *       HV-ACCOUNT-ACC-TYPE.</div>
+<div class="ln drop" id="l_ua_340" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">340</span>      *    MOVE COMM-INT-RATE     TO</div>
+<div class="ln drop" id="l_ua_341" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">341</span>      *       HV-ACCOUNT-INT-RATE.</div>
+<div class="ln drop" id="l_ua_342" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">342</span>      *    MOVE COMM-OVERDRAFT    TO</div>
+<div class="ln drop" id="l_ua_343" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">343</span>      *       HV-ACCOUNT-OVERDRAFT-LIM.</div>
+<div class="ln drop" id="l_ua_344" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">344</span>      *    MOVE COMM-LAST-STMT-DT TO</div>
+<div class="ln drop" id="l_ua_345" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">345</span>      *       HV-ACCOUNT-LAST-STMT.</div>
+<div class="ln drop" id="l_ua_346" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">346</span>      *    MOVE COMM-NEXT-STMT-DT TO</div>
+<div class="ln drop" id="l_ua_347" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">347</span>      *       HV-ACCOUNT-NEXT-STMT.</div>
+<div class="ln drop" id="l_ua_348" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">348</span>      *</div>
+<div class="ln drop" id="l_ua_349" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">349</span>      *    MOVE HV-ACCOUNT-AVAIL-BAL TO COMM-AVAIL-BAL.</div>
+<div class="ln drop" id="l_ua_350" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">350</span>      *    MOVE HV-ACCOUNT-ACTUAL-BAL TO COMM-ACTUAL-BAL.</div>
+<div class="ln drop" id="l_ua_351" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">351</span>      *</div>
+<div class="ln drop" id="l_ua_352" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">352</span>      *    EXEC SQL</div>
+<div class="ln drop" id="l_ua_353" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">353</span>      *       UPDATE ACCOUNT</div>
+<div class="ln drop" id="l_ua_354" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">354</span>      *       SET ACCOUNT_TYPE = :HV-ACCOUNT-ACC-TYPE,</div>
+<div class="ln drop" id="l_ua_355" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">355</span>      *           ACCOUNT_INTEREST_RATE = :HV-ACCOUNT-INT-RATE,</div>
+<div class="ln drop" id="l_ua_356" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">356</span>      *           ACCOUNT_OVERDRAFT_LIMIT = :HV-ACCOUNT-OVERDRAFT-LIM</div>
+<div class="ln drop" id="l_ua_357" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">357</span>      *       WHERE (ACCOUNT_SORTCODE = :HV-ACCOUNT-SORTCODE AND</div>
+<div class="ln drop" id="l_ua_358" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">358</span>      *              ACCOUNT_NUMBER = :HV-ACCOUNT-ACC-NO)</div>
+<div class="ln drop" id="l_ua_359" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">359</span>      *    END-EXEC.</div>
+<div class="ln drop" id="l_ua_360" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">360</span>      *</div>
+<div class="ln drop" id="l_ua_361" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">361</span>      *</div>
+<div class="ln drop" id="l_ua_362" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">362</span>      *    If the SQLCODE was NOT OK then we need to mark it as failed</div>
+<div class="ln drop" id="l_ua_363" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">363</span>      *</div>
+<div class="ln drop" id="l_ua_364" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">364</span>      *    IF SQLCODE NOT = 0</div>
+<div class="ln drop" id="l_ua_365" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">365</span>      *       MOVE &#x27;N&#x27; TO COMM-SUCCESS</div>
+<div class="ln drop" id="l_ua_366" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">366</span>      *</div>
+<div class="ln drop" id="l_ua_367" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">367</span>      *       GO TO UAD999</div>
+<div class="ln drop" id="l_ua_368" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">368</span>      *</div>
+<div class="ln drop" id="l_ua_369" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">369</span>      *    END-IF.</div>
+<div class="ln drop" id="l_ua_370" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">370</span>      *</div>
+<div class="ln drop" id="l_ua_371" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">371</span>      *</div>
+<div class="ln drop" id="l_ua_372" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">372</span>      *    If the SQLCODE was normal then we just need to set the</div>
+<div class="ln drop" id="l_ua_373" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">373</span>      *    SUCCESS CODE</div>
+<div class="ln drop" id="l_ua_374" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">374</span>      *</div>
+<div class="ln drop" id="l_ua_375" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">375</span>      *    MOVE &#x27;Y&#x27; TO COMM-SUCCESS.</div>
+<div class="ln drop" id="l_ua_376" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">376</span>      *</div>
+<div class="ln drop" id="l_ua_377" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">377</span>      *UAD999.</div>
+<div class="ln drop" id="l_ua_378" data-tgt="" data-note="コメントアウト済みの旧実装ブロック。明細日（last/next statement）を UPDATE する処理だが原典で無効化済＝明細日更新は未実装。変換側も明細日は更新対象に含めず原典の未実装状態を踏襲。" onclick="lineClick(this)"><span class="n">378</span>      *    EXIT.</div>
+<div class="ln plain" id="l_ua_379" data-tgt="" data-note="" onclick=""><span class="n">379</span>&nbsp;</div>
+<div class="ln plain" id="l_ua_380" data-tgt="" data-note="" onclick=""><span class="n">380</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_381" data-tgt="r_241" data-note="GET-ME-OUT-OF-HERE：EXEC CICS RETURN。FastAPI ではエンドポイント関数の return が相当。" onclick="lineClick(this)"><span class="n">381</span>       GET-ME-OUT-OF-HERE SECTION.</div>
+<div class="ln struct" id="l_ua_382" data-tgt="r_241" data-note="GET-ME-OUT-OF-HERE：EXEC CICS RETURN。FastAPI ではエンドポイント関数の return が相当。" onclick="lineClick(this)"><span class="n">382</span>       GMOOH010.</div>
+<div class="ln struct" id="l_ua_383" data-tgt="r_241" data-note="GET-ME-OUT-OF-HERE：EXEC CICS RETURN。FastAPI ではエンドポイント関数の return が相当。" onclick="lineClick(this)"><span class="n">383</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_384" data-tgt="r_241" data-note="GET-ME-OUT-OF-HERE：EXEC CICS RETURN。FastAPI ではエンドポイント関数の return が相当。" onclick="lineClick(this)"><span class="n">384</span>           EXEC CICS RETURN</div>
+<div class="ln struct" id="l_ua_385" data-tgt="r_241" data-note="GET-ME-OUT-OF-HERE：EXEC CICS RETURN。FastAPI ではエンドポイント関数の return が相当。" onclick="lineClick(this)"><span class="n">385</span>           END-EXEC.</div>
+<div class="ln struct" id="l_ua_386" data-tgt="r_241" data-note="GET-ME-OUT-OF-HERE：EXEC CICS RETURN。FastAPI ではエンドポイント関数の return が相当。" onclick="lineClick(this)"><span class="n">386</span>&nbsp;</div>
+<div class="ln struct" id="l_ua_387" data-tgt="r_241" data-note="GET-ME-OUT-OF-HERE：EXEC CICS RETURN。FastAPI ではエンドポイント関数の return が相当。" onclick="lineClick(this)"><span class="n">387</span>       GMOOH999.</div>
+<div class="ln struct" id="l_ua_388" data-tgt="r_241" data-note="GET-ME-OUT-OF-HERE：EXEC CICS RETURN。FastAPI ではエンドポイント関数の return が相当。" onclick="lineClick(this)"><span class="n">388</span>           EXIT.</div>
+<div class="ln plain" id="l_ua_389" data-tgt="" data-note="" onclick=""><span class="n">389</span>&nbsp;</div>
+<div class="ln plain" id="l_ua_390" data-tgt="" data-note="" onclick=""><span class="n">390</span>&nbsp;</div>
+<div class="ln drop" id="l_ua_391" data-tgt="" data-note="POPULATE-TIME-DATE：ASKTIME/FORMATTIME。本プログラムでは未呼出（デッドコード）。" onclick="lineClick(this)"><span class="n">391</span>       POPULATE-TIME-DATE SECTION.</div>
+<div class="ln drop" id="l_ua_392" data-tgt="" data-note="POPULATE-TIME-DATE：ASKTIME/FORMATTIME。本プログラムでは未呼出（デッドコード）。" onclick="lineClick(this)"><span class="n">392</span>       PTD010.</div>
+<div class="ln drop" id="l_ua_393" data-tgt="" data-note="POPULATE-TIME-DATE：ASKTIME/FORMATTIME。本プログラムでは未呼出（デッドコード）。" onclick="lineClick(this)"><span class="n">393</span>&nbsp;</div>
+<div class="ln drop" id="l_ua_394" data-tgt="" data-note="POPULATE-TIME-DATE：ASKTIME/FORMATTIME。本プログラムでは未呼出（デッドコード）。" onclick="lineClick(this)"><span class="n">394</span>           EXEC CICS ASKTIME</div>
+<div class="ln drop" id="l_ua_395" data-tgt="" data-note="POPULATE-TIME-DATE：ASKTIME/FORMATTIME。本プログラムでは未呼出（デッドコード）。" onclick="lineClick(this)"><span class="n">395</span>              ABSTIME(WS-U-TIME)</div>
+<div class="ln drop" id="l_ua_396" data-tgt="" data-note="POPULATE-TIME-DATE：ASKTIME/FORMATTIME。本プログラムでは未呼出（デッドコード）。" onclick="lineClick(this)"><span class="n">396</span>           END-EXEC.</div>
+<div class="ln drop" id="l_ua_397" data-tgt="" data-note="POPULATE-TIME-DATE：ASKTIME/FORMATTIME。本プログラムでは未呼出（デッドコード）。" onclick="lineClick(this)"><span class="n">397</span>&nbsp;</div>
+<div class="ln drop" id="l_ua_398" data-tgt="" data-note="POPULATE-TIME-DATE：ASKTIME/FORMATTIME。本プログラムでは未呼出（デッドコード）。" onclick="lineClick(this)"><span class="n">398</span>           EXEC CICS FORMATTIME</div>
+<div class="ln drop" id="l_ua_399" data-tgt="" data-note="POPULATE-TIME-DATE：ASKTIME/FORMATTIME。本プログラムでは未呼出（デッドコード）。" onclick="lineClick(this)"><span class="n">399</span>                     ABSTIME(WS-U-TIME)</div>
+<div class="ln drop" id="l_ua_400" data-tgt="" data-note="POPULATE-TIME-DATE：ASKTIME/FORMATTIME。本プログラムでは未呼出（デッドコード）。" onclick="lineClick(this)"><span class="n">400</span>                     DDMMYYYY(WS-ORIG-DATE)</div>
+<div class="ln drop" id="l_ua_401" data-tgt="" data-note="POPULATE-TIME-DATE：ASKTIME/FORMATTIME。本プログラムでは未呼出（デッドコード）。" onclick="lineClick(this)"><span class="n">401</span>                     TIME(WS-TIME-NOW)</div>
+<div class="ln drop" id="l_ua_402" data-tgt="" data-note="POPULATE-TIME-DATE：ASKTIME/FORMATTIME。本プログラムでは未呼出（デッドコード）。" onclick="lineClick(this)"><span class="n">402</span>                     DATESEP</div>
+<div class="ln drop" id="l_ua_403" data-tgt="" data-note="POPULATE-TIME-DATE：ASKTIME/FORMATTIME。本プログラムでは未呼出（デッドコード）。" onclick="lineClick(this)"><span class="n">403</span>           END-EXEC.</div>
+<div class="ln drop" id="l_ua_404" data-tgt="" data-note="POPULATE-TIME-DATE：ASKTIME/FORMATTIME。本プログラムでは未呼出（デッドコード）。" onclick="lineClick(this)"><span class="n">404</span>&nbsp;</div>
+<div class="ln drop" id="l_ua_405" data-tgt="" data-note="POPULATE-TIME-DATE：ASKTIME/FORMATTIME。本プログラムでは未呼出（デッドコード）。" onclick="lineClick(this)"><span class="n">405</span>       PTD999.</div>
+<div class="ln drop" id="l_ua_406" data-tgt="" data-note="POPULATE-TIME-DATE：ASKTIME/FORMATTIME。本プログラムでは未呼出（デッドコード）。" onclick="lineClick(this)"><span class="n">406</span>           EXIT.</div></div>
+  <div class="pane right" id="rightpane"><div class="fhdr">◆ cbsa/backend/main.py（変換後・FastAPI）</div>
+<div class="ln plain" id="r_1" data-tgt="" onclick=""><span class="n">1</span>&quot;&quot;&quot;CBSA モダン Web 版 — FastAPI バックエンド。</div>
+<div class="ln plain" id="r_2" data-tgt="" onclick=""><span class="n">2</span>&nbsp;</div>
+<div class="ln plain" id="r_3" data-tgt="" onclick=""><span class="n">3</span>元 IBM CICS Bank Sample Application（COBOL+BMS+VSAM+DB2）の業務層を、</div>
+<div class="ln plain" id="r_4" data-tgt="" onclick=""><span class="n">4</span>緑画面 presentation を捨てて REST API として再実装する。</div>
+<div class="ln plain" id="r_5" data-tgt="" onclick=""><span class="n">5</span>銀行窓口業務: 顧客・口座の CRUD、入出金（DBCRFUN）、資金移動（XFRFUN）、</div>
+<div class="ln plain" id="r_6" data-tgt="" onclick=""><span class="n">6</span>全取引の監査ログ（PROCTRAN）、信用調査（CRDTAGY 並行）。</div>
+<div class="ln plain" id="r_7" data-tgt="" onclick=""><span class="n">7</span>&quot;&quot;&quot;</div>
+<div class="ln plain" id="r_8" data-tgt="" onclick=""><span class="n">8</span>&nbsp;</div>
+<div class="ln plain" id="r_9" data-tgt="" onclick=""><span class="n">9</span>import logging</div>
+<div class="ln plain" id="r_10" data-tgt="" onclick=""><span class="n">10</span>import os</div>
+<div class="ln plain" id="r_11" data-tgt="" onclick=""><span class="n">11</span>import sqlite3</div>
+<div class="ln plain" id="r_12" data-tgt="" onclick=""><span class="n">12</span>from datetime import datetime, date</div>
+<div class="ln plain" id="r_13" data-tgt="" onclick=""><span class="n">13</span>&nbsp;</div>
+<div class="ln plain" id="r_14" data-tgt="" onclick=""><span class="n">14</span>from fastapi import FastAPI</div>
+<div class="ln plain" id="r_15" data-tgt="" onclick=""><span class="n">15</span>from fastapi.middleware.cors import CORSMiddleware</div>
+<div class="ln plain" id="r_16" data-tgt="" onclick=""><span class="n">16</span>&nbsp;</div>
+<div class="ln plain" id="r_17" data-tgt="" onclick=""><span class="n">17</span>from .database import (</div>
+<div class="ln plain" id="r_18" data-tgt="" onclick=""><span class="n">18</span>    init_db, db_cursor, SORTCODE, PROC_TYPE, is_valid_title,</div>
+<div class="ln plain" id="r_19" data-tgt="" onclick=""><span class="n">19</span>    is_valid_account_type, dob_error, MAX_ACCOUNTS_PER_CUSTOMER,</div>
+<div class="ln plain" id="r_20" data-tgt="" onclick=""><span class="n">20</span>)</div>
+<div class="ln plain" id="r_21" data-tgt="" onclick=""><span class="n">21</span>from .rc import (</div>
+<div class="ln plain" id="r_22" data-tgt="" onclick=""><span class="n">22</span>    CbsaError, cbsa_error_handler, db_error_handler, unhandled_error_handler,</div>
+<div class="ln plain" id="r_23" data-tgt="" onclick=""><span class="n">23</span>    not_found, conflict, unprocessable,</div>
+<div class="ln plain" id="r_24" data-tgt="" onclick=""><span class="n">24</span>)</div>
+<div class="ln plain" id="r_25" data-tgt="" onclick=""><span class="n">25</span>from .credit import evaluate_credit_score</div>
+<div class="ln plain" id="r_26" data-tgt="" onclick=""><span class="n">26</span>from .numbering import next_account_number, next_customer_number</div>
+<div class="ln plain" id="r_27" data-tgt="" onclick=""><span class="n">27</span>from . import models</div>
+<div class="ln plain" id="r_28" data-tgt="" onclick=""><span class="n">28</span>&nbsp;</div>
+<div class="ln plain" id="r_29" data-tgt="" onclick=""><span class="n">29</span># ログ設定（元 CBSA の DISPLAY 診断 / ABNDPROC 異常ログの対応物）。</div>
+<div class="ln plain" id="r_30" data-tgt="" onclick=""><span class="n">30</span># LOG_LEVEL 環境変数で調整可。機密（暗証・スコア等）は出力しない。</div>
+<div class="ln plain" id="r_31" data-tgt="" onclick=""><span class="n">31</span>logging.basicConfig(</div>
+<div class="ln plain" id="r_32" data-tgt="" onclick=""><span class="n">32</span>    level=os.environ.get(&quot;LOG_LEVEL&quot;, &quot;INFO&quot;).upper(),</div>
+<div class="ln plain" id="r_33" data-tgt="" onclick=""><span class="n">33</span>    format=&quot;%(asctime)s %(levelname)s %(name)s %(message)s&quot;,</div>
+<div class="ln plain" id="r_34" data-tgt="" onclick=""><span class="n">34</span>)</div>
+<div class="ln plain" id="r_35" data-tgt="" onclick=""><span class="n">35</span>logger = logging.getLogger(&quot;cbsa&quot;)</div>
+<div class="ln plain" id="r_36" data-tgt="" onclick=""><span class="n">36</span>&nbsp;</div>
+<div class="ln plain" id="r_37" data-tgt="" onclick=""><span class="n">37</span>app = FastAPI(title=&quot;CBSA Modern API&quot;, version=&quot;0.1.0&quot;)</div>
+<div class="ln plain" id="r_38" data-tgt="" onclick=""><span class="n">38</span>app.add_middleware(</div>
+<div class="ln plain" id="r_39" data-tgt="" onclick=""><span class="n">39</span>    CORSMiddleware,</div>
+<div class="ln plain" id="r_40" data-tgt="" onclick=""><span class="n">40</span>    allow_origins=[&quot;*&quot;],</div>
+<div class="ln plain" id="r_41" data-tgt="" onclick=""><span class="n">41</span>    allow_methods=[&quot;*&quot;],</div>
+<div class="ln plain" id="r_42" data-tgt="" onclick=""><span class="n">42</span>    allow_headers=[&quot;*&quot;],</div>
+<div class="ln plain" id="r_43" data-tgt="" onclick=""><span class="n">43</span>)</div>
+<div class="ln plain" id="r_44" data-tgt="" onclick=""><span class="n">44</span>app.add_exception_handler(CbsaError, cbsa_error_handler)</div>
+<div class="ln plain" id="r_45" data-tgt="" onclick=""><span class="n">45</span>app.add_exception_handler(sqlite3.Error, db_error_handler)</div>
+<div class="ln plain" id="r_46" data-tgt="" onclick=""><span class="n">46</span>app.add_exception_handler(Exception, unhandled_error_handler)</div>
+<div class="ln plain" id="r_47" data-tgt="" onclick=""><span class="n">47</span>&nbsp;</div>
+<div class="ln plain" id="r_48" data-tgt="" onclick=""><span class="n">48</span>&nbsp;</div>
+<div class="ln plain" id="r_49" data-tgt="" onclick=""><span class="n">49</span>@app.on_event(&quot;startup&quot;)</div>
+<div class="ln plain" id="r_50" data-tgt="" onclick=""><span class="n">50</span>async def _startup() -&gt; None:</div>
+<div class="ln plain" id="r_51" data-tgt="" onclick=""><span class="n">51</span>    init_db()</div>
+<div class="ln plain" id="r_52" data-tgt="" onclick=""><span class="n">52</span>    logger.info(&quot;CBSA backend started (sortcode=%s)&quot;, SORTCODE)</div>
+<div class="ln plain" id="r_53" data-tgt="" onclick=""><span class="n">53</span>    # 空なら初期データを投入。Vercel の /tmp は cold start で揮発するため、</div>
+<div class="ln plain" id="r_54" data-tgt="" onclick=""><span class="n">54</span>    # 起動時に毎回シードして公開デモにサンプルが出るようにする。</div>
+<div class="ln plain" id="r_55" data-tgt="" onclick=""><span class="n">55</span>    with db_cursor() as cur:</div>
+<div class="ln plain" id="r_56" data-tgt="" onclick=""><span class="n">56</span>        empty = cur.execute(&quot;SELECT COUNT(*) AS c FROM customers&quot;).fetchone()[&quot;c&quot;] == 0</div>
+<div class="ln plain" id="r_57" data-tgt="" onclick=""><span class="n">57</span>    if empty:</div>
+<div class="ln plain" id="r_58" data-tgt="" onclick=""><span class="n">58</span>        from .seed import seed</div>
+<div class="ln plain" id="r_59" data-tgt="" onclick=""><span class="n">59</span>        await seed()</div>
+<div class="ln plain" id="r_60" data-tgt="" onclick=""><span class="n">60</span>&nbsp;</div>
+<div class="ln plain" id="r_61" data-tgt="" onclick=""><span class="n">61</span>&nbsp;</div>
+<div class="ln plain" id="r_62" data-tgt="" onclick=""><span class="n">62</span># ---- 監査ログ（元 PROCTRAN INSERT） ----</div>
+<div class="ln plain" id="r_63" data-tgt="" onclick=""><span class="n">63</span>def _log_proctran(cur, account_number: str, ttype: str, amount: float, desc: str) -&gt; None:</div>
+<div class="ln plain" id="r_64" data-tgt="" onclick=""><span class="n">64</span>    now = datetime.now()</div>
+<div class="ln plain" id="r_65" data-tgt="" onclick=""><span class="n">65</span>    cur.execute(</div>
+<div class="ln plain" id="r_66" data-tgt="" onclick=""><span class="n">66</span>        &quot;&quot;&quot;INSERT INTO proctran (sortcode, number, date, time, ref, type, description, amount)</div>
+<div class="ln plain" id="r_67" data-tgt="" onclick=""><span class="n">67</span>           VALUES (?, ?, ?, ?, ?, ?, ?, ?)&quot;&quot;&quot;,</div>
+<div class="ln plain" id="r_68" data-tgt="" onclick=""><span class="n">68</span>        (</div>
+<div class="ln plain" id="r_69" data-tgt="" onclick=""><span class="n">69</span>            SORTCODE,</div>
+<div class="ln plain" id="r_70" data-tgt="" onclick=""><span class="n">70</span>            account_number,</div>
+<div class="ln plain" id="r_71" data-tgt="" onclick=""><span class="n">71</span>            now.strftime(&quot;%Y-%m-%d&quot;),</div>
+<div class="ln plain" id="r_72" data-tgt="" onclick=""><span class="n">72</span>            now.strftime(&quot;%H%M%S&quot;),</div>
+<div class="ln plain" id="r_73" data-tgt="" onclick=""><span class="n">73</span>            now.strftime(&quot;%H%M%S%f&quot;)[:12],</div>
+<div class="ln plain" id="r_74" data-tgt="" onclick=""><span class="n">74</span>            ttype,</div>
+<div class="ln plain" id="r_75" data-tgt="" onclick=""><span class="n">75</span>            desc,</div>
+<div class="ln plain" id="r_76" data-tgt="" onclick=""><span class="n">76</span>            amount,</div>
+<div class="ln plain" id="r_77" data-tgt="" onclick=""><span class="n">77</span>        ),</div>
+<div class="ln plain" id="r_78" data-tgt="" onclick=""><span class="n">78</span>    )</div>
+<div class="ln plain" id="r_79" data-tgt="" onclick=""><span class="n">79</span>&nbsp;</div>
+<div class="ln plain" id="r_80" data-tgt="" onclick=""><span class="n">80</span>&nbsp;</div>
+<div class="ln plain" id="r_81" data-tgt="" onclick=""><span class="n">81</span># ---- メタ（元 GETCOMPY / GETSCODE） ----</div>
+<div class="ln plain" id="r_82" data-tgt="" onclick=""><span class="n">82</span>@app.get(&quot;/api/company&quot;)</div>
+<div class="ln plain" id="r_83" data-tgt="" onclick=""><span class="n">83</span>def get_company():</div>
+<div class="ln plain" id="r_84" data-tgt="" onclick=""><span class="n">84</span>    return {&quot;company&quot;: &quot;CBSA Bank&quot;, &quot;sortcode&quot;: SORTCODE}</div>
+<div class="ln plain" id="r_85" data-tgt="" onclick=""><span class="n">85</span>&nbsp;</div>
+<div class="ln plain" id="r_86" data-tgt="" onclick=""><span class="n">86</span>&nbsp;</div>
+<div class="ln plain" id="r_87" data-tgt="" onclick=""><span class="n">87</span># ---- Customer ----</div>
+<div class="ln plain" id="r_88" data-tgt="" onclick=""><span class="n">88</span>def _row_to_customer(r) -&gt; models.CustomerOut:</div>
+<div class="ln plain" id="r_89" data-tgt="" onclick=""><span class="n">89</span>    return models.CustomerOut(</div>
+<div class="ln plain" id="r_90" data-tgt="" onclick=""><span class="n">90</span>        sortcode=r[&quot;sortcode&quot;], number=r[&quot;number&quot;], name=r[&quot;name&quot;],</div>
+<div class="ln plain" id="r_91" data-tgt="" onclick=""><span class="n">91</span>        address=r[&quot;address&quot;], dateOfBirth=r[&quot;date_of_birth&quot;],</div>
+<div class="ln plain" id="r_92" data-tgt="" onclick=""><span class="n">92</span>        creditScore=r[&quot;credit_score&quot;], csReviewDate=r[&quot;cs_review_date&quot;],</div>
+<div class="ln plain" id="r_93" data-tgt="" onclick=""><span class="n">93</span>    )</div>
+<div class="ln plain" id="r_94" data-tgt="" onclick=""><span class="n">94</span>&nbsp;</div>
+<div class="ln plain" id="r_95" data-tgt="" onclick=""><span class="n">95</span>&nbsp;</div>
+<div class="ln plain" id="r_96" data-tgt="" onclick=""><span class="n">96</span>@app.post(&quot;/api/customers&quot;, response_model=models.CustomerOut, status_code=201)</div>
+<div class="ln plain" id="r_97" data-tgt="" onclick=""><span class="n">97</span>async def create_customer(body: models.CustomerCreate):</div>
+<div class="ln plain" id="r_98" data-tgt="" onclick=""><span class="n">98</span>    # 敬称検証（元 CRECUST のチャネル非依存規則）。先頭語が許可リスト外なら弾く。</div>
+<div class="ln plain" id="r_99" data-tgt="" onclick=""><span class="n">99</span>    if not is_valid_title(body.name):</div>
+<div class="ln plain" id="r_100" data-tgt="" onclick=""><span class="n">100</span>        raise unprocessable(&quot;Invalid title in customer name&quot;, fail_code=&quot;T&quot;)</div>
+<div class="ln plain" id="r_101" data-tgt="" onclick=""><span class="n">101</span>    # 生年月日検証（元 CRECUST: 年&lt;1601=&#x27;O&#x27; / 未来日=&#x27;Y&#x27; / 年齢&gt;150=&#x27;O&#x27; / 書式不正=&#x27;Z&#x27;）</div>
+<div class="ln plain" id="r_102" data-tgt="" onclick=""><span class="n">102</span>    err = dob_error(body.dateOfBirth)</div>
+<div class="ln plain" id="r_103" data-tgt="" onclick=""><span class="n">103</span>    if err:</div>
+<div class="ln plain" id="r_104" data-tgt="" onclick=""><span class="n">104</span>        raise unprocessable(err[1], fail_code=err[0])</div>
+<div class="ln plain" id="r_105" data-tgt="" onclick=""><span class="n">105</span>    # 信用調査（元 CRECUST → CRDTAGY1〜5 並行）。トランザクション外で評価。</div>
+<div class="ln plain" id="r_106" data-tgt="" onclick=""><span class="n">106</span>    score = await evaluate_credit_score(body.model_dump())</div>
+<div class="ln plain" id="r_107" data-tgt="" onclick=""><span class="n">107</span>    review = date.today().isoformat()</div>
+<div class="ln plain" id="r_108" data-tgt="" onclick=""><span class="n">108</span>    with db_cursor() as cur:</div>
+<div class="ln plain" id="r_109" data-tgt="" onclick=""><span class="n">109</span>        number = next_customer_number(cur)</div>
+<div class="ln plain" id="r_110" data-tgt="" onclick=""><span class="n">110</span>        cur.execute(</div>
+<div class="ln plain" id="r_111" data-tgt="" onclick=""><span class="n">111</span>            &quot;&quot;&quot;INSERT INTO customers</div>
+<div class="ln plain" id="r_112" data-tgt="" onclick=""><span class="n">112</span>               (sortcode, number, name, address, date_of_birth, credit_score, cs_review_date)</div>
+<div class="ln plain" id="r_113" data-tgt="" onclick=""><span class="n">113</span>               VALUES (?, ?, ?, ?, ?, ?, ?)&quot;&quot;&quot;,</div>
+<div class="ln plain" id="r_114" data-tgt="" onclick=""><span class="n">114</span>            (SORTCODE, number, body.name, body.address, body.dateOfBirth, score, review),</div>
+<div class="ln plain" id="r_115" data-tgt="" onclick=""><span class="n">115</span>        )</div>
+<div class="ln plain" id="r_116" data-tgt="" onclick=""><span class="n">116</span>        _log_proctran(cur, &quot;00000000&quot;, PROC_TYPE[&quot;CREATE_CUSTOMER&quot;], 0,</div>
+<div class="ln plain" id="r_117" data-tgt="" onclick=""><span class="n">117</span>                      f&quot;CRECUS {SORTCODE}{number}&quot;)</div>
+<div class="ln plain" id="r_118" data-tgt="" onclick=""><span class="n">118</span>        row = cur.execute(</div>
+<div class="ln plain" id="r_119" data-tgt="" onclick=""><span class="n">119</span>            &quot;SELECT * FROM customers WHERE sortcode=? AND number=?&quot;, (SORTCODE, number)</div>
+<div class="ln plain" id="r_120" data-tgt="" onclick=""><span class="n">120</span>        ).fetchone()</div>
+<div class="ln plain" id="r_121" data-tgt="" onclick=""><span class="n">121</span>    return _row_to_customer(row)</div>
+<div class="ln plain" id="r_122" data-tgt="" onclick=""><span class="n">122</span>&nbsp;</div>
+<div class="ln plain" id="r_123" data-tgt="" onclick=""><span class="n">123</span>&nbsp;</div>
+<div class="ln plain" id="r_124" data-tgt="" onclick=""><span class="n">124</span>@app.get(&quot;/api/customers/{number}&quot;, response_model=models.CustomerOut)</div>
+<div class="ln plain" id="r_125" data-tgt="" onclick=""><span class="n">125</span>def get_customer(number: str):</div>
+<div class="ln plain" id="r_126" data-tgt="" onclick=""><span class="n">126</span>    with db_cursor() as cur:</div>
+<div class="ln plain" id="r_127" data-tgt="" onclick=""><span class="n">127</span>        row = cur.execute(</div>
+<div class="ln plain" id="r_128" data-tgt="" onclick=""><span class="n">128</span>            &quot;SELECT * FROM customers WHERE sortcode=? AND number=?&quot;, (SORTCODE, number)</div>
+<div class="ln plain" id="r_129" data-tgt="" onclick=""><span class="n">129</span>        ).fetchone()</div>
+<div class="ln plain" id="r_130" data-tgt="" onclick=""><span class="n">130</span>    if row is None:</div>
+<div class="ln plain" id="r_131" data-tgt="" onclick=""><span class="n">131</span>        raise not_found(f&quot;Customer {number} not found&quot;)</div>
+<div class="ln plain" id="r_132" data-tgt="" onclick=""><span class="n">132</span>    return _row_to_customer(row)</div>
+<div class="ln plain" id="r_133" data-tgt="" onclick=""><span class="n">133</span>&nbsp;</div>
+<div class="ln plain" id="r_134" data-tgt="" onclick=""><span class="n">134</span>&nbsp;</div>
+<div class="ln plain" id="r_135" data-tgt="" onclick=""><span class="n">135</span>def _blank(v) -&gt; bool:</div>
+<div class="ln plain" id="r_136" data-tgt="" onclick=""><span class="n">136</span>    return v is None or str(v).strip() == &quot;&quot;</div>
+<div class="ln plain" id="r_137" data-tgt="" onclick=""><span class="n">137</span>&nbsp;</div>
+<div class="ln plain" id="r_138" data-tgt="" onclick=""><span class="n">138</span>&nbsp;</div>
+<div class="ln plain" id="r_139" data-tgt="" onclick=""><span class="n">139</span>@app.put(&quot;/api/customers/{number}&quot;, response_model=models.CustomerOut)</div>
+<div class="ln plain" id="r_140" data-tgt="" onclick=""><span class="n">140</span>def update_customer(number: str, body: models.CustomerUpdate):</div>
+<div class="ln plain" id="r_141" data-tgt="" onclick=""><span class="n">141</span>    # 敬称検証（元 UPDCUST）。更新後の氏名が許可リスト外なら弾く。</div>
+<div class="ln plain" id="r_142" data-tgt="" onclick=""><span class="n">142</span>    if not _blank(body.name) and not is_valid_title(body.name):</div>
+<div class="ln plain" id="r_143" data-tgt="" onclick=""><span class="n">143</span>        raise unprocessable(&quot;Invalid title in customer name&quot;, fail_code=&quot;T&quot;)</div>
+<div class="ln plain" id="r_144" data-tgt="" onclick=""><span class="n">144</span>    # 氏名・住所が両方とも空/空白 → FAIL=&#x27;4&#x27;（元 UPDCUST：空値での上書き破壊を防ぐ）</div>
+<div class="ln plain" id="r_145" data-tgt="" onclick=""><span class="n">145</span>    if _blank(body.name) and _blank(body.address):</div>
+<div class="ln plain" id="r_146" data-tgt="" onclick=""><span class="n">146</span>        raise unprocessable(&quot;Neither name nor address supplied&quot;, fail_code=&quot;4&quot;)</div>
+<div class="ln plain" id="r_147" data-tgt="" onclick=""><span class="n">147</span>    with db_cursor() as cur:</div>
+<div class="ln plain" id="r_148" data-tgt="" onclick=""><span class="n">148</span>        row = cur.execute(</div>
+<div class="ln plain" id="r_149" data-tgt="" onclick=""><span class="n">149</span>            &quot;SELECT * FROM customers WHERE sortcode=? AND number=?&quot;, (SORTCODE, number)</div>
+<div class="ln plain" id="r_150" data-tgt="" onclick=""><span class="n">150</span>        ).fetchone()</div>
+<div class="ln plain" id="r_151" data-tgt="" onclick=""><span class="n">151</span>        if row is None:</div>
+<div class="ln plain" id="r_152" data-tgt="" onclick=""><span class="n">152</span>            raise not_found(f&quot;Customer {number} not found&quot;, fail_code=&quot;1&quot;)</div>
+<div class="ln plain" id="r_153" data-tgt="" onclick=""><span class="n">153</span>        # 空/空白の項目は既存値を保持（原典どおり、空での上書きはしない）</div>
+<div class="ln plain" id="r_154" data-tgt="" onclick=""><span class="n">154</span>        name = body.name if not _blank(body.name) else row[&quot;name&quot;]</div>
+<div class="ln plain" id="r_155" data-tgt="" onclick=""><span class="n">155</span>        address = body.address if not _blank(body.address) else row[&quot;address&quot;]</div>
+<div class="ln plain" id="r_156" data-tgt="" onclick=""><span class="n">156</span>        cur.execute(</div>
+<div class="ln plain" id="r_157" data-tgt="" onclick=""><span class="n">157</span>            &quot;UPDATE customers SET name=?, address=? WHERE sortcode=? AND number=?&quot;,</div>
+<div class="ln plain" id="r_158" data-tgt="" onclick=""><span class="n">158</span>            (name, address, SORTCODE, number),</div>
+<div class="ln plain" id="r_159" data-tgt="" onclick=""><span class="n">159</span>        )</div>
+<div class="ln plain" id="r_160" data-tgt="" onclick=""><span class="n">160</span>        row = cur.execute(</div>
+<div class="ln plain" id="r_161" data-tgt="" onclick=""><span class="n">161</span>            &quot;SELECT * FROM customers WHERE sortcode=? AND number=?&quot;, (SORTCODE, number)</div>
+<div class="ln plain" id="r_162" data-tgt="" onclick=""><span class="n">162</span>        ).fetchone()</div>
+<div class="ln plain" id="r_163" data-tgt="" onclick=""><span class="n">163</span>    return _row_to_customer(row)</div>
+<div class="ln plain" id="r_164" data-tgt="" onclick=""><span class="n">164</span>&nbsp;</div>
+<div class="ln plain" id="r_165" data-tgt="" onclick=""><span class="n">165</span>&nbsp;</div>
+<div class="ln plain" id="r_166" data-tgt="" onclick=""><span class="n">166</span>@app.delete(&quot;/api/customers/{number}&quot;, status_code=204)</div>
+<div class="ln plain" id="r_167" data-tgt="" onclick=""><span class="n">167</span>def delete_customer(number: str):</div>
+<div class="ln plain" id="r_168" data-tgt="" onclick=""><span class="n">168</span>    # 元 DELCUS: 顧客＋関連口座を削除し PROCTRAN に記録（口座は FK CASCADE）。</div>
+<div class="ln plain" id="r_169" data-tgt="" onclick=""><span class="n">169</span>    with db_cursor() as cur:</div>
+<div class="ln plain" id="r_170" data-tgt="" onclick=""><span class="n">170</span>        row = cur.execute(</div>
+<div class="ln plain" id="r_171" data-tgt="" onclick=""><span class="n">171</span>            &quot;SELECT * FROM customers WHERE sortcode=? AND number=?&quot;, (SORTCODE, number)</div>
+<div class="ln plain" id="r_172" data-tgt="" onclick=""><span class="n">172</span>        ).fetchone()</div>
+<div class="ln plain" id="r_173" data-tgt="" onclick=""><span class="n">173</span>        if row is None:</div>
+<div class="ln plain" id="r_174" data-tgt="" onclick=""><span class="n">174</span>            raise not_found(f&quot;Customer {number} not found&quot;)</div>
+<div class="ln plain" id="r_175" data-tgt="" onclick=""><span class="n">175</span>        cur.execute(&quot;DELETE FROM customers WHERE sortcode=? AND number=?&quot;, (SORTCODE, number))</div>
+<div class="ln plain" id="r_176" data-tgt="" onclick=""><span class="n">176</span>        _log_proctran(cur, &quot;00000000&quot;, PROC_TYPE[&quot;DELETE_CUSTOMER&quot;], 0,</div>
+<div class="ln plain" id="r_177" data-tgt="" onclick=""><span class="n">177</span>                      f&quot;DELCUS {SORTCODE}{number}&quot;)</div>
+<div class="ln plain" id="r_178" data-tgt="" onclick=""><span class="n">178</span>&nbsp;</div>
+<div class="ln plain" id="r_179" data-tgt="" onclick=""><span class="n">179</span>&nbsp;</div>
+<div class="ln plain" id="r_180" data-tgt="" onclick=""><span class="n">180</span># ---- Account ----</div>
+<div class="ln plain" id="r_181" data-tgt="" onclick=""><span class="n">181</span>def _row_to_account(r) -&gt; models.AccountOut:</div>
+<div class="ln plain" id="r_182" data-tgt="" onclick=""><span class="n">182</span>    return models.AccountOut(</div>
+<div class="ln plain" id="r_183" data-tgt="" onclick=""><span class="n">183</span>        sortcode=r[&quot;sortcode&quot;], number=r[&quot;number&quot;], customerNumber=r[&quot;customer_number&quot;],</div>
+<div class="ln plain" id="r_184" data-tgt="" onclick=""><span class="n">184</span>        type=r[&quot;type&quot;], interestRate=r[&quot;interest_rate&quot;], overdraftLimit=r[&quot;overdraft_limit&quot;],</div>
+<div class="ln plain" id="r_185" data-tgt="" onclick=""><span class="n">185</span>        opened=r[&quot;opened&quot;], lastStatementDate=r[&quot;last_statement_date&quot;],</div>
+<div class="ln plain" id="r_186" data-tgt="" onclick=""><span class="n">186</span>        nextStatementDate=r[&quot;next_statement_date&quot;],</div>
+<div class="ln plain" id="r_187" data-tgt="" onclick=""><span class="n">187</span>        availableBalance=r[&quot;available_balance&quot;], actualBalance=r[&quot;actual_balance&quot;],</div>
+<div class="ln plain" id="r_188" data-tgt="" onclick=""><span class="n">188</span>    )</div>
+<div class="ln plain" id="r_189" data-tgt="" onclick=""><span class="n">189</span>&nbsp;</div>
+<div class="ln plain" id="r_190" data-tgt="" onclick=""><span class="n">190</span>&nbsp;</div>
+<div class="ln plain" id="r_191" data-tgt="" onclick=""><span class="n">191</span>@app.post(&quot;/api/accounts&quot;, response_model=models.AccountOut, status_code=201)</div>
+<div class="ln plain" id="r_192" data-tgt="" onclick=""><span class="n">192</span>def create_account(body: models.AccountCreate):</div>
+<div class="ln plain" id="r_193" data-tgt="" onclick=""><span class="n">193</span>    # 元 CREACC: 顧客存在チェック(FAIL&#x27;1&#x27;) → 口座種別検証(FAIL&#x27;A&#x27;) → 口座数上限(FAIL&#x27;8&#x27;)</div>
+<div class="ln plain" id="r_194" data-tgt="" onclick=""><span class="n">194</span>    #            → 採番 → ACCOUNT INSERT → PROCTRAN。</div>
+<div class="ln plain" id="r_195" data-tgt="" onclick=""><span class="n">195</span>    # 口座種別検証（元 ACCOUNT-TYPE-CHECK。ISA/MORTGAGE/SAVING/CURRENT/LOAN 以外は弾く）</div>
+<div class="ln plain" id="r_196" data-tgt="" onclick=""><span class="n">196</span>    if not is_valid_account_type(body.type):</div>
+<div class="ln plain" id="r_197" data-tgt="" onclick=""><span class="n">197</span>        raise unprocessable(f&quot;Invalid account type &#x27;{body.type}&#x27;&quot;, fail_code=&quot;A&quot;)</div>
+<div class="ln plain" id="r_198" data-tgt="" onclick=""><span class="n">198</span>    with db_cursor() as cur:</div>
+<div class="ln plain" id="r_199" data-tgt="" onclick=""><span class="n">199</span>        cust = cur.execute(</div>
+<div class="ln plain" id="r_200" data-tgt="" onclick=""><span class="n">200</span>            &quot;SELECT 1 FROM customers WHERE sortcode=? AND number=?&quot;,</div>
+<div class="ln plain" id="r_201" data-tgt="" onclick=""><span class="n">201</span>            (SORTCODE, body.customerNumber),</div>
+<div class="ln plain" id="r_202" data-tgt="" onclick=""><span class="n">202</span>        ).fetchone()</div>
+<div class="ln plain" id="r_203" data-tgt="" onclick=""><span class="n">203</span>        if cust is None:</div>
+<div class="ln plain" id="r_204" data-tgt="" onclick=""><span class="n">204</span>            raise not_found(f&quot;Customer {body.customerNumber} not found&quot;, fail_code=&quot;1&quot;)</div>
+<div class="ln plain" id="r_205" data-tgt="" onclick=""><span class="n">205</span>        # 口座数上限（元 CREACC: NUMBER-OF-ACCOUNTS &gt; 9 で FAIL=&#x27;8&#x27;。1顧客最大10口座）</div>
+<div class="ln plain" id="r_206" data-tgt="" onclick=""><span class="n">206</span>        n_acc = cur.execute(</div>
+<div class="ln plain" id="r_207" data-tgt="" onclick=""><span class="n">207</span>            &quot;SELECT COUNT(*) AS c FROM accounts WHERE sortcode=? AND customer_number=?&quot;,</div>
+<div class="ln plain" id="r_208" data-tgt="" onclick=""><span class="n">208</span>            (SORTCODE, body.customerNumber),</div>
+<div class="ln plain" id="r_209" data-tgt="" onclick=""><span class="n">209</span>        ).fetchone()[&quot;c&quot;]</div>
+<div class="ln plain" id="r_210" data-tgt="" onclick=""><span class="n">210</span>        if n_acc &gt;= MAX_ACCOUNTS_PER_CUSTOMER:</div>
+<div class="ln plain" id="r_211" data-tgt="" onclick=""><span class="n">211</span>            raise conflict(&quot;Customer already has the maximum number of accounts&quot;, fail_code=&quot;8&quot;)</div>
+<div class="ln plain" id="r_212" data-tgt="" onclick=""><span class="n">212</span>        number = next_account_number(cur)</div>
+<div class="ln plain" id="r_213" data-tgt="" onclick=""><span class="n">213</span>        opened = date.today().isoformat()</div>
+<div class="ln plain" id="r_214" data-tgt="" onclick=""><span class="n">214</span>        cur.execute(</div>
+<div class="ln plain" id="r_215" data-tgt="" onclick=""><span class="n">215</span>            &quot;&quot;&quot;INSERT INTO accounts</div>
+<div class="ln plain" id="r_216" data-tgt="" onclick=""><span class="n">216</span>               (sortcode, number, customer_number, type, interest_rate, opened,</div>
+<div class="ln plain" id="r_217" data-tgt="" onclick=""><span class="n">217</span>                overdraft_limit, available_balance, actual_balance)</div>
+<div class="ln plain" id="r_218" data-tgt="" onclick=""><span class="n">218</span>               VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0)&quot;&quot;&quot;,</div>
+<div class="ln plain" id="r_219" data-tgt="" onclick=""><span class="n">219</span>            (SORTCODE, number, body.customerNumber, body.type, body.interestRate,</div>
+<div class="ln plain" id="r_220" data-tgt="" onclick=""><span class="n">220</span>             opened, body.overdraftLimit),</div>
+<div class="ln plain" id="r_221" data-tgt="" onclick=""><span class="n">221</span>        )</div>
+<div class="ln plain" id="r_222" data-tgt="" onclick=""><span class="n">222</span>        _log_proctran(cur, number, PROC_TYPE[&quot;CREATE_ACCOUNT&quot;], 0,</div>
+<div class="ln plain" id="r_223" data-tgt="" onclick=""><span class="n">223</span>                      f&quot;CREACC {body.customerNumber}{body.type}&quot;)</div>
+<div class="ln plain" id="r_224" data-tgt="" onclick=""><span class="n">224</span>        row = cur.execute(</div>
+<div class="ln plain" id="r_225" data-tgt="" onclick=""><span class="n">225</span>            &quot;SELECT * FROM accounts WHERE sortcode=? AND number=?&quot;, (SORTCODE, number)</div>
+<div class="ln plain" id="r_226" data-tgt="" onclick=""><span class="n">226</span>        ).fetchone()</div>
+<div class="ln plain" id="r_227" data-tgt="" onclick=""><span class="n">227</span>    return _row_to_account(row)</div>
+<div class="ln plain" id="r_228" data-tgt="" onclick=""><span class="n">228</span>&nbsp;</div>
+<div class="ln plain" id="r_229" data-tgt="" onclick=""><span class="n">229</span>&nbsp;</div>
+<div class="ln plain" id="r_230" data-tgt="" onclick=""><span class="n">230</span>@app.get(&quot;/api/accounts/{number}&quot;, response_model=models.AccountOut)</div>
+<div class="ln plain" id="r_231" data-tgt="" onclick=""><span class="n">231</span>def get_account(number: str):</div>
+<div class="ln plain" id="r_232" data-tgt="" onclick=""><span class="n">232</span>    with db_cursor() as cur:</div>
+<div class="ln plain" id="r_233" data-tgt="" onclick=""><span class="n">233</span>        row = cur.execute(</div>
+<div class="ln plain" id="r_234" data-tgt="" onclick=""><span class="n">234</span>            &quot;SELECT * FROM accounts WHERE sortcode=? AND number=?&quot;, (SORTCODE, number)</div>
+<div class="ln plain" id="r_235" data-tgt="" onclick=""><span class="n">235</span>        ).fetchone()</div>
+<div class="ln plain" id="r_236" data-tgt="" onclick=""><span class="n">236</span>    if row is None:</div>
+<div class="ln plain" id="r_237" data-tgt="" onclick=""><span class="n">237</span>        raise not_found(f&quot;Account {number} not found&quot;)</div>
+<div class="ln plain" id="r_238" data-tgt="" onclick=""><span class="n">238</span>    return _row_to_account(row)</div>
+<div class="ln plain" id="r_239" data-tgt="" onclick=""><span class="n">239</span>&nbsp;</div>
+<div class="ln plain" id="r_240" data-tgt="" onclick=""><span class="n">240</span>&nbsp;</div>
+<div class="ln rmapped" id="r_241" data-tgt="l_ua_157 l_ua_158 l_ua_159 l_ua_160 l_ua_161 l_ua_162 l_ua_163 l_ua_164 l_ua_165 l_ua_166 l_ua_167 l_ua_168 l_ua_169 l_ua_170 l_ua_171 l_ua_172 l_ua_173 l_ua_174 l_ua_381 l_ua_382 l_ua_383 l_ua_384 l_ua_385 l_ua_386 l_ua_387 l_ua_388" onclick="lineClick(this)"><span class="n">241</span>@app.put(&quot;/api/accounts/{number}&quot;, response_model=models.AccountOut)</div>
+<div class="ln rmapped" id="r_242" data-tgt="l_ua_153 l_ua_154 l_ua_155 l_ua_156 l_ua_157 l_ua_158 l_ua_159 l_ua_160 l_ua_161 l_ua_162 l_ua_163 l_ua_164 l_ua_165 l_ua_166 l_ua_167 l_ua_168 l_ua_169 l_ua_170 l_ua_171 l_ua_172 l_ua_173 l_ua_174" onclick="lineClick(this)"><span class="n">242</span>def update_account(number: str, body: models.AccountUpdate):</div>
+<div class="ln rmapped" id="r_243" data-tgt="l_ua_235 l_ua_236 l_ua_237 l_ua_238 l_ua_239 l_ua_240 l_ua_241 l_ua_242 l_ua_243 l_ua_244 l_ua_245 l_ua_246 l_ua_247 l_ua_248 l_ua_249 l_ua_250 l_ua_251 l_ua_252 l_ua_253 l_ua_254 l_ua_255 l_ua_256 l_ua_257 l_ua_258 l_ua_259 l_ua_260 l_ua_261 l_ua_262 l_ua_263 l_ua_264 l_ua_265 l_ua_266" onclick="lineClick(this)"><span class="n">243</span>    # 元 UPDACC: 種別・利率・当座貸越のみ更新（残高は入出金経由）。PROCTRAN は書かない。</div>
+<div class="ln rmapped" id="r_244" data-tgt="l_ua_235 l_ua_236 l_ua_237 l_ua_238 l_ua_239 l_ua_240 l_ua_241 l_ua_242 l_ua_243 l_ua_244 l_ua_245 l_ua_246 l_ua_247 l_ua_248 l_ua_249 l_ua_250 l_ua_251 l_ua_252 l_ua_253 l_ua_254 l_ua_255 l_ua_256 l_ua_257 l_ua_258 l_ua_259 l_ua_260 l_ua_261 l_ua_262 l_ua_263 l_ua_264 l_ua_265 l_ua_266" onclick="lineClick(this)"><span class="n">244</span>    # 種別が空/空白での更新は拒否（元 UPDACC: COMM-ACC-TYPE 空白 → SUCCESS=&#x27;N&#x27;。</div>
+<div class="ln rmapped" id="r_245" data-tgt="l_ua_235 l_ua_236 l_ua_237 l_ua_238 l_ua_239 l_ua_240 l_ua_241 l_ua_242 l_ua_243 l_ua_244 l_ua_245 l_ua_246 l_ua_247 l_ua_248 l_ua_249 l_ua_250 l_ua_251 l_ua_252 l_ua_253 l_ua_254 l_ua_255 l_ua_256 l_ua_257 l_ua_258 l_ua_259 l_ua_260 l_ua_261 l_ua_262 l_ua_263 l_ua_264 l_ua_265 l_ua_266" onclick="lineClick(this)"><span class="n">245</span>    # 空での上書き破壊を防ぐ。利率/当座貸越は 0 でも可）。None は PATCH＝据え置き。</div>
+<div class="ln rmapped" id="r_246" data-tgt="l_ua_267 l_ua_268 l_ua_269 l_ua_270 l_ua_271 l_ua_272" onclick="lineClick(this)"><span class="n">246</span>    if body.type is not None and _blank(body.type):</div>
+<div class="ln rmapped" id="r_247" data-tgt="l_ua_267 l_ua_268 l_ua_269 l_ua_270 l_ua_271 l_ua_272" onclick="lineClick(this)"><span class="n">247</span>        raise unprocessable(&quot;Account type must not be blank&quot;, fail_code=&quot;N&quot;)</div>
+<div class="ln rmapped" id="r_248" data-tgt="l_ua_187 l_ua_188 l_ua_189 l_ua_190 l_ua_191 l_ua_192 l_ua_193 l_ua_194 l_ua_195 l_ua_196 l_ua_197 l_ua_198 l_ua_199 l_ua_200 l_ua_201 l_ua_202 l_ua_203 l_ua_204 l_ua_205 l_ua_206 l_ua_207 l_ua_208 l_ua_209 l_ua_210 l_ua_211 l_ua_212 l_ua_213 l_ua_214 l_ua_215 l_ua_216 l_ua_217 l_ua_218 l_ua_219" onclick="lineClick(this)"><span class="n">248</span>    with db_cursor() as cur:</div>
+<div class="ln rmapped" id="r_249" data-tgt="l_ua_187 l_ua_188 l_ua_189 l_ua_190 l_ua_191 l_ua_192 l_ua_193 l_ua_194 l_ua_195 l_ua_196 l_ua_197 l_ua_198 l_ua_199 l_ua_200 l_ua_201 l_ua_202 l_ua_203 l_ua_204 l_ua_205 l_ua_206 l_ua_207 l_ua_208 l_ua_209 l_ua_210 l_ua_211 l_ua_212 l_ua_213 l_ua_214 l_ua_215 l_ua_216 l_ua_217 l_ua_218 l_ua_219" onclick="lineClick(this)"><span class="n">249</span>        row = cur.execute(</div>
+<div class="ln rmapped" id="r_250" data-tgt="l_ua_187 l_ua_188 l_ua_189 l_ua_190 l_ua_191 l_ua_192 l_ua_193 l_ua_194 l_ua_195 l_ua_196 l_ua_197 l_ua_198 l_ua_199 l_ua_200 l_ua_201 l_ua_202 l_ua_203 l_ua_204 l_ua_205 l_ua_206 l_ua_207 l_ua_208 l_ua_209 l_ua_210 l_ua_211 l_ua_212 l_ua_213 l_ua_214 l_ua_215 l_ua_216 l_ua_217 l_ua_218 l_ua_219" onclick="lineClick(this)"><span class="n">250</span>            &quot;SELECT * FROM accounts WHERE sortcode=? AND number=?&quot;, (SORTCODE, number)</div>
+<div class="ln rmapped" id="r_251" data-tgt="l_ua_187 l_ua_188 l_ua_189 l_ua_190 l_ua_191 l_ua_192 l_ua_193 l_ua_194 l_ua_195 l_ua_196 l_ua_197 l_ua_198 l_ua_199 l_ua_200 l_ua_201 l_ua_202 l_ua_203 l_ua_204 l_ua_205 l_ua_206 l_ua_207 l_ua_208 l_ua_209 l_ua_210 l_ua_211 l_ua_212 l_ua_213 l_ua_214 l_ua_215 l_ua_216 l_ua_217 l_ua_218 l_ua_219" onclick="lineClick(this)"><span class="n">251</span>        ).fetchone()</div>
+<div class="ln rmapped" id="r_252" data-tgt="l_ua_225 l_ua_226 l_ua_227 l_ua_228 l_ua_229 l_ua_230 l_ua_231 l_ua_232 l_ua_233" onclick="lineClick(this)"><span class="n">252</span>        if row is None:</div>
+<div class="ln rmapped" id="r_253" data-tgt="l_ua_225 l_ua_226 l_ua_227 l_ua_228 l_ua_229 l_ua_230 l_ua_231 l_ua_232 l_ua_233" onclick="lineClick(this)"><span class="n">253</span>            raise not_found(f&quot;Account {number} not found&quot;)</div>
+<div class="ln rmapped" id="r_254" data-tgt="l_ua_274 l_ua_275 l_ua_276 l_ua_277 l_ua_278 l_ua_279 l_ua_280 l_ua_281 l_ua_282 l_ua_283 l_ua_284 l_ua_285" onclick="lineClick(this)"><span class="n">254</span>        type_ = body.type if body.type is not None else row[&quot;type&quot;]</div>
+<div class="ln rmapped" id="r_255" data-tgt="l_ua_274 l_ua_275 l_ua_276 l_ua_277 l_ua_278 l_ua_279 l_ua_280 l_ua_281 l_ua_282 l_ua_283 l_ua_284 l_ua_285" onclick="lineClick(this)"><span class="n">255</span>        rate = body.interestRate if body.interestRate is not None else row[&quot;interest_rate&quot;]</div>
+<div class="ln rmapped" id="r_256" data-tgt="l_ua_274 l_ua_275 l_ua_276 l_ua_277 l_ua_278 l_ua_279 l_ua_280 l_ua_281 l_ua_282 l_ua_283 l_ua_284 l_ua_285" onclick="lineClick(this)"><span class="n">256</span>        over = body.overdraftLimit if body.overdraftLimit is not None else row[&quot;overdraft_limit&quot;]</div>
+<div class="ln rmapped" id="r_257" data-tgt="l_ua_274 l_ua_275 l_ua_276 l_ua_277 l_ua_278 l_ua_279 l_ua_280 l_ua_281 l_ua_282 l_ua_283 l_ua_284 l_ua_285" onclick="lineClick(this)"><span class="n">257</span>        cur.execute(</div>
+<div class="ln rmapped" id="r_258" data-tgt="l_ua_274 l_ua_275 l_ua_276 l_ua_277 l_ua_278 l_ua_279 l_ua_280 l_ua_281 l_ua_282 l_ua_283 l_ua_284 l_ua_285" onclick="lineClick(this)"><span class="n">258</span>            &quot;UPDATE accounts SET type=?, interest_rate=?, overdraft_limit=? &quot;</div>
+<div class="ln rmapped" id="r_259" data-tgt="l_ua_274 l_ua_275 l_ua_276 l_ua_277 l_ua_278 l_ua_279 l_ua_280 l_ua_281 l_ua_282 l_ua_283 l_ua_284 l_ua_285" onclick="lineClick(this)"><span class="n">259</span>            &quot;WHERE sortcode=? AND number=?&quot;,</div>
+<div class="ln rmapped" id="r_260" data-tgt="l_ua_274 l_ua_275 l_ua_276 l_ua_277 l_ua_278 l_ua_279 l_ua_280 l_ua_281 l_ua_282 l_ua_283 l_ua_284 l_ua_285" onclick="lineClick(this)"><span class="n">260</span>            (type_, rate, over, SORTCODE, number),</div>
+<div class="ln rmapped" id="r_261" data-tgt="l_ua_274 l_ua_275 l_ua_276 l_ua_277 l_ua_278 l_ua_279 l_ua_280 l_ua_281 l_ua_282 l_ua_283 l_ua_284 l_ua_285" onclick="lineClick(this)"><span class="n">261</span>        )</div>
+<div class="ln rmapped" id="r_262" data-tgt="l_ua_298 l_ua_299 l_ua_300 l_ua_301 l_ua_302 l_ua_303 l_ua_304 l_ua_305 l_ua_306 l_ua_307 l_ua_308 l_ua_309 l_ua_310 l_ua_311 l_ua_312 l_ua_313 l_ua_314 l_ua_315 l_ua_316 l_ua_317 l_ua_318 l_ua_319 l_ua_320 l_ua_321 l_ua_322 l_ua_323 l_ua_324 l_ua_325 l_ua_326 l_ua_327" onclick="lineClick(this)"><span class="n">262</span>        row = cur.execute(</div>
+<div class="ln rmapped" id="r_263" data-tgt="l_ua_298 l_ua_299 l_ua_300 l_ua_301 l_ua_302 l_ua_303 l_ua_304 l_ua_305 l_ua_306 l_ua_307 l_ua_308 l_ua_309 l_ua_310 l_ua_311 l_ua_312 l_ua_313 l_ua_314 l_ua_315 l_ua_316 l_ua_317 l_ua_318 l_ua_319 l_ua_320 l_ua_321 l_ua_322 l_ua_323 l_ua_324 l_ua_325 l_ua_326 l_ua_327" onclick="lineClick(this)"><span class="n">263</span>            &quot;SELECT * FROM accounts WHERE sortcode=? AND number=?&quot;, (SORTCODE, number)</div>
+<div class="ln rmapped" id="r_264" data-tgt="l_ua_298 l_ua_299 l_ua_300 l_ua_301 l_ua_302 l_ua_303 l_ua_304 l_ua_305 l_ua_306 l_ua_307 l_ua_308 l_ua_309 l_ua_310 l_ua_311 l_ua_312 l_ua_313 l_ua_314 l_ua_315 l_ua_316 l_ua_317 l_ua_318 l_ua_319 l_ua_320 l_ua_321 l_ua_322 l_ua_323 l_ua_324 l_ua_325 l_ua_326 l_ua_327" onclick="lineClick(this)"><span class="n">264</span>        ).fetchone()</div>
+<div class="ln rmapped" id="r_265" data-tgt="l_ua_298 l_ua_299 l_ua_300 l_ua_301 l_ua_302 l_ua_303 l_ua_304 l_ua_305 l_ua_306 l_ua_307 l_ua_308 l_ua_309 l_ua_310 l_ua_311 l_ua_312 l_ua_313 l_ua_314 l_ua_315 l_ua_316 l_ua_317 l_ua_318 l_ua_319 l_ua_320 l_ua_321 l_ua_322 l_ua_323 l_ua_324 l_ua_325 l_ua_326 l_ua_327" onclick="lineClick(this)"><span class="n">265</span>    return _row_to_account(row)</div>
+<div class="ln plain" id="r_266" data-tgt="" onclick=""><span class="n">266</span>&nbsp;</div>
+<div class="ln plain" id="r_267" data-tgt="" onclick=""><span class="n">267</span>&nbsp;</div>
+<div class="ln plain" id="r_268" data-tgt="" onclick=""><span class="n">268</span>@app.get(&quot;/api/customers/{number}/accounts&quot;, response_model=list[models.AccountOut])</div>
+<div class="ln plain" id="r_269" data-tgt="" onclick=""><span class="n">269</span>def list_customer_accounts(number: str):</div>
+<div class="ln plain" id="r_270" data-tgt="" onclick=""><span class="n">270</span>    # 元 INQACCCU: 顧客の口座一覧。</div>
+<div class="ln plain" id="r_271" data-tgt="" onclick=""><span class="n">271</span>    with db_cursor() as cur:</div>
+<div class="ln plain" id="r_272" data-tgt="" onclick=""><span class="n">272</span>        rows = cur.execute(</div>
+<div class="ln plain" id="r_273" data-tgt="" onclick=""><span class="n">273</span>            &quot;SELECT * FROM accounts WHERE sortcode=? AND customer_number=? ORDER BY number&quot;,</div>
+<div class="ln plain" id="r_274" data-tgt="" onclick=""><span class="n">274</span>            (SORTCODE, number),</div>
+<div class="ln plain" id="r_275" data-tgt="" onclick=""><span class="n">275</span>        ).fetchall()</div>
+<div class="ln plain" id="r_276" data-tgt="" onclick=""><span class="n">276</span>    return [_row_to_account(r) for r in rows]</div>
+<div class="ln plain" id="r_277" data-tgt="" onclick=""><span class="n">277</span>&nbsp;</div>
+<div class="ln plain" id="r_278" data-tgt="" onclick=""><span class="n">278</span>&nbsp;</div>
+<div class="ln plain" id="r_279" data-tgt="" onclick=""><span class="n">279</span>@app.delete(&quot;/api/accounts/{number}&quot;, status_code=204)</div>
+<div class="ln plain" id="r_280" data-tgt="" onclick=""><span class="n">280</span>def delete_account(number: str):</div>
+<div class="ln plain" id="r_281" data-tgt="" onclick=""><span class="n">281</span>    with db_cursor() as cur:</div>
+<div class="ln plain" id="r_282" data-tgt="" onclick=""><span class="n">282</span>        row = cur.execute(</div>
+<div class="ln plain" id="r_283" data-tgt="" onclick=""><span class="n">283</span>            &quot;SELECT * FROM accounts WHERE sortcode=? AND number=?&quot;, (SORTCODE, number)</div>
+<div class="ln plain" id="r_284" data-tgt="" onclick=""><span class="n">284</span>        ).fetchone()</div>
+<div class="ln plain" id="r_285" data-tgt="" onclick=""><span class="n">285</span>        if row is None:</div>
+<div class="ln plain" id="r_286" data-tgt="" onclick=""><span class="n">286</span>            raise not_found(f&quot;Account {number} not found&quot;)</div>
+<div class="ln plain" id="r_287" data-tgt="" onclick=""><span class="n">287</span>        cur.execute(&quot;DELETE FROM accounts WHERE sortcode=? AND number=?&quot;, (SORTCODE, number))</div>
+<div class="ln plain" id="r_288" data-tgt="" onclick=""><span class="n">288</span>        _log_proctran(cur, number, PROC_TYPE[&quot;DELETE_ACCOUNT&quot;], 0,</div>
+<div class="ln plain" id="r_289" data-tgt="" onclick=""><span class="n">289</span>                      f&quot;DELACC {row[&#x27;customer_number&#x27;]}{row[&#x27;type&#x27;]}&quot;)</div>
+<div class="ln plain" id="r_290" data-tgt="" onclick=""><span class="n">290</span>&nbsp;</div>
+<div class="ln plain" id="r_291" data-tgt="" onclick=""><span class="n">291</span>&nbsp;</div>
+<div class="ln plain" id="r_292" data-tgt="" onclick=""><span class="n">292</span># ---- 取引（入出金 / 振替） ----</div>
+<div class="ln plain" id="r_293" data-tgt="" onclick=""><span class="n">293</span>@app.post(&quot;/api/accounts/{number}/debit-credit&quot;, response_model=models.AccountOut)</div>
+<div class="ln plain" id="r_294" data-tgt="" onclick=""><span class="n">294</span>def debit_credit(number: str, body: models.DebitCreditRequest):</div>
+<div class="ln plain" id="r_295" data-tgt="" onclick=""><span class="n">295</span>    # 元 DBCRFUN（緑画面 BNK1CRA = 窓口チャネル）。type=DEB/CRE は原典どおり。</div>
+<div class="ln plain" id="r_296" data-tgt="" onclick=""><span class="n">296</span>    # ★実用上の意図的追加（原典の窓口にはチェック無し）：当座貸越限度を超える出金を拒否。</div>
+<div class="ln plain" id="r_297" data-tgt="" onclick=""><span class="n">297</span>    #   理由＝無制限のマイナス残高を防ぐ残高保護。原典機能の欠落ではなく安全側の機能追加。</div>
+<div class="ln plain" id="r_298" data-tgt="" onclick=""><span class="n">298</span>    #   詳細は CBSA_MAPPING_AND_DIFFERENCES.md に明記。</div>
+<div class="ln plain" id="r_299" data-tgt="" onclick=""><span class="n">299</span>    with db_cursor() as cur:</div>
+<div class="ln plain" id="r_300" data-tgt="" onclick=""><span class="n">300</span>        row = cur.execute(</div>
+<div class="ln plain" id="r_301" data-tgt="" onclick=""><span class="n">301</span>            &quot;SELECT * FROM accounts WHERE sortcode=? AND number=?&quot;, (SORTCODE, number)</div>
+<div class="ln plain" id="r_302" data-tgt="" onclick=""><span class="n">302</span>        ).fetchone()</div>
+<div class="ln plain" id="r_303" data-tgt="" onclick=""><span class="n">303</span>        if row is None:</div>
+<div class="ln plain" id="r_304" data-tgt="" onclick=""><span class="n">304</span>            raise not_found(f&quot;Account {number} not found&quot;)</div>
+<div class="ln plain" id="r_305" data-tgt="" onclick=""><span class="n">305</span>        new_actual = row[&quot;actual_balance&quot;] + body.amount</div>
+<div class="ln plain" id="r_306" data-tgt="" onclick=""><span class="n">306</span>        new_avail = row[&quot;available_balance&quot;] + body.amount</div>
+<div class="ln plain" id="r_307" data-tgt="" onclick=""><span class="n">307</span>        if new_avail &lt; -row[&quot;overdraft_limit&quot;]:   # 意図的追加（残高保護）</div>
+<div class="ln plain" id="r_308" data-tgt="" onclick=""><span class="n">308</span>            raise conflict(&quot;Insufficient funds (overdraft limit exceeded)&quot;, fail_code=&quot;3&quot;)</div>
+<div class="ln plain" id="r_309" data-tgt="" onclick=""><span class="n">309</span>        cur.execute(</div>
+<div class="ln plain" id="r_310" data-tgt="" onclick=""><span class="n">310</span>            &quot;UPDATE accounts SET actual_balance=?, available_balance=? WHERE sortcode=? AND number=?&quot;,</div>
+<div class="ln plain" id="r_311" data-tgt="" onclick=""><span class="n">311</span>            (new_actual, new_avail, SORTCODE, number),</div>
+<div class="ln plain" id="r_312" data-tgt="" onclick=""><span class="n">312</span>        )</div>
+<div class="ln plain" id="r_313" data-tgt="" onclick=""><span class="n">313</span>        ttype = PROC_TYPE[&quot;CREDIT&quot;] if body.amount &gt;= 0 else PROC_TYPE[&quot;DEBIT&quot;]</div>
+<div class="ln plain" id="r_314" data-tgt="" onclick=""><span class="n">314</span>        _log_proctran(cur, number, ttype, body.amount, &quot;&quot;)</div>
+<div class="ln plain" id="r_315" data-tgt="" onclick=""><span class="n">315</span>        row = cur.execute(</div>
+<div class="ln plain" id="r_316" data-tgt="" onclick=""><span class="n">316</span>            &quot;SELECT * FROM accounts WHERE sortcode=? AND number=?&quot;, (SORTCODE, number)</div>
+<div class="ln plain" id="r_317" data-tgt="" onclick=""><span class="n">317</span>        ).fetchone()</div>
+<div class="ln plain" id="r_318" data-tgt="" onclick=""><span class="n">318</span>    return _row_to_account(row)</div>
+<div class="ln plain" id="r_319" data-tgt="" onclick=""><span class="n">319</span>&nbsp;</div>
+<div class="ln plain" id="r_320" data-tgt="" onclick=""><span class="n">320</span>&nbsp;</div>
+<div class="ln plain" id="r_321" data-tgt="" onclick=""><span class="n">321</span>@app.post(&quot;/api/accounts/{number}/transfer&quot;)</div>
+<div class="ln plain" id="r_322" data-tgt="" onclick=""><span class="n">322</span>def transfer(number: str, body: models.TransferRequest):</div>
+<div class="ln plain" id="r_323" data-tgt="" onclick=""><span class="n">323</span>    # 元 XFRFUN。2 口座の残高更新 + PROCTRAN を 1 トランザクション（type=TFR）。</div>
+<div class="ln plain" id="r_324" data-tgt="" onclick=""><span class="n">324</span>    # ★実用上の意図的追加（いずれも原典機能の欠落ではない）：</div>
+<div class="ln plain" id="r_325" data-tgt="" onclick=""><span class="n">325</span>    #   (1) 当座貸越限度を超える送金を拒否＝残高保護。</div>
+<div class="ln plain" id="r_326" data-tgt="" onclick=""><span class="n">326</span>    #   (2) PROCTRAN を送金元(原典どおり)＋受取側にも 1 行ずつ＝各口座の明細に振替が載る。</div>
+<div class="ln plain" id="r_327" data-tgt="" onclick=""><span class="n">327</span>    #   理由は CBSA_MAPPING_AND_DIFFERENCES.md に明記。</div>
+<div class="ln plain" id="r_328" data-tgt="" onclick=""><span class="n">328</span>    if body.amount &lt;= 0:</div>
+<div class="ln plain" id="r_329" data-tgt="" onclick=""><span class="n">329</span>        raise unprocessable(&quot;Transfer amount must be positive&quot;, fail_code=&quot;4&quot;)</div>
+<div class="ln plain" id="r_330" data-tgt="" onclick=""><span class="n">330</span>    # 同一口座への自己振替は拒否（元 XFRFUN: COMM-FACCNO=COMM-TACCNO → ABEND &#x27;SAME&#x27;）。</div>
+<div class="ln plain" id="r_331" data-tgt="" onclick=""><span class="n">331</span>    if str(number).zfill(8) == str(body.targetAccount).zfill(8):</div>
+<div class="ln plain" id="r_332" data-tgt="" onclick=""><span class="n">332</span>        raise unprocessable(&quot;Cannot transfer to the same account&quot;, fail_code=&quot;SAME&quot;)</div>
+<div class="ln plain" id="r_333" data-tgt="" onclick=""><span class="n">333</span>    with db_cursor() as cur:</div>
+<div class="ln plain" id="r_334" data-tgt="" onclick=""><span class="n">334</span>        src = cur.execute(</div>
+<div class="ln plain" id="r_335" data-tgt="" onclick=""><span class="n">335</span>            &quot;SELECT * FROM accounts WHERE sortcode=? AND number=?&quot;, (SORTCODE, number)</div>
+<div class="ln plain" id="r_336" data-tgt="" onclick=""><span class="n">336</span>        ).fetchone()</div>
+<div class="ln plain" id="r_337" data-tgt="" onclick=""><span class="n">337</span>        if src is None:</div>
+<div class="ln plain" id="r_338" data-tgt="" onclick=""><span class="n">338</span>            raise not_found(f&quot;Source account {number} not found&quot;, fail_code=&quot;1&quot;)</div>
+<div class="ln plain" id="r_339" data-tgt="" onclick=""><span class="n">339</span>        dst = cur.execute(</div>
+<div class="ln plain" id="r_340" data-tgt="" onclick=""><span class="n">340</span>            &quot;SELECT * FROM accounts WHERE sortcode=? AND number=?&quot;, (SORTCODE, body.targetAccount)</div>
+<div class="ln plain" id="r_341" data-tgt="" onclick=""><span class="n">341</span>        ).fetchone()</div>
+<div class="ln plain" id="r_342" data-tgt="" onclick=""><span class="n">342</span>        if dst is None:</div>
+<div class="ln plain" id="r_343" data-tgt="" onclick=""><span class="n">343</span>            raise not_found(f&quot;Target account {body.targetAccount} not found&quot;, fail_code=&quot;2&quot;)</div>
+<div class="ln plain" id="r_344" data-tgt="" onclick=""><span class="n">344</span>        if src[&quot;available_balance&quot;] - body.amount &lt; -src[&quot;overdraft_limit&quot;]:  # 意図的追加(残高保護)</div>
+<div class="ln plain" id="r_345" data-tgt="" onclick=""><span class="n">345</span>            raise conflict(&quot;Insufficient funds (overdraft limit exceeded)&quot;, fail_code=&quot;3&quot;)</div>
+<div class="ln plain" id="r_346" data-tgt="" onclick=""><span class="n">346</span>        cur.execute(</div>
+<div class="ln plain" id="r_347" data-tgt="" onclick=""><span class="n">347</span>            &quot;UPDATE accounts SET actual_balance=actual_balance-?, available_balance=available_balance-? &quot;</div>
+<div class="ln plain" id="r_348" data-tgt="" onclick=""><span class="n">348</span>            &quot;WHERE sortcode=? AND number=?&quot;,</div>
+<div class="ln plain" id="r_349" data-tgt="" onclick=""><span class="n">349</span>            (body.amount, body.amount, SORTCODE, number),</div>
+<div class="ln plain" id="r_350" data-tgt="" onclick=""><span class="n">350</span>        )</div>
+<div class="ln plain" id="r_351" data-tgt="" onclick=""><span class="n">351</span>        cur.execute(</div>
+<div class="ln plain" id="r_352" data-tgt="" onclick=""><span class="n">352</span>            &quot;UPDATE accounts SET actual_balance=actual_balance+?, available_balance=available_balance+? &quot;</div>
+<div class="ln plain" id="r_353" data-tgt="" onclick=""><span class="n">353</span>            &quot;WHERE sortcode=? AND number=?&quot;,</div>
+<div class="ln plain" id="r_354" data-tgt="" onclick=""><span class="n">354</span>            (body.amount, body.amount, SORTCODE, body.targetAccount),</div>
+<div class="ln plain" id="r_355" data-tgt="" onclick=""><span class="n">355</span>        )</div>
+<div class="ln plain" id="r_356" data-tgt="" onclick=""><span class="n">356</span>        # 送金元行（原典 XFRFUN どおり：金額正・相手先を desc に）</div>
+<div class="ln plain" id="r_357" data-tgt="" onclick=""><span class="n">357</span>        _log_proctran(cur, number, PROC_TYPE[&quot;TRANSFER&quot;], body.amount,</div>
+<div class="ln plain" id="r_358" data-tgt="" onclick=""><span class="n">358</span>                      f&quot;TRANSFER{SORTCODE}{body.targetAccount}&quot;)</div>
+<div class="ln plain" id="r_359" data-tgt="" onclick=""><span class="n">359</span>        # 受取側行（意図的追加：受取口座の明細にも振替を残す）</div>
+<div class="ln plain" id="r_360" data-tgt="" onclick=""><span class="n">360</span>        _log_proctran(cur, body.targetAccount, PROC_TYPE[&quot;TRANSFER&quot;], body.amount,</div>
+<div class="ln plain" id="r_361" data-tgt="" onclick=""><span class="n">361</span>                      f&quot;TRANSFER{SORTCODE}{number}&quot;)</div>
+<div class="ln plain" id="r_362" data-tgt="" onclick=""><span class="n">362</span>    return {&quot;success&quot;: &quot;Y&quot;, &quot;from&quot;: number, &quot;to&quot;: body.targetAccount, &quot;amount&quot;: body.amount}</div>
+<div class="ln plain" id="r_363" data-tgt="" onclick=""><span class="n">363</span>&nbsp;</div>
+<div class="ln plain" id="r_364" data-tgt="" onclick=""><span class="n">364</span>&nbsp;</div>
+<div class="ln plain" id="r_365" data-tgt="" onclick=""><span class="n">365</span>@app.get(&quot;/api/accounts/{number}/transactions&quot;, response_model=list[models.ProcTranOut])</div>
+<div class="ln plain" id="r_366" data-tgt="" onclick=""><span class="n">366</span>def account_transactions(number: str):</div>
+<div class="ln plain" id="r_367" data-tgt="" onclick=""><span class="n">367</span>    with db_cursor() as cur:</div>
+<div class="ln plain" id="r_368" data-tgt="" onclick=""><span class="n">368</span>        rows = cur.execute(</div>
+<div class="ln plain" id="r_369" data-tgt="" onclick=""><span class="n">369</span>            &quot;SELECT * FROM proctran WHERE sortcode=? AND number=? AND logically_deleted=0 &quot;</div>
+<div class="ln plain" id="r_370" data-tgt="" onclick=""><span class="n">370</span>            &quot;ORDER BY id DESC&quot;,</div>
+<div class="ln plain" id="r_371" data-tgt="" onclick=""><span class="n">371</span>            (SORTCODE, number),</div>
+<div class="ln plain" id="r_372" data-tgt="" onclick=""><span class="n">372</span>        ).fetchall()</div>
+<div class="ln plain" id="r_373" data-tgt="" onclick=""><span class="n">373</span>    return [</div>
+<div class="ln plain" id="r_374" data-tgt="" onclick=""><span class="n">374</span>        models.ProcTranOut(</div>
+<div class="ln plain" id="r_375" data-tgt="" onclick=""><span class="n">375</span>            id=r[&quot;id&quot;], sortcode=r[&quot;sortcode&quot;], number=r[&quot;number&quot;], date=r[&quot;date&quot;],</div>
+<div class="ln plain" id="r_376" data-tgt="" onclick=""><span class="n">376</span>            time=r[&quot;time&quot;], ref=r[&quot;ref&quot;], type=r[&quot;type&quot;], description=r[&quot;description&quot;],</div>
+<div class="ln plain" id="r_377" data-tgt="" onclick=""><span class="n">377</span>            amount=r[&quot;amount&quot;],</div>
+<div class="ln plain" id="r_378" data-tgt="" onclick=""><span class="n">378</span>        )</div>
+<div class="ln plain" id="r_379" data-tgt="" onclick=""><span class="n">379</span>        for r in rows</div>
+<div class="ln plain" id="r_380" data-tgt="" onclick=""><span class="n">380</span>    ]</div></div>
+</div>
+<script>
+function clearHl(){document.querySelectorAll('.hl').forEach(e=>e.classList.remove('hl'))}
+function lineClick(el){
+  clearHl(); el.classList.add('hl');
+  var note = el.getAttribute('data-note');
+  document.getElementById('note').textContent = note || '対応行をハイライトしました。';
+  var tgts = (el.getAttribute('data-tgt')||'').split(' ').filter(Boolean);
+  var first=null;
+  tgts.forEach(function(id){var t=document.getElementById(id); if(t){t.classList.add('hl'); if(!first)first=t;}});
+  if(first) first.scrollIntoView({block:'center',behavior:'smooth'});
+}
+</script></body></html>
