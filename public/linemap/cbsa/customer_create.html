@@ -1919,4 +1919,13 @@ function lineClick(el){
   tgts.forEach(function(id){var t=document.getElementById(id); if(t){t.classList.add('hl'); if(!first)first=t;}});
   if(first) first.scrollIntoView({block:'center',behavior:'smooth'});
 }
+function focusHash(){
+  var h=(location.hash||'').replace('#',''); if(!h) return;
+  var el=document.getElementById(h); if(!el) return;
+  el.scrollIntoView({block:'center'});
+  if(/\b(map|change|struct|drop|rmapped)\b/.test(el.className)) lineClick(el);
+  else { clearHl(); el.classList.add('hl'); }
+}
+window.addEventListener('load', focusHash);
+window.addEventListener('hashchange', focusHash);
 </script></body></html>
