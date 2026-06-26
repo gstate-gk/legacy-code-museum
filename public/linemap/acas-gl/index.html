@@ -1,0 +1,31 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8">
+<title>ACAS GL 行単位突合 — 一覧</title><style>
+body { font-family:"Segoe UI",Meiryo,sans-serif; background:#0f2a4a; color:#e6eef7; margin:0; padding:24px 32px }
+h1 { font-size:18px }
+p { color:#bcd; font-size:13px; line-height:1.7; max-width:820px }
+ul { list-style:none; padding:0; max-width:820px }
+li { background:#0c2240; margin:8px 0; padding:12px 16px; border-radius:6px; border-left:4px solid #1f9e8f }
+li a { color:#8fd6c8; font-size:15px; font-weight:600; text-decoration:none }
+li a:hover { text-decoration:underline }
+.files { display:block; color:#7e98b6; font-size:11px; margin-top:4px }
+.lg { font-size:12px; border-left:3px solid; padding:2px 8px; margin-right:8px }
+.lg i { display:inline-block; width:10px; height:10px; margin-right:4px; border-radius:2px; vertical-align:middle }
+</style></head><body>
+<h1>ACAS GL 行単位突合（元COBOL ↔ 変換後 services/*.py）</h1>
+<p>左に元の ACAS COBOL を全行、右に変換後の Python サービスを全行並べ、
+色付き行をクリックすると対応行がハイライト＆スクロールします。
+灰色（削除）行は「なぜ落としたか」の理由を表示。
+<b>COBOL のどの行が変換後のどこに行ったか／どの行を落としてそれで良いのか</b>を、
+人が1行ずつ追って欠落の有無を確認するための資料です。
+ACAS は実在・現役の GnuCOBOL 会計システム（教材サンプルではない）です。</p>
+<div style="margin:10px 0 18px"><span class="lg" style="border-color:#1f9e8f"><i style="background:#1f9e8f"></i>対応</span> <span class="lg" style="border-color:#d97706"><i style="background:#d97706"></i>意図的変更/是正</span> <span class="lg" style="border-color:#9ca3af"><i style="background:#9ca3af"></i>削除</span> <span class="lg" style="border-color:#6d8db8"><i style="background:#6d8db8"></i>構造/宣言</span></div>
+<ul>
+<li><a href="chart.html">勘定マスタ保守 (gl030)</a><span class="files">gl030.cbl → services/chart_of_accounts.py</span></li>
+<li><a href="journal.html">仕訳入力・証明 (gl050/gl051)</a><span class="files">gl050.cbl ／ gl051.cbl → services/journal_entry.py</span></li>
+<li><a href="posting.html">転記 (gl070/gl072)</a><span class="files">gl070.cbl ／ gl072.cbl → services/posting.py</span></li>
+<li><a href="period_close.html">期末処理 (gl080)</a><span class="files">gl080.cbl → services/period_close.py</span></li>
+<li><a href="reports.html">報告：試算表/P&amp;L/BS (gl090a/gl090b/gl120)</a><span class="files">gl090a.cbl ／ gl090b.cbl ／ gl120.cbl → services/reports.py</span></li>
+</ul>
+<p style="color:#7e98b6;font-size:12px;border-top:1px solid #1c3a5c;padding-top:12px;max-width:820px">
+原典: <b>Applewood Computers Accounting System (ACAS)</b> — 実在・現役の GnuCOBOL 会計システム。Copyright (C) 1976-2013 Vincent Bryan Coen &lt;vbcoen@gmail.com&gt;。<br>ライセンス: <a href="https://www.gnu.org/licenses/old-licenses/gpl-2.0.html" style="color:#8fb6e6">GNU General Public License v2 (only)</a> ・本変換の <a href="https://github.com/gstate-gk/acas-gl/blob/main/LICENSE" style="color:#8fb6e6">LICENSE</a>。<br>左ペインの原典COBOLは <b>未改変</b>のまま帰属表示の上で掲載。右ペインは原典を Web(FastAPI+SQLite) へ<b>変換した派生物</b>（GPL v2）で、変更点は本ページの色分け（🟧意図的変更/是正・⬜削除）および新旧マッピング（ACAS_GL_FINDINGS.md）に明示しています。</p>
+</body></html>
